@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-glibc
+pkgver=2.23
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="the main C library. 64 bit abi"
+homepage="https://www.gnu.org/software/libc/"
+sources="http://ftp.gnu.org/gnu/glibc/glibc-2.23.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f glibc-2.23.tar.xz ]; then wget $sources; fi
+tar -xvf glibc-2.23.tar.xz
+cd glibc-$pkgver
+
+mkdir -pv glibcbuild && cd glibcbuild
+BUILD_CC="gcc"			\
+CC="$crosstarget-gcc -m64"	\
+../configure			\
+	--prefix=$utools	\
+	--build=$crosstarget	\
+	--host=$crosstarget	\
+	--with-headers=$utools/include \
+	--libdir=$utools/lib	\
+	--disable-profile	\
+	--enable-kernel=2.6.32	\
+	--enable-obsolete-rpc	\
+	libc_cv_forced_unwind=yes \
+	libc_cv_ctors_header=yes \
+	libc_cv_c_cleanup=yes
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf glibc-$pkgver glibcbuild
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

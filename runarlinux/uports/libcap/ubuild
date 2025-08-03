@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	# use our buildflags
+	sed -i "s/CFLAGS :=/CFLAGS += \$(CPPFLAGS) /" Make.Rules
+	sed -i "s/LDFLAGS :=/LDFLAGS +=/" Make.Rules
+
+	# Disable tests, as they cause cross-build failure
+	sed -e '/test:/,/.sh/d' -e '/tests/d' -i Makefile
+
+	make GOLANG=no RAISE_SETFCAP=no lib=lib prefix=/usr DESTDIR=$PKG install
+	chmod -v 755 $PKG/usr/lib/libcap.so
+
+	mkdir -p $PKG/lib
+	mv -v $PKG/usr/lib/libcap.so.* $PKG/lib
+	ln -sfv ../../lib/$(readlink $PKG/usr/lib/libcap.so) $PKG/usr/lib/libcap.so
+}

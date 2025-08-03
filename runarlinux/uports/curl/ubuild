@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	./configure \
+		--prefix=/usr \
+		--disable-static \
+		--enable-threaded-resolver \
+		--with-ca-bundle=/etc/ssl/certs/ca-certificates.crt \
+		--with-openssl \
+		--without-brotli \
+		--without-libidn2 \
+		--without-libpsl \
+		--without-librtmp \
+		--without-nghttp2 \
+		--without-zstd 
+	make
+	make DESTDIR=$PKG install
+}

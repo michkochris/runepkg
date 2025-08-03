@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-autoconf
+pkgver=2.72
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains programs for producing shell scripts that can automatically configure source code."
+homepage="https://www.gnu.org/software/autoconf/"
+sources="https://ftp.gnu.org/gnu/autoconf/autoconf-2.72.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f autoconf-2.72.tar.xz ]; then wget $sources; fi
+tar -xvf autoconf-2.72.tar.xz
+cd autoconf-$pkgver
+./configure	--prefix=/usr	\
+		--build=$BUILD	\
+		--host=$crosstarget
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

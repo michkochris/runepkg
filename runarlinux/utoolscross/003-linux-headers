@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-linux-headers
+pkgver=6.6.3
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="expose the kernel's API for use by Glibc."
+homepage="https://www.kernel.org/"
+sources="https://www.kernel.org/pub/linux/kernel/v6.x/linux-6.6.3.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f linux-6.6.3.tar.xz ]; then wget $sources; fi
+tar -xvf linux-6.6.3.tar.xz
+cd linux-$pkgver
+
+#mkdir -pv $installdir/ulinux/{lib,lib32,libx32}
+#ln -sv . $installdir/ulinux/usr
+#ln -sv . $installdir/ulinux/local
+#ln -sv lib $installdir/ulinux/lib64
+#make mrproper
+#make ARCH=x86_64 headers
+#make ARCH=x86_64 INSTALL_HDR_PATH=$installdir/ulinux headers_install
+
+mkdir -pv /utools/{lib,lib32,libx32,local}
+ln -sv . /utools/usr
+ln -sv . /utools/local
+ln -sv lib /utools/lib64
+make mrproper
+make headers
+make INSTALL_HDR_PATH=/utools headers_install
+
+#defaultpackager
+cd $src && rm -rf linux-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

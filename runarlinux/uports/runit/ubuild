@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd admin/$name-$version
+
+	patch -Np1 -i $SRC/chpst.patch
+	patch -Np1 -i $SRC/sigcont.patch
+
+	# set default service path to /var/service
+	sed -i -e 's:^char \*varservice ="/service/";$:char \*varservice ="/var/service/";:' src/sv.c
+
+	./package/compile
+	./package/check
+	
+	install -d $PKG/sbin
+	install -m 755 command/* $PKG/sbin
+	
+	install -d $PKG/usr/share/man/man8
+	install -m 644 man/* $PKG/usr/share/man/man8
+
+	if [ ! -e /sbin/init ] || [ "$(readlink /sbin/init)" = /sbin/runit-init ]; then
+		ln -s /sbin/runit-init $PKG/sbin/init
+		install -m755 $SRC/halt $SRC/shutdown $PKG/sbin
+		ln -s halt $PKG/sbin/reboot
+		ln -s halt $PKG/sbin/poweroff
+		install -D $SRC/shutdown.8 $PKG/usr/share/man/man8/shutdown.8
+	fi
+}

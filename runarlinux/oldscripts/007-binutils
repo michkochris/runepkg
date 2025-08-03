@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+#
+#
+# check ld search path
+# ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-binutils
+pkgver=2.24
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="contains a linker, an assembler, and other tools for handling object files."
+homepage="https://www.gnu.org/software/binutils/"
+sources="http://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.bz2"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f binutils-2.24.tar.bz2 ]; then wget $sources; fi
+tar -xvjf binutils-2.24.tar.bz2
+cd binutils-$pkgver
+mkdir -v ../binutils-build && cd ../binutils-build
+
+AR=ar AS=as \
+../binutils-$pkgver/configure \
+	--prefix=$utoolscross \
+	--host=$build \
+	--target=$crosstarget \
+	--with-sysroot=$ulinux \
+	--with-lib-path=/utools/lib:/utools/lib32 \
+	--disable-nls \
+	--disable-werror
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf binutils-$pkgver binutils-build
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

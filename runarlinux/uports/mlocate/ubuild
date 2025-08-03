@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+	sed -i '/^groupname /s/mlocate/locate/' Makefile.in
+	./configure --prefix=/usr \
+		--sysconfdir=/etc \
+		--localstatedir=/var/lib \
+		--disable-nls
+	make
+	make DESTDIR=$PKG install
+
+	install -D -m 0755 $SRC/mlocate $PKG/etc/cron/daily/mlocate
+	install -m 0644 $SRC/updatedb.conf $PKG/etc
+}
+

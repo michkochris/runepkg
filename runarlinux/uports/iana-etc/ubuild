@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+
+	install -d -m 755 $PKG/etc
+	install -m 644 services $PKG/etc
+	install -m 644 protocols $PKG/etc
+}

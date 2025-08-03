@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-isl
+pkgver=0.12.2
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="a library for manipulating sets and relations of integer points bounded by linear constraints. "
+homepage="https://libisl.sourceforge.io/"
+sources="https://gcc.gnu.org/pub/gcc/infrastructure/isl-0.12.2.tar.bz2"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f isl-0.12.2.tar.bz2 ]; then wget $sources; fi
+tar -xvjf isl-0.12.2.tar.bz2
+cd isl-$pkgver
+
+LDFLAGS="-Wl,-rpath,/utoolscross/lib" \
+./configure \
+	--prefix=$utoolscross     \
+	--enable-shared           \
+	--enable-static           \
+	--with-gmp-prefix=$utoolscross
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf isl-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

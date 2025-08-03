@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$commit
+
+	for s in $SRC/*; do
+		case $s in
+			*.patch) patch -Np1 -i $s;;
+		esac
+	done
+
+	DESTDIR=$PKG ./INSTALL.sh
+	install -m644 $SRC/$name.repo $PKG/etc/$name.repo
+	install -m644 $SRC/$name.conf $PKG/etc/$name.conf
+}

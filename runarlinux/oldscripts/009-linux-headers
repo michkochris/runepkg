@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-linux-headers
+pkgver=4.14.99
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="expose the kernel's API for use by Glibc."
+homepage="https://www.kernel.org/"
+sources="https://mirrors.edge.kernel.org/pub/linux/kernel/v4.x/linux-4.14.99.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f linux-4.14.99.tar.xz ]; then wget $sources; fi
+tar -xvf linux-4.14.99.tar.xz
+cd linux-$pkgver
+
+# we create a mini filesystem skeleton for /utools and /utoolscross
+# install host system cross tools to /utoolscross and
+# install headers and the newly cross compiled glibc and programs in /utools
+
+#mkdir -pv $installdir/utools/{lib,lib32,libx32}
+#ln -sv . $installdir/utools/usr
+#ln -sv . $installdir/utools/local
+#ln -sv lib $installdir/utools/lib64
+
+#mkdir -pv $installdir/utoolscross/{lib,lib32,libx32}
+#ln -sv . $installdir/utoolscross/usr
+#ln -sv . $installdir/utoolscross/local
+#ln -sv lib $installdir/utoolscross/lib64
+
+make mrproper
+echo "INSTALLING LINUX HEADERS TO $installdir/utools"
+make ARCH=x86_64 INSTALL_HDR_PATH=$installdir/utools headers_install
+
+
+defaultpackager
+cd $src && rm -rf linux-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

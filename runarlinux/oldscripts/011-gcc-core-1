@@ -1,0 +1,88 @@
+#!/usr/bin/env bash
+#
+# initial temporary gcc build
+#
+# gcc 1st phaze disable libs
+# gcc 2nd phaze not disable libs
+# gcc 3rd phase enable libs
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-gcc
+pkgver=13.2.0
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="contains the GNU compiler collection, which includes the C and C++ compilers."
+homepage="https://gcc.gnu.org/"
+sources="https://ftp.gnu.org/gnu/gcc/gcc-13.2.0/gcc-13.2.0.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f gcc-13.2.0.tar.xz ]; then wget $sources; fi
+tar -xvf gcc-13.2.0.tar.xz
+cd gcc-$pkgver
+
+# this hackery is meant to change where gcc looks for the default dyanamic linker
+# and where to look for libraries, this allows us to use our /crosstools prefix when installing gcc
+# it alows gcc to work correctly installing to a non default place...
+# it changes the where gcc looks for the C start files...
+#-------------------------------------------------------------------------------------------------------
+#Change the default directory name for the libraries: /utoolscross
+sed -e '/m64=/s/lib64/lib/' \
+    -e '/m32=/s/m32=.*/m32=..\/lib32$(call if_multiarch,:i386-linux-gnu)/' \
+    -i.orig gcc/config/i386/t-linux64
+sed -i 's,i386-linux-gnu,i686-cross-linux-gnu,g' gcc/config/i386/t-linux64
+sed -i 's,x86_64-linux-gnu,x86_64-cross-linux-gnu,g' gcc/config/i386/t-linux64
+sed -i 's,/lib,/utools/lib,g' gcc/config/i386/t-linux64
+# change GCC's default dynamic linker to use the one installed in /tools.
+sed -i 's,/lib/ld-linux.so.2,/utools/lib32/ld-linux.so.2,g' gcc/config/i386/linux64.h
+sed -i 's,/lib64/ld-linux-x86-64.so.2,/utools/lib/ld-linux-x86-64.so.2,g' gcc/config/i386/linux64.h
+sed -i 's,/libx32/ld-linux-x32.so.2,/utools/libx32/ld-linux-x32.so.2,g' gcc/config/i386/linux64.h
+# Once again, change GCC's default dynamic linker to use the one in /tools for musl libc
+sed -i 's,/lib/ld-musl-i386.so.1,/utools/lib32/ld-musl-i386.so.1,g' gcc/config/i386/linux64.h
+sed -i 's,/lib/ld-musl-x86_64.so.1,/utools/lib/ld-musl-x86_64.so.1,g' gcc/config/i386/linux64.h
+sed -i 's,/lib/ld-musl-x32.so.1,/utools/libx32/ld-musl-x32.so.1,g' gcc/config/i386/linux64.h
+
+sed -i 's,/lib/ld-linux.so.2,/utools/lib32/ld-linux.so.2,g' gcc/config/i386/linux.h
+sed -i 's,/lib/ld-musl-i386.so.1,/utools/lib32/ld-musl-i386.so.1,g' gcc/config/i386/linux.h
+#--------------------------------------------------------------------------------------------------------
+mkdir ../gccbuild && cd ../gccbuild
+../gcc-$pkgver/configure --build=$build			\
+	    		 --host=$build			\
+	    		 --target=$crosstarget		\
+	    		 --prefix=$utoolscross		\
+			 --includedir=$utools/include	\
+			 --libdir=$utools/lib		\
+	 		 --disable-nls			\
+			 --disable-libatomic		\
+	    		 --disable-libgomp		\
+	    		 --disable-libmudflap		\
+	    		 --disable-libmpx		\
+	    		 --disable-libssp		\
+			 --disable-libvtv		\
+	    		 --disable-libquadmath		\
+	    		 --disable-libstdcxx		\
+			 --disable-libstdc++-v3		\
+			 --disable-libsanitizer		\
+			 --disable-decimal-float	\
+	    		 --with-gmp=$utoolscross	\
+	    		 --with-mpfr=$utoolscross	\
+	    		 --with-mpc=$utoolscross	\
+	    		 --with-isl=$utoolscross	\
+	    		 --with-glibc-version=2.38	\
+			 --disable-shared               \
+                         --enable-threads=posix		\
+                         --disable-multilib		\
+                         --with-multilib-list=m64,m32,mx32 \
+                         --enable-languages=c,c++
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf gcc-$pkgver gccbuild
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

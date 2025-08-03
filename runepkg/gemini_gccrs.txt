@@ -1,0 +1,23 @@
+That's an excellent way to think about it. The gccrs project is not just a technical curiosity; it's an opportunity to bridge two powerful ecosystems and a chance for you to prepare for a more integrated future. The fact that you've already started separating your C and Rust projects in your upkg structure shows you're thinking in the right direction.
+Here's how you can adapt your current C workflow to get more in line with this upcoming gccrs opportunity:
+1. Focus on GCC-compatible Practices
+Since gccrs is a frontend for GCC, the more your C workflow aligns with standard GCC practices, the more seamless the transition will be. This means:
+ * Standard C and POSIX APIs: When writing C code, favor standard C library functions and POSIX APIs. While rustc with LLVM is very portable, the gccrs goal is to integrate with the existing GNU/Linux environment.
+ * Embrace the GNU Build System: If you're not already using it, consider exploring the GNU build system (Autotools: Autoconf, Automake). This is the traditional way to build many GCC-based projects.
+ * Understand GCC Flags and Options: Deepen your knowledge of GCC's compiler flags, especially those related to optimization, warnings, and target architectures. This will be directly relevant to gccrs as it will likely inherit many of these.
+2. Prepare for Interoperability
+One of the main benefits of gccrs is the ability to easily link C and Rust code. You can start preparing for this now.
+ * Create C APIs: Design your C libraries with clear, stable APIs that can be called from other languages. Use well-defined header files.
+ * Experiment with extern "C": When you write Rust code, start practicing the use of the extern "C" block. This is the syntax for telling the Rust compiler to use the C calling convention, which is essential for interoperability.
+ * Build with a Makefile: If you're using a simple Makefile for your upkg projects, you can start experimenting with rules that combine both C and Rust. You'd use gcc for your C files and rustc (or eventually gccrs) for your Rust files, then link them all together in the final step. This will give you a taste of the mixed-language workflow that gccrs is designed to streamline.
+3. Learn Rust with a Mindset for Low-Level Development
+While you're developing your Rust skills, focus on the parts of the language that are most relevant to system-level programming and kernel development.
+ * Understand unsafe Rust: The kernel will need to use unsafe Rust to perform low-level operations like interacting with hardware and managing memory directly. Learn to use unsafe blocks responsibly and understand the invariants you need to maintain.
+ * Learn about FFI (Foreign Function Interface): This is the mechanism for calling C code from Rust and vice-versa. It's a core skill for anyone who wants to work on a mixed C/Rust project.
+ * Explore Embedded Rust: The Rust community has a strong presence in the embedded space. Many of the techniques for writing Rust code on microcontrollers are directly applicable to kernel-level development, such as working without the standard library (no_std) and interacting with memory-mapped registers.
+4. Stay Up-to-Date with gccrs Development
+The project is still in active development, so it's important to keep an eye on its progress.
+ * Follow the Project Blog: The gccrs team has a blog where they post regular updates on their progress. This is the best place to find out what features are working and which ones are still in progress.
+ * Check the GitHub Repository: The gccrs GitHub page is where the development happens. You can see the latest commits, issues, and pull requests to get a real-time sense of the project's status.
+ * Use an Experimental Toolchain: Once gccrs reaches a usable state, you may be able to use it experimentally with a cargo toolchain. Keep an eye out for news on this, as it will be the most direct way to get your hands dirty.
+By focusing on these areas, you can ensure your C skills remain strong and relevant, while building up your Rust knowledge in a way that is perfectly suited for the opportunities that gccrs is creating. This is a great time to be a developer interested in the intersection of these two languages.

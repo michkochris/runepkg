@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+desciption=
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	./configure --prefix=/usr \
+	            --bindir=/bin \
+	            --disable-static \
+            	    --sysconfdir=/etc \
+		    --disable-nls
+	make
+	make DESTDIR=$PKG install
+
+	chmod -v 755 $PKG/usr/lib/libattr.so
+
+	mkdir -p $PKG/lib
+	mv -v $PKG/usr/lib/libattr.so.* $PKG/lib
+	ln -sfv ../../lib/$(readlink $PKG/usr/lib/libattr.so) $PKG/usr/lib/libattr.so
+
+}

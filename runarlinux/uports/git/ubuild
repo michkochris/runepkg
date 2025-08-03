@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	make CFLAGS="$CFLAGS" \
+		prefix=/usr \
+		gitexecdir=/usr/lib/git-core \
+		perllibdir="$(/usr/bin/perl -MConfig -wle 'print $Config{installvendorlib}')" \
+		DESTDIR=$PKG install
+
+	mkdir -p $PKG/usr/share/git/
+	install -m644 ./contrib/completion/git-prompt.sh $PKG/usr/share/git/git-prompt.sh
+
+}

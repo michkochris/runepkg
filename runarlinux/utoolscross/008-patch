@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-patch
+pkgver=2.7.6
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains a program for modifying or creating files by applying a “patch” file typically created by the diff program."
+homepage="https://savannah.gnu.org/projects/patch/"
+sources="https://ftp.gnu.org/gnu/patch/patch-2.7.6.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f patch-2.7.6.tar.xz ]; then wget $sources; fi
+tar -xvf patch-2.7.6.tar.xz
+cd patch-$pkgver
+./configure \
+        --prefix=/usr   \
+        --build=$BUILD  \
+        --host=$crosstarget
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

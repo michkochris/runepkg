@@ -1,0 +1,17 @@
+
+
+build() {
+	cd $name-$version
+
+	./configure --prefix=/usr \
+	            --sysconfdir=/etc \
+		    --libexecdir=/usr/lib \
+	            --disable-setuid \
+	            --disable-cache-owner \
+	            --with-systemdtmpfilesdir=no \
+		    --with-systemdsystemunitdir=no
+	make
+	make DESTDIR=$PKG install
+
+	install -d $PKG/var/cache/man
+}

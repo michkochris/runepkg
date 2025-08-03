@@ -1,0 +1,20 @@
+[package]
+name = "runepkg_highlight"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "runepkg_highlight"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+libc = "0.2"
+syntect = "5.1"
+once_cell = "1.19"
+
+[build-dependencies]
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3

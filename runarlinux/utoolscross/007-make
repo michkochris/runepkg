@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-make
+pkgver=4.4.1
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains a program for controlling the generation of executables and other non-source files of a package from source files."
+homepage="https://www.gnu.org/software/make/"
+sources="https://ftp.gnu.org/gnu/make/make-4.4.1.tar.gz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f make-4.4.1.tar.gz ]; then wget $sources; fi
+tar -xvf make-4.4.1.tar.gz
+cd make-$pkgver
+./configure \
+	--prefix=/usr	\
+	--build=$BUILD	\
+	--host=$crosstarget \
+	--without-guile \
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

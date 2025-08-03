@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	sed -i /ARPD/d Makefile
+	rm -fv man/man8/arpd.8
+	
+	[ -e /usr/lib/pkgconfig/xtables.pc ] || sed -i 's/m_ipt.o//' tc/Makefile
+
+	make
+	make DESTDIR=$PKG install
+}

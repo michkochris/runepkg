@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+#
+#
+#
+# check ld search path
+# ld --verbose | grep SEARCH_DIR | tr -s ' ;' \\012
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-binutils
+pkgver=2.41
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains a linker, an assembler, and other tools for handling object files."
+homepage="https://www.gnu.org/software/binutils/"
+sources="https://sourceware.org/pub/binutils/releases/binutils-2.41.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f binutils-2.41.tar.xz ]; then wget $sources; fi
+tar -xvf binutils-2.41.tar.xz
+cd binutils-$pkgver
+mkdir -v ../binutils-build && cd ../binutils-build
+../binutils-$pkgver/configure \
+		--prefix=$utoolscross	\
+		--target=$crosstarget   \
+		--with-sysroot=$utools	\
+		--disable-nls		\
+		--enable-gprofng=no	\
+		--disable-werror	\
+		--enable-new-dtags	\
+		--enable-default-hash-style=gnu \
+		--enable-install-libiberty	\
+		--with-lib-path=/utools/lib:/utools/lib32
+
+make -j$(nproc)
+make install #DESTDIR=$installdir || exit $?
+
+#defaultpackager
+cd $src && rm -rf binutils-$pkgver binutils-build
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	# https://sourceware.org/PR23914
+	sed -i 's:-Werror::' */Makefile.in
+
+	./configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--program-prefix="eu-" \
+		--disable-debuginfod \
+		--enable-deterministic-archives
+	make
+	make DESTDIR=$PKG install
+}

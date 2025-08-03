@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-libstdcxx
+pkgver=12.2.0
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="Libstdc++ is the standard C++ library. "
+homepage="https://gcc.gnu.org/"
+sources="https://ftp.gnu.org/gnu/gcc/gcc-12.2.0/gcc-12.2.0.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+
+cd $usrc
+if [ ! -f gcc-12.2.0.tar.xz ]; then wget $sources; fi
+tar -xvf gcc-12.2.0.tar.xz
+cd gcc-$pkgver
+mkdir -v build32 && cd build32
+../libstdc++-v3/configure \
+	--build=$build			\
+	--host=$target32                \
+	--target=$target32		\
+	--prefix=$tools                 \
+	--libdir=$tools/lib32           \
+	--disable-multilib              \
+	--disable-nls                   \
+	--disable-libstdcxx-threads     \
+	--disable-libstdcxx-pch         \
+	--with-gxx-include-dir=$tools/lib/$target/include/c++/$pkgver \
+	CC="$target-gcc -m32"          \
+	CXX="$target-g++ -m32"
+
+make -j$(nproc)
+make install DESTDIR=$installdir
+sleep 5
+cd ../
+mkdir -v build && cd build
+../libstdc++-v3/configure \
+	--build=$build                  \
+        --host=$target                  \
+        --target=$target                \
+	--prefix=$tools                 \
+	--disable-multilib              \
+	--disable-nls                   \
+	--disable-libstdcxx-threads     \
+	--disable-libstdcxx-pch         \
+	--with-gxx-include-dir=$tools/lib/$target/include/c++/$pkgver
+
+make -j$(nproc)
+make install DESTDIR=$installdir
+
+defaultpackager
+cd $usrc && rm -rf  gcc-$pkgver
+# end of file

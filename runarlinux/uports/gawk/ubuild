@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	export ac_cv_libsigsegv=no
+
+	# ensure some unneeded files are not installed
+	sed -i 's/extras//' Makefile.in
+
+	./configure --prefix=/usr --libexecdir=/usr/lib --sysconfdir=/etc --disable-nls
+	make
+	make DESTDIR=$PKG install
+
+}

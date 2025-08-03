@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	./configure --prefix=/usr \
+	            --disable-static \
+		    --disable-nls
+	make
+	make DESTDIR=$PKG install
+
+
+	mkdir -pv $PKG/bin $PKG/lib
+	for i in lzma unlzma lzcat xz unxz xzcat; do
+		mv -v $PKG/usr/bin/$i $PKG/bin
+	done
+	mv -v $PKG/usr/lib/liblzma.so.* $PKG/lib
+	ln -svf ../../lib/$(readlink $PKG/usr/lib/liblzma.so) $PKG/usr/lib/liblzma.so
+}

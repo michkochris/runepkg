@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	mkdir -v build
+	cd build
+
+	../configure --prefix=/usr           \
+	             --bindir=/bin           \
+	             --with-root-prefix=""   \
+	             --enable-elf-shlibs     \
+	             --disable-libblkid      \
+	             --disable-libuuid       \
+	             --disable-uuidd         \
+	             --disable-fsck
+	make
+	make DESTDIR=$PKG install
+	make DESTDIR=$PKG install-libs
+
+	for i in libcom_err libe2p libext2fs libss; do
+		chmod -v u+w $PKG/usr/lib/${i}.a
+	done
+
+}

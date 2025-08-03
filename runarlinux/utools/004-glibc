@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-glibc
+pkgver=2.38
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="the main C library. 64 bit abi"
+homepage="https://www.gnu.org/software/libc/"
+sources="https://ftp.gnu.org/gnu/glibc/glibc-2.38.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f glibc-2.38.tar.xz ]; then wget $sources; fi
+tar -xvf glibc-2.38.tar.xz
+cd glibc-$pkgver
+mkdir -pv build && cd build
+
+../configure --prefix=$utools	      \
+             --host=$crosstarget      \
+             --with-headers=$utools/include \
+             --libdir=$utools/lib     \
+             --libexecdir=$utools/lib
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf glibc-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

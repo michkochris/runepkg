@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+
+cwd=$(pwd)
+BUILD=$(echo ${MACHTYPE} | sed -e 's/-[^-]*/-build_pc/')
+toolstarget="x86_64-tools-linux-gnu"
+toolstarget32="i686-tools-linux-gnu"
+toolstargetx32="x86_64-tools-linux-gnux32"
+crosstarget="x86_64-cross-linux-gnu"
+crosstarget32="i686-cross-linux-gnu"
+crosstargetx32="x86_64-cross-linux-gnux32"
+utarget="x86_64-u-linux-gnu"
+utarget32="i686-u-linux-gnu"
+utargetx32="x86_64-u-linux-gnux32"
+
+system=/mnt/ulinux
+ulinux=/ulinux
+uports=$system/uports
+src=$system/sources
+tools=/mnt/ulinux/utools
+crosstools=/mnt/ulinux/utoolscross
+utools=/utools
+utoolscross=/utoolscross
+tpath=$utoolscross/bin:$utools/bin:$ulinux/bin:$PATH
+upath=$utoolscross/bin:$utools/bin:$ulinux/bin:
+pkgdir=$system/pkgs
+staging=$system/staging
+installdir=$system/install
+
+if [ ! -d $system ]; then mkdir -pv $system; fi
+if [ ! -d $src ]; then mkdir -pv $src; fi
+if [ ! -d $uports ]; then mkdir -pv $uports; fi
+if [ ! -d $tools ]; then mkdir -pv $tools; fi
+if [ ! -d $crosstools ]; then mkdir -pv $crosstools; fi
+if [ ! -d $pkgdir ]; then mkdir -pv $pkgdir; fi
+if [ ! -d $staging ]; then mkdir -pv $staging; fi
+if [ ! -d $installdir ]; then mkdir -pv $installdir; fi
+if [ ! -e $ulinux ]; then  ln -sv $system / ; fi
+if [ ! -e $utools ]; then  ln -sv $tools / ; fi
+if [ ! -e $utoolscross ]; then  ln -sv $crosstools / ; fi
+if [ -d $system ]; then echo $system; fi
+if [ -d $src ]; then echo $src; fi
+if [ -d $uports ]; then echo $uports; fi
+if [ -d $tools ]; then echo $tools; fi
+if [ -d $crosstools ]; then echo $crosstools; fi
+if [ -d $pkgdir ]; then echo $pkgdir; fi
+if [ -d $staging ]; then echo $staging; fi
+if [ -d $installdir ]; then echo $installdir; fi
+if [ -e "$ulinux" ]; then  ls -l $ulinux; fi
+if [ -e "$utools" ]; then  ls -l $utools; fi
+if [ -e "$utoolscross" ]; then  ls -l $utoolscross; fi
+if [ ! -e "$ulinux" ]; then  echo "Warning: $ulinux symlink is broken";exit 1; fi
+if [ ! -e "$utools" ]; then  echo "Warning: $utools symlink is broken";exit 1; fi
+if [ ! -e "$utoolscross" ]; then  echo "Warning: $utoolscross symlink is broken";exit 1; fi
+#echo "NORMAL PATH= $PATH"
+#echo "tpath= $tpath"
+
+function minimaldebcontrol {
+echo "uports: required minimal dpkg control fields are"
+echo "pkgname="
+echo "pkgver="
+echo "maintainer="
+echo "description="
+echo "sources="
+echo "arch="
+echo "depends="
+echo "uports: the package info must be readable by the shell also..."
+}
+
+function checkpkginfo {
+if [ -z ${pkgname+x} ]; then echo "pkgname= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${pkgver+x} ]; then echo "pkgver= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${maintainer+x} ]; then echo "maintainer= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${description+x} ]; then echo "description= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${sources+x} ]; then echo "sources= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${arch+x} ]; then echo "arch= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z ${depends+x} ]; then echo "depends= is unpresent";minimaldebcontrol; exit 1; fi
+if [ -z "$pkgname" ]; then echo "pkgname= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -z "$pkgver" ]; then echo "pkgver= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -z "$maintainer" ]; then echo "maintainer= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -z "$description" ]; then echo "description= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -z "$sources" ]; then echo "sources= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -z "$arch" ]; then echo "arch= is unreadable";minimaldebcontrol;exit 1; fi
+if [ -v "$depends" ]; then echo "depends= is unreadable";minimaldebcontrol;exit 1; fi
+}
+
+function infoecho {
+echo "Package: $pkgname"
+echo "Version: $pkgver"
+if [ -v uploaders ]; then echo "Uploaders: $uploaders"; fi
+echo "Maintainer: $maintainer"
+if [ -v changedby ]; then echo "Changed-By: $changedby"; fi
+if [ -v urgency ]; then echo "Urgency: $urgency"; fi
+if [ -v changes ]; then echo "Changes: $changes"; fi
+if [ -v section ]; then echo "Section: $section"; fi
+if [ -v priority ]; then echo "Priority: $priority"; fi
+echo "Description: $description"
+if [ -v homepage ]; then echo "Homepage: $homepage"; fi
+if [ -v origin ]; then echo "Origin: $origin"; fi
+echo "Sources: $sources"
+echo "Architecture: $arch"
+if [ -v essential ]; then echo "Essential: $essential"; fi
+if [ -v predepends ]; then echo "Pre-Depends: $predepends"; fi
+if [ -v standardsversion ]; then echo "Standards-Version: $standardsversion"; fi
+if [ -v builddepends ]; then echo "Build-Depends: $builddepends"; fi
+echo "Depends: $depends"
+if [ -v provides ]; then echo "Provides: $provides"; fi
+if [ -v suggests ]; then echo "Suggests: $suggests"; fi
+if [ -v recommends ]; then echo "Recommends: $recommends"; fi
+if [ -v enhances ]; then echo "Enhances: $enhances"; fi
+if [ -v replaces ]; then echo "Replaces: $replaces"; fi
+if [ -v breaks ]; then echo "Breaks: $breaks"; fi
+if [ -v conflicts ]; then echo "Conflicts: $conflicts"; fi
+echo "Installed-Size: $installedsize"
+echo "Date: $today";
+if [ -v comment ]; then echo "Comment: $comment"; fi
+}
+
+function defaultpackager {
+checkpkginfo
+fullpkgname=${pkgname}_${pkgver}-${pkgrel}_${arch}
+if [ ! -d $staging/DEBIAN ]; then mkdir -p $staging/DEBIAN; fi
+cd $installdir
+installedsize=$(find . -type d | xargs du -s | cut -d'.' -f 1)
+today=$(date "+%A %d %m %Y %H:%M:%S %Z")
+echo "Creating data archive"
+tar -zcf $staging/data.tar.gz ./
+echo "Creating control file" && infoecho
+controlfile=$staging/DEBIAN/control
+echo "Package: $pkgname" > $controlfile
+echo "Version: $pkgver" >> $controlfile
+if [ -v uploaders ]; then echo "Uploaders: $uploaders" >> $controlfile; fi
+echo "Maintainer: $maintainer" >> $controlfile
+if [ -v changedby ]; then echo "Changed-By: $changedby" >> $controlfile; fi
+if [ -v urgency ]; then echo "Urgency: $urgency" >> $controlfile; fi
+if [ -v changes ]; then echo "Changes: $changes" >> $controlfile; fi
+if [ -v section ]; then echo "Section: $section" >> $controlfile; fi
+if [ -v priority ]; then echo "Priority: $priority" >> $controlfile; fi
+echo "Description: $description" >> $controlfile
+if [ -v homepage ]; then echo "Homepage: $homepage" >> $controlfile; fi
+if [ -v origin ]; then echo "Origin: $origin" >> $controlfile; fi
+echo "Sources: $sources"  >> $controlfile
+echo "Architecture: $arch" >> $controlfile
+if [ -v essential ]; then echo "Essential: $essential" >> $controlfile; fi
+if [ -v predepends ]; then echo "Pre-Depends: $predepends" >> $controlfile; fi
+if [ -v standardsversion ]; then echo "Standards-Version: $standardsversion" >> $controlfile; fi
+if [ -v builddepends ]; then echo "Build-Depends: $builddepends" >> $controlfile; fi
+echo "Depends: $depends" >> $controlfile
+if [ -v provides ]; then echo "Provides: $provides" >> $controlfile; fi
+if [ -v suggests ]; then echo "Suggests: $suggests" >> $controlfile; fi
+if [ -v recommends ]; then echo "Recommends: $recommends" >> $controlfile; fi
+if [ -v enhances ]; then echo "Enhances: $enhances" >> $controlfile; fi
+if [ -v replaces ]; then echo "Replaces: $replaces" >> $controlfile; fi
+if [ -v breaks ]; then echo "Breaks: $breaks" >> $controlfile; fi
+if [ -v conflicts ]; then echo "Conflicts: $conflicts" >> $controlfile; fi
+echo "Installed-Size: $installedsize" >> $controlfile
+echo "Date: $today" >> $controlfile
+if [ -v comment ]; then echo "Comment: $comment" >> $controlfile; fi
+cd $staging/DEBIAN/
+echo "Creating control archive"
+tar -zcf $staging/control.tar.gz ./
+cd $staging
+echo "Creating debian-binary file"
+echo 2.0 > debian-binary
+echo "Creating deb package"
+ar r $pkgdir/$fullpkgname.deb debian-binary control.tar.gz data.tar.gz
+echo "Cleaning up..."
+rm -rf $installdir/* $staging/*
+}
+
+# end of file

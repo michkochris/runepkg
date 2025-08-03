@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	# Don't build or install locate because we use mlocate,
+	# which is a secure version of locate.
+	sed -e '/^SUBDIRS/s/locate//' -e 's/frcode locate updatedb//' -i Makefile.in
+
+	./configure --prefix=/usr
+
+	# don't build locate, but the docs want a file in there.
+	make -C locate dblocation.texi
+	make
+
+	make DESTDIR=$PKG install
+
+	mkdir -pv $PKG/bin
+	mv -v $PKG/usr/bin/find $PKG/bin
+}

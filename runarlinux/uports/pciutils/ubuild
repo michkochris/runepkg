@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	make OPT="${CFLAGS} -fPIC -DPIC" \
+	     PREFIX=/usr                \
+	     SHAREDIR=/usr/share/hwdata \
+	     MANDIR=/usr/share/man	\
+	     SHARED=yes
+
+	make PREFIX=/usr                \
+	     SHAREDIR=/usr/share/hwdata \
+	     MANDIR=/usr/share/man	\
+	     SHARED=yes                 \
+	     DESTDIR=$PKG		\
+	     install install-lib
+
+	chmod -v 755 $PKG/usr/lib/libpci.so
+}

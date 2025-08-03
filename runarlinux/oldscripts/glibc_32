@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-glibc_lib32
+pkgver=2.38
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="the main C library. 64 bit abi"
+homepage="https://www.gnu.org/software/libc/"
+sources="https://ftp.gnu.org/gnu/glibc/glibc-2.38.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f glibc-2.38.tar.xz ]; then wget $sources; fi
+tar -xvf glibc-2.38.tar.xz
+cd glibc-$pkgver
+mkdir -pv build && cd build
+
+CC="$crosstarget-gcc -m32"            \
+CXX="$crosstarget-g++ -m32"           \
+../configure --prefix=$utools	      \
+             --build=$build           \
+             --host=$crosstarget32    \
+             --with-headers=$utools/include \
+	     --enable-shared          \
+             --libdir=$utools/lib32 \
+             --libexecdir=$utools/lib32 \
+             libc_cv_slibdir=$utools/lib32
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+#find . -maxdepth 1 ! -name $installdir/utoolscross/lib32 -type d -not -path '.' -exec rm -rf {} +
+
+defaultpackager
+cd $src && rm -rf glibc-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# remember to clean install dir for next package
+rm -rf $installdir/*
+# end of file

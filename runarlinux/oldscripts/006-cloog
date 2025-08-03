@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-cloog
+pkgver=0.18.1
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="contains compression and decompression routines used by some programs."
+homepage="http://cloog.org/"
+sources="https://gcc.gnu.org/pub/gcc/infrastructure/cloog-0.18.1.tar.gz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f cloog-0.18.1.tar.gz ]; then wget $sources; fi
+tar -xvf cloog-0.18.1.tar.gz
+cd cloog-$pkgver
+
+LDFLAGS="-Wl,-rpath,/utoolscross/lib" \
+./configure \
+	--prefix=$utoolscross	\
+	--enable-shared		\
+	--enable-static		\
+	--with-gmp-prefix=$utoolscross \
+	--with-isl-prefix=$utoolscross
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf cloog-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

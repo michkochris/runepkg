@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-automake
+pkgver=1.17
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains programs for generating Makefiles for use with Autoconf."
+homepage="https://www.gnu.org/software/automake/"
+sources="https://ftp.gnu.org/gnu/automake/automake-1.17.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f automake-1.17.tar.xz ]; then wget $sources; fi
+tar -xvf automake-1.17.tar.xz
+cd automake-$pkgver
+./configure		--prefix=/usr	\
+			--build=$BUILD	\
+			--host=$crosstarget \
+			--docdir=/usr/share/doc/automake-1.17
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

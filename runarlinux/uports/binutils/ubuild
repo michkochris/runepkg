@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	sed -i '/^SUBDIRS/s/doc//' bfd/Makefile.in
+
+	patch -Np1 -i $SRC/CVE-2023-1972.patch
+
+	mkdir -v build
+	cd       build
+
+	../configure \
+		--prefix=/usr \
+		--sysconfdir=/etc \
+		--enable-gold \
+		--enable-ld=default \
+		--enable-lto \
+		--enable-plugins \
+		--enable-shared \
+		--disable-werror \
+		--with-system-zlib \
+		--enable-multilib \
+		--with-lib-path=/usr/lib:/lib:/usr/lib32
+	make tooldir=/usr
+	make tooldir=/usr DESTDIR=$PKG install
+}

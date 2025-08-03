@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$name-$version
+	
+	NOCONFIGURE=1 ./autogen.sh
+
+	./configure --prefix=/usr                       \
+	            --enable-unicode                    \
+		    --enable-jit                        \
+	            --enable-pcre2-16                   \
+	            --enable-pcre2-32                   \
+	            --enable-pcre2grep-libz             \
+	            --enable-pcre2grep-libbz2           \
+	            --enable-pcre2test-libreadline      \
+	            --disable-static
+	make
+	make DESTDIR=$PKG install
+
+}

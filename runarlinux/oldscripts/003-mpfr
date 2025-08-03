@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-mpfr
+pkgver=3.1.2
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="C library for multiple-precision floating-point computations with correct rounding."
+homepage="https://www.mpfr.org/"
+sources="http://www.mpfr.org/mpfr-3.1.2/mpfr-3.1.2.tar.xz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f mpfr-3.1.2.tar.xz ]; then wget $sources; fi
+tar -xvf mpfr-3.1.2.tar.xz
+cd mpfr-$pkgver
+
+LDFLAGS="-Wl,-rpath,/utoolscross/lib" \
+./configure \
+	--prefix=$utoolscross	\
+	--with-gmp=$utoolscross \
+	--enable-shared		\
+	--enable-static
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf mpfr-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

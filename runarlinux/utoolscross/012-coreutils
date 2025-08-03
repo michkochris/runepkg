@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-coreutils
+pkgver=9.5
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="contains the basic utility programs needed by every operating system."
+homepage="https://www.gnu.org/software/coreutils/"
+sources="https://ftp.gnu.org/gnu/coreutils/coreutils-9.5.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f coreutils-9.5.tar.xz ]; then wget $sources; fi
+tar -xvf coreutils-9.5.tar.xz
+cd coreutils-$pkgver
+./configure \
+        --prefix=/usr	\
+        --build=$BUILD	\
+        --host=$crosstarget \
+	--enable-install-program=hostname
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+#
+# ulinux: a simple and universal linux distribution...
+. ./ulinux-config && PATH=$tpath
+
+pkgname=utoolscross-m4
+pkgver=1.4.19
+pkgrel=1
+maintainer="michkochris@gmail.com"
+description="The M4 package contains a macro processor."
+homepage="https://www.gnu.org/software/m4/"
+sources="https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz"
+arch=amd64
+depends=
+comment="ulinux: a simple and universal linux distribution..."
+checkpkginfo
+
+cd $src
+if [ ! -f m4-1.4.19.tar.xz ]; then wget $sources; fi
+tar -xvf m4-1.4.19.tar.xz
+cd m4-$pkgver
+./configure	\
+	--prefix=/usr	\
+	--build=$BUILD	\
+	--host=$crosstarget
+
+make -j$(nproc)
+make install DESTDIR=$utools || exit $?
+
+#defaultpackager
+cd $src && rm -rf $pkgname-$pkgver
+#cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

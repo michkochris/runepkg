@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	cd $name-$version
+
+	mkdir -pv $PKG/var/lib/hwclock
+
+	./configure ADJTIME_PATH=/var/lib/hwclock/adjtime   \
+	            --disable-chfn-chsh  \
+	            --disable-login      \
+	            --disable-nologin    \
+	            --disable-su         \
+	            --disable-setpriv    \
+	            --disable-runuser    \
+	            --disable-pylibmount \
+	            --disable-static     \
+	            --without-python     \
+	            --without-systemd    \
+		    --disable-nls        \
+	            --without-systemdsystemunitdir
+	make
+	make DESTDIR=$PKG install
+
+}

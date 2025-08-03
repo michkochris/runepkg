@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-zstd
+pkgver=1.5.5
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="contains compression and decompression routines used by some programs."
+homepage="https://facebook.github.io/zstd/"
+sources="https://github.com/facebook/zstd/releases/download/v1.5.5/zstd-1.5.5.tar.gz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f zstd-1.5.5.tar.gz ]; then wget $sources; fi
+tar -xvf zstd-1.5.5.tar.gz
+cd zstd-$pkgver
+
+make -j$(nproc)
+make install DESTDIR=$installdir/utoolscross || exit $?
+cd $installdir/utoolscross && mv usr/local/* .  # fix zstd funky install dirs
+rm -rf $installdir/utoolscross/usr
+rm -rf $installdir/utoolscross/local
+
+defaultpackager
+cd $src && rm -rf zstd-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+. ./uports-config && PATH=$tpath
+
+pkgname=utoolscross-mpc
+pkgver=1.0.2
+pkgrel=1
+maintainer="linuxchrist@gmail.com"
+description="C library for the arithmetic of complex numbers with arbitrarily high precision and correct rounding of the result. "
+homepage="https://www.multiprecision.org/"
+sources="https://ftp.gnu.org/gnu/mpc/mpc-1.0.2.tar.gz"
+arch=amd64
+depends=
+comment="uports: a universal linux/gnu ports collection"
+checkpkginfo
+
+cd $src
+if [ ! -f mpc-1.0.2.tar.gz ]; then wget $sources; fi
+tar -xvf mpc-1.0.2.tar.gz
+cd mpc-$pkgver
+
+LDFLAGS="-Wl,-rpath,/utoolscross/lib" \
+./configure \
+	--prefix=$utoolscross    \
+	--with-gmp=$utoolscross  \
+	--with-mpfr=$utoolscross \
+	--enable-shared          \
+	--enable-static
+
+make -j$(nproc)
+make install DESTDIR=$installdir || exit $?
+
+defaultpackager
+cd $src && rm -rf mpc-$pkgver
+cd $pkgdir && dpkg --force-all -i $fullpkgname.deb
+# end of file

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+#
+#
+# uports: a universal linux/gnu ports collection
+
+pkgname=
+pkgver=
+pkgrel=
+maintainer= <linuxchrist@gmail.com>
+description= Meta port for base system
+homepage=
+arch=
+depends=
+
+build() {
+	install -Dm644 $SRC/cacert-$_version.pem $PKG/etc/ssl/cert.pem
+
+	install -d $PKG/etc/ssl/certs
+	ln -s /etc/ssl/cert.pem $PKG/etc/ssl/certs/ca-certificates.crt
+	ln -s /etc/ssl/cert.pem $PKG/etc/ssl/ca-bundle.crt
+}
