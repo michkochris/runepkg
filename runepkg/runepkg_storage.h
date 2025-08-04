@@ -55,7 +55,7 @@ int runepkg_storage_create_package_directory(const char *pkg_name, const char *p
  * @return 0 on success, -1 on failure
  */
 int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_version, 
-                                      const upkg_package_info_t *pkg_info);
+                                      const PkgInfo *pkg_info);
 
 /**
  * @brief Reads package info from persistent storage
@@ -65,7 +65,7 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
  * @return 0 on success, -1 on failure
  */
 int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_version,
-                                     upkg_package_info_t *pkg_info);
+                                     PkgInfo *pkg_info);
 
 /**
  * @brief Removes a package from persistent storage

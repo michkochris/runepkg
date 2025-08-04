@@ -1,10 +1,10 @@
 /******************************************************************************
- * Filename:    upkg_util.h
+ * Filename:    runepkg_util.h
  * Author:      <michkochris@gmail.com>
  * Date:        started 01-02-2025
- * Description: Essential utility function declarations for upkg reboot implementation
+ * Description: Essential utility function declarations for runepkg (runar linux)
  *
- * Copyright (c) 2025 upkg (ulinux) All rights reserved.
+ * Copyright (c) 2025 runepkg (runar linux) All rights reserved.
  * GPLV3
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,8 +20,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-#ifndef UPKG_UTIL_H
-#define UPKG_UTIL_H
+#ifndef RUNEPKG_UTIL_H
+#define RUNEPKG_UTIL_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,17 +37,17 @@
 /**
  * @brief Logging function for verbose output
  */
-void upkg_util_log_verbose(const char *format, ...);
+void runepkg_util_log_verbose(const char *format, ...);
 
 /**
  * @brief Logging function for debug output
  */
-void upkg_util_log_debug(const char *format, ...);
+void runepkg_util_log_debug(const char *format, ...);
 
 /**
  * @brief Prints error messages with formatting support
  */
-void upkg_util_error(const char *format, ...);
+void runepkg_util_error(const char *format, ...);
 
 // --- Memory Management ---
 
@@ -55,7 +55,7 @@ void upkg_util_error(const char *format, ...);
  * @brief Frees allocated memory pointed to by a char pointer and sets the pointer to NULL.
  * @param ptr A pointer to the char pointer that needs to be freed.
  */
-void upkg_util_free_and_null(char **ptr);
+void runepkg_util_free_and_null(char **ptr);
 
 // --- String Manipulation ---
 
@@ -64,7 +64,7 @@ void upkg_util_free_and_null(char **ptr);
  * @param str The string to trim.
  * @return A pointer to the trimmed string, or NULL if the input string is NULL.
  */
-char *upkg_util_trim_whitespace(char *str);
+char *runepkg_util_trim_whitespace(char *str);
 
 /**
  * @brief Safely copies a source string to a destination buffer, ensuring null-termination.
@@ -73,7 +73,7 @@ char *upkg_util_trim_whitespace(char *str);
  * @param n The size of the destination buffer.
  * @return A pointer to the destination string, or NULL if input is invalid.
  */
-char *upkg_util_safe_strncpy(char *dest, const char *src, size_t n);
+char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n);
 
 /**
  * @brief Concatenates a directory path and a filename, handling slashes correctly.
@@ -82,7 +82,7 @@ char *upkg_util_safe_strncpy(char *dest, const char *src, size_t n);
  * @return A newly allocated string with the full path, or NULL on error.
  * The caller is responsible for freeing the returned string.
  */
-char *upkg_util_concat_path(const char *dir, const char *file);
+char *runepkg_util_concat_path(const char *dir, const char *file);
 
 // --- File System Operations ---
 
@@ -91,7 +91,7 @@ char *upkg_util_concat_path(const char *dir, const char *file);
  * @param filepath The path to check.
  * @return 1 if the file exists, 0 if it does not, -1 if an error occurred.
  */
-int upkg_util_file_exists(const char *filepath);
+int runepkg_util_file_exists(const char *filepath);
 
 /**
  * @brief Creates a directory recursively with the specified permissions.
@@ -99,7 +99,7 @@ int upkg_util_file_exists(const char *filepath);
  * @param mode The permissions for the created directories (e.g., 0755).
  * @return 0 on success, -1 on failure.
  */
-int upkg_util_create_dir_recursive(const char *path, mode_t mode);
+int runepkg_util_create_dir_recursive(const char *path, mode_t mode);
 
 /**
  * @brief Reads the entire content of a file into a dynamically allocated buffer.
@@ -108,7 +108,7 @@ int upkg_util_create_dir_recursive(const char *path, mode_t mode);
  * @return A pointer to the null-terminated content buffer, or NULL on error.
  * The caller is responsible for freeing the returned buffer.
  */
-char *upkg_util_read_file_content(const char *filepath, size_t *len);
+char *runepkg_util_read_file_content(const char *filepath, size_t *len);
 
 /**
  * @brief Copies a file from a source path to a destination path, preserving file permissions.
@@ -116,7 +116,7 @@ char *upkg_util_read_file_content(const char *filepath, size_t *len);
  * @param destination_path The full path to the destination file.
  * @return 0 on success, -1 on failure.
  */
-int upkg_util_copy_file(const char *source_path, const char *destination_path);
+int runepkg_util_copy_file(const char *source_path, const char *destination_path);
 
 // --- Configuration File Operations ---
 
@@ -128,14 +128,13 @@ int upkg_util_copy_file(const char *source_path, const char *destination_path);
  * @return A dynamically allocated string containing the trimmed and expanded value, or NULL if not found.
  * The caller is responsible for freeing this string.
  */
-char *upkg_util_get_config_value(const char *filepath, const char *key, char separator);
+char *runepkg_util_get_config_value(const char *filepath, const char *key, char separator);
 
 // --- .deb Package Operations ---
 
 /**
  * @brief Extracts a .deb package completely into the specified directory.
- * 
- * This function performs a complete .deb extraction:
+ * * This function performs a complete .deb extraction:
  * 1. Creates the destination directory if it doesn't exist
  * 2. Extracts the .deb archive using 'ar' command
  * 3. Finds and extracts both control.tar.* and data.tar.* archives
@@ -145,7 +144,7 @@ char *upkg_util_get_config_value(const char *filepath, const char *key, char sep
  * @param extract_dir The directory where the .deb should be extracted.
  * @return 0 on success, -1 on failure.
  */
-int upkg_util_extract_deb_complete(const char *deb_path, const char *extract_dir);
+int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_dir);
 
 /**
  * @brief Executes an external command safely in a child process.
@@ -153,6 +152,6 @@ int upkg_util_extract_deb_complete(const char *deb_path, const char *extract_dir
  * @param argv An array of null-terminated strings for the arguments.
  * @return 0 on successful command execution, or a non-zero exit status/error code on failure.
  */
-int upkg_util_execute_command(const char *command_path, char *const argv[]);
+int runepkg_util_execute_command(const char *command_path, char *const argv[]);
 
-#endif // UPKG_UTIL_H
+#endif // RUNEPKG_UTIL_H

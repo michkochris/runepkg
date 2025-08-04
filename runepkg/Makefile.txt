@@ -25,11 +25,8 @@
 # It also handles creating a default config file and installing the executable.
 
 CC = gcc
-CXX = g++
 # Updated CFLAGS with _GNU_SOURCE and improved flags for consolidated system
 CFLAGS = -Wall -Wextra -std=c99 -D_GNU_SOURCE -g -MMD -MP
-CXXFLAGS = -Wall -Wextra -std=c++17 -D_GNU_SOURCE -g -MMD -MP
-
 LDFLAGS =
 LIBS =
 
@@ -84,9 +81,9 @@ ifeq ($(WITH_RUST),1)
     RUST_HEADERS = runepkg_highlight_rust.h runepkg_highlight_ffi.h
     $(info Building with Rust FFI highlighting support)
 else
-    RUST_SOURCES =
-    RUST_OBJECTS =
-    RUST_HEADERS =
+    RUST_SOURCES = 
+    RUST_OBJECTS = 
+    RUST_HEADERS = 
     $(info Building without Rust FFI support)
 endif
 
@@ -96,18 +93,12 @@ ifeq ($(WITH_CPP),1)
     LDFLAGS += $(CPP_LDFLAGS)
     CPP_SOURCES = runepkg_network_cpp.c
     CPP_OBJECTS = runepkg_network_cpp.o
-    # === NEW: Add your C++ implementation source file here ===
-    CPP_IMPL_SOURCES = runepkg_network_impl.cpp
-    CPP_IMPL_OBJECTS = $(CPP_IMPL_SOURCES:.cpp=.o)
-    # =========================================================
     CPP_HEADERS = runepkg_network_ffi.h
     $(info Building with C++ FFI networking support)
 else
-    CPP_SOURCES =
-    CPP_OBJECTS =
-    CPP_IMPL_SOURCES =
-    CPP_IMPL_OBJECTS =
-    CPP_HEADERS =
+    CPP_SOURCES = 
+    CPP_OBJECTS = 
+    CPP_HEADERS = 
     $(info Building without C++ FFI support)
 endif
 
@@ -115,16 +106,13 @@ TARGET = runepkg
 
 # Source files - Updated to include utility, package, hash, storage functions, and optional FFI systems
 SRCS = runepkg_cli.c runepkg_config.c runepkg_util.c runepkg_pack.c runepkg_hash.c runepkg_storage.c $(RUST_SOURCES) $(CPP_SOURCES)
-# =================================================================================================
-# === FIX: Make sure all object files, including C++ ones, are in the list ===
-OBJS = $(SRCS:.c=.o) $(CPP_IMPL_OBJECTS)
-# ===========================================================================
+OBJS = $(SRCS:.c=.o)
 
 # Header dependencies - Updated to include FFI headers if enabled
 HEADERS = runepkg_config.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h $(RUST_HEADERS) $(CPP_HEADERS)
 
 # Phony targets - Updated to include FFI targets
-.PHONY: all clean install debug run termux-install create-user-config uninstall test info rust-lib with-rust clean-rust test-rust with-cpp clean-cpp with-all clean-all
+.PHONY: all clean install debug run termux-install create-user-config uninstall test info rust-lib with-rust clean-rust test-rust with-cpp cpp-info test-cpp with-all clean-all
 
 # Include generated dependency files
 -include $(SRCS:.c=.d)
@@ -143,19 +131,12 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	@echo "Linking $(TARGET)..."
-    # === FIX: Use g++ for the final linking step ===
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	@echo "Build complete: $(TARGET)"
 
 %.o: %.c $(HEADERS)
 	@echo "Compiling $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
-
-# === NEW: Rule for compiling C++ source files ===
-%.o: %.cpp $(HEADERS)
-	@echo "Compiling C++ file $<..."
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-# ===============================================
 
 clean:
 	@echo "Cleaning up..."
@@ -301,7 +282,6 @@ uninstall:
 
 # Debug build with extra debugging symbols and verbose output
 debug: CFLAGS += -DDEBUG -O0
-debug: CXXFLAGS += -DDEBUG -O0
 debug: all
 	@echo "Debug build complete. Run with -v for verbose output."
 
@@ -324,13 +304,11 @@ test-verbose: all create-user-config
 info:
 	@echo "=== Build Information ==="
 	@echo "Target: $(TARGET)"
-	@echo "Source files: $(SRCS) $(CPP_IMPL_SOURCES)"
+	@echo "Source files: $(SRCS)"
 	@echo "Object files: $(OBJS)"
 	@echo "Headers: $(HEADERS)"
 	@echo "CC: $(CC)"
-	@echo "CXX: $(CXX)"
 	@echo "CFLAGS: $(CFLAGS)"
-	@echo "CXXFLAGS: $(CXXFLAGS)"
 	@echo ""
 	@echo "=== FFI Systems Status ==="
 	@echo "Rust FFI: $(if $(filter 1,$(WITH_RUST)),✅ Enabled,❌ Disabled)"
@@ -561,9 +539,7 @@ endif
 
 # Object file rule for C++ FFI (only if enabled)
 ifeq ($(WITH_CPP),1)
-# === FIX: This rule needs to point to the C++ implementation file, not the C wrapper ===
 runepkg_network_cpp.o: runepkg_network_cpp.c runepkg_network_ffi.h
 	@echo "Compiling C++ FFI wrapper: $<..."
 	$(CC) $(CFLAGS) -c $< -o $@
-# === The above rule is for the C wrapper, which should be fine. We need a new rule for the C++ file. ===
 endif

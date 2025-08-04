@@ -11,6 +11,8 @@
 
 // Global variables
 bool g_verbose_mode = false;
+// The declaration for runepkg_main_hash_table is now solely in runepkg_hash.h.
+// The definition is in runepkg_hash.c.
 
 // --- Simple Logging Functions ---
 
@@ -72,19 +74,32 @@ int runepkg_init(void) {
         // Continue execution - some functionality may still work
     }
     
+    // Initialize hash table if not already created
+    if (!runepkg_main_hash_table) {
+        runepkg_main_hash_table = runepkg_hash_create_table(INITIAL_HASH_TABLE_SIZE);
+        if (!runepkg_main_hash_table) {
+            fprintf(stderr, "Error: Failed to create hash table for package management.\n");
+            return -1;
+        } else {
+            runepkg_log_verbose("Hash table initialized for package management.\n");
+        }
+    }
+    
+    // TODO: Load installed packages into hash table from persistent storage
+    
     return 0;
 }
 
 /**
- * @brief Cleans up upkg environment and frees allocated memory.
+ * @brief Cleans up runepkg environment and frees allocated memory.
  */
 void runepkg_cleanup(void) {
     runepkg_log_verbose("Cleaning up runepkg environment...\n");
     
     // Clean up hash table if it exists
-    if (upkg_main_hash_table) {
-        upkg_hash_destroy_table(upkg_main_hash_table);
-        upkg_main_hash_table = NULL;
+    if (runepkg_main_hash_table) {
+        runepkg_hash_destroy_table(runepkg_main_hash_table);
+        runepkg_main_hash_table = NULL;
     }
     
     // Clean up configuration paths
@@ -102,7 +117,6 @@ void errormsg(const char *format, ...) {
     
     fprintf(stderr, "ERROR: ");
     vfprintf(stderr, format, args);
-    
     va_end(args);
 }
 
@@ -119,51 +133,35 @@ void handle_install(const char *deb_file_path) {
     }
     
     // Initialize package info structure
-    upkg_package_info_t pkg_info;
-    upkg_pack_init_package_info(&pkg_info);
+    PkgInfo pkg_info;
+    runepkg_pack_init_package_info(&pkg_info);
     
     // Extract package and collect information
     printf("\nExtracting package and collecting information...\n");
-    int result = upkg_pack_extract_and_collect_info(deb_file_path, g_control_dir, &pkg_info);
+    int result = runepkg_pack_extract_and_collect_info(deb_file_path, g_control_dir, &pkg_info);
     
     if (result == 0) {
         printf("Package extraction successful!\n\n");
         
         // FIRST: Print the collected package information
         printf("=== FIRST: Package Info Collected into Struct ===\n");
-        upkg_pack_print_package_info(&pkg_info);
+        runepkg_pack_print_package_info(&pkg_info);
         
-        // Initialize hash table if not already created
-        if (!upkg_main_hash_table) {
-            upkg_main_hash_table = upkg_hash_create_table(INITIAL_HASH_TABLE_SIZE);
-            if (!upkg_main_hash_table) {
-                printf("Warning: Failed to create hash table for package management.\n");
-            } else {
-                runepkg_log_verbose("Hash table initialized for package management.\n");
-            }
-        }
-        
-        // Add package to hash table if table exists
-        if (upkg_main_hash_table) {
-            upkg_hash_package_info_t hash_pkg_info;
-            if (upkg_hash_convert_package_info(&pkg_info, &hash_pkg_info) == 0) {
-                if (upkg_hash_add_package(upkg_main_hash_table, &hash_pkg_info) == 0) {
-                    printf("Package successfully added to internal database.\n\n");
-                    
-                    // SECOND: Search and print from hash table to verify integrity
-                    upkg_hash_package_info_t *stored_pkg = upkg_hash_search(upkg_main_hash_table, pkg_info.package_name);
-                    if (stored_pkg) {
-                        printf("=== SECOND: Package Info after being added to Hash ===\n");
-                        upkg_hash_print_package_info(stored_pkg);
-                    } else {
-                        printf("Warning: Package not found in hash table after adding.\n");
-                    }
+        // Add package to hash table if table exists (using the unified PkgInfo struct)
+        if (runepkg_main_hash_table) {
+            if (runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info) == 0) {
+                printf("Package successfully added to internal database.\n\n");
+                
+                // SECOND: Search and print from hash table to verify integrity
+                PkgInfo *stored_pkg = runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name);
+                if (stored_pkg) {
+                    printf("=== SECOND: Package Info after being added to Hash ===\n");
+                    runepkg_hash_print_package_info(stored_pkg);
                 } else {
-                    printf("Warning: Failed to add package to internal database.\n");
+                    printf("Warning: Package not found in hash table after adding.\n");
                 }
-                // Note: hash_pkg_info memory is managed by the hash table now
             } else {
-                printf("Warning: Failed to convert package info for hash table.\n");
+                printf("Warning: Failed to add package to internal database.\n");
             }
         }
 
@@ -207,7 +205,7 @@ void handle_install(const char *deb_file_path) {
     }
     
     // Clean up allocated memory
-    upkg_pack_free_package_info(&pkg_info);
+    runepkg_pack_free_package_info(&pkg_info);
 }
 
 /**

@@ -1,10 +1,10 @@
 /******************************************************************************
- * Filename:    upkg_hash.h
+ * Filename:    runepkg_hash.h
  * Author:      <michkochris@gmail.com>
  * Date:        started 01-02-2025
- * Description: Hash table for upkg package management
+ * Description: Hash table for runepkg (runar linux) package management
  *
- * Copyright (c) 2025 upkg (ulinux) All rights reserved.
+ * Copyright (c) 2025 runepkg (runar linux) All rights reserved.
  * GPLV3
  * This program is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the Free
@@ -20,8 +20,8 @@
  * with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 
-#ifndef UPKG_HASH_H
-#define UPKG_HASH_H
+#ifndef RUNEPKG_HASH_H
+#define RUNEPKG_HASH_H
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -33,8 +33,10 @@
 #define MIN_HASH_TABLE_SIZE 8
 #define MAX_SUGGESTIONS 10
 
-// --- Package Info Structure for Hash Table ---
-typedef struct upkg_hash_package_info {
+// --- Unified PkgInfo Structure ---
+// This is the unified struct that will be used across the application.
+// It's the single source of truth for all package data.
+typedef struct PkgInfo {
     char *package_name;
     char *version;
     char *architecture;
@@ -48,24 +50,26 @@ typedef struct upkg_hash_package_info {
     char *filename;
     char **file_list;
     int file_count;
-} upkg_hash_package_info_t;
+    char *control_dir_path; // Re-added: Path to the extracted 'control' directory.
+    char *data_dir_path;    // Re-added: Path to the extracted 'data' directory.
+} PkgInfo;
 
 // --- Hash Table Node Structure ---
-typedef struct upkg_hash_node {
-    upkg_hash_package_info_t data;
-    struct upkg_hash_node *next;
-} upkg_hash_node_t;
+typedef struct runepkg_hash_node {
+    PkgInfo data; // Use the new PkgInfo struct
+    struct runepkg_hash_node *next;
+} runepkg_hash_node_t;
 
 // --- Hash Table Structure ---
-typedef struct upkg_hash_table {
-    upkg_hash_node_t **buckets;
+typedef struct runepkg_hash_table {
+    runepkg_hash_node_t **buckets;
     size_t size;
     size_t count;
-} upkg_hash_table_t;
+} runepkg_hash_table_t;
 
 // --- Global Variables ---
 extern bool g_verbose_mode;
-extern upkg_hash_table_t *upkg_main_hash_table;
+extern runepkg_hash_table_t *runepkg_main_hash_table;
 
 // --- Function Prototypes ---
 
@@ -74,7 +78,7 @@ extern upkg_hash_table_t *upkg_main_hash_table;
  * @param initial_size The desired initial size of the hash table.
  * @return A pointer to the new hash table, or NULL on failure.
  */
-upkg_hash_table_t* upkg_hash_create_table(size_t initial_size);
+runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size);
 
 /**
  * @brief Searches the hash table for a package.
@@ -82,7 +86,7 @@ upkg_hash_table_t* upkg_hash_create_table(size_t initial_size);
  * @param name The name of the package to search for.
  * @return A pointer to the package info, or NULL if not found.
  */
-upkg_hash_package_info_t* upkg_hash_search(upkg_hash_table_t *table, const char *name);
+PkgInfo* runepkg_hash_search(runepkg_hash_table_t *table, const char *name);
 
 /**
  * @brief Adds a package to the hash table with deep copy.
@@ -90,45 +94,37 @@ upkg_hash_package_info_t* upkg_hash_search(upkg_hash_table_t *table, const char 
  * @param pkg_info The package info to add.
  * @return 0 on success, -1 on failure.
  */
-int upkg_hash_add_package(upkg_hash_table_t *table, const upkg_hash_package_info_t *pkg_info);
+int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_info);
 
 /**
  * @brief Removes a package from the hash table.
  * @param table A pointer to the hash table.
  * @param name The name of the package to remove.
  */
-void upkg_hash_remove_package(upkg_hash_table_t *table, const char *name);
+void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name);
 
 /**
  * @brief Destroys the hash table and frees all memory.
  * @param table A pointer to the hash table to destroy.
  */
-void upkg_hash_destroy_table(upkg_hash_table_t *table);
+void runepkg_hash_destroy_table(runepkg_hash_table_t *table);
 
 /**
  * @brief Prints package information from the hash table.
  * @param pkg_info A pointer to the package info to print.
  */
-void upkg_hash_print_package_info(const upkg_hash_package_info_t *pkg_info);
+void runepkg_hash_print_package_info(const PkgInfo *pkg_info);
 
 /**
  * @brief Lists all packages in the hash table.
  * @param table A pointer to the hash table.
  */
-void upkg_hash_list_packages(upkg_hash_table_t *table);
-
-/**
- * @brief Converts upkg_package_info_t to upkg_hash_package_info_t.
- * @param src Source package info from upkg_pack.
- * @param dst Destination package info for hash table.
- * @return 0 on success, -1 on failure.
- */
-int upkg_hash_convert_package_info(const void *src, upkg_hash_package_info_t *dst);
+void runepkg_hash_list_packages(runepkg_hash_table_t *table);
 
 /**
  * @brief Frees all allocated memory in a hash package info structure.
  * @param pkg_info Pointer to the package info structure to free.
  */
-void upkg_hash_free_package_info(upkg_hash_package_info_t *pkg_info);
+void runepkg_hash_free_package_info(PkgInfo *pkg_info);
 
-#endif // UPKG_HASH_H
+#endif // RUNEPKG_HASH_H

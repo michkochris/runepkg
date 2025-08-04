@@ -43,7 +43,7 @@ char *runepkg_get_config_file_path() {
 
     // 1. Check for environment variable override
     char *env_config_path = getenv("RUNEPKG_CONFIG_PATH");
-    if (env_config_path && upkg_util_file_exists(env_config_path)) {
+    if (env_config_path && runepkg_util_file_exists(env_config_path)) {
         runepkg_log_verbose("Using configuration from RUNEPKG_CONFIG_PATH: %s\n", env_config_path);
         config_file_path = strdup(env_config_path);
         if (!config_file_path) {
@@ -55,7 +55,7 @@ char *runepkg_get_config_file_path() {
 
     // 2. Check for system-wide configuration
     const char *system_config_path = "/etc/runepkg/runepkgconfig";
-    if (upkg_util_file_exists(system_config_path)) {
+    if (runepkg_util_file_exists(system_config_path)) {
         runepkg_log_verbose("Using system-wide configuration: %s\n", system_config_path);
         config_file_path = strdup(system_config_path);
         if (!config_file_path) {
@@ -70,7 +70,7 @@ char *runepkg_get_config_file_path() {
     if (home_dir) {
         char user_config_path[PATH_MAX];
         snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkgconfig", home_dir);
-        if (upkg_util_file_exists(user_config_path)) {
+        if (runepkg_util_file_exists(user_config_path)) {
             runepkg_log_verbose("Using user-specific configuration: %s\n", user_config_path);
             config_file_path = strdup(user_config_path);
             if (!config_file_path) {
@@ -99,34 +99,34 @@ int runepkg_config_load() {
 
     // Retrieve the directory paths from the determined config file.
     runepkg_log_verbose("Loading configuration values from '%s'...\n", config_file_path);
-    g_runepkg_base_dir = upkg_util_get_config_value(config_file_path, "runepkg_dir", '=');
+    g_runepkg_base_dir = runepkg_util_get_config_value(config_file_path, "runepkg_dir", '=');
     if (!g_runepkg_base_dir) {
         fprintf(stderr, "Error: Failed to read 'runepkg_dir' from config file. This is critical.\n");
-        upkg_util_free_and_null(&config_file_path);
+        runepkg_util_free_and_null(&config_file_path);
         runepkg_config_cleanup(); // Clean up anything partially allocated
         return -1;
     }
 
-    g_control_dir = upkg_util_get_config_value(config_file_path, "control_dir", '=');
+    g_control_dir = runepkg_util_get_config_value(config_file_path, "control_dir", '=');
     if (!g_control_dir) {
         fprintf(stderr, "Error: Failed to read 'control_dir' from config file. This is critical.\n");
-        upkg_util_free_and_null(&config_file_path);
+        runepkg_util_free_and_null(&config_file_path);
         runepkg_config_cleanup();
         return -1;
     }
 
-    g_runepkg_db_dir = upkg_util_get_config_value(config_file_path, "runepkg_db", '='); // New value
+    g_runepkg_db_dir = runepkg_util_get_config_value(config_file_path, "runepkg_db", '='); // New value
     if (!g_runepkg_db_dir) {
         fprintf(stderr, "Error: Failed to read 'runepkg_db' from config file. This is critical.\n");
-        upkg_util_free_and_null(&config_file_path);
+        runepkg_util_free_and_null(&config_file_path);
         runepkg_config_cleanup();
         return -1;
     }
 
-    g_install_dir_internal = upkg_util_get_config_value(config_file_path, "install_dir", '=');
+    g_install_dir_internal = runepkg_util_get_config_value(config_file_path, "install_dir", '=');
     if (!g_install_dir_internal) {
         fprintf(stderr, "Error: Failed to read 'install_dir' from config file. This is critical.\n");
-        upkg_util_free_and_null(&config_file_path);
+        runepkg_util_free_and_null(&config_file_path);
         runepkg_config_cleanup();
         return -1;
     }
@@ -135,30 +135,30 @@ int runepkg_config_load() {
     g_system_install_root = strdup(g_install_dir_internal);
     if (!g_system_install_root) {
         fprintf(stderr, "Error: Failed to duplicate 'install_dir' for g_system_install_root.\n");
-        upkg_util_free_and_null(&config_file_path);
+        runepkg_util_free_and_null(&config_file_path);
         runepkg_config_cleanup();
         return -1;
     }
     
-    upkg_util_free_and_null(&config_file_path); // Free the path string after use
+    runepkg_util_free_and_null(&config_file_path); // Free the path string after use
 
     runepkg_log_verbose("Configuration loaded successfully:\n");
     runepkg_log_verbose("  runepkg_base_dir: %s\n", g_runepkg_base_dir);
     runepkg_log_verbose("  control_dir: %s\n", g_control_dir);
     runepkg_log_verbose("  runepkg_db_dir: %s\n", g_runepkg_db_dir); // New log message
-    runepkg_log_verbose("  install_dir_internal (record keeping): %s\n", g_install_dir_internal);
-    runepkg_log_verbose("  system_install_root (actual target): %s\n", g_system_install_root);
+    runepkg_log_verbose("  internal_install_dir: %s\n", g_install_dir_internal);
+    runepkg_log_verbose("  system_install_root: %s\n", g_system_install_root);
 
     return 0;
 }
 
 void runepkg_config_cleanup() {
     runepkg_log_verbose("Cleaning up global path variables...\n");
-    upkg_util_free_and_null(&g_runepkg_base_dir);
-    upkg_util_free_and_null(&g_control_dir);
-    upkg_util_free_and_null(&g_runepkg_db_dir); // New cleanup call
-    upkg_util_free_and_null(&g_install_dir_internal);
-    upkg_util_free_and_null(&g_system_install_root);
+    runepkg_util_free_and_null(&g_runepkg_base_dir);
+    runepkg_util_free_and_null(&g_control_dir);
+    runepkg_util_free_and_null(&g_runepkg_db_dir); // New cleanup call
+    runepkg_util_free_and_null(&g_install_dir_internal);
+    runepkg_util_free_and_null(&g_system_install_root);
 }
 
 void runepkg_init_paths() {
@@ -178,9 +178,9 @@ void runepkg_init_paths() {
     }
 
     runepkg_log_verbose("Creating necessary runepkg directories...\n");
-    if (upkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
-        upkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 || // New directory creation
-        upkg_util_create_dir_recursive(g_install_dir_internal, 0755) != 0) {
+    if (runepkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
+        runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 || // New directory creation
+        runepkg_util_create_dir_recursive(g_install_dir_internal, 0755) != 0) {
         fprintf(stderr, "Error: Failed to create necessary runepkg directories based on config. Exiting.\n");
         runepkg_config_cleanup();
         exit(EXIT_FAILURE);
