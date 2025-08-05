@@ -54,6 +54,11 @@ void runepkg_util_log_debug(const char *format, ...);
  */
 void runepkg_util_error(const char *format, ...);
 
+/**
+ * @brief Prints security validation messages (successful blocks)
+ */
+void runepkg_util_security_blocked(const char *format, ...);
+
 // --- Memory Management ---
 
 /**

@@ -85,6 +85,14 @@ void runepkg_util_error(const char *format, ...) {
     va_end(args);
 }
 
+void runepkg_util_security_blocked(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    fprintf(stderr, "SECURITY: Blocked ");
+    vfprintf(stderr, format, args);
+    va_end(args);
+}
+
 // --- Memory Management ---
 
 void runepkg_util_free_and_null(char **ptr) {

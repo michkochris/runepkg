@@ -1,4 +1,7 @@
-/******************************************************************************
+/*******************************************************************    // Check if Rust FFI is available
+    if (!runepkg_rust_highlighting_available()) {
+        runepkg_util_log_debug("Rust FFI not available, using basic fallback highlighting\n");
+        return runepkg_highlight_script_fallback(script_content, script_len, scheme);*******
  * Filename:    runepkg_highlight_rust.c
  * Author:      <michkochris@gmail.com>
  * Date:        started 01-03-2025
@@ -28,15 +31,15 @@ int runepkg_rust_highlighting_available(void) {
         // Test FFI availability
         ffi_available = (rust_test_ffi() == 42) ? 1 : 0;
         if (ffi_available) {
-            runepkg_log_verbose("Rust FFI highlighting is available\n");
+            runepkg_util_log_verbose("Rust FFI highlighting is available\n");
             // Initialize highlighting system
             if (!ffi_initialized) {
                 rust_init_highlighting();
                 ffi_initialized = 1;
-                runepkg_log_verbose("Rust highlighting system initialized\n");
+                runepkg_util_log_verbose("Rust highlighting system initialized\n");
             }
         } else {
-            runepkg_log_verbose("Rust FFI highlighting is not available, using fallback\n");
+            runepkg_util_log_verbose("Rust FFI highlighting is not available, using fallback\n");
         }
     }
     return ffi_available;
@@ -62,13 +65,13 @@ static RustHighlightScheme convert_scheme_to_rust(runepkg_highlight_scheme_t sch
  */
 char* runepkg_highlight_script_rust(const char* script_content, int script_len, runepkg_highlight_scheme_t scheme) {
     if (!script_content || script_len <= 0) {
-        runepkg_log_debug("Invalid script content provided to runepkg_highlight_script_rust\n");
+        runepkg_util_log_debug("Invalid script content provided to runepkg_highlight_script_rust\n");
         return NULL;
     }
 
     // Check if Rust FFI is available
     if (!runepkg_rust_highlighting_available()) {
-        runepkg_log_debug("Rust FFI not available, using basic fallback highlighting\n");
+        runepkg_util_log_debug("Rust FFI not available, using basic fallback highlighting\n");
         return runepkg_highlight_script_basic_fallback(script_content, script_len, scheme);
     }
 
@@ -77,11 +80,11 @@ char* runepkg_highlight_script_rust(const char* script_content, int script_len, 
     char* result = rust_highlight_shell_script(script_content, script_len, rust_scheme);
     
     if (!result) {
-        runepkg_log_debug("Rust highlighting failed, using fallback\n");
+        runepkg_util_log_debug("Rust highlighting failed, using fallback\n");
         return runepkg_highlight_script_basic_fallback(script_content, script_len, scheme);
     }
 
-    runepkg_log_verbose("Successfully highlighted script using Rust FFI (%d chars -> %d chars)\n", 
+    runepkg_util_log_verbose("Successfully highlighted script using Rust FFI (%d chars -> %d chars)\n", 
                         script_len, (int)strlen(result));
     return result;
 }
@@ -136,7 +139,7 @@ char* runepkg_highlight_script_basic_fallback(const char* script_content, int sc
     size_t output_size = script_len * 3 + 200; // More space for colors
     char* output = malloc(output_size);
     if (!output) {
-        runepkg_log_debug("Memory allocation failed in fallback highlighting\n");
+        runepkg_util_log_debug("Memory allocation failed in fallback highlighting\n");
         return NULL;
     }
 
@@ -215,7 +218,7 @@ char* runepkg_highlight_script_basic_fallback(const char* script_content, int sc
 
     output[output_pos] = '\0';
     
-    runepkg_log_verbose("Fallback highlighting completed (%d chars -> %d chars)\n", 
+    runepkg_util_log_verbose("Fallback highlighting completed (%d chars -> %d chars)\n", 
                         script_len, (int)output_pos);
     return output;
 }
@@ -225,16 +228,16 @@ char* runepkg_highlight_script_basic_fallback(const char* script_content, int sc
  */
 int runepkg_execute_script_rust(const char* script_content, int script_len) {
     if (!script_content || script_len <= 0) {
-        runepkg_log_debug("Invalid script content provided to runepkg_execute_script_rust\n");
+        runepkg_util_log_debug("Invalid script content provided to runepkg_execute_script_rust\n");
         return -1;
     }
 
     if (!runepkg_rust_highlighting_available()) {
-        runepkg_log_debug("Rust FFI not available for script execution\n");
+        runepkg_util_log_debug("Rust FFI not available for script execution\n");
         return -1;
     }
 
-    runepkg_log_verbose("Executing script via Rust FFI (%d chars)\n", script_len);
+    runepkg_util_log_verbose("Executing script via Rust FFI (%d chars)\n", script_len);
     return rust_execute_script_from_memory(script_content, script_len, 0);
 }
 

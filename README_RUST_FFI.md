@@ -1,48 +1,51 @@
 # runepkg Rust FFI Highlighting System
 
-Advanced syntax highlighting for runepkg using Rust via Foreign Function Interface (FFI).
+Zero-dependency syntax highlighting for runepkg using Rust via Foreign Function Interface (FFI).
 
 ## Overview
 
-This directory now includes a powerful Rust-based syntax highlighting system that integrates seamlessly with the existing runepkg C codebase. The system uses the `syntect` crate (same engine as Sublime Text) to provide professional-grade syntax highlighting for shell scripts and other code.
+This directory includes a lightweight Rust-based syntax highlighting system that integrates seamlessly with the existing runepkg C codebase. The system uses absolutely zero external dependencies and provides clean ANSI highlighting optimized for maximum gccrs compatibility.
 
 ## Features
 
-### 🎨 Advanced Highlighting
-- **Professional Quality**: Uses syntect highlighting engine
-- **Multiple Themes**: Nano-style, Vim-style, and default themes
-- **Shell Script Focus**: Optimized for bash, sh, zsh highlighting
-- **ANSI Terminal Output**: Ready for terminal display
+### 🎨 Clean Highlighting
+- **Zero Dependencies**: No external crates, libcore/liballoc only
+- **ANSI Terminal Output**: Simple, effective terminal highlighting
+- **Shell Script Focus**: Optimized for bash, sh, zsh highlighting  
+- **Self-Contained**: All FFI types defined internally
 
 ### 🔧 Script Processing
-- **Type Detection**: Automatically detects Shell, Python, Perl, Ruby scripts
-- **Syntax Validation**: Comprehensive syntax checking
-- **Metadata Extraction**: Extracts author, version, description from comments
-- **Statistics**: Line counts, character counts, script analysis
+- **Type Detection**: Pattern-based script type detection
+- **Syntax Validation**: Fundamental syntax checking
+- **Metadata Extraction**: Basic comment parsing
+- **Zero Overhead**: Minimal memory footprint
 
 ### ⚡ Execution Support
-- **Secure Execution**: Safe script execution from memory
-- **Shebang Parsing**: Intelligent interpreter detection
-- **Error Handling**: Robust error reporting and cleanup
+- **Placeholder Ready**: Minimal execution framework
+- **Future POSIX**: Designed for POSIX compliance
+- **Error Handling**: Core-based error types
+- **Memory Safe**: Rust ownership guarantees
 
-### 🔄 Fallback System
-- **Graceful Degradation**: Works with or without Rust
-- **Auto-Detection**: Automatically detects Rust availability
-- **Basic Fallback**: Simple ANSI highlighting when Rust unavailable
+### 🔄 Clean Architecture
+- **Maximum Compatibility**: Works with any Rust compiler
+- **Future-Proof**: Ready for gccrs when released
+- **Self-Contained**: No external dependencies to break
+- **Minimal Attack Surface**: Zero external crate vulnerabilities
 
 ## File Structure
 
 ```
 runepkg/
-├── Cargo.toml                    # Rust project configuration
-├── src/                          # Rust source code
-│   ├── lib.rs                   # Main FFI interface and highlighting
-│   ├── exec.rs                  # Script execution functionality
-│   └── script.rs                # Script utilities and validation
+├── Cargo.toml                    # Zero dependency Rust configuration
+├── gccrs-src/                    # gccrs-compatible Rust source code
+│   ├── runepkg_highlight.rs     # Main FFI interface and highlighting (zero deps)
+│   ├── runepkg_exec.rs          # Minimal execution placeholder  
+│   └── runepkg_script.rs        # Pure Rust script utilities
 ├── runepkg_highlight_ffi.h      # Raw FFI function declarations
 ├── runepkg_highlight_rust.h     # C wrapper API
 ├── runepkg_highlight_rust.c     # C wrapper implementation
 ├── test_rust_ffi.sh            # Test script for FFI functionality
+├── build_rust.sh               # Clean slate build script
 ├── README_RUST_FFI.md          # This file
 └── sample_scripts/             # Test scripts (created by test script)
     ├── test_bash.sh
@@ -53,7 +56,7 @@ runepkg/
 
 ### Prerequisites
 
-1. **Rust Toolchain** (recommended):
+1. **Rust Toolchain** (any version - gccrs ready):
    ```bash
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    source ~/.cargo/env
@@ -64,22 +67,22 @@ runepkg/
 
 ### Build Options
 
-#### 🚀 Recommended: Build with Rust FFI
+#### 🚀 Clean Slate: Zero Dependencies  
 ```bash
-# Automatic build with Rust detection
+# Clean slate build (zero external dependencies)
 make with-rust
 
-# Or step by step
-make rust-lib        # Build Rust library first
-make WITH_RUST=1     # Build C code with FFI
-```
-
-#### 📦 Alternative: Build without Rust
-```bash
-# Standard build (auto-detects and falls back)
+# Standard build (includes clean slate Rust)
 make
 
-# Explicitly without Rust
+# Step by step
+./build_rust.sh     # Build zero dependency Rust library
+make WITH_RUST=1    # Build C code with FFI
+```
+
+#### 📦 Alternative: C Only Fallback
+```bash
+# Explicitly without Rust (C only fallback)
 make WITHOUT_RUST=1
 ```
 

@@ -322,7 +322,7 @@ char* runepkg_secure_sprintf(size_t max_len, const char* format, ...) {
 
 runepkg_error_t runepkg_validate_pointer(const void* ptr, const char* name) {
     if (!ptr) {
-        runepkg_util_error("NULL pointer: %s\n", name ? name : "unknown");
+        runepkg_util_security_blocked("NULL pointer: %s\n", name ? name : "unknown");
         return RUNEPKG_ERROR_NULL_POINTER;
     }
     return RUNEPKG_SUCCESS;
@@ -375,7 +375,7 @@ runepkg_error_t runepkg_validate_path(const char* path) {
     
     // Check for path traversal attacks
     if (strstr(path, "..")) {
-        runepkg_util_error("Path traversal attempt detected: %s\n", path);
+        runepkg_util_security_blocked("path traversal attempt: %s\n", path);
         return RUNEPKG_ERROR_INVALID_INPUT;
     }
     

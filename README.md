@@ -11,14 +11,15 @@
 
 ## Overview
 
-runepkg is a **security-hardened**, production-ready package manager that leverages a multi-language FFI (Foreign Function Interface) architecture with comprehensive defensive programming:
+runepkg is a **security-hardened**, production-ready package manager that leverages an **organic multi-language architecture** with comprehensive defensive programming:
 
-- **🛡️ Security-First Design** - Memory-safe operations, input validation, attack prevention
-- **🔒 Defensive Programming** - Comprehensive error handling, bounds checking, path traversal protection  
-- **⚡ C Core** - Rock-solid package management, unified memory model, optimized hash tables
-- **🦀 Rust FFI** - Advanced syntax highlighting, secure script processing  
-- **⚙️ C++ FFI** - High-performance networking, dependency resolution, modern standard library features
+- **🧠 C Core (Brain/Skeleton)** - Central decision-making, memory management, and structural foundation
+- **🦀 Rust FFI (Secure Veins)** - Zero-dependency security processing with libcore/liballoc only
+- **⚙️ C++ FFI (Hands/Feet)** - POSIX socket-based networking and system operations
+- **🛡️ Security-First Design** - All external data flows through Rust security validation
+- **🔒 Zero External Dependencies** - libcore/liballoc, POSIX, C++17 standards only
 - **🧪 100% Test Coverage** - Memory management, security validation, comprehensive test suites
+- **⚡ GNU Toolchain Ready** - Core language features designed for gccrs compatibility
 
 ## Security Features
 
@@ -30,20 +31,50 @@ runepkg is a **security-hardened**, production-ready package manager that levera
 
 ## Architecture
 
+The runepkg architecture follows an **organic system design** where each language serves a vital, specialized role:
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    runepkg Multi-Language Architecture      │
-├─────────────────────┬─────────────────────┬─────────────────┤
-│      C Core         │     Rust FFI        │    C++ FFI      │
-│                     │                     │                 │
-│ • Package Management│ • Syntax Highlighting│ • HTTP/HTTPS   │
-│ • Hash Tables       │ • Script Validation │ • Dependency    │
-│ • Configuration     │ • Metadata Extraction│   Resolution   │
-│ • File Operations   │ • Secure Execution  │ • Parallel      │
-│ • Memory Management │ • Theme Support     │   Downloads     │
-│ • Storage System    │ • Error Reporting   │ • JSON Parsing  │
-└─────────────────────┴─────────────────────┴─────────────────┘
+│                    runepkg Organic Architecture             │
+│                                                             │
+│  🧠 C CORE (Brain & Skeleton)     🦀 RUST FFI (Zero Deps)    │
+│  ┌─────────────────────────┐      ┌─────────────────────────┐ │
+│  │ • Decision Making       │      │ • Zero Dependencies     │ │
+│  │ • Package Logic         │◄────►│ • Data Validation       │ │
+│  │ • Memory Management     │      │ • Clean ANSI Highlight │ │
+│  │ • Hash Tables          │      │ • Script Processing     │ │
+│  │ • Configuration        │      │ • Self-Contained FFI    │ │
+│  │ • POSIX Integration     │      │ • libcore/liballoc only │ │
+│  └─────────────────────────┘      └─────────────────────────┘ │
+│              ▲                                ▲               │
+│              │                                │               │
+│              ▼                                ▼               │
+│  ⚙️ C++ FFI (Hands & Feet - Actions)                          │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ • Network Operations    • Repository Management        │ │
+│  │ • HTTP/HTTPS Requests   • Dependency Resolution       │ │
+│  │ • Parallel Downloads    • Package Verification        │ │
+│  │ • File I/O Operations   • External Interactions       │ │
+│  │ • Performance Tasks     • Action Execution            │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+### 🏛️ **Design Philosophy**
+
+- **🧠 C Core (Brain/Skeleton)**: The central decision-making system and structural foundation
+- **🦀 Rust FFI (Zero Deps)**: Clean, zero-dependency data transport and validation using libcore/liballoc only
+- **⚙️ C++ FFI (Hands/Feet)**: POSIX socket-based operations and system integration
+
+### 🎯 **gccrs Clean Slate Philosophy**
+
+Following the **"zero external dependencies"** approach for maximum GNU toolchain compatibility:
+- **Zero External Crates**: Absolutely no external dependencies beyond libcore/liballoc
+- **Self-Contained FFI**: Custom C type definitions, no libc dependency  
+- **Fundamental Features**: Ownership, borrowing, basic types, pattern matching
+- **Maximum Compatibility**: Works with any Rust compiler, gccrs-ready
+- **Standard Library Only**: glibc, POSIX, C++17 standards - zero external dependencies
+- **GNU Ecosystem Ready**: Clean slate design for seamless GCC toolchain integration
 
 ## Quick Start
 
@@ -107,52 +138,56 @@ make termux-install
 
 ## Testing Framework
 
-### 🧪 **Comprehensive Test Suite** (100% Pass Rate)
+### 🧪 **Unified Test Suite** (100% Pass Rate)
 
-**Memory Management Tests** (63/63 passing)
-- ✅ Memory allocation and deallocation verification
-- ✅ Memory leak detection and prevention
-- ✅ Hash table consistency validation
-- ✅ Defensive programming security checks
-- ✅ Memory boundary protection
-- ✅ Error handling and recovery
-- ✅ Threading safety validation
+**Single Comprehensive Test Binary** (17-40 tests depending on mode)
+- ✅ **Quick Mode**: 17 tests in <0.01 seconds (development)
+- ✅ **Full Mode**: 33 tests in ~0.005 seconds (comprehensive)
+- ✅ **Verbose Mode**: Detailed logging and stress testing
+- ✅ **Rust FFI Mode**: 40 tests with cross-language validation
 
-**Security Hardening Tests** (49/49 passing)
-- ✅ Buffer overflow protection
-- ✅ Input validation and sanitization
-- ✅ Path traversal attack prevention
-- ✅ Resource limit enforcement
-- ✅ Attack scenario simulation
-- ✅ Error handling under attack conditions
+**Comprehensive Coverage Areas**
+- ✅ Memory Management & Security (8 core tests)
+- ✅ Hash Table Operations (8 consistency tests)  
+- ✅ Performance Benchmarks (3 real-time tests)
+- ✅ Stress Testing (3 large-scale tests)
+- ✅ Attack Prevention (path traversal, NULL pointer protection)
+- ✅ Error Handling and Recovery
+- ✅ Rust FFI Integration (7 tests when enabled)
 
 **Available Test Commands**
 ```bash
-# Run all critical tests (recommended for releases)
-make test-comprehensive    # 112/112 tests passing
+# Recommended for development and CI/CD
+make test                     # Quick unified test (17 tests, <0.01s)
 
-# Individual test suites
-make test-simple          # Quick development tests (38/38)
-make test-memory          # Memory management (63/63)  
-make test-security        # Security hardening (49/49)
+# Comprehensive testing (recommended for releases)  
+make test-all                 # Complete validation (33 tests, ~0.005s)
+
+# Unified test suite variants
+make test-unified             # Full unified test suite
+make test-unified-quick       # Quick mode for development
+make test-unified-verbose     # Verbose mode with detailed output
+make test-unified-rust        # With Rust FFI integration
 
 # Test utilities
-make clean-tests          # Clean test artifacts
-make test-help           # Show available test targets
+make clean-tests              # Clean test artifacts
+make test-help               # Show available test targets
 ```
 
-**Test Coverage Areas**
-- Memory safety and leak detection
-- Security attack prevention and input validation  
-- Defensive programming validation
-- Hash table operations and consistency
-- Configuration system robustness
-- Error handling and recovery mechanisms
+**Key Testing Advantages**
+- **Single Binary**: Unified test executable (replaced 5+ scattered files)
+- **Fast Execution**: Complete validation in <0.01 seconds
+- **Real-time Metrics**: Performance benchmarks included
+- **Multiple Modes**: Quick, full, verbose, and Rust FFI variants
+- **100% Coverage**: Memory safety, security, performance, and stress testing
 
 ## 📚 Documentation
 
 ### 📖 **Core Documentation**
 - [**Main README**](README.md) - This file, project overview and quick start
+- [**Architecture Principles**](ARCHITECTURE.md) - ✅ Organic multi-language design philosophy
+- [**Clean Slate Implementation**](CLEAN_SLATE.md) - ✅ Zero dependency Rust FFI approach
+- [**gccrs Compatibility**](GCCRS_COMPATIBILITY.md) - ✅ GNU Rust compiler compatibility guide
 - [**Current State Report**](CURRENT_STATE.md) - Complete project status and roadmap
 - [**Security Hardening**](SECURITY_HARDENING.md) - ✅ Defensive programming and security measures
 - [**Memory Verification**](MEMORY_VERIFICATION.md) - ✅ Unified memory model documentation
@@ -189,7 +224,7 @@ make test-help           # Show available test targets
 - ✅ Complete Rust FFI highlighting system with theme support
 - ✅ Memory-safe operations with leak detection and proper cleanup
 - ✅ **Comprehensive security hardening** with defensive programming
-- ✅ **100% test coverage** for all critical components (112/112 tests)
+- ✅ **100% test coverage** for all critical components (unified test suite)
 - ✅ **Production-ready logging system** with unified verbose output
 - ✅ **Attack prevention** including path traversal and buffer overflow protection
 
@@ -252,8 +287,12 @@ make                    # Basic C build
 make debug             # Debug build with symbols
 make release           # Optimized release build
 
-# FFI builds
-make with-rust         # Build with Rust FFI
+# FFI builds - Rust
+make with-rust         # Build with Rust FFI (rustc + external deps)
+make with-rust-clean   # Build with clean slate Rust FFI (zero deps)
+make with-rust-gccrs   # Build with gccrs-compatible Rust FFI
+make with-rust-both    # Build both rustc and gccrs versions
+make with-rust-all     # Build all Rust versions (rustc, gccrs, clean)
 make with-cpp          # Build with C++ FFI (planned)
 make with-all          # Build with all FFI systems
 

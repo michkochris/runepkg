@@ -1,7 +1,0 @@
-That's a great strategy. Having a working stable_old branch is a perfect safety net and a strong foundation for future development. It's proof that your C/C++ build and core package information pipeline are solid.
-As you dive into the new work on your laptop with Rust and GitHub Copilot, here's a recap of the context we discussed regarding Rust and GCCRS compatibility:
-Your primary goal for the Rust integration should be to focus on features that are likely to be included in the new and upcoming gccrs compiler. This means adopting a "lowest common denominator" approach for maximum portability.
- * Stick to Core Language Features: When writing your Rust code, prioritize the fundamental features of the language. This includes basic data structures, ownership and borrowing, enums, structs, and common FFI patterns.
- * Avoid Experimental and Complex Features: Be cautious with advanced or highly experimental features of Rust. Features that rely on more complex compiler internals might not be present in early gccrs versions.
- * Focus on the FFI Bridge: The stable_old branch proves your C FFI bridge works. The new Rust code should primarily focus on providing a clean, simple, and stable interface for that C code to call, using #[no_mangle] and extern "C" to expose functions as needed.
-By keeping your Rust code simple and focused, you ensure that your project remains a lean and portable system that will work seamlessly with future versions of gccrs while still benefiting from Rust's safety and performance advantages.

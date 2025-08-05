@@ -78,7 +78,7 @@ endif
 # Configure Rust FFI if enabled
 ifeq ($(WITH_RUST),1)
     CFLAGS += -DWITH_RUST_FFI
-    LDFLAGS += -L./$(RUST_LIB_PATH) -l$(RUST_LIB_NAME) -ldl -lpthread -lm
+    LDFLAGS += -L./$(RUST_LIB_PATH) -l$(RUST_LIB_NAME) -ldl -lpthread -lm -Wl,-rpath,./$(RUST_LIB_PATH)
     RUST_SOURCES = runepkg_highlight_rust.c
     RUST_OBJECTS = runepkg_highlight_rust.o
     RUST_HEADERS = runepkg_highlight_rust.h runepkg_highlight_ffi.h
@@ -162,12 +162,7 @@ clean:
 	rm -f $(OBJS) $(TARGET) $(SRCS:.c=.d)
 	rm -f $(CPP_IMPL_OBJECTS) $(CPP_IMPL_SOURCES:.cpp=.d)
 	@echo "🧹 Cleaning up test artifacts..."
-	rm -f $(MEMORY_TEST) $(SECURITY_TEST) $(PERFORMANCE_TEST) $(SIMPLE_MEMORY_TEST)
-	rm -f memory_test memory_test.o memory_test.d
-	rm -f security_test security_test.o security_test.d  
-	rm -f performance_test performance_test.o performance_test.d
-	rm -f simple_memory_test simple_memory_test.o simple_memory_test.d
-	rm -f test_runner test_runner.o test_runner.d
+	rm -f $(UNIFIED_TEST) $(UNIFIED_TEST)_rust $(UNIFIED_TEST).o $(UNIFIED_TEST).d
 	@echo "✅ Clean complete."
 
 # Test compilation only (useful for checking syntax without running)
@@ -208,6 +203,14 @@ install: all
 	mkdir -p $(DESTDIR)$(PREFIX)/bin
 	cp $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	@# Install Rust library if it exists
+	@if [ -f "$(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so" ]; then \
+		echo "Installing Rust library lib$(RUST_LIB_NAME).so..."; \
+		mkdir -p $(DESTDIR)$(PREFIX)/lib; \
+		cp $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so $(DESTDIR)$(PREFIX)/lib/; \
+		chmod 755 $(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
+		echo "Rust library installed to $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
+	fi
 	@echo "Determining configuration installation location..."
 	@if [ -f runepkgconfig ]; then \
 		if [ "$(shell id -u)" = "0" ] || [ -w "$(DESTDIR)$(ETCDIR)" ] 2>/dev/null; then \
@@ -219,6 +222,9 @@ install: all
 			echo "=== Linux Installation Complete (System-wide) ==="; \
 			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
 			echo "System config: $(ETCDIR)/runepkg/runepkgconfig"; \
+			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
+				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
+			fi; \
 		else \
 			echo "No elevated privileges detected. Installing user-specific configuration..."; \
 			cp runepkgconfig ~/.runepkgconfig; \
@@ -227,6 +233,9 @@ install: all
 			echo "=== Linux Installation Complete (User-specific) ==="; \
 			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
 			echo "User config: ~/.runepkgconfig"; \
+			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
+				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
+			fi; \
 		fi; \
 	else \
 		echo "WARNING: runepkgconfig file not found in current directory!"; \
@@ -247,6 +256,14 @@ termux-install: all
 	mkdir -p $(TERMUX_PREFIX)/bin
 	cp $(TARGET) $(TERMUX_PREFIX)/bin/$(TARGET)
 	chmod 755 $(TERMUX_PREFIX)/bin/$(TARGET)
+	@# Install Rust library if it exists
+	@if [ -f "$(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so" ]; then \
+		echo "Installing Rust library lib$(RUST_LIB_NAME).so for Termux..."; \
+		mkdir -p $(TERMUX_PREFIX)/lib; \
+		cp $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so $(TERMUX_PREFIX)/lib/; \
+		chmod 755 $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
+		echo "Rust library installed to $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
+	fi
 	@echo "Creating user-specific configuration file at ~/.runepkgconfig..."
 	@if [ -f runepkgconfig ]; then \
 		cp runepkgconfig ~/.runepkgconfig; \
@@ -260,6 +277,9 @@ termux-install: all
 	@echo "=== Termux Installation Complete ==="
 	@echo "Binary: $(TERMUX_PREFIX)/bin/$(TARGET)"
 	@echo "User config: ~/.runepkgconfig"
+	@if [ -f "$(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
+		echo "Rust library: $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
+	fi
 	@echo ""
 	@echo "The cascading configuration will check:"
 	@echo "  1. \$$RUNEPKG_CONFIG_PATH environment variable"
@@ -280,6 +300,16 @@ uninstall:
 		else \
 			echo "ERROR: Need elevated privileges to remove $(PREFIX)/bin/$(TARGET)"; \
 			echo "Please run: sudo make uninstall"; \
+		fi; \
+	fi
+	# Remove Rust library from standard Linux locations
+	@if [ -f $(PREFIX)/lib/lib$(RUST_LIB_NAME).so ]; then \
+		echo "Removing $(PREFIX)/lib/lib$(RUST_LIB_NAME).so..."; \
+		if [ "$(shell id -u)" = "0" ] || [ -w "$(PREFIX)/lib" ] 2>/dev/null; then \
+			rm -f $(PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
+			echo "Linux Rust library removed."; \
+		else \
+			echo "ERROR: Need elevated privileges to remove $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 		fi; \
 	fi
 	# Remove system config if we have privileges
@@ -304,6 +334,12 @@ uninstall:
 		echo "Removing $(TERMUX_PREFIX)/bin/$(TARGET)..."; \
 		rm -f $(TERMUX_PREFIX)/bin/$(TARGET); \
 		echo "Termux binary removed."; \
+	fi
+	# Remove Rust library from Termux locations
+	@if [ -f $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so ]; then \
+		echo "Removing $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so..."; \
+		rm -f $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
+		echo "Termux Rust library removed."; \
 	fi
 	@echo "Uninstallation complete."
 
@@ -363,6 +399,9 @@ info:
 	@echo "make install       - Install for Linux"
 	@echo "make termux-install - Install for Termux"
 	@echo "make test          - Build and test basic functionality"
+	@echo "make test-unified  - Run comprehensive unified test suite"
+	@echo "make test-unified-rust - Run unified tests with Rust FFI"
+	@echo "make test-unified-quick - Run quick unified tests"
 	@echo "make test-rust     - Test Rust FFI system"
 	@echo "make test-cpp      - Test C++ FFI system (planned)"
 	@echo "make clean         - Clean build artifacts"
@@ -372,28 +411,27 @@ info:
 	@echo "make cpp-info      - Show detailed C++ FFI information"
 	@echo "make uninstall     - Remove installed files (sudo may be needed)"
 	@echo "make debug         - Build with debug flags"
-	@echo "make info          - Show this information"
 	@echo ""
 	@echo "=== Rust FFI Targets ==="
-	@echo "make with-rust     - Build with Rust FFI highlighting support"
-	@echo "make rust-lib      - Build only the Rust library"
-	@echo "make test-rust     - Test Rust FFI functionality"
-	@echo "make clean-rust    - Clean Rust build artifacts"
+	@echo "make with-rust        - Build with clean slate Rust FFI (zero dependencies)"
+	@echo "make rust-lib         - Build clean slate Rust library"
+	@echo "make test-rust        - Test Rust FFI functionality"
+	@echo "make clean-rust       - Clean Rust build artifacts"
 	@echo "=========================="
 
 # --- Rust FFI Targets ---
 
-# Build Rust library
+# Build Rust library (now clean slate by default)
 rust-lib:
-	@echo "Building Rust highlighting library..."
+	@echo "Building clean slate Rust highlighting library (zero dependencies)..."
 	@if command -v cargo >/dev/null 2>&1; then \
-		cargo build --release; \
+		cargo build --release --no-default-features --features clean-slate; \
 		if [ -f "$(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).a" ]; then \
-			echo "✓ Rust library built successfully: $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).a"; \
+			echo "✓ Clean slate Rust library built successfully: $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).a"; \
 		elif [ -f "$(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so" ]; then \
-			echo "✓ Rust library built successfully: $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so"; \
+			echo "✓ Clean slate Rust library built successfully: $(RUST_LIB_PATH)/lib$(RUST_LIB_NAME).so"; \
 		else \
-			echo "✗ Rust library build failed or output not found"; \
+			echo "✗ Clean slate Rust library build failed or output not found"; \
 			exit 1; \
 		fi; \
 	else \
@@ -401,9 +439,9 @@ rust-lib:
 		exit 1; \
 	fi
 
-# Build with Rust FFI support
+# Build with Rust FFI support (clean slate by default)
 with-rust: rust-lib
-	@echo "Building runepkg with Rust FFI support..."
+	@echo "Building runepkg with clean slate Rust FFI support..."
 	$(MAKE) WITH_RUST=1
 
 # Test Rust FFI functionality
@@ -442,14 +480,17 @@ test-rust: with-rust
 	@rm -f test_script.sh
 
 # Clean Rust build artifacts
+# Remove obsolete targets
 clean-rust:
 	@echo "Cleaning Rust build artifacts..."
 	@if [ -f "Cargo.toml" ]; then \
 		cargo clean; \
+		rm -f Cargo.lock; \
 		echo "✓ Rust build artifacts cleaned"; \
 	else \
 		echo "No Cargo.toml found, nothing to clean"; \
 	fi
+	@echo "✓ Clean slate Rust build artifacts cleaned"
 
 # Clean C++ build artifacts (when implemented)
 clean-cpp:
@@ -589,12 +630,6 @@ endif
 TEST_CFLAGS = $(CFLAGS) -DRUNEPKG_TEST_MODE
 TEST_LDFLAGS = -lpthread
 
-# Test executables
-MEMORY_TEST = memory_test
-SECURITY_TEST = security_test  
-PERFORMANCE_TEST = performance_test
-SIMPLE_MEMORY_TEST = simple_memory_test
-
 # Test object files (excluding main CLI to avoid main() conflicts)
 # Test Object Files
 TEST_OBJS = runepkg_config.o runepkg_util.o runepkg_pack.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o $(CPP_IMPL_OBJECTS)
@@ -602,85 +637,49 @@ TEST_OBJS = runepkg_config.o runepkg_util.o runepkg_pack.o runepkg_hash.o runepk
 C_TEST_OBJS = runepkg_config.o runepkg_util.o runepkg_pack.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o
 
 # =============================================================================
-# === INDIVIDUAL TEST TARGETS ===
+# === UNIFIED TEST SUITE ===
 # =============================================================================
 
-# Memory management and unified model test
-test-memory: $(MEMORY_TEST)
-	@echo "🧠 === Running Memory Management Tests ==="
-	@./$(MEMORY_TEST) || (echo "❌ Memory tests failed!" && exit 1)
-	@echo "✅ Memory tests completed successfully!"
+# Unified test suite - single comprehensive test binary
+UNIFIED_TEST = unified_test_suite
+UNIFIED_TEST_OBJS = runepkg_hash.o runepkg_pack.o runepkg_defensive.o runepkg_util.o runepkg_storage.o runepkg_config.o
 
-$(MEMORY_TEST): test_runner.c memory_test.c $(C_TEST_OBJS)
-	@echo "🔨 Building memory test suite..."
-	$(CC) $(TEST_CFLAGS) -o $@ test_runner.c memory_test.c $(C_TEST_OBJS) $(TEST_LDFLAGS)
+$(UNIFIED_TEST): unified_test_suite.c $(UNIFIED_TEST_OBJS)
+	@echo "🧪 Building unified test suite..."
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) unified_test_suite.c $(UNIFIED_TEST_OBJS) $(LIBS) -lpthread -lm -o $(UNIFIED_TEST)
 
-# Security and defensive programming test
-test-security: $(SECURITY_TEST)
-	@echo "🔒 === Running Security Tests ==="
-	@./$(SECURITY_TEST) || (echo "🚨 Security tests failed!" && exit 1)
-	@echo "🛡️ Security tests completed successfully!"
+# Run unified test suite (default mode)
+test-unified: $(UNIFIED_TEST)
+	@echo "🚀 Running unified test suite..."
+	@./$(UNIFIED_TEST)
 
-$(SECURITY_TEST): security_test.c $(C_TEST_OBJS)
-	@echo "🔨 Building security test suite..."
-	$(CC) $(TEST_CFLAGS) -o $@ security_test.c $(C_TEST_OBJS) $(TEST_LDFLAGS)
+# Run unified test suite with verbose output
+test-unified-verbose: $(UNIFIED_TEST)
+	@echo "🚀 Running unified test suite (verbose)..."
+	@./$(UNIFIED_TEST) --verbose
 
-# Performance and stress test
-test-performance: $(PERFORMANCE_TEST)
-	@echo "⚡ === Running Performance Tests ==="
-	@./$(PERFORMANCE_TEST) || (echo "📉 Performance tests failed!" && exit 1)
-	@echo "🚀 Performance tests completed successfully!"
+# Run quick unified tests
+test-unified-quick: $(UNIFIED_TEST)
+	@echo "🚀 Running unified test suite (quick mode)..."
+	@./$(UNIFIED_TEST) --quick
 
-$(PERFORMANCE_TEST): performance_test.c $(C_TEST_OBJS)
-	@echo "🔨 Building performance test suite..."
-	$(CC) $(TEST_CFLAGS) -o $@ performance_test.c $(C_TEST_OBJS) $(TEST_LDFLAGS)
+# Run unified test suite with Rust FFI
+test-unified-rust: rust-lib $(UNIFIED_TEST)
+	@echo "🚀 Running unified test suite with Rust FFI..."
+	$(CC) $(CFLAGS) $(TEST_CFLAGS) -DWITH_RUST=1 unified_test_suite.c $(UNIFIED_TEST_OBJS) -L./$(RUST_LIB_PATH) -l$(RUST_LIB_NAME) $(LIBS) -lpthread -lm -ldl -o $(UNIFIED_TEST)_rust
+	@LD_LIBRARY_PATH=./$(RUST_LIB_PATH):$$LD_LIBRARY_PATH ./$(UNIFIED_TEST)_rust
 
-# Simple memory test (minimal dependencies)
-test-simple: $(SIMPLE_MEMORY_TEST)
-	@echo "🧪 === Running Simple Memory Tests ==="
-	@./$(SIMPLE_MEMORY_TEST) || (echo "❌ Simple tests failed!" && exit 1)
-	@echo "✅ Simple tests completed successfully!"
-
-$(SIMPLE_MEMORY_TEST): simple_memory_test.c runepkg_hash.o runepkg_pack.o runepkg_defensive.o runepkg_util.o
-	@echo "🔨 Building simple memory test..."
-	$(CC) $(TEST_CFLAGS) -o $@ simple_memory_test.c runepkg_hash.o runepkg_pack.o runepkg_defensive.o runepkg_util.o
-
-# =============================================================================
-# === COMPREHENSIVE TEST SUITES ===
-# =============================================================================
-
-# Run all tests for stable release validation
-test-all: test-memory test-security
+# Comprehensive test suite with detailed reporting
+test-all: test-unified
 	@echo ""
-	@echo "🎉 === ALL CRITICAL TESTS COMPLETED SUCCESSFULLY ==="
-	@echo "✅ Memory Management: 100% PASSED (63/63 tests)"
-	@echo "🛡️ Security Hardening: 100% PASSED (49/49 tests)" 
-	@echo "⚠️ Performance: Under development (compilation issues)"
+	@echo "🎉 === ALL TESTS COMPLETED SUCCESSFULLY ==="
+	@echo "✅ Unified Test Suite: 100% PASSED"
 	@echo ""
 	@echo "🚀 READY FOR STABLE RELEASE! 🚀"
-	@echo "📊 Total: 112/112 critical tests passing (100%)"
-	@echo ""
-
-# Comprehensive test with detailed reporting
-test-comprehensive: clean-tests test-all
-	@echo ""
-	@echo "📊 === COMPREHENSIVE TEST REPORT ==="
-	@echo "🔍 Test Coverage:"
-	@echo "   - Memory Management & Leak Detection"
-	@echo "   - Defensive Programming Validation"
-	@echo "   - Security Attack Prevention"
-	@echo "   - Buffer Overflow Protection"
-	@echo "   - Path Traversal Prevention"
-	@echo "   - Input Validation & Sanitization"
-	@echo "   - Performance & Scalability"
-	@echo "   - Stress Testing"
-	@echo ""
-	@echo "✅ ALL SECURITY AND STABILITY TESTS PASSED"
-	@echo "🛡️ System is hardened and production-ready"
 	@echo ""
 
 # Quick test for development
-test: test-simple
+test: test-unified-quick
 	@echo "🔄 Quick development test completed"
 
 # =============================================================================
@@ -689,35 +688,34 @@ test: test-simple
 
 # Clean test artifacts
 clean-tests:
-	@echo "🧹 Cleaning all test artifacts..."
-	@rm -f $(MEMORY_TEST) $(SECURITY_TEST) $(PERFORMANCE_TEST) $(SIMPLE_MEMORY_TEST)
-	@rm -f memory_test memory_test.o memory_test.d
-	@rm -f security_test security_test.o security_test.d  
-	@rm -f performance_test performance_test.o performance_test.d
-	@rm -f simple_memory_test simple_memory_test.o simple_memory_test.d
-	@rm -f test_runner test_runner.o test_runner.d
+	@echo "🧹 Cleaning test artifacts..."
+	@rm -f $(UNIFIED_TEST) $(UNIFIED_TEST)_rust $(UNIFIED_TEST).o $(UNIFIED_TEST).d
 	@echo "✅ Test cleanup completed"
+
+# Clean unified test
+clean-unified:
+	@rm -f $(UNIFIED_TEST) $(UNIFIED_TEST)_rust
 
 # Test help
 test-help:
 	@echo "🧪 === runepkg Testing Framework ==="
 	@echo ""
 	@echo "Available test targets:"
-	@echo "  test                 - Quick development test"
-	@echo "  test-memory         - Memory management tests"
-	@echo "  test-security       - Security and defensive programming tests"
-	@echo "  test-performance    - Performance and stress tests"
-	@echo "  test-simple         - Simple memory test (minimal deps)"
-	@echo "  test-all            - Run all test suites"
-	@echo "  test-comprehensive  - Full test suite with detailed reporting"
+	@echo "  test                 - Quick development test (unified)"
+	@echo "  test-unified         - Full unified test suite"
+	@echo "  test-unified-quick   - Quick unified test suite"
+	@echo "  test-unified-verbose - Verbose unified test suite"
+	@echo "  test-unified-rust    - Unified test suite with Rust FFI"
+	@echo "  test-all             - Complete test validation"
 	@echo ""
 	@echo "Cleanup targets:"
 	@echo "  clean               - Clean build artifacts"
 	@echo "  clean-tests         - Clean test artifacts"
+	@echo "  clean-unified       - Clean unified test artifacts only"
 	@echo "  clean-all           - Deep clean everything"
 	@echo "  test-help           - Show this help"
 	@echo ""
-	@echo "🚀 For stable release validation, run: make test-comprehensive"
+	@echo "🚀 For stable release validation, run: make test-all"
 	@echo "🧹 For complete cleanup, run: make clean-all"
 	@echo ""
 

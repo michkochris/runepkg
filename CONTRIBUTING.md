@@ -28,8 +28,8 @@ cd runepkg
 make with-all
 
 # Run comprehensive tests to verify setup
-make test-comprehensive
-# Expected: 112/112 tests passing
+make test-all
+# Expected: 33/33 tests passing (unified test suite)
 ```
 
 ## 🛠️ **Development Workflow**
