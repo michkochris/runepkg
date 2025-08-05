@@ -40,22 +40,6 @@ extern char *g_runepkg_db_dir;
 extern bool g_verbose_mode;
 
 // --- Internal Function Declarations ---
-static void runepkg_log_verbose(const char *format, ...);
-
-// --- Internal Functions ---
-
-/**
- * @brief Logging function for verbose output
- */
-static void runepkg_log_verbose(const char *format, ...) {
-    if (!g_verbose_mode) return;
-    
-    va_list args;
-    va_start(args, format);
-    printf("[STORAGE VERBOSE] ");
-    vprintf(format, args);
-    va_end(args);
-}
 
 // --- Public Storage Functions ---
 

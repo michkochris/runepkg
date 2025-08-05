@@ -40,6 +40,11 @@
 void runepkg_util_log_verbose(const char *format, ...);
 
 /**
+ * @brief Main verbose logging function used throughout the application
+ */
+void runepkg_log_verbose(const char *format, ...);
+
+/**
  * @brief Logging function for debug output
  */
 void runepkg_util_log_debug(const char *format, ...);

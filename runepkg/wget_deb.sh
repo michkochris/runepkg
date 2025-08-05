@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# A helper script to download .deb files for testing upkg.
+# A helper script to download .deb files for testing runepkg.
 # This script uses a function to quickly check and download files
 # by simply providing the URL.
 
@@ -21,10 +21,10 @@ download_if_not_exist() {
 
 echo "Starting download process..."
 
-# --- BusyBox (arm64) ---
-download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/b/busybox/busybox-static_1.37.0-6+b2_arm64.deb"
+# --- BusyBox (amd64) ---
+download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/b/busybox/busybox-static_1.37.0-6+b3_amd64.deb"
 
-# --- File Utility (arm64) ---
-download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/f/file/file_5.39-3+deb11u1_arm64.deb"
+# --- File Utility (amd64) ---
+download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/f/file/file_5.46-5_amd64.deb"
 
 echo "Download process complete."

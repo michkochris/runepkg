@@ -8,26 +8,12 @@
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
+#include "runepkg_util.h"
 
 // Global variables
 bool g_verbose_mode = false;
 // The declaration for runepkg_main_hash_table is now solely in runepkg_hash.h.
 // The definition is in runepkg_hash.c.
-
-// --- Simple Logging Functions ---
-
-/**
- * @brief Logging function for verbose output
- */
-void runepkg_log_verbose(const char *format, ...) {
-    if (!g_verbose_mode) return;
-
-    va_list args;
-    va_start(args, format);
-    printf("[VERBOSE] ");
-    vprintf(format, args);
-    va_end(args);
-}
 
 // --- Placeholder Function Implementations ---
 

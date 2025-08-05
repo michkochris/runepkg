@@ -23,6 +23,7 @@
 #include "runepkg_hash.h"
 #include "runepkg_util.h"
 #include "runepkg_pack.h"
+#include "runepkg_defensive.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -105,6 +106,8 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->priority);
     runepkg_util_free_and_null(&pkg_info->homepage);
     runepkg_util_free_and_null(&pkg_info->filename);
+    runepkg_util_free_and_null(&pkg_info->control_dir_path);
+    runepkg_util_free_and_null(&pkg_info->data_dir_path);
 
     if (pkg_info->file_list) {
         for (int i = 0; i < pkg_info->file_count; i++) {
@@ -124,7 +127,13 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
  * @return A pointer to the new hash table, or NULL on failure.
  */
 runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
-    runepkg_hash_table_t *table = malloc(sizeof(runepkg_hash_table_t));
+    runepkg_error_t err = runepkg_validate_size(initial_size, 1000000, "hash table size");
+    if (err != RUNEPKG_SUCCESS) {
+        runepkg_util_error("Invalid hash table size: %s\n", runepkg_error_string(err));
+        return NULL;
+    }
+
+    runepkg_hash_table_t *table = runepkg_secure_malloc(sizeof(runepkg_hash_table_t));
     if (!table) {
         runepkg_util_error("Failed to allocate memory for hash table structure.\n");
         return NULL;
@@ -135,10 +144,10 @@ runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
     }
     initial_size = find_next_prime(initial_size);
 
-    table->buckets = calloc(initial_size, sizeof(runepkg_hash_node_t*));
+    table->buckets = runepkg_secure_calloc(initial_size, sizeof(runepkg_hash_node_t*));
     if (!table->buckets) {
         runepkg_util_error("Failed to allocate memory for hash table buckets.\n");
-        free(table);
+        runepkg_secure_free((void**)&table, sizeof(runepkg_hash_table_t));
         return NULL;
     }
 
@@ -186,7 +195,7 @@ static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size) {
 
     if (new_size == table->size) return 0;
 
-    runepkg_hash_node_t **new_buckets = calloc(new_size, sizeof(runepkg_hash_node_t*));
+    runepkg_hash_node_t **new_buckets = runepkg_secure_calloc(new_size, sizeof(runepkg_hash_node_t*));
     if (!new_buckets) {
         runepkg_util_error("Failed to allocate memory for hash table resize.\n");
         return -1;
@@ -237,27 +246,36 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         runepkg_util_log_verbose("Package '%s' already exists in hash table, updating.\n", pkg_info->package_name);
         runepkg_hash_free_package_info(existing);
         
-        existing->package_name = pkg_info->package_name ? strdup(pkg_info->package_name) : NULL;
-        existing->version = pkg_info->version ? strdup(pkg_info->version) : NULL;
-        existing->architecture = pkg_info->architecture ? strdup(pkg_info->architecture) : NULL;
-        existing->maintainer = pkg_info->maintainer ? strdup(pkg_info->maintainer) : NULL;
-        existing->description = pkg_info->description ? strdup(pkg_info->description) : NULL;
-        existing->depends = pkg_info->depends ? strdup(pkg_info->depends) : NULL;
-        existing->installed_size = pkg_info->installed_size ? strdup(pkg_info->installed_size) : NULL;
-        existing->section = pkg_info->section ? strdup(pkg_info->section) : NULL;
-        existing->priority = pkg_info->priority ? strdup(pkg_info->priority) : NULL;
-        existing->homepage = pkg_info->homepage ? strdup(pkg_info->homepage) : NULL;
-        existing->filename = pkg_info->filename ? strdup(pkg_info->filename) : NULL;
+        existing->package_name = pkg_info->package_name ? runepkg_secure_strdup(pkg_info->package_name) : NULL;
+        existing->version = pkg_info->version ? runepkg_secure_strdup(pkg_info->version) : NULL;
+        existing->architecture = pkg_info->architecture ? runepkg_secure_strdup(pkg_info->architecture) : NULL;
+        existing->maintainer = pkg_info->maintainer ? runepkg_secure_strdup(pkg_info->maintainer) : NULL;
+        existing->description = pkg_info->description ? runepkg_secure_strdup(pkg_info->description) : NULL;
+        existing->depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
+        existing->installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
+        existing->section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
+        existing->priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
+        existing->homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
+        existing->filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+        existing->control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
+        existing->data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
         
         if (pkg_info->file_list && pkg_info->file_count > 0) {
-            existing->file_list = malloc(pkg_info->file_count * sizeof(char*));
-            if (existing->file_list) {
-                existing->file_count = pkg_info->file_count;
-                for (int i = 0; i < pkg_info->file_count; i++) {
-                    existing->file_list[i] = pkg_info->file_list[i] ? strdup(pkg_info->file_list[i]) : NULL;
-                }
-            } else {
+            runepkg_error_t err = runepkg_validate_file_count(pkg_info->file_count);
+            if (err != RUNEPKG_SUCCESS) {
+                runepkg_util_error("Invalid file count: %s\n", runepkg_error_string(err));
+                existing->file_list = NULL;
                 existing->file_count = 0;
+            } else {
+                existing->file_list = runepkg_secure_malloc(pkg_info->file_count * sizeof(char*));
+                if (existing->file_list) {
+                    existing->file_count = pkg_info->file_count;
+                    for (int i = 0; i < pkg_info->file_count; i++) {
+                        existing->file_list[i] = pkg_info->file_list[i] ? runepkg_secure_strdup(pkg_info->file_list[i]) : NULL;
+                    }
+                } else {
+                    existing->file_count = 0;
+                }
             }
         } else {
             existing->file_list = NULL;
@@ -274,7 +292,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         }
     }
 
-    runepkg_hash_node_t *new_node = malloc(sizeof(runepkg_hash_node_t));
+    runepkg_hash_node_t *new_node = runepkg_secure_malloc(sizeof(runepkg_hash_node_t));
     if (!new_node) {
         runepkg_util_error("Failed to allocate memory for new hash table node.\n");
         return -1;
@@ -282,27 +300,36 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
 
     memset(&new_node->data, 0, sizeof(PkgInfo));
 
-    new_node->data.package_name = pkg_info->package_name ? strdup(pkg_info->package_name) : NULL;
-    new_node->data.version = pkg_info->version ? strdup(pkg_info->version) : NULL;
-    new_node->data.architecture = pkg_info->architecture ? strdup(pkg_info->architecture) : NULL;
-    new_node->data.maintainer = pkg_info->maintainer ? strdup(pkg_info->maintainer) : NULL;
-    new_node->data.description = pkg_info->description ? strdup(pkg_info->description) : NULL;
-    new_node->data.depends = pkg_info->depends ? strdup(pkg_info->depends) : NULL;
-    new_node->data.installed_size = pkg_info->installed_size ? strdup(pkg_info->installed_size) : NULL;
-    new_node->data.section = pkg_info->section ? strdup(pkg_info->section) : NULL;
-    new_node->data.priority = pkg_info->priority ? strdup(pkg_info->priority) : NULL;
-    new_node->data.homepage = pkg_info->homepage ? strdup(pkg_info->homepage) : NULL;
-    new_node->data.filename = pkg_info->filename ? strdup(pkg_info->filename) : NULL;
+    new_node->data.package_name = pkg_info->package_name ? runepkg_secure_strdup(pkg_info->package_name) : NULL;
+    new_node->data.version = pkg_info->version ? runepkg_secure_strdup(pkg_info->version) : NULL;
+    new_node->data.architecture = pkg_info->architecture ? runepkg_secure_strdup(pkg_info->architecture) : NULL;
+    new_node->data.maintainer = pkg_info->maintainer ? runepkg_secure_strdup(pkg_info->maintainer) : NULL;
+    new_node->data.description = pkg_info->description ? runepkg_secure_strdup(pkg_info->description) : NULL;
+    new_node->data.depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
+    new_node->data.installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
+    new_node->data.section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
+    new_node->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
+    new_node->data.homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
+    new_node->data.filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+    new_node->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
+    new_node->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
 
     if (pkg_info->file_list && pkg_info->file_count > 0) {
-        new_node->data.file_list = malloc(pkg_info->file_count * sizeof(char*));
-        if (new_node->data.file_list) {
-            new_node->data.file_count = pkg_info->file_count;
-            for (int i = 0; i < pkg_info->file_count; i++) {
-                new_node->data.file_list[i] = pkg_info->file_list[i] ? strdup(pkg_info->file_list[i]) : NULL;
-            }
-        } else {
+        runepkg_error_t err = runepkg_validate_file_count(pkg_info->file_count);
+        if (err != RUNEPKG_SUCCESS) {
+            runepkg_util_error("Invalid file count: %s\n", runepkg_error_string(err));
+            new_node->data.file_list = NULL;
             new_node->data.file_count = 0;
+        } else {
+            new_node->data.file_list = runepkg_secure_malloc(pkg_info->file_count * sizeof(char*));
+            if (new_node->data.file_list) {
+                new_node->data.file_count = pkg_info->file_count;
+                for (int i = 0; i < pkg_info->file_count; i++) {
+                    new_node->data.file_list[i] = pkg_info->file_list[i] ? runepkg_secure_strdup(pkg_info->file_list[i]) : NULL;
+                }
+            } else {
+                new_node->data.file_count = 0;
+            }
         }
     } else {
         new_node->data.file_list = NULL;

@@ -21,6 +21,7 @@
  ******************************************************************************/
 
 #include "runepkg_util.h"
+#include "runepkg_defensive.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -46,6 +47,17 @@ extern bool g_verbose_mode;
 // --- Logging Functions ---
 
 void runepkg_util_log_verbose(const char *format, ...) {
+    if (!g_verbose_mode) return;
+    
+    va_list args;
+    va_start(args, format);
+    printf("[VERBOSE] ");
+    vprintf(format, args);
+    va_end(args);
+}
+
+// Main verbose logging function used throughout the application
+void runepkg_log_verbose(const char *format, ...) {
     if (!g_verbose_mode) return;
     
     va_list args;
@@ -111,28 +123,7 @@ char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n) {
 }
 
 char *runepkg_util_concat_path(const char *dir, const char *file) {
-    if (!dir || !file) {
-        return NULL;
-    }
-
-    size_t dir_len = strlen(dir);
-    size_t file_len = strlen(file);
-    bool needs_slash = (dir_len > 0 && dir[dir_len - 1] != '/' && file[0] != '/');
-    size_t total_len = dir_len + file_len + (needs_slash ? 1 : 0) + 1;
-
-    char *full_path = (char *)malloc(total_len);
-    if (!full_path) {
-        runepkg_util_error("Failed to allocate memory for path concatenation\n");
-        return NULL;
-    }
-
-    strcpy(full_path, dir);
-    if (needs_slash) {
-        strcat(full_path, "/");
-    }
-    strcat(full_path, file);
-
-    return full_path;
+    return runepkg_secure_path_concat(dir, file);
 }
 
 // --- File System Operations ---
