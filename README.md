@@ -5,6 +5,113 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![FFI: Rust+C++](https://img.shields.io/badge/FFI-Rust+C++-brightgreen.svg)](https://github.com/michkochris/runepkg)
+[![Debug: -vv](https://img.shields.io/badge/Debug--vv%20Mode-Enhanced-yellow.svg)](https://github.com/michkochris/runepkg)
+
+## 🧪 **Revolutionary Debugging Enhancement**
+
+**runepkg** now features **comprehensive -vv (very verbose) mode** with research-grade internal debugging:
+
+```bash
+# Enhanced debugging capabilities
+runepkg -vv -i package.deb
+# [DEBUG-VV] === DEEP INSTALL ANALYSIS START ===
+# [DEBUG-VV] File size check: 955444 bytes
+# [DEBUG-VV] Hash table address: 0x55f8b2c4c2a0
+# [DEBUG-VV] Memory layout analysis complete
+```
+
+**✅ Works perfectly with rune_analyze framework for comprehensive dual-tool analysis!**
+
+## 🌟 **Enhanced JSON API Implementation - August 2025**
+
+Both **runepkg** and **rune_analyze** now feature comprehensive JSON APIs for automation, integration, and machine-readable analysis. These implementations provide structured, parseable output for CI/CD pipelines, automation scripts, and research applications.
+
+### 🔧 **runepkg JSON Capabilities**
+
+```bash
+# JSON-only output (machine-readable)
+runepkg --json -i package.deb
+
+# Both human and JSON output (debugging/research)
+runepkg --both -i package.deb
+```
+
+**Example JSON Output:**
+```json
+{
+  "runepkg_version": "0.1.0",
+  "operation": "install",
+  "timestamp": 1754621953,
+  "install_result": {
+    "success": true,
+    "exit_code": 0,
+    "duration_seconds": 2.453721
+  },
+  "package_info": {
+    "name": "example-package",
+    "version": "1.2.3",
+    "architecture": "amd64",
+    "maintainer": "Example Developer",
+    "file_count": 42,
+    "installed_size": "1024 KB"
+  },
+  "system_info": {
+    "control_dir": "/var/lib/runepkg/control",
+    "hash_table_initialized": true
+  }
+}
+```
+
+### 🔬 **rune_analyze JSON Capabilities**
+
+```bash
+# JSON analysis output
+rune_analyze --json /usr/bin/gcc --version
+
+# Comprehensive analysis with JSON
+rune_analyze --both -vv /usr/bin/sort file.txt
+```
+
+**Example JSON Analysis:**
+```json
+{
+  "rune_analyze_version": "1.0.0",
+  "operation": "analysis_complete",
+  "target_executable": "/bin/echo",
+  "execution_result": {
+    "exit_code": 0,
+    "execution_time": 0.002796
+  },
+  "security_analysis": {
+    "overall_security_score": 85,
+    "dangerous_function_count": 2,
+    "security_classification": "LOW_RISK"
+  },
+  "memory_analysis": {
+    "peak_memory_kb": 2048,
+    "memory_leaks": 0
+  },
+  "performance_analysis": {
+    "cpu_usage_percent": 0.5,
+    "resource_efficiency_score": 92
+  }
+}
+```
+
+### 🤖 **Automation & Integration**
+
+**Perfect for CI/CD pipelines, monitoring systems, and research:**
+
+```bash
+# Security assessment automation
+SECURITY_SCORE=$(rune_analyze --json ./binary | jq '.security_analysis.overall_security_score')
+
+# Batch package processing
+for pkg in *.deb; do runepkg --json -i "$pkg" >> install_log.json; done
+
+# Performance monitoring
+rune_analyze --json /usr/bin/* | jq '.performance_analysis' > metrics.json
+```
 
 ## 🌟 Vision Statement
 
