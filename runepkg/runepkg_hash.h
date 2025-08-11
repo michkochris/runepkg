@@ -27,10 +27,10 @@
 #include <stdbool.h>
 
 // --- Hash Table Configuration ---
-#define INITIAL_HASH_TABLE_SIZE 16
+#define INITIAL_HASH_TABLE_SIZE 2
 #define GROW_LOAD_FACTOR_THRESHOLD 0.75
 #define SHRINK_LOAD_FACTOR_THRESHOLD 0.25
-#define MIN_HASH_TABLE_SIZE 8
+#define MIN_HASH_TABLE_SIZE 2
 #define MAX_SUGGESTIONS 10
 
 // --- Unified PkgInfo Structure ---

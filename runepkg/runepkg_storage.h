@@ -35,7 +35,6 @@
 
 // --- Storage Constants ---
 #define RUNEPKG_STORAGE_BINARY_FILE "pkginfo.bin"
-#define RUNEPKG_STORAGE_FILES_LIST  "files.list"
 
 // --- Storage Functions ---
 
