@@ -1,0 +1,48 @@
+# ******************************************************************************
+# * Filename:    runepkgconfig
+# * Author:      <michkochris@gmail.com>
+# * Date:        started 12-31-2024
+# * Description: runepkg manages linux .deb pkg's for Runar Linux
+# *
+# * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
+# * GPLV3
+# * This program is free software: you can redistribute it and/or modify it
+# * under the terms of the GNU General Public License as published by the Free
+# * Software Foundation, either version 3 of the License, or (at your option)
+# * any later version.
+# *
+# * This program is distributed in the hope that it will be useful, but WITHOUT
+# * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# * more details.
+# *
+# * You should have received a copy of the GNU General Public License along
+# * with this program. If not, see <https://www.gnu.org/licenses/>.
+# ******************************************************************************/
+# file description: runepkg config settings
+
+# make sure to not to leave ending / forward slash!
+# and use full linux path names ie.
+# full directory paths
+
+# main config file
+config_file=~/.runepkgconfig
+
+# main directory where runepkg does work
+runepkg_dir=~/runepkg_dir
+
+# directory where runepkg unpacks .deb pkg info
+# where runepkg processes .deb control files  
+control_dir=~/runepkg_dir/control_dir
+
+# main directory where runepkg installs programs
+# normally / unless testing and developing
+#installdir=
+install_dir=~/runepkg_dir/install_dir
+
+# directory where runepkg stores its persistent package database
+# a subdirectory for each installed package and a binary Pkginfo file inside
+runepkg_db=~/runepkg_dir/runepkg_db
+
+
+# end of file...

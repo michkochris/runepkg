@@ -1,0 +1,43 @@
+[package]
+name = "runepkg_highlight"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+name = "runepkg_highlight"
+path = "gccrs-src/runepkg_highlight.rs"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# CLEAN SLATE: Absolutely zero external dependencies
+# Following gccrs "lowest common denominator" philosophy
+# - No external crates whatsoever
+# - libcore/liballoc only (built into Rust)
+# - Self-contained C FFI types
+# - Pure Rust fundamental language features
+
+# NO DEPENDENCIES - CLEAN SLATE APPROACH
+
+[features]
+default = []
+# Clean slate feature flag
+clean-slate = []
+
+[build-dependencies]
+# No build dependencies either
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+# Minimize binary size for clean slate approach
+opt-level-size = "z"
+
+[profile.dev]
+# Fast compilation for development
+opt-level = 0
+debug = true
+
+# Clean slate configuration
+[target.'cfg(not(test))']
+panic = "abort"  # Smaller binary, no unwinding
