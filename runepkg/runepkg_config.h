@@ -1,3 +1,17 @@
+#/******************************************************************************
+ * Filename:    runepkg_config.h
+ * Author:      <michkochris@gmail.com>
+ * Date:        2025-01-04
+ * Description: Configuration declarations for runepkg
+ * LICENSE:     GPL v3
+ * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
+ * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
+ * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
+ * ANY LATER VERSION.
+ * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
+ * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
+ ******************************************************************************/
+
 #ifndef RUNEPKG_CONFIG_H
 #define RUNEPKG_CONFIG_H
 

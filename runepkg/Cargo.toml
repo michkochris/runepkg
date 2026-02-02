@@ -30,14 +30,11 @@ clean-slate = []
 lto = true
 codegen-units = 1
 opt-level = 3
-# Minimize binary size for clean slate approach
-opt-level-size = "z"
+panic = "abort"  # Smaller binary, no unwinding
 
 [profile.dev]
 # Fast compilation for development
 opt-level = 0
 debug = true
 
-# Clean slate configuration
-[target.'cfg(not(test))']
-panic = "abort"  # Smaller binary, no unwinding
+

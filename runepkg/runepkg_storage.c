@@ -33,13 +33,7 @@
 #include "runepkg_storage.h"
 #include "runepkg_config.h"
 #include "runepkg_util.h"
-#include "runepkg_pack.h" // Needed for PkgInfo and pack functions
-
-// External global variables
-extern char *g_runepkg_db_dir;
-extern bool g_verbose_mode;
-
-// --- Internal Function Declarations ---
+static int runepkg_storage_remove_dir_recursive(const char *path);
 
 // --- Public Storage Functions ---
 
@@ -320,11 +314,55 @@ int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version
 
     runepkg_log_verbose("Removing package directory: %s\n", pkg_dir_path);
 
-    // TODO: Implement recursive directory removal
-    // For now, just print what would be removed
-    printf("Would remove package directory: %s\n", pkg_dir_path);
-    
+    if (runepkg_storage_remove_dir_recursive(pkg_dir_path) != 0) {
+        printf("Warning: Failed to remove package directory: %s\n", pkg_dir_path);
+        return -1;
+    }
+
     return 0;
+}
+
+// --- Internal Helpers ---
+static int runepkg_storage_remove_dir_recursive(const char *path) {
+    DIR *dir = opendir(path);
+    if (!dir) {
+        return -1;
+    }
+
+    struct dirent *entry;
+    int ret = 0;
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        char child[PATH_MAX];
+        snprintf(child, sizeof(child), "%s/%s", path, entry->d_name);
+
+        struct stat st;
+        if (lstat(child, &st) != 0) {
+            ret = -1;
+            continue;
+        }
+
+        if (S_ISDIR(st.st_mode)) {
+            if (runepkg_storage_remove_dir_recursive(child) != 0) {
+                ret = -1;
+            }
+        } else {
+            if (unlink(child) != 0) {
+                ret = -1;
+            }
+        }
+    }
+
+    closedir(dir);
+    if (rmdir(path) != 0) {
+        ret = -1;
+    }
+
+    return ret;
 }
 
 /**
@@ -345,12 +383,20 @@ int runepkg_storage_list_packages(void) {
     }
 
     struct dirent *entry;
-    printf("\n=== Installed Packages (Persistent Storage) ===\n");
+    bool first = true;
     
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            printf("  %s\n", entry->d_name);
+            if (!first) {
+                printf(" ");
+            }
+            printf("%s", entry->d_name);
+            first = false;
         }
+    }
+
+    if (!first) {
+        printf("\n");
     }
 
     closedir(dir);

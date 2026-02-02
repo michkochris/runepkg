@@ -1,24 +1,16 @@
-/******************************************************************************
+/*****************************************************************************
  * Filename:    runepkg_pack.c
  * Author:      <michkochris@gmail.com>
- * Date:        started 01-02-2025
- * Description: Package extraction and information collection for runepkg (runar linux)
- *
- * Copyright (c) 2025 runepkg (runar linux) All rights reserved.
- * GPLV3
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <https://www.gnu.org/licenses/>.
- ******************************************************************************/
+ * Date:        2025-01-04
+ * Description: Package extraction and information collection for runepkg
+ * LICENSE:     GPL v3
+ * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
+ * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
+ * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
+ * ANY LATER VERSION.
+ * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
+ * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
+ ***************************************************************************/
 
 #include "runepkg_pack.h"
 #include "runepkg_util.h"

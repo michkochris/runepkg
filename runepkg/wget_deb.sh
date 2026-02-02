@@ -22,7 +22,7 @@ download_if_not_exist() {
 echo "Starting download process..."
 
 # --- BusyBox (amd64) ---
-download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/b/busybox/busybox-static_1.37.0-6+b3_amd64.deb"
+download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/b/busybox/busybox-static_1.37.0-9_amd64.deb"
 
 # --- File Utility (amd64) ---
 download_if_not_exist "http://ftp.us.debian.org/debian/pool/main/f/file/file_5.46-5_amd64.deb"
