@@ -627,3 +627,49 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
     
     return 0;
 }
+
+char **parse_depends(const char *depends) {
+    if (!depends || *depends == '\0') return NULL;
+
+    // Count commas to estimate size
+    int count = 1;
+    for (const char *p = depends; *p; p++) {
+        if (*p == ',') count++;
+    }
+
+    char **result = calloc(count + 1, sizeof(char*));
+    if (!result) return NULL;
+
+    char *copy = strdup(depends);
+    if (!copy) {
+        free(result);
+        return NULL;
+    }
+
+    char *token = strtok(copy, ",");
+    int i = 0;
+    while (token && i < count) {
+        // Trim leading whitespace
+        while (*token == ' ' || *token == '\t') token++;
+        // Find end: stop at space, tab, or '('
+        char *end = token;
+        while (*end && *end != ' ' && *end != '\t' && *end != '(') end++;
+        *end = '\0';
+        // If not empty, add
+        if (*token) {
+            result[i] = strdup(token);
+            if (!result[i]) {
+                // Free previous
+                for (int j = 0; j < i; j++) free(result[j]);
+                free(result);
+                free(copy);
+                return NULL;
+            }
+            i++;
+        }
+        token = strtok(NULL, ",");
+    }
+
+    free(copy);
+    return result;
+}

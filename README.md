@@ -39,6 +39,7 @@ Commands and Options:
     -L, --list-files <package-name>         List files for a package.
     -S, --search <query>                    Search for a package by name.
     -v, --verbose                           Verbosity: -v=verbose, -vv=very verbose.
+    -f, --force                             Force install even if dependencies are missing.
             --version                           Print version information.
     -h, --help                              Display this help message.
 
@@ -60,8 +61,21 @@ Setting up busybox-static (1:1.37.0-9)...
 
 You can also feed a list of .deb files via stdin:
 ```
-cat list.txt | runepkg -i
-printf "%s\n" *.deb | runepkg -i
+runepkg -i debs/*.deb
+
+ls debs/*.deb > debs_list.txt
+cat debs_list.txt | ./runepkg -i
+
+printf "%s\n" debs/*.deb | ./runepkg -i
+
+```
+### **Dependency Resolution**
+runepkg automatically resolves and installs package dependencies from .deb files in the same directory. Use `--force` to install despite missing dependencies.
+
+For example:
+```
+runepkg -i package.deb  # Installs package and its deps if available
+runepkg -f -i package.deb  # Forces install even if deps are missing
 ```
 ### **Core Components**
 ```
@@ -87,7 +101,7 @@ runepkg/
 - Rust/C++ FFI are optional. Core builds use `make runepkg`.
 - Full builds use `make all` and will enable FFI if the toolchains are present.
 
-*runepkg - *Advancing the art of .deb package management through performance, and multi-language integration.*
+*runepkg - *Advancing the art of .deb package management through performance, automatic dependency resolution, and multi-language integration.*
 
 *Built with ❤️ for the Linux community by developers who believe in secure, efficient, and intelligent package management.*
 

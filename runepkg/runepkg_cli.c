@@ -30,6 +30,7 @@
 
 // Global variables
 bool g_verbose_mode = false;
+bool g_force_mode = false;
 
 // * @brief Prints the program's usage information.
 void usage(void) {
@@ -46,6 +47,7 @@ void usage(void) {
     printf("  -s, --status <package-name>             Show detailed information about a package.\n");
     printf("  -S, --search <query>                    Search for a package by name.\n");
     printf("  -v, --verbose                           Enable verbose output.\n");
+    printf("  -f, --force                             Force install even if dependencies are missing.\n");
     printf("      --version                           Print version information.\n");
     printf("  -h, --help                              Display this help message.\n\n");
     printf("      --print-config                      Print current configuration settings.\n");
@@ -55,11 +57,13 @@ void usage(void) {
 
 // --- Main Function ---
 int main(int argc, char *argv[]) {
-    // Check for verbose and JSON modes first, as they affect all subsequent output.
+    // Check for verbose and force modes first, as they affect all subsequent output.
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             g_verbose_mode = true;
-            break;
+        }
+        if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0) {
+            g_force_mode = true;
         }
     }
     
@@ -131,6 +135,16 @@ int main(int argc, char *argv[]) {
                     if (next_arg[0] == '@') {
                         i++;
                         handle_install_listfile(next_arg + 1);
+                        continue;
+                    }
+                    if (strcmp(next_arg, "-f") == 0 || strcmp(next_arg, "--force") == 0) {
+                        g_force_mode = true;
+                        i++;
+                        continue;
+                    }
+                    if (strcmp(next_arg, "-v") == 0 || strcmp(next_arg, "--verbose") == 0) {
+                        g_verbose_mode = true;
+                        i++;
                         continue;
                     }
                     if (next_arg[0] == '-' || strstr(next_arg, ".deb") == NULL) {

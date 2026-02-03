@@ -164,4 +164,11 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
  */
 int runepkg_util_execute_command(const char *command_path, char *const argv[]);
 
+/**
+ * @brief Parses the Depends field from a package control file.
+ * @param depends The depends string (e.g., "libc6 (>= 2.2.5), libsomething").
+ * @return A null-terminated array of package names, or NULL on error. Caller must free.
+ */
+char **parse_depends(const char *depends);
+
 #endif // RUNEPKG_UTIL_H

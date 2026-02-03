@@ -16,6 +16,7 @@
 #define RUNEPKG_HANDLE_H
 
 #include <stdbool.h>
+#include "runepkg_hash.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,12 @@ extern "C" {
 
 /* Global verbose flag defined in runepkg_cli.c */
 extern bool g_verbose_mode;
+
+/* Global force mode flag */
+extern bool g_force_mode;
+
+/* Hash table for tracking packages currently being installed (for cycle detection) */
+extern runepkg_hash_table_t *installing_packages;
 
 int runepkg_init(void);
 void runepkg_cleanup(void);
