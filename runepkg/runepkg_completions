@@ -19,7 +19,17 @@ _runepkg_completions() {
         mapfile -t pkglist < "${HOME}/.runepkg/pkglist.txt"
     fi
 
-    case "$prev" in
+    # Find the last command flag
+    local last_cmd=""
+    for ((i=1; i<cword; i++)); do
+        case "${words[i]}" in
+            -i|--install|-r|--remove|-s|--status|-S|--search|-L|--list-files)
+                last_cmd="${words[i]}"
+                ;;
+        esac
+    done
+
+    case "$last_cmd" in
         -i|--install|-S|--search)
             # Complete with file paths
             COMPREPLY=($(compgen -f -- "$cur"))

@@ -31,6 +31,7 @@
 // Global variables
 bool g_verbose_mode = false;
 bool g_force_mode = false;
+bool g_did_install = false;
 
 // * @brief Prints the program's usage information.
 void usage(void) {
@@ -130,7 +131,7 @@ int main(int argc, char *argv[]) {
     }
     
     // Register the cleanup function to be called on exit.
-    atexit(runepkg_cleanup);
+    // atexit(runepkg_cleanup);
 
     // Step 2: Execute commands based on the interleaved arguments.
     for (int i = 1; i < argc; ++i) {
@@ -142,11 +143,13 @@ int main(int argc, char *argv[]) {
                     if (strcmp(next_arg, "-") == 0) {
                         i++;
                         handle_install_stdin();
+                        g_did_install = true;
                         break;
                     }
                     if (next_arg[0] == '@') {
                         i++;
                         handle_install_listfile(next_arg + 1);
+                        g_did_install = true;
                         continue;
                     }
                     if (strcmp(next_arg, "-f") == 0 || strcmp(next_arg, "--force") == 0) {
@@ -162,8 +165,11 @@ int main(int argc, char *argv[]) {
                     if (next_arg[0] == '-') {
                         break; // Stop if it's a new command switch
                     }
-                    if (handle_install(next_arg) != 0 && failed_count < 100) {
+                    int ret = handle_install(next_arg);
+                    if (ret != 0 && failed_count < 100) {
                         failed_packages[failed_count++] = strdup(next_arg);
+                    } else if (ret == 0) {
+                        g_did_install = true;
                     }
                     i++;
                 }
@@ -290,6 +296,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (g_did_install) {
+        handle_update_pkglist();
+    }
+    runepkg_cleanup();
     return EXIT_SUCCESS;
-    // Note: The atexit handler will now call runepkg_cleanup()
+    // Note: Cleanup called manually
 }
