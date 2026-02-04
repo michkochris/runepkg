@@ -172,7 +172,7 @@ $(TARGET): $(OBJS)
 
 clean:
 	@echo "Cleaning up build artifacts..."
-	rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
+	rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) Cargo.lock
 	@rm -rf target
 	@echo "🧹 Clean complete."
 

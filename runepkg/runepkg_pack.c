@@ -194,7 +194,7 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
     runepkg_pack_init_package_info(pkg_info);
     
     if (!runepkg_util_file_exists(deb_path)) {
-        runepkg_util_error(".deb file not found: %s\n", deb_path);
+        runepkg_log_verbose(".deb file not found: %s\n", deb_path);
         return -1;
     }
     

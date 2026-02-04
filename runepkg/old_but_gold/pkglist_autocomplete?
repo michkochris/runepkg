@@ -1,0 +1,11 @@
+ok grok my solution for carried over pkglist auto complete on gnu linux.
+
+create 2 files named pkglist.bin, pkglist.txt.
+create a file in /etc/runepkg/ config_dir if you have too or user's specific runepkg ~/.runepkg config_dir
+its in cascading config system.
+runepkg runs and collects what pkglist info it can.
+create runepkg_completions in source tree.
+then bash-completion takes care of rest.
+i want to load entire pkglist like its a built in command option that automaticly
+auto completes when interleaved cammands are used.
+possible?

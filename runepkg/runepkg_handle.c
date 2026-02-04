@@ -26,6 +26,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/statvfs.h>
+#include <fnmatch.h>
+#include <sys/ioctl.h>
 
 #include "runepkg_handle.h"
 #include "runepkg_config.h"
@@ -36,6 +39,47 @@
 
 runepkg_hash_table_t *installing_packages = NULL;
 
+// Helper function to print package data header (used by handle_list and handle_remove)
+static int print_package_data_header(void) {
+    if (!g_runepkg_db_dir) {
+        return 0;
+    }
+
+    // Count packages
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) {
+        return 0;
+    }
+
+    int pkg_count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            pkg_count++;
+        }
+    }
+    closedir(dir);
+
+    // Calculate used space
+    off_t used_space = runepkg_util_get_dir_size(g_runepkg_db_dir);
+
+    // Get available space
+    struct statvfs vfs;
+    off_t avail_space = 0;
+    if (statvfs(g_runepkg_db_dir, &vfs) == 0) {
+        avail_space = (off_t)vfs.f_bavail * vfs.f_frsize;
+    }
+
+    // Format sizes
+    char used_str[32], avail_str[32];
+    runepkg_util_format_size(used_space, used_str, sizeof(used_str));
+    runepkg_util_format_size(avail_space, avail_str, sizeof(avail_str));
+
+    printf("Reading package data: %d packages, %s used, %s available\n", pkg_count, used_str, avail_str);
+    return pkg_count;
+}
+
+// Helper function to calculate directory size recursively
 /*
  * Calculate optimal number of threads for file operations
  * Based on available CPU cores and current system load
@@ -256,11 +300,47 @@ void* install_single_file(void *arg) {
     return NULL;
 }
 
-void handle_install(const char *deb_file_path) {
+int handle_install(const char *deb_file_path) {
     struct timespec start_time, end_time;
     clock_gettime(CLOCK_MONOTONIC, &start_time);
 
     runepkg_log_verbose("Installing package from: %s\n", deb_file_path);
+
+    // Handle patterns
+    if (strstr(deb_file_path, ".deb") == NULL) {
+        char pattern[PATH_MAX];
+        if (strstr(deb_file_path, "*") != NULL) {
+            strncpy(pattern, deb_file_path, sizeof(pattern) - 1);
+        } else {
+            snprintf(pattern, sizeof(pattern), "%s*.deb", deb_file_path);
+        }
+        glob_t globbuf;
+        int found = 0;
+        if (glob(pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
+            found = 1;
+        } else if (strstr(deb_file_path, "/") == NULL) {
+            // Try with debs/ prefix
+            char new_pattern[PATH_MAX];
+            if (strstr(deb_file_path, "*") != NULL) {
+                snprintf(new_pattern, sizeof(new_pattern), "debs/%s", deb_file_path);
+            } else {
+                snprintf(new_pattern, sizeof(new_pattern), "debs/%s*.deb", deb_file_path);
+            }
+            globfree(&globbuf);
+            if (glob(new_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
+                found = 1;
+            }
+        }
+        if (found) {
+            for(size_t k = 0; k < globbuf.gl_pathc; k++) {
+                handle_install(globbuf.gl_pathv[k]);
+            }
+            globfree(&globbuf);
+            return 0;
+        }
+        globfree(&globbuf);
+        return -1;
+    }
 
     if (g_verbose_mode) {
         struct stat file_stat;
@@ -275,7 +355,7 @@ void handle_install(const char *deb_file_path) {
 
     if (!g_control_dir) {
         runepkg_log_verbose("ERROR: g_control_dir is NULL - configuration not loaded properly\n");
-        return;
+        return -1;
     }
 
     PkgInfo pkg_info;
@@ -289,7 +369,7 @@ void handle_install(const char *deb_file_path) {
             (installing_packages && runepkg_hash_search(installing_packages, pkg_info.package_name))) {
             runepkg_log_verbose("Package %s already installed or installing, skipping\n", pkg_info.package_name);
             runepkg_pack_free_package_info(&pkg_info);
-            return;
+            return 0;
         }
 
         if (installing_packages) {
@@ -324,7 +404,7 @@ void handle_install(const char *deb_file_path) {
                                 for (int k = 0; deps[k]; k++) free(deps[k]);
                                 free(deps);
                                 runepkg_pack_free_package_info(&pkg_info);
-                                return;
+                                return -1;
                             } else {
                                 runepkg_log_verbose("Skipping missing dependency %s (force mode)\n", deps[j]);
                             }
@@ -344,10 +424,9 @@ void handle_install(const char *deb_file_path) {
         } else {
             printf("Selecting previously unselected package %s.\n",
                    pkg_info.package_name ? pkg_info.package_name : "(unknown)");
-            printf("Unpacking %s (%s) (from %s) ...\n",
+            printf("Unpacking %s (%s) ...\n",
                    pkg_info.package_name ? pkg_info.package_name : "(unknown)",
-                   pkg_info.version ? pkg_info.version : "(unknown)",
-                   deb_file_path);
+                   pkg_info.version ? pkg_info.version : "(unknown)");
         }
 
         if (runepkg_main_hash_table) {
@@ -534,7 +613,8 @@ void handle_install(const char *deb_file_path) {
         }
 
     } else {
-        printf("Error: Failed to extract package or collect information.\n");
+        runepkg_pack_free_package_info(&pkg_info);
+        return -1;
     }
 
     if (pkg_info.package_name && installing_packages) {
@@ -546,6 +626,8 @@ void handle_install(const char *deb_file_path) {
     clock_gettime(CLOCK_MONOTONIC, &end_time);
     double install_time = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1000000000.0;
     runepkg_log_verbose("Total installation time: %.6f seconds\n", install_time);
+
+    return 0;
 }
 
 void handle_remove_stdin(void) {
@@ -562,10 +644,10 @@ void handle_remove_stdin(void) {
     }
 }
 
-void handle_remove(const char *package_name) {
+int handle_remove(const char *package_name) {
     if (!package_name || package_name[0] == '\0') {
         printf("Error: remove requires a package name.\n");
-        return;
+        return -1;
     }
 
     char name_buf[PATH_MAX];
@@ -573,12 +655,12 @@ void handle_remove(const char *package_name) {
     char *trimmed = runepkg_util_trim_whitespace(name_buf);
     if (!trimmed || trimmed[0] == '\0') {
         printf("Error: remove requires a package name.\n");
-        return;
+        return -1;
     }
 
     if (!g_runepkg_db_dir) {
         printf("Error: runepkg database directory not configured.\n");
-        return;
+        return -1;
     }
 
     char pkg_name[PATH_MAX] = {0};
@@ -598,7 +680,7 @@ void handle_remove(const char *package_name) {
         DIR *dir = opendir(g_runepkg_db_dir);
         if (!dir) {
             printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
-            return;
+            return -1;
         }
 
         struct dirent *entry;
@@ -627,18 +709,77 @@ void handle_remove(const char *package_name) {
             strncpy(pkg_name, match_name, sizeof(pkg_name) - 1);
             strncpy(pkg_version, match_version, sizeof(pkg_version) - 1);
         } else if (match_count > 1) {
-            printf("Error: multiple installed packages match '%s'. Use full name from list.\n", package_name);
-            return;
+            // Multiple matches - show them like -l does
+            print_package_data_header();
+            printf("Looking for package... '%s' did you mean?\n", package_name);
+            
+            // Collect and display matching packages
+            char matches[100][PATH_MAX];
+            int match_idx = 0;
+            
+            // Re-scan directory to collect matches
+            DIR *list_dir = opendir(g_runepkg_db_dir);
+            if (list_dir) {
+                struct dirent *entry;
+                while ((entry = readdir(list_dir)) != NULL && match_idx < 100) {
+                    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                        if (strstr(entry->d_name, trimmed) != NULL) {
+                            strncpy(matches[match_idx], entry->d_name, PATH_MAX - 1);
+                            matches[match_idx][PATH_MAX - 1] = '\0';
+                            match_idx++;
+                        }
+                    }
+                }
+                closedir(list_dir);
+                
+                // Display in columns
+                const char *items[100];
+                for (int i = 0; i < match_idx; i++) {
+                    items[i] = matches[i];
+                }
+                runepkg_util_print_columns(items, match_idx);
+            }
+            
+            return -2; // Special code: showed suggestions, no removal performed
         } else {
-            printf("Error: package not installed: %s\n", trimmed);
-            return;
+            // No exact matches found - show suggestions if any packages contain the search string
+            char suggestions[100][PATH_MAX];
+            int suggestion_count = runepkg_util_get_package_suggestions(trimmed, g_runepkg_db_dir, suggestions, 100);
+            
+            if (suggestion_count > 0) {
+                // Show suggestions in the same clean format
+                print_package_data_header();
+                printf("Looking for package... '%s' did you mean?\n", package_name);
+                
+                const char *items[100];
+                for (int i = 0; i < suggestion_count; i++) {
+                    items[i] = suggestions[i];
+                }
+                runepkg_util_print_columns(items, suggestion_count);
+                return -2; // Suggestions shown, no removal performed
+            } else {
+                printf("Error: package not installed: %s\n", trimmed);
+                return -1;
+            }
         }
     }
 
     PkgInfo pkg_info;
     if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) != 0) {
         printf("Error: package not installed: %s-%s\n", pkg_name, pkg_version);
-        return;
+        return -1;
+    }
+
+    // Confirmation prompt in verbose mode
+    if (g_verbose_mode) {
+        printf("Do you want to remove package %s-%s? [y/N] ", pkg_name, pkg_version);
+        fflush(stdout);
+        char response[10];
+        if (fgets(response, sizeof(response), stdin) == NULL || (response[0] != 'y' && response[0] != 'Y')) {
+            printf("Removal cancelled.\n");
+            runepkg_pack_free_package_info(&pkg_info);
+            return -1;
+        }
     }
 
     if (g_system_install_root && pkg_info.file_list && pkg_info.file_count > 0) {
@@ -658,9 +799,12 @@ void handle_remove(const char *package_name) {
 
     if (runepkg_storage_remove_package(pkg_name, pkg_version) != 0) {
         printf("Warning: failed to remove package metadata for %s-%s\n", pkg_name, pkg_version);
-    } else {
-        printf("Removed package: %s-%s\n", pkg_name, pkg_version);
+        runepkg_pack_free_package_info(&pkg_info);
+        return -1;
     }
+
+    runepkg_pack_free_package_info(&pkg_info);
+    return 0;
 }
 
 void handle_version(void) {
@@ -669,20 +813,122 @@ void handle_version(void) {
     printf("Licensed under GPL v3\n");
 }
 
-void handle_list(void) {
+void handle_list(const char *pattern) {
     runepkg_log_verbose("Listing installed packages...\n");
+
+    print_package_data_header();
+
     printf("Listing installed packages...\n");
-    if (runepkg_storage_list_packages() != 0) {
-        printf("Warning: Failed to list packages from persistent storage.\n");
+    int listed = runepkg_storage_list_packages(pattern);
+    if (pattern && listed == 0) {
+        printf("No packages match '%s'.\n", pattern);
     }
     if (g_runepkg_db_dir) runepkg_log_verbose("  Database dir: %s\n", g_runepkg_db_dir);
 }
 
-void handle_status(const char *package_name) {
+int handle_status(const char *package_name) {
     if (!package_name || !g_runepkg_db_dir) {
         printf("Error: Invalid package name or config.\n");
+        return -1;
+    }
+
+    print_package_data_header();
+
+    // First pass: count exact matches
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) {
+        printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
+        return -1;
+    }
+
+    struct dirent *entry;
+    int exact_match_count = 0;
+    char exact_match_name[PATH_MAX] = {0};
+    char exact_match_version[PATH_MAX] = {0};
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        // Check for exact match first
+        if (strcmp(entry->d_name, package_name) == 0) {
+            exact_match_count = 1;
+            // For exact match, parse name and version from the directory name
+            char *last_dash = strrchr(entry->d_name, '-');
+            if (last_dash) {
+                size_t name_len = last_dash - entry->d_name;
+                strncpy(exact_match_name, entry->d_name, name_len);
+                exact_match_name[name_len] = '\0';
+                strcpy(exact_match_version, last_dash + 1);
+            } else {
+                // No version part, use the name as-is
+                strncpy(exact_match_name, entry->d_name, sizeof(exact_match_name) - 1);
+                exact_match_version[0] = '\0';
+            }
+            break; // Exact match found, no need to continue
+        }
+
+        // Check for prefix matches (for partial names like "binutils")
+        size_t name_len = strlen(package_name);
+        if (strncmp(entry->d_name, package_name, name_len) == 0 && entry->d_name[name_len] == '-') {
+            const char *ver = entry->d_name + name_len + 1;
+            if (*ver != '\0') {
+                exact_match_count++;
+                if (exact_match_count == 1) {
+                    // Store the first match
+                    strncpy(exact_match_name, package_name, sizeof(exact_match_name) - 1);
+                }
+            }
+        }
+    }
+    closedir(dir);
+
+    if (exact_match_count == 1) {
+        // Exactly one match - show status
+        PkgInfo pkg_info;
+        runepkg_pack_init_package_info(&pkg_info);
+        if (runepkg_storage_read_package_info(exact_match_name, exact_match_version, &pkg_info) == 0) {
+            printf("Package: %s\n", exact_match_name);
+            printf("Version: %s\n", pkg_info.version ? pkg_info.version : "(unknown)");
+            printf("Architecture: %s\n", pkg_info.architecture ? pkg_info.architecture : "(unknown)");
+            printf("Maintainer: %s\n", pkg_info.maintainer ? pkg_info.maintainer : "(unknown)");
+            printf("Description: %s\n", pkg_info.description ? pkg_info.description : "(unknown)");
+            printf("Depends: %s\n", pkg_info.depends ? pkg_info.depends : "(none)");
+            printf("Installed-Size: %s\n", pkg_info.installed_size ? pkg_info.installed_size : "(unknown)");
+            printf("Section: %s\n", pkg_info.section ? pkg_info.section : "(unknown)");
+            printf("Priority: %s\n", pkg_info.priority ? pkg_info.priority : "(unknown)");
+            printf("Homepage: %s\n", pkg_info.homepage ? pkg_info.homepage : "(unknown)");
+            printf("Files installed: %d\n", pkg_info.file_count);
+            runepkg_pack_free_package_info(&pkg_info);
+            return 0;
+        } else {
+            printf("Failed to read package info for %s %s.\n", exact_match_name, exact_match_version);
+            runepkg_pack_free_package_info(&pkg_info);
+            return -1;
+        }
+    } else {
+        // Multiple matches or no matches - show suggestions
+        printf("Looking for package... '%s' did you mean?\n", package_name);
+        char suggestions[100][PATH_MAX];
+        int match_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
+        if (match_count > 0) {
+            const char *items[100];
+            for (int i = 0; i < match_count; i++) {
+                items[i] = suggestions[i];
+            }
+            runepkg_util_print_columns(items, match_count);
+        }
+        return -2; // Special code: showed suggestions, no status shown
+    }
+}
+
+void handle_search(const char *file_pattern) {
+    if (!file_pattern || !g_runepkg_db_dir) {
+        printf("Error: Invalid file pattern or config.\n");
         return;
     }
+
+    print_package_data_header();
 
     DIR *dir = opendir(g_runepkg_db_dir);
     if (!dir) {
@@ -691,47 +937,53 @@ void handle_status(const char *package_name) {
     }
 
     struct dirent *entry;
-    char *version = NULL;
-    char pkg_dir[PATH_MAX];
+    int found_matches = 0;
+
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strncmp(entry->d_name, package_name, strlen(package_name)) == 0 &&
-            entry->d_name[strlen(package_name)] == '-') {
-            version = strdup(entry->d_name + strlen(package_name) + 1); // After "pkg-"
-            snprintf(pkg_dir, sizeof(pkg_dir), "%s/%s", g_runepkg_db_dir, entry->d_name);
-            break;
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        // Parse package name and version from directory name
+        char *pkg_name = NULL;
+        char *pkg_version = NULL;
+        char *last_dash = strrchr(entry->d_name, '-');
+        if (last_dash) {
+            size_t name_len = last_dash - entry->d_name;
+            pkg_name = malloc(name_len + 1);
+            if (pkg_name) {
+                strncpy(pkg_name, entry->d_name, name_len);
+                pkg_name[name_len] = '\0';
+            }
+            pkg_version = strdup(last_dash + 1);
+        } else {
+            pkg_name = strdup(entry->d_name);
+            pkg_version = strdup("");
         }
+
+        // Read package info
+        PkgInfo pkg_info;
+        runepkg_pack_init_package_info(&pkg_info);
+
+        if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) == 0) {
+            // Check if any files match the pattern
+            for (int i = 0; i < pkg_info.file_count; i++) {
+                if (strstr(pkg_info.file_list[i], file_pattern) != NULL) {
+                    printf("%s: %s\n", pkg_name, pkg_info.file_list[i]);
+                    found_matches = 1;
+                }
+            }
+        }
+
+        runepkg_pack_free_package_info(&pkg_info);
+        free(pkg_name);
+        free(pkg_version);
     }
+
     closedir(dir);
 
-    if (!version) {
-        printf("Package %s is not installed.\n", package_name);
-        return;
+    if (!found_matches) {
+        printf("No packages found containing files matching '%s'\n", file_pattern);
     }
-
-    PkgInfo pkg_info;
-    runepkg_pack_init_package_info(&pkg_info);
-    if (runepkg_storage_read_package_info(package_name, version, &pkg_info) == 0) {
-        printf("Package: %s\n", pkg_info.package_name ? pkg_info.package_name : "(unknown)");
-        printf("Version: %s\n", pkg_info.version ? pkg_info.version : "(unknown)");
-        printf("Architecture: %s\n", pkg_info.architecture ? pkg_info.architecture : "(unknown)");
-        printf("Maintainer: %s\n", pkg_info.maintainer ? pkg_info.maintainer : "(unknown)");
-        printf("Description: %s\n", pkg_info.description ? pkg_info.description : "(unknown)");
-        printf("Depends: %s\n", pkg_info.depends ? pkg_info.depends : "(none)");
-        printf("Installed-Size: %s\n", pkg_info.installed_size ? pkg_info.installed_size : "(unknown)");
-        printf("Section: %s\n", pkg_info.section ? pkg_info.section : "(unknown)");
-        printf("Priority: %s\n", pkg_info.priority ? pkg_info.priority : "(unknown)");
-        printf("Homepage: %s\n", pkg_info.homepage ? pkg_info.homepage : "(unknown)");
-        printf("Files installed: %d\n", pkg_info.file_count);
-    } else {
-        printf("Failed to read package info for %s %s.\n", package_name, version);
-    }
-
-    runepkg_pack_free_package_info(&pkg_info);
-    free(version);
-}
-
-void handle_search(const char *query) {
-    printf("Searching for packages with query: %s (placeholder)\n", query);
 }
 
 void handle_print_config(void) {
@@ -761,5 +1013,58 @@ void handle_print_config_file(void) {
         printf("  2. /etc/runepkg/runepkgconfig (system-wide)\n");
         printf("  3. ~/.runepkgconfig (user-specific)\n");
     }
+}
+
+void handle_update_pkglist(void) {
+    if (!g_runepkg_db_dir) {
+        fprintf(stderr, "Error: Database directory not configured.\n");
+        return;
+    }
+
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) {
+        fprintf(stderr, "Error: Cannot open database directory: %s\n", g_runepkg_db_dir);
+        return;
+    }
+
+    FILE *txt_file = fopen(g_pkglist_txt_path, "w");
+    if (!txt_file) {
+        fprintf(stderr, "Error: Cannot open pkglist.txt for writing: %s\n", g_pkglist_txt_path);
+        closedir(dir);
+        return;
+    }
+
+    // For bin, just copy txt for now
+    FILE *bin_file = fopen(g_pkglist_bin_path, "w");
+    if (!bin_file) {
+        fprintf(stderr, "Error: Cannot open pkglist.bin for writing: %s\n", g_pkglist_bin_path);
+        fclose(txt_file);
+        closedir(dir);
+        return;
+    }
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        // Extract package name: everything before the last -
+        char *last_dash = strrchr(entry->d_name, '-');
+        if (last_dash) {
+            *last_dash = '\0'; // Temporarily null-terminate
+            fprintf(txt_file, "%s\n", entry->d_name);
+            fprintf(bin_file, "%s\n", entry->d_name);
+            *last_dash = '-'; // Restore
+        } else {
+            fprintf(txt_file, "%s\n", entry->d_name);
+            fprintf(bin_file, "%s\n", entry->d_name);
+        }
+    }
+
+    fclose(txt_file);
+    fclose(bin_file);
+    closedir(dir);
+
+    printf("Package list updated.\n");
 }
 

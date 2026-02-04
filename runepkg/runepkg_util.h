@@ -171,4 +171,43 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]);
  */
 char **parse_depends(const char *depends);
 
+/**
+ * @brief Calculates the total size of a directory recursively.
+ * @param path The path to the directory.
+ * @return The total size in bytes, or 0 on error.
+ */
+off_t runepkg_util_get_dir_size(const char *path);
+
+/**
+ * @brief Formats a size in bytes to a human-readable string (KB/MB/GB).
+ * @param size_bytes The size in bytes.
+ * @param buffer The buffer to store the formatted string.
+ * @param buffer_size The size of the buffer.
+ * @return A pointer to the buffer containing the formatted string.
+ */
+char *runepkg_util_format_size(off_t size_bytes, char *buffer, size_t buffer_size);
+
+/**
+ * @brief Gets the terminal width, falling back to 80 if unavailable.
+ * @return The terminal width in columns.
+ */
+int runepkg_util_get_terminal_width(void);
+
+/**
+ * @brief Prints an array of strings in columnar format to fit the terminal width.
+ * @param items Array of strings to print.
+ * @param count Number of items in the array.
+ */
+void runepkg_util_print_columns(const char *items[], int count);
+
+/**
+ * @brief Generates package name suggestions based on a search string.
+ * @param search_name The name to search for.
+ * @param db_dir The database directory to search in.
+ * @param suggestions Array to store suggestions (must be pre-allocated).
+ * @param max_suggestions Maximum number of suggestions to return.
+ * @return Number of suggestions found.
+ */
+int runepkg_util_get_package_suggestions(const char *search_name, const char *db_dir, char suggestions[][PATH_MAX], int max_suggestions);
+
 #endif // RUNEPKG_UTIL_H

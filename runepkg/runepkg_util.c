@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <sys/ioctl.h>
 
 // Define PATH_MAX if not defined
 #ifndef PATH_MAX
@@ -672,4 +673,130 @@ char **parse_depends(const char *depends) {
 
     free(copy);
     return result;
+}
+
+// --- File System Utilities ---
+
+off_t runepkg_util_get_dir_size(const char *path) {
+    DIR *dir = opendir(path);
+    if (!dir) return 0;
+
+    off_t total = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        char fullpath[PATH_MAX];
+        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+
+        struct stat st;
+        if (stat(fullpath, &st) == 0) {
+            if (S_ISDIR(st.st_mode)) {
+                total += runepkg_util_get_dir_size(fullpath);
+            } else {
+                total += st.st_size;
+            }
+        }
+    }
+    closedir(dir);
+    return total;
+}
+
+// --- String Formatting Utilities ---
+
+char *runepkg_util_format_size(off_t size_bytes, char *buffer, size_t buffer_size) {
+    if (!buffer || buffer_size == 0) return NULL;
+
+    double size;
+    const char *unit;
+
+    if (size_bytes >= 1024LL * 1024 * 1024) {
+        size = (double)size_bytes / (1024 * 1024 * 1024);
+        unit = "GB";
+    } else if (size_bytes >= 1024 * 1024) {
+        size = (double)size_bytes / (1024 * 1024);
+        unit = "MB";
+    } else if (size_bytes >= 1024) {
+        size = (double)size_bytes / 1024;
+        unit = "KB";
+    } else {
+        size = (double)size_bytes;
+        unit = "B";
+    }
+
+    if (size_bytes >= 1024) {
+        snprintf(buffer, buffer_size, "%.1f %s", size, unit);
+    } else {
+        snprintf(buffer, buffer_size, "%.0f %s", size, unit);
+    }
+
+    return buffer;
+}
+
+// --- Terminal Utilities ---
+
+int runepkg_util_get_terminal_width(void) {
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
+        return w.ws_col;
+    }
+    return 80; // fallback
+}
+
+// --- Output Formatting Utilities ---
+
+void runepkg_util_print_columns(const char *items[], int count) {
+    if (!items || count <= 0) return;
+
+    // Find maximum length
+    size_t max_len = 0;
+    for (int i = 0; i < count; i++) {
+        if (items[i]) {
+            size_t len = strlen(items[i]);
+            if (len > max_len) max_len = len;
+        }
+    }
+
+    int col_width = max_len + 2;
+    int width = runepkg_util_get_terminal_width();
+    int cols = width / col_width;
+    if (cols < 1) cols = 1;
+    int rows = (count + cols - 1) / cols;
+
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            int idx = r * cols + c;
+            if (idx < count && items[idx]) {
+                printf("%-*s", col_width, items[idx]);
+            }
+        }
+        printf("\n");
+    }
+}
+
+// --- Package Suggestion Utilities ---
+
+int runepkg_util_get_package_suggestions(const char *search_name, const char *db_dir, char suggestions[][PATH_MAX], int max_suggestions) {
+    if (!search_name || !db_dir || !suggestions || max_suggestions <= 0) {
+        return 0;
+    }
+
+    DIR *dir = opendir(db_dir);
+    if (!dir) {
+        return 0;
+    }
+
+    int suggestion_count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL && suggestion_count < max_suggestions) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            if (strstr(entry->d_name, search_name) != NULL) {
+                strncpy(suggestions[suggestion_count], entry->d_name, PATH_MAX - 1);
+                suggestions[suggestion_count][PATH_MAX - 1] = '\0';
+                suggestion_count++;
+            }
+        }
+    }
+    closedir(dir);
+    return suggestion_count;
 }

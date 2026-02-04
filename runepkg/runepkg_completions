@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Bash completion for runepkg
+# This script provides autocompletion for runepkg commands and package names
+
+_runepkg_completions() {
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    local prev=${COMP_WORDS[COMP_CWORD-1]}
+    local words=("${COMP_WORDS[@]}")
+    local cword=$COMP_CWORD
+
+    # Load package list from cascading config locations
+    local pkglist=()
+    # System-wide first
+    if [[ -f "/etc/runepkg/pkglist.txt" ]]; then
+        mapfile -t pkglist < "/etc/runepkg/pkglist.txt"
+    # Then user-specific
+    elif [[ -f "${HOME}/.runepkg/pkglist.txt" ]]; then
+        mapfile -t pkglist < "${HOME}/.runepkg/pkglist.txt"
+    fi
+
+    case "$prev" in
+        -i|--install|-S|--search)
+            # Complete with file paths
+            COMPREPLY=($(compgen -f -- "$cur"))
+            ;;
+        -r|--remove|-s|--status|-L|--list-files)
+            # Complete with package names
+            COMPREPLY=($(compgen -W "${pkglist[*]}" -- "$cur"))
+            ;;
+        *)
+            # Complete with options and package names
+            local options="-i --install -r --remove -l --list -s --status -L --list-files -S --search -v --verbose -f --force --version -h --help --print-config --print-config-file --update-pkglist"
+            if [[ $cur == -* ]]; then
+                COMPREPLY=($(compgen -W "$options" -- "$cur"))
+            else
+                COMPREPLY=($(compgen -W "$options ${pkglist[*]}" -- "$cur"))
+            fi
+            ;;
+    esac
+}
+
+complete -F _runepkg_completions runepkg

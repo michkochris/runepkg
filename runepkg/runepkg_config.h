@@ -30,6 +30,8 @@ extern char *g_control_dir;
 extern char *g_runepkg_db_dir; // Database directory for persistent storage
 extern char *g_install_dir_internal;
 extern char *g_system_install_root;
+extern char *g_pkglist_txt_path;
+extern char *g_pkglist_bin_path;
 
 // --- Function Prototypes for Configuration Management ---
 

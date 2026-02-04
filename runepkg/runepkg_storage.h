@@ -86,7 +86,7 @@ int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version
  * @brief Lists all packages in persistent storage
  * @return 0 on success, -1 on failure
  */
-int runepkg_storage_list_packages(void);
+int runepkg_storage_list_packages(const char *pattern);
 
 /**
  * @brief Gets the full path to a package directory

@@ -34,18 +34,19 @@ extern runepkg_hash_table_t *installing_packages;
 int runepkg_init(void);
 void runepkg_cleanup(void);
 
-void handle_install(const char *deb_file_path);
+int handle_install(const char *deb_file_path);
 void handle_install_stdin(void);
 void handle_install_listfile(const char *path);
-void handle_remove(const char *package_name);
+int handle_remove(const char *package_name);
 void handle_remove_stdin(void);
 
-void handle_list(void);
-void handle_status(const char *package_name);
+void handle_list(const char *pattern);
+int handle_status(const char *package_name);
 void handle_search(const char *query);
 void handle_print_config(void);
 void handle_print_config_file(void);
 void handle_version(void);
+void handle_update_pkglist(void);
 
 #ifdef __cplusplus
 }

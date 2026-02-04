@@ -29,11 +29,18 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
+#include <fnmatch.h>
 
 #include "runepkg_storage.h"
 #include "runepkg_config.h"
 #include "runepkg_util.h"
 static int runepkg_storage_remove_dir_recursive(const char *path);
+
+// Compare function for qsort
+static int compare_packages(const void *a, const void *b) {
+    return strcmp(*(const char **)a, *(const char **)b);
+}
 
 // --- Public Storage Functions ---
 
@@ -114,7 +121,7 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
 
     FILE *bin_file = fopen(binary_file_path, "wb");
     if (!bin_file) {
-        printf("Error: Failed to open binary file for writing: %s\n", binary_file_path);
+        runepkg_log_verbose("Failed to open binary file for writing: %s\n", binary_file_path);
         return -1;
     }
 
@@ -192,7 +199,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
 
     FILE *bin_file = fopen(binary_file_path, "rb");
     if (!bin_file) {
-        printf("Error: Failed to open binary file for reading: %s\n", binary_file_path);
+        runepkg_log_verbose("Failed to open binary file for reading: %s\n", binary_file_path);
         return -1;
     }
 
@@ -368,7 +375,7 @@ static int runepkg_storage_remove_dir_recursive(const char *path) {
 /**
  * @brief Lists all packages in persistent storage
  */
-int runepkg_storage_list_packages(void) {
+int runepkg_storage_list_packages(const char *pattern) {
     if (!g_runepkg_db_dir) {
         printf("Error: runepkg database directory not configured.\n");
         return -1;
@@ -383,22 +390,60 @@ int runepkg_storage_list_packages(void) {
     }
 
     struct dirent *entry;
-    bool first = true;
+    char *packages[1024];
+    int count = 0;
+    size_t max_len = 0;
     
-    while ((entry = readdir(dir)) != NULL) {
+    while ((entry = readdir(dir)) != NULL && count < 1024) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            if (!first) {
-                printf(" ");
+            if (!pattern || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) {
+                packages[count] = strdup(entry->d_name);
+                if (packages[count]) {
+                    size_t len = strlen(packages[count]);
+                    if (len > max_len) max_len = len;
+                    count++;
+                }
             }
-            printf("%s", entry->d_name);
-            first = false;
         }
     }
 
-    if (!first) {
+    closedir(dir);
+
+    if (count == 0) {
+        return 0; // No packages
+    }
+
+    // Sort packages alphabetically
+    qsort(packages, count, sizeof(char *), compare_packages);
+
+    // Get terminal width
+    struct winsize w;
+    int width = 80; // default
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
+        width = w.ws_col;
+    }
+
+    // Calculate number of columns
+    int col_width = max_len + 2; // +2 for spacing
+    int cols = width / col_width;
+    if (cols < 1) cols = 1;
+
+    // Print in columns
+    int rows = (count + cols - 1) / cols; // ceil(count / cols)
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            int idx = r * cols + c;
+            if (idx < count) {
+                printf("%-*s", (int)col_width, packages[idx]);
+            }
+        }
         printf("\n");
     }
 
-    closedir(dir);
-    return 0;
+    // Free memory
+    for (int i = 0; i < count; i++) {
+        free(packages[i]);
+    }
+
+    return count;
 }

@@ -44,14 +44,16 @@ void usage(void) {
     printf("  -r, --remove <package-name>             Remove a package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
     printf("  -l, --list                              List all installed packages.\n");
+    printf("      --list <pattern>                    List installed packages matching pattern.\n");
     printf("  -s, --status <package-name>             Show detailed information about a package.\n");
-    printf("  -S, --search <query>                    Search for a package by name.\n");
+    printf("  -S, --search <file-path>                Search for packages containing files matching path.\n");
     printf("  -v, --verbose                           Enable verbose output.\n");
     printf("  -f, --force                             Force install even if dependencies are missing.\n");
     printf("      --version                           Print version information.\n");
     printf("  -h, --help                              Display this help message.\n\n");
     printf("      --print-config                      Print current configuration settings.\n");
     printf("      --print-config-file                 Print path to configuration file in use.\n");
+    printf("      --update-pkglist                    Update the package list for autocompletion.\n");
     printf("Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'\n");
 }
 
@@ -101,6 +103,16 @@ int main(int argc, char *argv[]) {
             handle_print_config_file();
             return EXIT_SUCCESS;
         }
+        if (strcmp(argv[i], "--update-pkglist") == 0) {
+            // Initialize first to load config, then update pkglist
+            if (runepkg_init() != 0) {
+                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
+                return EXIT_FAILURE;
+            }
+            handle_update_pkglist();
+            runepkg_cleanup();
+            return EXIT_SUCCESS;
+        }
     }
 
     if (argc < 2) {
@@ -122,8 +134,8 @@ int main(int argc, char *argv[]) {
 
     // Step 2: Execute commands based on the interleaved arguments.
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0) {
-            if (i + 1 < argc) {
+        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0) {            char *failed_packages[100];
+            int failed_count = 0;            if (i + 1 < argc) {
                 // Loop to handle multiple .deb files
                 while (i + 1 < argc) {
                     char *next_arg = argv[i+1];
@@ -147,16 +159,38 @@ int main(int argc, char *argv[]) {
                         i++;
                         continue;
                     }
-                    if (next_arg[0] == '-' || strstr(next_arg, ".deb") == NULL) {
-                        break; // Stop if it's a new command switch or not a .deb file
+                    if (next_arg[0] == '-') {
+                        break; // Stop if it's a new command switch
                     }
-                    handle_install(next_arg);
+                    if (handle_install(next_arg) != 0 && failed_count < 100) {
+                        failed_packages[failed_count++] = strdup(next_arg);
+                    }
                     i++;
                 }
             } else {
                 handle_install_stdin();
             }
+            if (failed_count > 0) {
+                printf("looking for packages...\n");
+                for(int j = 0; j < failed_count; j++) {
+                    printf("%s\n", failed_packages[j]);
+                    free(failed_packages[j]);
+                }
+                char cwd[PATH_MAX];
+                if (getcwd(cwd, sizeof(cwd))) {
+                    printf("not found, are you sure it's the right directory? listing contents:\n");
+                    char cmd[PATH_MAX + 10];
+                    snprintf(cmd, sizeof(cmd), "ls \"%s\"", cwd);
+                    system(cmd);
+                } else {
+                    printf("not found, are you sure it's the right directory?\n");
+                }
+            }
         } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0) {
+            char *removed_packages[100];
+            int removed_count = 0;
+            char *failed_packages[100];
+            int failed_count = 0;
             if (i + 1 < argc) {
                 while (i + 1 < argc) {
                     char *next_arg = argv[i+1];
@@ -168,17 +202,73 @@ int main(int argc, char *argv[]) {
                     if (next_arg[0] == '-') {
                         break;
                     }
-                    handle_remove(next_arg);
+                    int ret = handle_remove(next_arg);
+                    if (ret == 0) {
+                        // Successful removal
+                        if (removed_count < 100) {
+                            removed_packages[removed_count++] = strdup(next_arg);
+                        }
+                    } else if (ret == -2) {
+                        // Suggestions shown, no removal attempted - do nothing
+                        // The suggestions were already displayed by handle_remove
+                    } else if (ret != 0 && failed_count < 100) {
+                        // Package not found
+                        failed_packages[failed_count++] = strdup(next_arg);
+                    }
                     i++;
                 }
             } else {
                 handle_remove_stdin();
             }
+            if (removed_count > 0) {
+                printf("Successfully removed packages:\n");
+                for(int j = 0; j < removed_count; j++) {
+                    if(j > 0) printf(" ");
+                    printf("%s", removed_packages[j]);
+                    free(removed_packages[j]);
+                }
+                printf("\n");
+            }
+            if (failed_count > 0) {
+                printf("Failed to find packages:\n");
+                for(int j = 0; j < failed_count; j++) {
+                    printf("  %s", failed_packages[j]);
+                    
+                    // Show suggestions for this failed package
+                    char suggestions[10][PATH_MAX];
+                    int suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
+                    if (suggestion_count > 0) {
+                        printf(" - did you mean:\n");
+                        const char *items[10];
+                        for (int k = 0; k < suggestion_count; k++) {
+                            items[k] = suggestions[k];
+                        }
+                        printf("    ");
+                        runepkg_util_print_columns(items, suggestion_count);
+                    } else {
+                        printf(" - not found\n");
+                    }
+                    
+                    free(failed_packages[j]);
+                }
+            }
         } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0) {
-            handle_list();
+            const char *pattern = NULL;
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                pattern = argv[i+1];
+                i++;
+            }
+            handle_list(pattern);
         } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0) {
             if (i + 1 < argc) {
-                handle_status(argv[i+1]);
+                int ret = handle_status(argv[i+1]);
+                if (ret == -2) {
+                    // Suggestions shown, no status displayed - do nothing
+                    // The suggestions were already displayed by handle_status
+                } else if (ret != 0) {
+                    // Error occurred
+                    runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+1]);
+                }
                 i++;
             } else {
                 runepkg_log_verbose("Error: -s/--status requires a package name.");
@@ -188,7 +278,7 @@ int main(int argc, char *argv[]) {
                 handle_search(argv[i+1]);
                 i++;
             } else {
-                runepkg_log_verbose("Error: -S/--search requires a query.");
+                runepkg_log_verbose("Error: -S/--search requires a file path pattern.");
             }
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             // Already handled at the start of main
