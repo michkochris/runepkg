@@ -86,7 +86,7 @@ char *runepkg_get_config_file_path() {
     char *home_dir = getenv("HOME");
     if (home_dir) {
         char user_config_path[PATH_MAX];
-        snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkg/runepkgconfig", home_dir);
+        snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkgconfig", home_dir);
         if (runepkg_util_file_exists(user_config_path)) {
             runepkg_log_verbose("Using user-specific configuration: %s\n", user_config_path);
             config_file_path = strdup(user_config_path);

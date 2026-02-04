@@ -57,7 +57,7 @@ _runepkg_completions() {
             ;;
         *)
             # Complete with options and package names
-            local options="-i --install -r --remove -l --list -s --status -L --list-files -S --search -v --verbose -f --force --version -h --help --print-config --print-config-file --print-pkglist-file --update-pkglist"
+            local options="-i --install -r --remove -l --list -s --status -L --list-files -S --search -v --verbose -f --force --version -h --help --print-config --print-config-file --print-pkglist-file"
             if [[ $cur == -* ]]; then
                 COMPREPLY=($(compgen -W "$options" -- "$cur"))
             else

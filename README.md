@@ -23,7 +23,7 @@ sudo make install
 
 # This automatically installs:
 # - Binary to /usr/bin/runepkg
-# - Bash completion to /etc/bash_completion.d/runepkg
+# - Bash completion to /usr/share/bash-completion/completions/runepkg
 # - System config to /etc/runepkg/runepkgconfig
 ```
 ⚡ Build complete messages are shown by the build system.
@@ -60,7 +60,6 @@ Commands and Options:
         --print-config                      Print current configuration settings.
         --print-config-file                 Print path to configuration file in use.
         --print-pkglist-file                Print paths to autocomplete files.
-        --update-pkglist                    Update the directory list for autocompletion (automatic after installs).
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 ```
 

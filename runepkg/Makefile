@@ -136,7 +136,7 @@ OBJS = $(C_SOURCES:.c=.o) $(CPP_SOURCES:.cpp=.o)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h runepkg_defensive.h $(RUST_HEADERS) $(CPP_HEADERS)
 
 # Phony targets - Updated to include FFI targets
-.PHONY: all clean clean-all install debug run termux-install create-user-config uninstall test info rust-lib with-rust clean-rust test-rust with-cpp clean-cpp with-all clean-all test-all test-memory test-security test-performance test-comprehensive clean-tests
+.PHONY: all clean clean-all install debug run termux-install uninstall test info rust-lib with-rust clean-rust test-rust with-cpp clean-cpp with-all clean-all test-all test-memory test-security test-performance test-comprehensive clean-tests
 
 .DEFAULT_GOAL := runepkg
 
@@ -153,6 +153,8 @@ DESTDIR ?=
 PREFIX ?= /usr
 # ETCDIR is where the system-wide configuration goes
 ETCDIR ?= /etc
+# COMPLETION_DIR is where bash completion scripts go
+COMPLETION_DIR ?= /usr/share/bash-completion/completions
 # TERMUX_PREFIX is the base directory for Termux installs
 TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 
@@ -187,21 +189,6 @@ test-binary: $(TARGET)
 		exit 1; \
 	fi
 
-# Create user-specific configuration, separate from the install process
-create-user-config:
-	@echo "Creating user configuration..."
-	@if [ ! -f ~/.runepkgconfig ]; then \
-		if [ -f runepkgconfig ]; then \
-			cp runepkgconfig ~/.runepkgconfig; \
-			echo "Default runepkgconfig created at ~/.runepkgconfig"; \
-		else \
-			echo "ERROR: runepkgconfig file not found in current directory!"; \
-			exit 1; \
-		fi; \
-	else \
-		echo "runepkgconfig already exists at ~/.runepkgconfig. Not overwriting."; \
-	fi
-
 # The main install target for standard Linux systems
 # This installs the binary to PREFIX/bin and config based on privileges
 # With sudo/elevated privileges: installs config to ETCDIR/runepkg/runepkgconfig
@@ -230,12 +217,13 @@ install: runepkg
 			echo "Installing system-wide configuration to $(DESTDIR)$(ETCDIR)/runepkg..."; \
 			mkdir -p $(DESTDIR)$(ETCDIR)/runepkg; \
 			cp runepkgconfig $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
+			sed -i 's|~/|/var/lib/|g' $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
 			chmod 644 $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
 			echo "Configuration file installed to $(ETCDIR)/runepkg/runepkgconfig"; \
 			echo "=== Linux Installation Complete (System-wide) ==="; \
 			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
 			echo "System config: $(ETCDIR)/runepkg/runepkgconfig"; \
-			echo "Bash completion: $(ETCDIR)/bash_completion.d/runepkg"; \
+			echo "Bash completion: $(COMPLETION_DIR)/runepkg"; \
 			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
 				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 			fi; \
@@ -247,7 +235,7 @@ install: runepkg
 			echo "=== Linux Installation Complete (User-specific) ==="; \
 			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
 			echo "User config: ~/.runepkgconfig"; \
-			echo "Bash completion: $(ETCDIR)/bash_completion.d/runepkg"; \
+			echo "Bash completion: $(COMPLETION_DIR)/runepkg"; \
 			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
 				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 			fi; \
@@ -257,10 +245,10 @@ install: runepkg
 	fi
 	@echo "Installing bash completion..."
 	@if [ -f runepkg_completions ]; then \
-		mkdir -p $(DESTDIR)$(ETCDIR)/bash_completion.d; \
-		cp runepkg_completions $(DESTDIR)$(ETCDIR)/bash_completion.d/runepkg; \
-		chmod 644 $(DESTDIR)$(ETCDIR)/bash_completion.d/runepkg; \
-		echo "Bash completion installed to $(ETCDIR)/bash_completion.d/runepkg"; \
+		mkdir -p $(DESTDIR)$(COMPLETION_DIR); \
+		cp runepkg_completions $(DESTDIR)$(COMPLETION_DIR)/runepkg; \
+		chmod 644 $(DESTDIR)$(COMPLETION_DIR)/runepkg; \
+		echo "Bash completion installed to $(COMPLETION_DIR)/runepkg"; \
 	else \
 		echo "WARNING: runepkg_completions file not found in current directory!"; \
 	fi
@@ -271,9 +259,8 @@ install: runepkg
 	@echo "  3. ~/.runepkgconfig (user-specific)"
 	@echo ""
 	@echo "Bash completion will be loaded automatically in new bash sessions."
-	@echo "To load completion in current session: source $(ETCDIR)/bash_completion.d/runepkg"
+	@echo "To load completion in current session: source $(COMPLETION_DIR)/runepkg"
 	@echo ""
-	@echo "To manually create a user-specific config, run: make create-user-config"
 
 # Termux-specific install target
 # This installs the binary to TERMUX_PREFIX/bin and creates user config at ~/.runepkgconfig
@@ -350,6 +337,23 @@ uninstall:
 				echo "Attempting sudo rm $$l..."; sudo rm -f "$$l" && echo "Removed $$l (via sudo)" || echo "Failed to remove $$l via sudo"; \
 			else \
 				echo "ERROR: Cannot remove $$l (insufficient privileges). To remove manually run: sudo rm -f $$l"; \
+			fi; \
+		fi; \
+	done; \
+	# Remove bash completion
+	@COMPLETION_CANDIDATES="$(DESTDIR)$(COMPLETION_DIR)/$(TARGET) /usr/share/bash-completion/completions/$(TARGET)"; \
+	for comp in $$COMPLETION_CANDIDATES; do \
+		if [ -f "$$comp" ]; then \
+			echo "Found $$comp"; \
+			DIR=$$(dirname "$$comp"); \
+			if [ "$(shell id -u)" = "0" ]; then \
+				echo "Removing $$comp..."; rm -f "$$comp" && echo "Removed $$comp" || echo "Failed to remove $$comp"; \
+			elif [ -w "$$DIR" ]; then \
+				echo "Removing $$comp..."; rm -f "$$comp" && echo "Removed $$comp" || echo "Failed to remove $$comp"; \
+			elif command -v sudo >/dev/null 2>&1; then \
+				echo "Attempting sudo rm $$comp..."; sudo rm -f "$$comp" && echo "Removed $$comp (via sudo)" || echo "Failed to remove $$comp via sudo"; \
+			else \
+				echo "ERROR: Cannot remove $$comp (insufficient privileges). To remove manually run: sudo rm -f $$comp"; \
 			fi; \
 		fi; \
 	done; \
@@ -457,7 +461,7 @@ version: runepkg
 	./$(TARGET) --version
 
 # Development target - build and test verbose mode (requires config file)
-test-verbose: runepkg create-user-config
+test-verbose: runepkg
 	@echo "Testing $(TARGET) in verbose mode..."
 	./$(TARGET) -v --version
 
@@ -821,90 +825,4 @@ test-help:
 
 # =============================================================================
 # === END TESTING FRAMEWORK ===
-# =============================================================================
-
-# =============================================================================
-# === INSTALLATION ===
-# =============================================================================
-
-# Install runepkg system-wide
-install: runepkg
-	@echo "Installing runepkg for Linux system to /usr/bin..."
-	@mkdir -p /usr/bin
-	@cp runepkg /usr/bin/runepkg
-	@chmod 755 /usr/bin/runepkg
-	@echo "Installing bash completion to /etc/bash_completion.d/..."
-	@mkdir -p /etc/bash_completion.d
-	@cp runepkg_completions /etc/bash_completion.d/runepkg
-	@chmod 644 /etc/bash_completion.d/runepkg
-	@echo "Determining configuration installation location..."
-	@if [ -w /etc ]; then \
-		echo "Installing system-wide configuration to /etc/runepkg..."; \
-		mkdir -p /etc/runepkg; \
-		if [ ! -f /etc/runepkg/runepkgconfig ]; then \
-			cp runepkgconfig /etc/runepkg/runepkgconfig; \
-		fi; \
-		echo "Configuration file installed to /etc/runepkg/runepkgconfig"; \
-	else \
-		echo "Installing user configuration to ~/.runepkg..."; \
-		mkdir -p ~/.runepkg; \
-		if [ ! -f ~/.runepkg/runepkgconfig ]; then \
-			cp runepkgconfig ~/.runepkg/runepkgconfig; \
-		fi; \
-		echo "Configuration file installed to ~/.runepkg/runepkgconfig"; \
-	fi
-	@echo "=== Linux Installation Complete (System-wide) ==="
-	@echo "Binary: /usr/bin/runepkg"
-	@echo "Completion: /etc/bash_completion.d/runepkg"
-	@if [ -f /etc/runepkg/runepkgconfig ]; then \
-		echo "System config: /etc/runepkg/runepkgconfig"; \
-	else \
-		echo "User config: ~/.runepkg/runepkgconfig"; \
-	fi
-	@echo ""
-	@echo "To load completion in current session: source /etc/bash_completion.d/runepkg"
-	@echo "Completion will be loaded automatically in new bash sessions."
-
-# Uninstall runepkg
-uninstall:
-	@echo "Attempting to uninstall runepkg..."
-	@if [ -f /usr/bin/runepkg ]; then \
-		echo "Found /usr/bin/runepkg"; \
-		echo "Removing /usr/bin/runepkg..."; \
-		rm -f /usr/bin/runepkg; \
-		echo "Removed /usr/bin/runepkg"; \
-	else \
-		echo "runepkg not found in /usr/bin"; \
-	fi
-	@if [ -f /etc/bash_completion.d/runepkg ]; then \
-		echo "Removing bash completion..."; \
-		rm -f /etc/bash_completion.d/runepkg; \
-		echo "Removed bash completion"; \
-	fi
-	@echo "Using config for cleanup: $(shell if [ -f /etc/runepkg/runepkgconfig ]; then echo /etc/runepkg/runepkgconfig; else echo ~/.runepkg/runepkgconfig; fi)"
-	@if [ -d /etc/runepkg ]; then \
-		echo "Removing directory: /etc/runepkg"; \
-		rm -rf /etc/runepkg; \
-		echo "System config removed."; \
-	fi
-	@if [ -d ~/.runepkg ]; then \
-		echo "Removing directory: ~/.runepkg"; \
-		rm -rf ~/.runepkg; \
-		echo "User config removed."; \
-	fi
-	@echo "Uninstallation complete."
-
-# Create user-specific config file
-create-user-config:
-	@echo "Creating user-specific configuration..."
-	@mkdir -p ~/.runepkg
-	@if [ ! -f ~/.runepkg/runepkgconfig ]; then \
-		cp runepkgconfig ~/.runepkg/runepkgconfig; \
-		echo "User config created at ~/.runepkg/runepkgconfig"; \
-	else \
-		echo "User config already exists at ~/.runepkg/runepkgconfig"; \
-	fi
-
-# =============================================================================
-# === END INSTALLATION ===
 # =============================================================================

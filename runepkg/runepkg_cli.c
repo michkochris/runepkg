@@ -56,7 +56,6 @@ void usage(void) {
     printf("      --print-config                      Print current configuration settings.\n");
     printf("      --print-config-file                 Print path to configuration file in use.\n");
     printf("      --print-pkglist-file                Print paths to autocomplete files.\n");
-    printf("      --update-pkglist                    Update the directory list for autocompletion.\n");
     printf("Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'\n");
 }
 
@@ -113,16 +112,6 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
             }
             handle_print_pkglist_file();
-            runepkg_cleanup();
-            return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--update-pkglist") == 0) {
-            // Initialize first to load config, then update pkglist
-            if (runepkg_init() != 0) {
-                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
-                return EXIT_FAILURE;
-            }
-            handle_update_pkglist();
             runepkg_cleanup();
             return EXIT_SUCCESS;
         }
@@ -308,9 +297,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (g_did_install) {
-        handle_update_pkglist();
-    }
+    handle_update_pkglist();
     runepkg_cleanup();
     return EXIT_SUCCESS;
     // Note: Cleanup called manually
