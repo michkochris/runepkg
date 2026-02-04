@@ -9,14 +9,11 @@ _runepkg_completions() {
     local words=("${COMP_WORDS[@]}")
     local cword=$COMP_CWORD
 
-    # Load package list from cascading config locations
+    # Load package list from runepkg_dir
     local pkglist=()
-    # System-wide first
-    if [[ -f "/etc/runepkg/runepkg_autocomplete.txt" ]]; then
-        mapfile -t pkglist < "/etc/runepkg/runepkg_autocomplete.txt"
-    # Then user-specific
-    elif [[ -f "${HOME}/.runepkg/runepkg_autocomplete.txt" ]]; then
-        mapfile -t pkglist < "${HOME}/.runepkg/runepkg_autocomplete.txt"
+    local txt_file=$(runepkg --print-pkglist-file 2>/dev/null | awk '/Text file:/ {print $3}')
+    if [[ -f "$txt_file" ]]; then
+        mapfile -t pkglist < "$txt_file"
     fi
 
     # Enable case-insensitive matching

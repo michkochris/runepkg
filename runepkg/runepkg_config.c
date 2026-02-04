@@ -143,28 +143,19 @@ int runepkg_config_load() {
             runepkg_config_cleanup();
             return -1;
         }
-        // Set pkglist paths to ~/.runepkg/
-        char *config_dir = runepkg_util_concat_path(home, ".runepkg");
-        if (!config_dir) {
-            fprintf(stderr, "Error: Failed to create config_dir path.\n");
-            runepkg_config_cleanup();
-            return -1;
-        }
-        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.txt");
+        // Set pkglist paths to runepkg_dir
+        g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_base_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
             fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
-            free(config_dir);
             runepkg_config_cleanup();
             return -1;
         }
-        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.bin");
+        g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_base_dir, "runepkg_autocomplete.bin");
         if (!g_pkglist_bin_path) {
             fprintf(stderr, "Error: Failed to create pkglist.bin path.\n");
-            free(config_dir);
             runepkg_config_cleanup();
             return -1;
         }
-        free(config_dir);
         // Create directories
         if (runepkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
             runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 ||
@@ -220,32 +211,21 @@ int runepkg_config_load() {
             return -1;
         }
 
-        // Set pkglist paths based on config directory
-        char *config_file_dup = strdup(config_file_path);
-        if (!config_file_dup) {
-            fprintf(stderr, "Error: Failed to duplicate config file path for dirname.\n");
-            runepkg_util_free_and_null(&config_file_path);
-            runepkg_config_cleanup();
-            return -1;
-        }
-        char *config_dir = dirname(config_file_dup);
-        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.txt");
+        // Set pkglist paths based on runepkg_dir
+        g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_base_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
             fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
-            free(config_file_dup);
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
-        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.bin");
+        g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_base_dir, "runepkg_autocomplete.bin");
         if (!g_pkglist_bin_path) {
             fprintf(stderr, "Error: Failed to create runepkg_autocomplete.bin path.\n");
-            free(config_file_dup);
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
-        free(config_file_dup);
 
         // Now, create the directories based on the loaded config paths
         // Check for NULL pointers before calling create_dir_recursive
