@@ -1015,56 +1015,48 @@ void handle_print_config_file(void) {
     }
 }
 
+void handle_print_pkglist_file(void) {
+    printf("Autocomplete files:\n");
+    if (g_pkglist_txt_path) printf("  Text file: %s\n", g_pkglist_txt_path);
+    else printf("  Text file: (not set)\n");
+    if (g_pkglist_bin_path) printf("  Binary file: %s\n", g_pkglist_bin_path);
+    else printf("  Binary file: (not set)\n");
+}
+
 void handle_update_pkglist(void) {
-    if (!g_runepkg_db_dir) {
-        fprintf(stderr, "Error: Database directory not configured.\n");
-        return;
-    }
-
-    DIR *dir = opendir(g_runepkg_db_dir);
-    if (!dir) {
-        fprintf(stderr, "Error: Cannot open database directory: %s\n", g_runepkg_db_dir);
-        return;
-    }
-
     FILE *txt_file = fopen(g_pkglist_txt_path, "w");
     if (!txt_file) {
-        fprintf(stderr, "Error: Cannot open pkglist.txt for writing: %s\n", g_pkglist_txt_path);
-        closedir(dir);
+        fprintf(stderr, "Error: Cannot open runepkg_autocomplete.txt for writing: %s\n", g_pkglist_txt_path);
         return;
     }
 
-    // For bin, just copy txt for now
     FILE *bin_file = fopen(g_pkglist_bin_path, "w");
     if (!bin_file) {
-        fprintf(stderr, "Error: Cannot open pkglist.bin for writing: %s\n", g_pkglist_bin_path);
+        fprintf(stderr, "Error: Cannot open runepkg_autocomplete.bin for writing: %s\n", g_pkglist_bin_path);
         fclose(txt_file);
-        closedir(dir);
         return;
     }
 
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_DIR) continue;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+    // Scan installed packages
+    if (g_runepkg_db_dir) {
+        DIR *dir = opendir(g_runepkg_db_dir);
+        if (dir) {
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type != DT_DIR) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-        // Extract package name: everything before the last -
-        char *last_dash = strrchr(entry->d_name, '-');
-        if (last_dash) {
-            *last_dash = '\0'; // Temporarily null-terminate
-            fprintf(txt_file, "%s\n", entry->d_name);
-            fprintf(bin_file, "%s\n", entry->d_name);
-            *last_dash = '-'; // Restore
-        } else {
-            fprintf(txt_file, "%s\n", entry->d_name);
-            fprintf(bin_file, "%s\n", entry->d_name);
+                // Use the full directory name as package name
+                fprintf(txt_file, "%s\n", entry->d_name);
+                fprintf(bin_file, "%s\n", entry->d_name);
+            }
+            closedir(dir);
         }
     }
 
     fclose(txt_file);
     fclose(bin_file);
-    closedir(dir);
 
-    printf("Package list updated.\n");
+    printf("Autocomplete list updated.\n");
 }
 

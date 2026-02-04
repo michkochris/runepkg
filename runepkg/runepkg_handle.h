@@ -45,6 +45,7 @@ int handle_status(const char *package_name);
 void handle_search(const char *query);
 void handle_print_config(void);
 void handle_print_config_file(void);
+void handle_print_pkglist_file(void);
 void handle_version(void);
 void handle_update_pkglist(void);
 

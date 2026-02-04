@@ -1,6 +1,8 @@
-# runepkg - Fast Old School linux .deb Package Manager
+# runepkg
 
-[![Language: C FFI: Rust C++](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
+[![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
+[![FFI: Rust](https://img.shields.io/badge/FFI-Rust-orange.svg)](https://www.rust-lang.org/)
+[![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **Latest Milestone**: Intelligent autocompletion with interleaved command support and automatic package list updates! 🚀
@@ -19,16 +21,19 @@ make all
 # Install
 sudo make install
 
-# Optional: Setup autocompletion
-source runepkg/runepkg_completions
+# This automatically installs:
+# - Binary to /usr/bin/runepkg
+# - Bash completion to /etc/bash_completion.d/runepkg
+# - System config to /etc/runepkg/runepkgconfig
 ```
 ⚡ Build complete messages are shown by the build system.
+
 ### **Uninstallation**
 ```bash
 make clean
-make uninstall
+sudo make uninstall
 ```
-🧹 Clean complete is shown after cleanup.
+🧹 Clean complete is shown after cleanup. This removes the binary, completion, and config files.
 ### **Basic Usage**
 ```
 runepkg - The Runar Linux package manager.
@@ -46,15 +51,16 @@ Commands and Options:
         --list <pattern>                    List installed packages matching pattern.
     -s, --status <package-name>             Show detailed information about a package.
     -L, --list-files <package-name>         List files for a package.
-    -S, --search <query>                    Search for a package by name.
-    -v, --verbose                           Verbosity: -v=verbose, -vv=very verbose.
+    -S, --search <file-path>                Search for packages containing files matching path.
+    -v, --verbose                           Enable verbose output.
     -f, --force                             Force install even if dependencies are missing.
         --version                           Print version information.
     -h, --help                              Display this help message.
 
         --print-config                      Print current configuration settings.
         --print-config-file                 Print path to configuration file in use.
-        --update-pkglist                    Update the package list for autocompletion (automatic after installs).
+        --print-pkglist-file                Print paths to autocomplete files.
+        --update-pkglist                    Update the directory list for autocompletion (automatic after installs).
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 ```
 
@@ -138,7 +144,9 @@ runepkg/
 - Rust/C++ FFI are optional. Core builds use `make runepkg`.
 - Full builds use `make all` and will enable FFI if the toolchains are present.
 
-*runepkg - *Advancing the art of .deb package management through performance, automatic dependency resolution, and multi-language integration.*
+*runepkg - Fast Old School linux .deb Package Manager*
+
+*Advancing the art of .deb package management through performance, automatic dependency resolution, and multi-language integration.*
 
 *Built with ❤️ for the Linux community by developers who believe in secure, efficient, and intelligent package management.*
 

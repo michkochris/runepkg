@@ -47,6 +47,7 @@ void usage(void) {
     printf("  -l, --list                              List all installed packages.\n");
     printf("      --list <pattern>                    List installed packages matching pattern.\n");
     printf("  -s, --status <package-name>             Show detailed information about a package.\n");
+    printf("  -L, --list-files <package-name>         List files for a package.\n");
     printf("  -S, --search <file-path>                Search for packages containing files matching path.\n");
     printf("  -v, --verbose                           Enable verbose output.\n");
     printf("  -f, --force                             Force install even if dependencies are missing.\n");
@@ -54,7 +55,8 @@ void usage(void) {
     printf("  -h, --help                              Display this help message.\n\n");
     printf("      --print-config                      Print current configuration settings.\n");
     printf("      --print-config-file                 Print path to configuration file in use.\n");
-    printf("      --update-pkglist                    Update the package list for autocompletion.\n");
+    printf("      --print-pkglist-file                Print paths to autocomplete files.\n");
+    printf("      --update-pkglist                    Update the directory list for autocompletion.\n");
     printf("Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'\n");
 }
 
@@ -102,6 +104,16 @@ int main(int argc, char *argv[]) {
         if (strcmp(argv[i], "--print-config-file") == 0) {
             // No need to initialize for this - just find the config file
             handle_print_config_file();
+            return EXIT_SUCCESS;
+        }
+        if (strcmp(argv[i], "--print-pkglist-file") == 0) {
+            // Initialize first to load config, then print pkglist paths
+            if (runepkg_init() != 0) {
+                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
+                return EXIT_FAILURE;
+            }
+            handle_print_pkglist_file();
+            runepkg_cleanup();
             return EXIT_SUCCESS;
         }
         if (strcmp(argv[i], "--update-pkglist") == 0) {

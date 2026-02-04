@@ -12,35 +12,55 @@ _runepkg_completions() {
     # Load package list from cascading config locations
     local pkglist=()
     # System-wide first
-    if [[ -f "/etc/runepkg/pkglist.txt" ]]; then
-        mapfile -t pkglist < "/etc/runepkg/pkglist.txt"
+    if [[ -f "/etc/runepkg/runepkg_autocomplete.txt" ]]; then
+        mapfile -t pkglist < "/etc/runepkg/runepkg_autocomplete.txt"
     # Then user-specific
-    elif [[ -f "${HOME}/.runepkg/pkglist.txt" ]]; then
-        mapfile -t pkglist < "${HOME}/.runepkg/pkglist.txt"
+    elif [[ -f "${HOME}/.runepkg/runepkg_autocomplete.txt" ]]; then
+        mapfile -t pkglist < "${HOME}/.runepkg/runepkg_autocomplete.txt"
     fi
+
+    # Enable case-insensitive matching
+    shopt -s nocaseglob
 
     # Find the last command flag
     local last_cmd=""
     for ((i=1; i<cword; i++)); do
         case "${words[i]}" in
-            -i|--install|-r|--remove|-s|--status|-S|--search|-L|--list-files)
+            -i|--install|-r|--remove|-s|--status|-S|--search|-L|--list-files|-l|--list)
                 last_cmd="${words[i]}"
                 ;;
         esac
     done
 
+    # Debug output (comment out for production)
+    # echo "DEBUG: cur='$cur', last_cmd='$last_cmd', pkglist=(${pkglist[*]})" >&2
+
     case "$last_cmd" in
-        -i|--install|-S|--search)
+        -i|--install)
+            if [[ "$cur" == */* ]]; then
+                # Complete files in the specified directory
+                local dir="${cur%/*}"
+                local prefix="${cur%/*}/"
+                local base="${cur##*/}"
+                if [[ -d "$dir" ]]; then
+                    COMPREPLY=($(compgen -f -- "$dir/$base" | sed "s|^$dir/|$prefix|"))
+                fi
+            else
+                # Complete local files and directories
+                COMPREPLY=($(compgen -f -- "$cur"))
+            fi
+            ;;
+        -S|--search)
             # Complete with file paths
             COMPREPLY=($(compgen -f -- "$cur"))
             ;;
-        -r|--remove|-s|--status|-L|--list-files)
-            # Complete with package names
+        -r|--remove|-s|--status|-L|--list-files|-l|--list)
+            # Complete with package names from pkglist
             COMPREPLY=($(compgen -W "${pkglist[*]}" -- "$cur"))
             ;;
         *)
             # Complete with options and package names
-            local options="-i --install -r --remove -l --list -s --status -L --list-files -S --search -v --verbose -f --force --version -h --help --print-config --print-config-file --update-pkglist"
+            local options="-i --install -r --remove -l --list -s --status -L --list-files -S --search -v --verbose -f --force --version -h --help --print-config --print-config-file --print-pkglist-file --update-pkglist"
             if [[ $cur == -* ]]; then
                 COMPREPLY=($(compgen -W "$options" -- "$cur"))
             else
@@ -48,6 +68,9 @@ _runepkg_completions() {
             fi
             ;;
     esac
+
+    # Custom completion options
+    compopt -o nospace    # Don't add space after completion
 }
 
 complete -F _runepkg_completions runepkg

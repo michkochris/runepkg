@@ -150,14 +150,14 @@ int runepkg_config_load() {
             runepkg_config_cleanup();
             return -1;
         }
-        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "pkglist.txt");
+        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
-            fprintf(stderr, "Error: Failed to create pkglist.txt path.\n");
+            fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
             free(config_dir);
             runepkg_config_cleanup();
             return -1;
         }
-        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "pkglist.bin");
+        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.bin");
         if (!g_pkglist_bin_path) {
             fprintf(stderr, "Error: Failed to create pkglist.bin path.\n");
             free(config_dir);
@@ -229,17 +229,17 @@ int runepkg_config_load() {
             return -1;
         }
         char *config_dir = dirname(config_file_dup);
-        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "pkglist.txt");
+        g_pkglist_txt_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
-            fprintf(stderr, "Error: Failed to create pkglist.txt path.\n");
+            fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
             free(config_file_dup);
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
-        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "pkglist.bin");
+        g_pkglist_bin_path = runepkg_util_concat_path(config_dir, "runepkg_autocomplete.bin");
         if (!g_pkglist_bin_path) {
-            fprintf(stderr, "Error: Failed to create pkglist.bin path.\n");
+            fprintf(stderr, "Error: Failed to create runepkg_autocomplete.bin path.\n");
             free(config_file_dup);
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
