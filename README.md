@@ -3,6 +3,8 @@
 [![Language: C FFI: Rust C++](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+**Latest Milestone**: Intelligent autocompletion with interleaved command support and automatic package list updates! 🚀
+
 ### **Installation**
 ```bash
 git clone https://github.com/michkochris/runepkg.git
@@ -16,6 +18,9 @@ make all
 
 # Install
 sudo make install
+
+# Optional: Setup autocompletion
+source runepkg/runepkg_completions
 ```
 ⚡ Build complete messages are shown by the build system.
 ### **Uninstallation**
@@ -33,19 +38,51 @@ Usage:
 
 Commands and Options:
     -i, --install <path-to-package.deb>...  Install one or more .deb files.
+        --install -                         Read .deb paths from stdin.
+        --install @file                     Read .deb paths from a list file.
     -r, --remove <package-name>             Remove a package.
+        --remove -                          Read package names from stdin.
     -l, --list                              List all installed packages.
+        --list <pattern>                    List installed packages matching pattern.
     -s, --status <package-name>             Show detailed information about a package.
     -L, --list-files <package-name>         List files for a package.
     -S, --search <query>                    Search for a package by name.
     -v, --verbose                           Verbosity: -v=verbose, -vv=very verbose.
     -f, --force                             Force install even if dependencies are missing.
-            --version                           Print version information.
+        --version                           Print version information.
     -h, --help                              Display this help message.
 
-            --print-config                      Print current configuration settings.
-            --print-config-file                 Print path to configuration file in use.
+        --print-config                      Print current configuration settings.
+        --print-config-file                 Print path to configuration file in use.
+        --update-pkglist                    Update the package list for autocompletion (automatic after installs).
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
+```
+
+### **Autocompletion**
+runepkg supports intelligent bash autocompletion for commands, options, and package names. It handles interleaved commands seamlessly.
+
+#### Setup
+```bash
+# Source the completion script
+source runepkg/runepkg_completions
+
+# Or add to your ~/.bashrc for permanent setup
+echo "source /path/to/runepkg/runepkg_completions" >> ~/.bashrc
+```
+
+#### Features
+- **Interleaved Commands**: Completes correctly in complex command sequences (e.g., `runepkg -i pkg1 -r <tab>` suggests package names).
+- **Context-Aware**: 
+  - After `-i` or `-S`: Completes file paths.
+  - After `-r`, `-s`, `-L`: Completes installed package names.
+  - Otherwise: Completes options and package names.
+- **Automatic Updates**: Package list is automatically updated after successful installations, keeping completions current.
+
+#### Example
+```bash
+runepkg -i debs/binutils<TAB>  # Completes .deb files
+runepkg -r binutils-<TAB>      # Completes installed packages
+runepkg -v -i pkg1.deb -s <TAB>  # Completes package names for status
 ```
 
 ### **Batch Install & Summary Output**
