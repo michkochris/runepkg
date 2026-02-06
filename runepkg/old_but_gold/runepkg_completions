@@ -53,7 +53,13 @@ _runepkg_completions() {
             ;;
         -r|--remove|-s|--status|-L|--list-files|-l|--list)
             # Complete with package names from pkglist
-            COMPREPLY=($(compgen -W "${pkglist[*]}" -- "$cur"))
+            local matches=($(compgen -W "${pkglist[*]}" -- "$cur"))
+            if [[ ${#matches[@]} -eq 1 ]]; then
+                COMPREPLY=("${matches[0]}")
+            elif [[ ${#matches[@]} -gt 1 ]]; then
+                # Complete to the first match to allow full completion
+                COMPREPLY=("${matches[0]}")
+            fi
             ;;
         *)
             # Complete with options and package names

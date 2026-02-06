@@ -49,6 +49,8 @@ void handle_print_pkglist_file(void);
 void handle_version(void);
 void handle_update_pkglist(void);
 
+int print_package_data_header(void);
+
 #ifdef __cplusplus
 }
 #endif

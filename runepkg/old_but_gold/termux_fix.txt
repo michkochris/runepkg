@@ -1,0 +1,71 @@
+Gemini im getting error compiling runepkg on termux, everything fine on wsl linux, the error would be located in runepkg_handle.c where multi-thread pkg install works:
+
+make runepkg
+
+gcc -Wall -Wextra -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread -c runepkg_cli.c -o runepkg_cli.o
+
+gcc -Wall -Wextra -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread -c runepkg_handle.c -o runepkg_handle.o
+
+runepkg_handle.c:95:9: error: call to undeclared function 'getloadavg'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+
+95 | if (getloadavg(loadavg, 3) == -1) {
+
+| ^
+
+1 error generated.
+
+make: *** [Makefile:168: runepkg_handle.o] Error 1
+
+[ localhost ~/runepkg/runepkg ]$
+
+Ah, the classic "it works on my machine (WSL)" vs. "Termux says no" situation. It looks like you've run into a common portability hiccup.
+
+The issue is that Android’s Bionic C library (which Termux uses) does not implement getloadavg(). While it's standard on BSD and available via _GNU_SOURCE on most desktop Linux distros (Glibc), Bionic keeps things lean and omits it.
+
+Since you're using it to manage multi-threaded installs (likely to throttle based on system load), you have a few ways to fix this.
+
+Solution 1: The Quick Fix (Stub it out)
+If you don't strictly need load-balancing on your phone, the easiest way to get it compiling is to wrap the call in an #ifdef. Android defines the __ANDROID__ macro, which we can use to bypass the missing function.
+
+In runepkg_handle.c:
+
+C
+#ifdef __ANDROID__
+    // Android/Termux doesn't have getloadavg. 
+    // We'll simulate a '0' load or handle it gracefully.
+    loadavg[0] = 0.0; loadavg[1] = 0.0; loadavg[2] = 0.0;
+#else
+    if (getloadavg(loadavg, 3) == -1) {
+        // Your existing error handling
+    }
+#endif
+Solution 2: The "Proper" Fix (Manual Parsing)
+If runepkg actually relies on that load average to decide how many threads to spawn, you can manually read /proc/loadavg, which is where the kernel stores this data.
+
+Add this helper function to your code:
+
+C
+#ifdef __ANDROID__
+int getloadavg(double loadavg[], int nelem) {
+    FILE *fp = fopen("/proc/loadavg", "r");
+    if (!fp) return -1;
+    
+    int count = 0;
+    for (int i = 0; i < nelem && i < 3; i++) {
+        if (fscanf(fp, "%lf", &loadavg[i]) != 1) break;
+        count++;
+    }
+    
+    fclose(fp);
+    return (count > 0) ? count : -1;
+}
+#endif
+Why did this happen?
+Feature	Glibc (WSL/Ubuntu)	Bionic (Termux/Android)
+getloadavg()	Available in stdlib.h	Missing
+Header	Needs #define _GNU_SOURCE	N/A
+Backend	Reads /proc/loadavg	Kernel support exists, but no API wrapper
+One more thing...
+Check if your Makefile or source includes <stdlib.h>. On Glibc, you need _GNU_SOURCE defined before including headers for getloadavg to show up, but on Termux, no amount of defines will bring it into existence because it's simply not in the library.
+
+Would you like me to help you write a small cmake or Makefile check to automate this detection so you don't have to hardcode the fix?

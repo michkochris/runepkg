@@ -245,13 +245,13 @@ install: runepkg
 	fi
 	@echo "Installing bash completion..."
 	@if [ -f runepkg_completions ]; then \
-		mkdir -p $(DESTDIR)$(COMPLETION_DIR); \
-		cp runepkg_completions $(DESTDIR)$(COMPLETION_DIR)/runepkg; \
-		chmod 644 $(DESTDIR)$(COMPLETION_DIR)/runepkg; \
-		echo "Bash completion installed to $(COMPLETION_DIR)/runepkg"; \
+		echo "Skipping old bash completion script (using self-completing binary instead)"; \
 	else \
-		echo "WARNING: runepkg_completions file not found in current directory!"; \
+		echo "No old completion script found (good, using self-completing binary)"; \
 	fi
+	@echo "Adding self-completing binary completion to ~/.bashrc..."
+	@grep -q "complete -o nosort -C runepkg runepkg" ~/.bashrc || echo "complete -o nosort -C runepkg runepkg" >> ~/.bashrc
+	@echo "Completion added to ~/.bashrc (if not already present)."
 	@echo ""
 	@echo "The cascading configuration will check:"
 	@echo "  1. \$$RUNEPKG_CONFIG_PATH environment variable"
@@ -259,7 +259,7 @@ install: runepkg
 	@echo "  3. ~/.runepkgconfig (user-specific)"
 	@echo ""
 	@echo "Bash completion will be loaded automatically in new bash sessions."
-	@echo "To load completion in current session: source $(COMPLETION_DIR)/runepkg"
+	@echo "No manual sourcing needed - the binary handles completion internally."
 	@echo ""
 
 # Termux-specific install target
@@ -287,6 +287,9 @@ termux-install: all
 		echo "ERROR: runepkgconfig file not found in current directory!"; \
 		exit 1; \
 	fi
+	@echo "Adding self-completing binary completion to ~/.bashrc..."
+	@grep -q "complete -o nosort -C runepkg runepkg" ~/.bashrc || echo "complete -o nosort -C runepkg runepkg" >> ~/.bashrc
+	@echo "Completion added to ~/.bashrc (if not already present)."
 	@echo ""
 	@echo "=== Termux Installation Complete ==="
 	@echo "Binary: $(TERMUX_PREFIX)/bin/$(TARGET)"
@@ -300,8 +303,8 @@ termux-install: all
 	@echo "  2. /etc/runepkg/runepkgconfig (system-wide - not available in Termux)"
 	@echo "  3. ~/.runepkgconfig (user-specific - PRIMARY for Termux)"
 	@echo ""
-	@echo "For bash completion in Termux, manually source the completion file:"
-	@echo "  source $(PWD)/runepkg_completions"
+	@echo "For bash completion in Termux, the binary is self-completing."
+	@echo "No manual sourcing needed - completion works automatically."
 	@echo ""
 	@echo "You can now run 'runepkg <command>' from anywhere in Termux."
 
@@ -430,6 +433,9 @@ uninstall:
 			echo "ERROR: Bash completion exists but cannot be removed without elevated privileges. To remove manually run: sudo rm -f $(ETCDIR)/bash_completion.d/runepkg"; \
 		fi; \
 	fi
+	@echo "Removing self-completing binary completion from ~/.bashrc..."
+	@sed -i '/complete -o nosort -C runepkg runepkg/d' ~/.bashrc
+	@echo "Completion removed from ~/.bashrc."
 	# Termux uninstall
 	@if [ -f $(TERMUX_PREFIX)/bin/$(TARGET) ]; then \
 		echo "Removing $(TERMUX_PREFIX)/bin/$(TARGET)..."; \
@@ -442,6 +448,9 @@ uninstall:
 		rm -f $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
 		echo "Termux Rust library removed."; \
 	fi
+	@echo "Removing self-completing binary completion from ~/.bashrc..."
+	@sed -i '/complete -o nosort -C runepkg runepkg/d' ~/.bashrc
+	@echo "Completion removed from ~/.bashrc."
 	@echo "Uninstallation complete."
 
 # Debug build with extra debugging symbols and verbose output

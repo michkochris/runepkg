@@ -127,6 +127,193 @@ char *runepkg_util_concat_path(const char *dir, const char *file) {
     return runepkg_secure_path_concat(dir, file);
 }
 
+// --- Version Comparison ---
+
+// Helper: Compare two version parts using Debian collation rules
+static int compare_collation(const char *a, const char *b) {
+    const char *pa = a, *pb = b;
+    while (*pa || *pb) {
+        // Extract next sequence from a
+        int is_digit_a = isdigit(*pa);
+        const char *start_a = pa;
+        while (*pa && isdigit(*pa) == is_digit_a) pa++;
+        size_t len_a = pa - start_a;
+
+        // Extract next sequence from b
+        int is_digit_b = isdigit(*pb);
+        const char *start_b = pb;
+        while (*pb && isdigit(*pb) == is_digit_b) pb++;
+        size_t len_b = pb - start_b;
+
+        if (is_digit_a && is_digit_b) {
+            // Both digit sequences: compare numerically
+            char buf_a[64], buf_b[64];
+            if (len_a >= sizeof(buf_a) || len_b >= sizeof(buf_b)) return strcmp(a, b); // Fallback
+            memcpy(buf_a, start_a, len_a); buf_a[len_a] = '\0';
+            memcpy(buf_b, start_b, len_b); buf_b[len_b] = '\0';
+            long num_a = strtol(buf_a, NULL, 10);
+            long num_b = strtol(buf_b, NULL, 10);
+            if (num_a < num_b) return -1;
+            if (num_a > num_b) return 1;
+        } else if (!is_digit_a && !is_digit_b) {
+            // Both non-digit: compare lexicographically
+            int cmp = strncmp(start_a, start_b, len_a < len_b ? len_a : len_b);
+            if (cmp != 0) return cmp;
+            if (len_a < len_b) return -1;
+            if (len_a > len_b) return 1;
+        } else {
+            // One digit, one non-digit: the digit sequence is larger
+            if (is_digit_a) return 1;
+            else return -1;
+        }
+    }
+    return 0;
+}
+
+// Parse version into epoch, upstream, revision
+static void parse_version(const char *version, long *epoch, char *upstream, char *revision) {
+    *epoch = 0;
+    strcpy(upstream, version);
+    revision[0] = '\0';
+
+    char *colon = strrchr(upstream, ':');
+    if (colon) {
+        *colon = '\0';
+        *epoch = strtol(upstream, NULL, 10);
+        memmove(upstream, colon + 1, strlen(colon + 1) + 1);
+    }
+
+    char *dash = strrchr(upstream, '-');
+    if (dash) {
+        strcpy(revision, dash + 1);
+        *dash = '\0';
+    }
+}
+
+int runepkg_util_compare_versions(const char *v1, const char *v2) {
+    if (!v1 || !v2) return v1 ? 1 : (v2 ? -1 : 0);
+    if (strcmp(v1, v2) == 0) return 0;
+
+    long epoch1, epoch2;
+    char up1[256], up2[256], rev1[256], rev2[256];
+    parse_version(v1, &epoch1, up1, rev1);
+    parse_version(v2, &epoch2, up2, rev2);
+
+    if (epoch1 < epoch2) return -1;
+    if (epoch1 > epoch2) return 1;
+
+    int cmp = compare_collation(up1, up2);
+    if (cmp != 0) return cmp;
+
+    return compare_collation(rev1, rev2);
+}
+
+// --- Dependency Parsing ---
+
+int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint) {
+    if (!installed_version || !constraint) return -1;
+
+    // Parse operator and version
+    // Operator is sequence of non-space, non-digit characters
+    size_t op_len = strcspn(constraint, " 0123456789");
+    if (op_len == 0 || op_len > 2) return -1;
+
+    char op[3] = {0};
+    memcpy(op, constraint, op_len);
+    op[op_len] = '\0';
+
+    char ver[64] = {0};
+    if (strlen(constraint + op_len) >= sizeof(ver)) return -1;
+    strcpy(ver, constraint + op_len);
+
+    // Trim leading/trailing whitespace from ver
+    runepkg_util_trim_whitespace(ver);
+
+    int cmp = runepkg_util_compare_versions(installed_version, ver);
+    if (strcmp(op, ">=") == 0) return cmp >= 0;
+    if (strcmp(op, "<=") == 0) return cmp <= 0;
+    if (strcmp(op, "==") == 0) return cmp == 0;
+    if (strcmp(op, "=") == 0) return cmp == 0;  // Debian uses = for exact match
+    if (strcmp(op, "!=") == 0) return cmp != 0;
+    if (strcmp(op, ">") == 0) return cmp > 0;
+    if (strcmp(op, "<") == 0) return cmp < 0;
+    if (strcmp(op, "<<") == 0) return cmp < 0;  // dpkg uses << for strict less
+    if (strcmp(op, ">>") == 0) return cmp > 0;  // dpkg uses >> for strict greater
+    return -1;  // Unknown op
+}
+
+// --- Dependency Parsing ---
+
+Dependency **parse_depends_with_constraints(const char *depends) {
+    if (!depends || *depends == '\0') return NULL;
+
+    // Count commas
+    int count = 1;
+    for (const char *p = depends; *p; p++) {
+        if (*p == ',') count++;
+    }
+
+    Dependency **result = calloc(count + 1, sizeof(Dependency*));
+    if (!result) return NULL;
+
+    char *copy = strdup(depends);
+    if (!copy) {
+        free(result);
+        return NULL;
+    }
+
+    char *token = strtok(copy, ",");
+    int i = 0;
+    while (token && i < count) {
+        // Trim
+        while (*token == ' ' || *token == '\t') token++;
+        if (*token == '\0') {
+            token = strtok(NULL, ",");
+            continue;
+        }
+
+        result[i] = calloc(1, sizeof(Dependency));
+        if (!result[i]) {
+            // Free all
+            for (int j = 0; j < i; j++) {
+                free(result[j]->package);
+                free(result[j]->constraint);
+                free(result[j]);
+            }
+            free(result);
+            free(copy);
+            return NULL;
+        }
+
+        // Parse package and constraint
+        char *paren = strchr(token, '(');
+        if (paren) {
+            *paren = '\0';
+            char *close = strchr(paren + 1, ')');
+            if (close) *close = '\0';
+            result[i]->package = strdup(runepkg_util_trim_whitespace(token));
+            // Extract constraint without parentheses
+            char *inner = paren + 1;
+            while (*inner && (*inner == ' ' || *inner == '(')) inner++;
+            char *end = inner + strlen(inner) - 1;
+            while (end > inner && (*end == ' ' || *end == ')')) {
+                *end = '\0';
+                end--;
+            }
+            result[i]->constraint = strdup(inner);
+        } else {
+            result[i]->package = strdup(runepkg_util_trim_whitespace(token));
+            result[i]->constraint = NULL;
+        }
+
+        i++;
+        token = strtok(NULL, ",");
+    }
+
+    free(copy);
+    return result;
+}
+
 // --- File System Operations ---
 
 int runepkg_util_file_exists(const char *filepath) {

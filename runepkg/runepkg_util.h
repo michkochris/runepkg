@@ -94,6 +94,42 @@ char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n);
  */
 char *runepkg_util_concat_path(const char *dir, const char *file);
 
+// --- Version Comparison ---
+
+/**
+ * @brief Compares two version strings (e.g., "1.2.3" vs "1.2.4").
+ * @param v1 First version string.
+ * @param v2 Second version string.
+ * @return -1 if v1 < v2, 0 if equal, 1 if v1 > v2.
+ */
+int runepkg_util_compare_versions(const char *v1, const char *v2);
+
+// --- Dependency Parsing ---
+
+/**
+ * @brief Checks if an installed version satisfies a dependency constraint.
+ * @param installed_version The version of the installed package.
+ * @param constraint The constraint string, e.g., ">= 2.15" or "<< 3.0".
+ * @return 1 if satisfied, 0 if not, -1 on error.
+ */
+int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint);
+
+// --- Dependency Struct ---
+
+typedef struct {
+    char *package;
+    char *constraint;  // e.g., ">= 2.15" or NULL if no constraint
+} Dependency;
+
+// --- Dependency Parsing ---
+
+/**
+ * @brief Parses a depends string into an array of Dependency structs.
+ * @param depends The depends string, e.g., "libc6 (>= 2.15), libssl".
+ * @return Array of Dependency pointers, NULL-terminated.
+ */
+Dependency **parse_depends_with_constraints(const char *depends);
+
 // --- File System Operations ---
 
 /**

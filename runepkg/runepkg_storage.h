@@ -106,4 +106,10 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
  */
 int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_version);
 
+/**
+ * @brief Builds the binary autocomplete index
+ * @return 0 on success, -1 on failure
+ */
+int runepkg_storage_build_autocomplete_index(void);
+
 #endif // RUNEPKG_STORAGE_H

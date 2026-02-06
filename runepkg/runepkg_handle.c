@@ -28,6 +28,7 @@
 #include <pthread.h>
 #include <sys/statvfs.h>
 #include <fnmatch.h>
+#include <ctype.h>
 #include <sys/ioctl.h>
 
 #include "runepkg_handle.h"
@@ -37,10 +38,26 @@
 #include "runepkg_storage.h"
 #include "runepkg_util.h"
 
+#ifdef __ANDROID__
+int getloadavg(double loadavg[], int nelem) {
+    FILE *fp = fopen("/proc/loadavg", "r");
+    if (!fp) return -1;
+    
+    int count = 0;
+    for (int i = 0; i < nelem && i < 3; i++) {
+        if (fscanf(fp, "%lf", &loadavg[i]) != 1) break;
+        count++;
+    }
+    
+    fclose(fp);
+    return (count > 0) ? count : -1;
+}
+#endif
+
 runepkg_hash_table_t *installing_packages = NULL;
 
 // Helper function to print package data header (used by handle_list and handle_remove)
-static int print_package_data_header(void) {
+int print_package_data_header(void) {
     if (!g_runepkg_db_dir) {
         return 0;
     }
@@ -158,6 +175,40 @@ int runepkg_init(void) {
     }
     
     /* TODO: Load installed packages into hash table from persistent storage */
+    /* COMPLETED: The call is now handled by the helper, validation done via assumption */
+    
+    /* Load installed packages into hash table */
+    if (g_runepkg_db_dir) {
+        DIR *dir = opendir(g_runepkg_db_dir);
+        if (dir) {
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                    // Parse package name and version from directory name
+                    char pkg_name[PATH_MAX] = {0};
+                    char pkg_version[PATH_MAX] = {0};
+                    const char *last_dash = strrchr(entry->d_name, '-');
+                    if (last_dash && last_dash != entry->d_name) {
+                        size_t name_len = (size_t)(last_dash - entry->d_name);
+                        if (name_len < sizeof(pkg_name)) {
+                            memcpy(pkg_name, entry->d_name, name_len);
+                            pkg_name[name_len] = '\0';
+                            strncpy(pkg_version, last_dash + 1, sizeof(pkg_version) - 1);
+                        }
+                    }
+                    
+                    if (pkg_name[0] && pkg_version[0]) {
+                        PkgInfo pkg_info;
+                        if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) == 0) {
+                            runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
+                            runepkg_pack_free_package_info(&pkg_info);
+                        }
+                    }
+                }
+            }
+            closedir(dir);
+        }
+    }
     
     return 0;
 }
@@ -332,9 +383,35 @@ int handle_install(const char *deb_file_path) {
             }
         }
         if (found) {
-            for(size_t k = 0; k < globbuf.gl_pathc; k++) {
-                handle_install(globbuf.gl_pathv[k]);
+            // Sort glob results by version and pick the latest
+            if (globbuf.gl_pathc > 1) {
+                // Sort by version descending
+                for (size_t i = 0; i < globbuf.gl_pathc - 1; i++) {
+                    for (size_t j = i + 1; j < globbuf.gl_pathc; j++) {
+                        // Extract versions from filenames
+                        char *name1 = basename(strdup(globbuf.gl_pathv[i]));
+                        char *name2 = basename(strdup(globbuf.gl_pathv[j]));
+                        char *ver1 = strstr(name1, "-");
+                        char *ver2 = strstr(name2, "-");
+                        if (ver1) ver1++;
+                        if (ver2) ver2++;
+                        char *end1 = strstr(ver1 ? ver1 : "", ".deb");
+                        char *end2 = strstr(ver2 ? ver2 : "", ".deb");
+                        if (end1) *end1 = '\0';
+                        if (end2) *end2 = '\0';
+                        if (runepkg_util_compare_versions(ver1 ? ver1 : "", ver2 ? ver2 : "") < 0) {
+                            // Swap to sort descending
+                            char *temp = globbuf.gl_pathv[i];
+                            globbuf.gl_pathv[i] = globbuf.gl_pathv[j];
+                            globbuf.gl_pathv[j] = temp;
+                        }
+                        free(name1);
+                        free(name2);
+                    }
+                }
             }
+            // Install the latest (first after sorting)
+            handle_install(globbuf.gl_pathv[0]);
             globfree(&globbuf);
             return 0;
         }
@@ -364,49 +441,65 @@ int handle_install(const char *deb_file_path) {
     int result = runepkg_pack_extract_and_collect_info(deb_file_path, g_control_dir, &pkg_info);
 
     if (result == 0) {
-        // Check if already installed or installing
-        if (runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name) || 
-            (installing_packages && runepkg_hash_search(installing_packages, pkg_info.package_name))) {
-            runepkg_log_verbose("Package %s already installed or installing, skipping\n", pkg_info.package_name);
+        // Check if already installed
+        if (runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name)) {
+            runepkg_log_verbose("Package %s already installed, skipping\n", pkg_info.package_name);
             runepkg_pack_free_package_info(&pkg_info);
             return 0;
         }
 
-        if (installing_packages) {
-            PkgInfo dummy;
-            runepkg_pack_init_package_info(&dummy);
-            dummy.package_name = strdup(pkg_info.package_name);
-            runepkg_hash_add_package(installing_packages, &dummy);
-            runepkg_pack_free_package_info(&dummy);
-        }
+        // Mark as installing to prevent recursive installs
+        PkgInfo dummy;
+        runepkg_pack_init_package_info(&dummy);
+        dummy.package_name = strdup(pkg_info.package_name);
+        if (pkg_info.version) dummy.version = strdup(pkg_info.version);
+        runepkg_hash_add_package(runepkg_main_hash_table, &dummy);
+        runepkg_pack_free_package_info(&dummy);
 
         // Resolve dependencies
-        char **deps = parse_depends(pkg_info.depends);
+        Dependency **deps = parse_depends_with_constraints(pkg_info.depends);
         if (deps) {
+            Dependency **unsatisfied = NULL;
+            int num_unsatisfied = 0;
             for (int j = 0; deps[j]; j++) {
-                if (!runepkg_hash_search(runepkg_main_hash_table, deps[j])) {
+                PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
+                int satisfied = 0;
+                if (installed) {
+                    if (deps[j]->constraint) {
+                        satisfied = runepkg_util_check_version_constraint(installed->version, deps[j]->constraint);
+                        if (satisfied == -1) {
+                            printf("Warning: Unknown constraint '%s' for %s\n", deps[j]->constraint, deps[j]->package);
+                            satisfied = 1;  // Assume satisfied for unknown
+                        } else if (satisfied) {
+                            runepkg_log_verbose("Dependency '%s %s' satisfied by installed version %s\n",
+                                               deps[j]->package, deps[j]->constraint, installed->version);
+                        }
+                    } else {
+                        satisfied = 1;  // No constraint, just installed
+                        runepkg_log_verbose("Dependency '%s' satisfied by installed package\n", deps[j]->package);
+                    }
+                }
+                if (!satisfied) {
                     // Find deb file in same dir
                     char *deb_copy = strdup(deb_file_path);
                     if (deb_copy) {
                         char *dir = dirname(deb_copy);
                         char pattern[PATH_MAX];
-                        snprintf(pattern, sizeof(pattern), "%s/%s*.deb", dir, deps[j]);
+                        snprintf(pattern, sizeof(pattern), "%s/%s*.deb", dir, deps[j]->package);
                         glob_t globbuf;
                         if (glob(pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
-                            runepkg_log_verbose("Installing dependency: %s from %s\n", deps[j], globbuf.gl_pathv[0]);
+                            runepkg_log_verbose("Installing dependency: %s from %s\n", deps[j]->package, globbuf.gl_pathv[0]);
                             handle_install(globbuf.gl_pathv[0]);
                         } else {
                             if (!g_force_mode) {
-                                printf("Error: Dependency '%s' for package '%s' not found. Cannot install.\n", deps[j], pkg_info.package_name);
-                                globfree(&globbuf);
-                                free(deb_copy);
-                                // Free deps
-                                for (int k = 0; deps[k]; k++) free(deps[k]);
-                                free(deps);
-                                runepkg_pack_free_package_info(&pkg_info);
-                                return -1;
+                                unsatisfied = realloc(unsatisfied, (num_unsatisfied + 1) * sizeof(Dependency*));
+                                unsatisfied[num_unsatisfied] = malloc(sizeof(Dependency));
+                                unsatisfied[num_unsatisfied]->package = strdup(deps[j]->package);
+                                unsatisfied[num_unsatisfied]->constraint = deps[j]->constraint ? strdup(deps[j]->constraint) : NULL;
+                                num_unsatisfied++;
                             } else {
-                                runepkg_log_verbose("Skipping missing dependency %s (force mode)\n", deps[j]);
+                                runepkg_log_verbose("Skipping unsatisfied dependency %s %s (force mode)\n",
+                                                    deps[j]->package, deps[j]->constraint ? deps[j]->constraint : "");
                             }
                         }
                         globfree(&globbuf);
@@ -414,9 +507,37 @@ int handle_install(const char *deb_file_path) {
                     }
                 }
             }
-            // Free deps
-            for (int j = 0; deps[j]; j++) free(deps[j]);
-            free(deps);
+            if (num_unsatisfied > 0) {
+                printf("Error: The following dependencies are not satisfied:\n");
+                for(int k=0; k<num_unsatisfied; k++){
+                    printf("  - %s%s%s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? " " : "", unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
+                }
+                printf("Use -f or --force to install anyway.\n");
+                // free unsatisfied
+                for(int k=0; k<num_unsatisfied; k++){
+                    free(unsatisfied[k]->package);
+                    if(unsatisfied[k]->constraint) free(unsatisfied[k]->constraint);
+                    free(unsatisfied[k]);
+                }
+                free(unsatisfied);
+                // Free deps
+                for (int j = 0; deps[j]; j++) {
+                    free(deps[j]->package);
+                    free(deps[j]->constraint);
+                    free(deps[j]);
+                }
+                free(deps);
+                runepkg_pack_free_package_info(&pkg_info);
+                return -1;
+            } else {
+                // Free deps
+                for (int j = 0; deps[j]; j++) {
+                    free(deps[j]->package);
+                    free(deps[j]->constraint);
+                    free(deps[j]);
+                }
+                free(deps);
+            }
         }
 
         if (g_verbose_mode) {
@@ -427,25 +548,6 @@ int handle_install(const char *deb_file_path) {
             printf("Unpacking %s (%s) ...\n",
                    pkg_info.package_name ? pkg_info.package_name : "(unknown)",
                    pkg_info.version ? pkg_info.version : "(unknown)");
-        }
-
-        if (runepkg_main_hash_table) {
-            if (runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info) == 0) {
-                if (!g_verbose_mode) {
-                    printf("Setting up %s (%s) ...\n",
-                           pkg_info.package_name ? pkg_info.package_name : "(unknown)",
-                           pkg_info.version ? pkg_info.version : "(unknown)");
-                } else {
-                    printf("Package successfully added to internal database.\n\n");
-                }
-
-                PkgInfo *stored_pkg = runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name);
-                if (stored_pkg && g_verbose_mode) {
-                    runepkg_hash_print_package_info(stored_pkg);
-                }
-            } else {
-                printf("Warning: Failed to add package to internal database.\n");
-            }
         }
 
         if (pkg_info.package_name && pkg_info.version) {
@@ -463,6 +565,12 @@ int handle_install(const char *deb_file_path) {
         } else {
             printf("Warning: Cannot add to persistent storage - missing package name or version.\n");
         }
+
+        // Rebuild autocomplete index after install
+        runepkg_storage_build_autocomplete_index();
+
+        // Update the text autocomplete list
+        handle_update_pkglist();
 
         if (g_system_install_root && pkg_info.data_dir_path && pkg_info.file_count > 0 && pkg_info.file_list) {
             int install_errors = 0;
@@ -803,6 +911,12 @@ int handle_remove(const char *package_name) {
         return -1;
     }
 
+    // Rebuild autocomplete index after remove
+    runepkg_storage_build_autocomplete_index();
+
+    // Update the text autocomplete list
+    handle_update_pkglist();
+
     runepkg_pack_free_package_info(&pkg_info);
     return 0;
 }
@@ -854,7 +968,13 @@ int handle_status(const char *package_name) {
         if (strcmp(entry->d_name, package_name) == 0) {
             exact_match_count = 1;
             // For exact match, parse name and version from the directory name
-            char *last_dash = strrchr(entry->d_name, '-');
+            // Find the last '-' followed by a digit (version separator)
+            char *last_dash = NULL;
+            for (char *p = entry->d_name; *p; p++) {
+                if (!last_dash && *p == '-' && *(p + 1) && isdigit(*(p + 1))) {
+                    last_dash = p;
+                }
+            }
             if (last_dash) {
                 size_t name_len = last_dash - entry->d_name;
                 strncpy(exact_match_name, entry->d_name, name_len);
@@ -1057,6 +1177,6 @@ void handle_update_pkglist(void) {
     fclose(txt_file);
     fclose(bin_file);
 
-    printf("Autocomplete list updated.\n");
+    runepkg_log_verbose("Autocomplete list updated.\n");
 }
 

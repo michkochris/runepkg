@@ -35,7 +35,16 @@
 #include "runepkg_storage.h"
 #include "runepkg_config.h"
 #include "runepkg_util.h"
+#include "runepkg_pack.h"
 static int runepkg_storage_remove_dir_recursive(const char *path);
+
+// Binary index structures (from self-completing-binary.txt)
+typedef struct {
+    uint32_t magic;      // 0x52554E45 ("RUNE")
+    uint32_t version;    // Index format version
+    uint32_t entry_count;
+    uint32_t strings_size; // Size of string blob
+} AutocompleteHeader;
 
 // Compare function for qsort
 static int compare_packages(const void *a, const void *b) {
@@ -125,6 +134,17 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
         return -1;
     }
 
+    // Write PkgHeader for fast mmap access
+    PkgHeader header;
+    header.magic = 0x52554E45;  // "RUNE"
+    memset(header.pkgname, 0, sizeof(header.pkgname));
+    memset(header.version, 0, sizeof(header.version));
+    if (pkg_name) strncpy(header.pkgname, pkg_name, sizeof(header.pkgname) - 1);
+    if (pkg_version) strncpy(header.version, pkg_version, sizeof(header.version) - 1);
+    header.data_start = sizeof(PkgHeader);  // Data starts after header
+
+    fwrite(&header, sizeof(PkgHeader), 1, bin_file);
+
     // Write string lengths and strings to binary file
     size_t len;
     
@@ -200,6 +220,12 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     FILE *bin_file = fopen(binary_file_path, "rb");
     if (!bin_file) {
         runepkg_log_verbose("Failed to open binary file for reading: %s\n", binary_file_path);
+        return -1;
+    }
+
+    // Skip the PkgHeader
+    if (fseek(bin_file, sizeof(PkgHeader), SEEK_SET) != 0) {
+        fclose(bin_file);
         return -1;
     }
 
@@ -446,4 +472,107 @@ int runepkg_storage_list_packages(const char *pattern) {
     }
 
     return count;
+}
+
+/**
+ * @brief Builds the binary autocomplete index (runepkg_autocomplete.bin)
+ */
+int runepkg_storage_build_autocomplete_index(void) {
+    if (!g_runepkg_db_dir) {
+        runepkg_log_verbose("Error: runepkg database directory not configured.\n");
+        return -1;
+    }
+
+    runepkg_log_verbose("Building autocomplete index from: %s\n", g_runepkg_db_dir);
+
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) {
+        runepkg_log_verbose("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
+        return -1;
+    }
+
+    char **packages = NULL;
+    int count = 0;
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            packages = realloc(packages, (count + 1) * sizeof(char *));
+            if (!packages) {
+                runepkg_log_verbose("Error: Memory allocation failed.\n");
+                closedir(dir);
+                return -1;
+            }
+            packages[count] = strdup(entry->d_name);
+            if (!packages[count]) {
+                runepkg_log_verbose("Error: String duplication failed.\n");
+                closedir(dir);
+                for (int i = 0; i < count; i++) free(packages[i]);
+                free(packages);
+                return -1;
+            }
+            count++;
+        }
+    }
+    closedir(dir);
+
+    if (count == 0) {
+        runepkg_log_verbose("No packages found, skipping index build.\n");
+        return 0;
+    }
+
+    // Sort packages alphabetically
+    qsort(packages, count, sizeof(char *), compare_packages);
+
+    // Calculate sizes
+    size_t strings_size = 0;
+    for (int i = 0; i < count; i++) {
+        strings_size += strlen(packages[i]) + 1; // +1 for null terminator
+    }
+
+    // Build the file path
+    char index_path[PATH_MAX];
+    snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
+
+    FILE *fp = fopen(index_path, "wb");
+    if (!fp) {
+        runepkg_log_verbose("Error: Cannot create index file: %s\n", index_path);
+        for (int i = 0; i < count; i++) free(packages[i]);
+        free(packages);
+        return -1;
+    }
+
+    // Write header
+    AutocompleteHeader hdr = {
+        .magic = 0x52554E45, // "RUNE"
+        .version = 1,
+        .entry_count = (uint32_t)count,
+        .strings_size = (uint32_t)strings_size
+    };
+    fwrite(&hdr, sizeof(hdr), 1, fp);
+
+    // Write offset table (relative to start of string blob)
+    uint32_t offset = 0;
+    for (int i = 0; i < count; i++) {
+        fwrite(&offset, sizeof(uint32_t), 1, fp);
+        offset += strlen(packages[i]) + 1;
+    }
+
+    // Write string blob
+    for (int i = 0; i < count; i++) {
+        fwrite(packages[i], strlen(packages[i]) + 1, 1, fp);
+    }
+
+    fclose(fp);
+
+    // Make the index readable by all users
+    if (chmod(index_path, 0644) != 0) {
+        runepkg_log_verbose("Warning: Failed to set permissions on autocomplete index\n");
+    }
+
+    // Free memory
+    for (int i = 0; i < count; i++) free(packages[i]);
+    free(packages);
+
+    runepkg_log_verbose("Autocomplete index built: %d entries, %s\n", count, index_path);
+    return 0;
 }

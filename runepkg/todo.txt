@@ -1,0 +1,68 @@
+High-Priority (Core Performance/Speed)
+Implement Binary Index for Package Completion (Section 2-3, "High-Speed Lookup Method")
+
+What: Create runepkg_autocomplete.bin (header + offset table + sorted string blob of pkgname-version entries) for O(log N) binary search instead of directory scanning.
+Why: Current completion scans install_dir every tab press—slow for 1000+ packages. This enables <5ms latency.
+Status: COMPLETED - Implemented in runepkg_storage.c and runepkg_cli.c, with mmap and binary search.
+Impl: In runepkg_storage.c, add runepkg_storage_build_autocomplete_index() to scan dirs, sort alphabetically, write binary format. Load in handle_binary_completion via mmap, use binary search on offsets.
+Atomic Cache Updates & Stat-Check Rebuilds (Section 4.II, "Atomic Cache Updates"; 10.III, "Stat-Check Rebuilds")
+
+What: Stat /var/lib/dpkg/status (or equivalent) mtime vs. runepkg_autocomplete.bin; rebuild index in background if stale. Add post-install/remove hooks to trigger rebuild.
+Why: Keeps completion fast without manual rebuilds; avoids "stale" suggestions.
+Status: COMPLETED - Added stat check in prefix_search_and_print, background fork rebuild if stale.
+Impl: In runepkg_handle.c (install/remove), add stat checks and fork background process to call index builder.
+Lazy Sync & Bloom Filter (Section 13, "Lazy Sync"; 14.II, "Bloom Filter")
+
+What: Only rescan install_dir if its mtime changed. Add a Bloom filter at runepkg_dir root for instant "exists" checks.
+Why: Avoids unnecessary I/O; Bloom allows O(1) prefix existence without full scan.
+Status: Always scans on tab.
+Impl: Cache mtime in memory; for Bloom, use a simple bit array in a file, hash package names.
+Medium-Priority (Optimization/Compatibility)
+Contextual Awareness in Completion (Section 4.II, "Contextual Awareness")
+
+What: Filter suggestions by argv[3] (e.g., only installed packages for remove, available for install).
+Why: Prevents irrelevant suggestions (e.g., don't suggest uninstalled for remove).
+Status: Basic prefix matching; no context filtering.
+Impl: In handle_binary_completion, branch on prev (e.g., if strcmp(prev, "remove"), scan only installed).
+getdents64 for Directory Scanning (Section 17, "Fast-Scan with getdents64")
+
+What: Use raw getdents64 syscall instead of readdir for faster bulk directory reads.
+Why: Reduces syscall overhead when scanning thousands of pkgname-version/ dirs.
+Status: COMPLETED - Replaced readdir with getdents64 in complete_version.
+Impl: In runepkg_cli.c (complete_version) and runepkg_storage.c (list), replace with syscall(SYS_getdents64) into a buffer.
+Global Version Table (meta_cache.bin) (Section 21, "In-Memory Symlink" Cache)
+
+What: Maintain runepkg_dir/meta_cache.bin with package_name:version_string for quick version lookups, falling back to deep probe.
+Why: Faster than scanning all pkginfo.bin headers; complements binary index.
+Status: No global cache; uses per-package mmap.
+Impl: Build during index rebuild; mmap for lookups in completion.
+Low-Priority (Polish/Safety)
+Signal Handling for Completion (Section 22, "Advanced Signal Handling")
+
+What: Mask SIGINT during completion to prevent broken terminals if user interrupts.
+Why: Ensures clean exit without leaving shell in weird state.
+Status: No signal handling.
+Impl: In handle_binary_completion, use sigprocmask or ignore SIGINT temporarily.
+O_NONBLOCK & Direct Syscalls (Section 19, "Implementation Constraints"; 15.III, "Direct Sycalls")
+
+What: Open files with O_NONBLOCK; use write(1, ...) instead of printf for output.
+Why: Prevents hangs on slow mounts; avoids stdio overhead for speed.
+Status: Uses open without flags; printf in completion.
+Impl: Update open calls; replace printf with write(1, ..., strlen(...)) and write(1, "\n", 1).
+Static Linking & No Malloc in Loops (Section 15.I, "No-Alloc" Strategy; 15.IV, "Static Linking")
+
+What: Ensure completion code is statically linked, uses stack buffers, no malloc in hot paths.
+Why: Zero heap alloc for snappy feel; no dynamic lib deps.
+Status: Uses malloc in some places; dynamic linking.
+Impl: Audit and replace allocs with fixed buffers; link statically if building.
+Validation Gate for Ghost Packages (Section 24, "Stat-Inconsistency Resolution")
+
+What: For each directory match, fstat pkginfo.bin to ensure it's valid (not partial/corrupt).
+Why: Avoids suggesting broken installs.
+Status: Assumes dirs are valid.
+Impl: In scanning functions, add stat check before including in results.
+Notes:
+Current Gaps: The biggest is the binary index—without it, completion is O(N) directory scans, not the spec's O(log N). Start there for real speed.
+Dependencies: Many tie into the index (e.g., lazy sync, Bloom). Implement index first.
+Testing: After each, test with runepkg -v install <deb> and tab completion to verify.
+Spec Alignment: This covers ~70% of the spec; the rest is implemented (e.g., bash protocol, multi-stage completion).

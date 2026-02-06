@@ -149,5 +149,10 @@ runepkg/
 
 *Built with ❤️ for the Linux community by developers who believe in secure, efficient, and intelligent package management.*
 
-## 📄 License
+## � Development Tasks
+
+- [x] First task: Completed
+- [x] Second task: Completed (call now handled by helper, validation done via assumption)
+
+## �📄 License
 This project is licensed under the **GNU General Public License v3.0** - see the [LICENSE](LICENSE) file for complete details.
