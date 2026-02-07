@@ -27,6 +27,15 @@
 #include <stdlib.h>
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
+#include <stdint.h>
+
+// Binary index header used by the self-completing binary (mmap'd index)
+typedef struct {
+    uint32_t magic;      // 0x52554E45 ("RUNE")
+    uint32_t version;    // Index format version
+    uint32_t entry_count;
+    uint32_t strings_size; // Size of string blob
+} AutocompleteHeader;
 
 // Define PATH_MAX if not defined
 #ifndef PATH_MAX

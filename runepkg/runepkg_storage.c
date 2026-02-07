@@ -38,13 +38,7 @@
 #include "runepkg_pack.h"
 static int runepkg_storage_remove_dir_recursive(const char *path);
 
-// Binary index structures (from self-completing-binary.txt)
-typedef struct {
-    uint32_t magic;      // 0x52554E45 ("RUNE")
-    uint32_t version;    // Index format version
-    uint32_t entry_count;
-    uint32_t strings_size; // Size of string blob
-} AutocompleteHeader;
+/* AutocompleteHeader is defined in runepkg_storage.h for shared use */
 
 // Compare function for qsort
 static int compare_packages(const void *a, const void *b) {

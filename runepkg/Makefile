@@ -129,7 +129,7 @@ endif
 TARGET = runepkg
 
 # Source files - Updated to include utility, package, hash, storage functions, defensive programming, and optional FFI systems
-C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c $(RUST_SOURCES)
+C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c runepkg_completion.c runepkg_install.c $(RUST_SOURCES)
 OBJS = $(C_SOURCES:.c=.o) $(CPP_SOURCES:.cpp=.o)
 
 # Header dependencies - Updated to include FFI headers if enabled

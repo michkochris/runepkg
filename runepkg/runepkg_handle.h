@@ -17,6 +17,9 @@
 
 #include <stdbool.h>
 #include "runepkg_hash.h"
+/* Public APIs moved into smaller modules */
+#include "runepkg_install.h"
+#include "runepkg_completion.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,9 +37,6 @@ extern runepkg_hash_table_t *installing_packages;
 int runepkg_init(void);
 void runepkg_cleanup(void);
 
-int handle_install(const char *deb_file_path);
-void handle_install_stdin(void);
-void handle_install_listfile(const char *path);
 int handle_remove(const char *package_name);
 void handle_remove_stdin(void);
 
@@ -49,10 +49,8 @@ void handle_print_pkglist_file(void);
 void handle_version(void);
 void handle_update_pkglist(void);
 
-/* Completion helpers (moved from runepkg_cli.c) */
-int is_completion_trigger(char *argv[]);
-void handle_binary_completion(const char *partial, const char *prev);
-
+/* Completion and install APIs are declared in runepkg_completion.h
+ * and runepkg_install.h respectively. */
 /* Print the autocomplete index contents (used by --print-auto-pkgs) */
 void handle_print_auto_pkgs(void);
 int print_package_data_header(void);
