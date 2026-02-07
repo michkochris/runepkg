@@ -243,15 +243,7 @@ install: runepkg
 	else \
 		echo "WARNING: runepkgconfig file not found in current directory!"; \
 	fi
-	@echo "Installing bash completion..."
-	@if [ -f runepkg_completions ]; then \
-		echo "Skipping old bash completion script (using self-completing binary instead)"; \
-	else \
-		echo "No old completion script found (good, using self-completing binary)"; \
-	fi
-	@echo "Adding self-completing binary completion to ~/.bashrc..."
-	@grep -q "complete -o nosort -C runepkg runepkg" ~/.bashrc || echo "complete -o nosort -C runepkg runepkg" >> ~/.bashrc
-	@echo "Completion added to ~/.bashrc (if not already present)."
+	@echo "Bash completion: using built-in self-completing binary (no external script installed)."
 	@echo ""
 	@echo "The cascading configuration will check:"
 	@echo "  1. \$$RUNEPKG_CONFIG_PATH environment variable"
@@ -344,22 +336,7 @@ uninstall:
 		fi; \
 	done; \
 	# Remove bash completion
-	@COMPLETION_CANDIDATES="$(DESTDIR)$(COMPLETION_DIR)/$(TARGET) /usr/share/bash-completion/completions/$(TARGET)"; \
-	for comp in $$COMPLETION_CANDIDATES; do \
-		if [ -f "$$comp" ]; then \
-			echo "Found $$comp"; \
-			DIR=$$(dirname "$$comp"); \
-			if [ "$(shell id -u)" = "0" ]; then \
-				echo "Removing $$comp..."; rm -f "$$comp" && echo "Removed $$comp" || echo "Failed to remove $$comp"; \
-			elif [ -w "$$DIR" ]; then \
-				echo "Removing $$comp..."; rm -f "$$comp" && echo "Removed $$comp" || echo "Failed to remove $$comp"; \
-			elif command -v sudo >/dev/null 2>&1; then \
-				echo "Attempting sudo rm $$comp..."; sudo rm -f "$$comp" && echo "Removed $$comp (via sudo)" || echo "Failed to remove $$comp via sudo"; \
-			else \
-				echo "ERROR: Cannot remove $$comp (insufficient privileges). To remove manually run: sudo rm -f $$comp"; \
-			fi; \
-		fi; \
-	done; \
+	# No external shell completion script is installed by modern runepkg; nothing to remove.
 	# Remove runepkg work dirs (from config if available)
 	@CONFIG_CANDIDATES="$$RUNEPKG_CONFIG_PATH $(ETCDIR)/runepkg/runepkgconfig $$HOME/.runepkgconfig"; \
 	FOUND_CONFIG=""; \
@@ -433,9 +410,7 @@ uninstall:
 			echo "ERROR: Bash completion exists but cannot be removed without elevated privileges. To remove manually run: sudo rm -f $(ETCDIR)/bash_completion.d/runepkg"; \
 		fi; \
 	fi
-	@echo "Removing self-completing binary completion from ~/.bashrc..."
-	@sed -i '/complete -o nosort -C runepkg runepkg/d' ~/.bashrc
-	@echo "Completion removed from ~/.bashrc."
+	@echo "No shell completion cleanup needed (self-completing binary)."
 	# Termux uninstall
 	@if [ -f $(TERMUX_PREFIX)/bin/$(TARGET) ]; then \
 		echo "Removing $(TERMUX_PREFIX)/bin/$(TARGET)..."; \

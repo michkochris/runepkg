@@ -37,6 +37,382 @@
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
 #include "runepkg_util.h"
+#include <stdint.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+
+/* Autocomplete binary header used by the on-disk index */
+typedef struct {
+    uint32_t magic;       /* 0x52554E45 "RUNE" */
+    uint32_t version;
+    uint32_t entry_count;
+    uint32_t strings_size;
+} AutocompleteHeader;
+
+/* Completion helpers moved from runepkg_cli.c */
+int is_completion_trigger(char *argv[]) {
+    (void)argv; /* suppressed unused warning; argc check is done by caller */
+    return 1;
+}
+
+/* Forward decl for helper used only within this file */
+static int prefix_search_and_print(const char *prefix);
+
+/* Recursively scan directories starting at `base` and print any .deb
+ * files whose relative path matches the `partial` prefix. This replaces
+ * the previous hard-coded search of "." and "debs".
+ */
+static void scan_deb_recursive(const char *base, const char *partial, int depth) {
+    if (depth > 64) return;
+    DIR *dir = opendir(base);
+    if (!dir) return;
+
+    struct dirent *entry;
+    char path[PATH_MAX];
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        snprintf(path, sizeof(path), "%s/%s", base, entry->d_name);
+        struct stat st;
+        if (lstat(path, &st) != 0) continue;
+        if (S_ISDIR(st.st_mode)) {
+            scan_deb_recursive(path, partial, depth + 1);
+        } else if (S_ISREG(st.st_mode)) {
+            size_t len = strlen(entry->d_name);
+            if (len > 4 && strcmp(entry->d_name + len - 4, ".deb") == 0) {
+                /* Normalize relative path for printing */
+                char rel[PATH_MAX];
+                if (strncmp(path, "./", 2) == 0) snprintf(rel, sizeof(rel), "%s", path + 2);
+                else if (strncmp(path, ".\\", 2) == 0) snprintf(rel, sizeof(rel), "%s", path + 2);
+                else snprintf(rel, sizeof(rel), "%s", path);
+                if (strncmp(rel, partial, strlen(partial)) == 0) {
+                    printf("%s\n", rel);
+                }
+            }
+        }
+    }
+
+    closedir(dir);
+}
+
+static void complete_deb_files(const char *partial) {
+    scan_deb_recursive(".", partial, 0);
+}
+
+/* Search the binary autocomplete index for prefix matches and print them. */
+static int prefix_search_and_print(const char *prefix) {
+    char index_path[PATH_MAX];
+    if (!g_runepkg_db_dir) return 0;
+    snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
+
+    struct stat index_st, dir_st;
+    int index_exists = (stat(index_path, &index_st) == 0);
+    int dir_stat = stat(g_runepkg_db_dir, &dir_st);
+
+    if (dir_stat == 0 && (!index_exists || dir_st.st_mtime > index_st.st_mtime)) {
+        runepkg_storage_build_autocomplete_index();
+    }
+
+    int fd = open(index_path, O_RDONLY);
+    if (fd < 0) return 0;
+
+    struct stat st;
+    if (fstat(fd, &st) < 0) { close(fd); return 0; }
+
+    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mapped == MAP_FAILED) { close(fd); return 0; }
+
+    AutocompleteHeader *hdr = (AutocompleteHeader *)mapped;
+    if (hdr->magic != 0x52554E45) { munmap(mapped, st.st_size); close(fd); return 0; }
+
+    uint32_t *offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
+    char *names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
+
+    int low = 0, high = hdr->entry_count - 1;
+    int first_match = -1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        char *current_name = names + offsets[mid];
+        int cmp = strcmp(prefix, current_name);
+        if (cmp == 0) {
+            first_match = mid; high = mid - 1;
+        } else if (cmp < 0) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+
+    if (first_match == -1 && low < (int)hdr->entry_count) {
+        char *name = names + offsets[low];
+        if (strncmp(prefix, name, strlen(prefix)) == 0) first_match = low;
+    }
+
+    if (first_match != -1) {
+        for (int i = first_match; i < (int)hdr->entry_count; i++) {
+            char *name = names + offsets[i];
+            if (strncmp(prefix, name, strlen(prefix)) != 0) break;
+            printf("%s\n", name);
+        }
+    }
+
+    munmap(mapped, st.st_size);
+    close(fd);
+    return (first_match != -1) ? 1 : 0;
+}
+
+/* Binary completion entrypoint: prints completion candidates to stdout.
+ * This implementation first tries to read Bash's `COMP_LINE`/`COMP_POINT`
+ * environment to reconstruct the full command line and infer the active
+ * command (e.g. `install`) even when flags are interleaved. If that data
+ * isn't available, it falls back to the previous `prev`-based behavior.
+ */
+void handle_binary_completion(const char *partial, const char *prev) {
+    const char *comp_line = getenv("COMP_LINE");
+    const char *comp_point_s = getenv("COMP_POINT");
+    int comp_point = 0;
+    if (comp_point_s) comp_point = atoi(comp_point_s);
+
+    char inferred_cmd[64] = {0};
+    if (comp_line) {
+        size_t len = strlen(comp_line);
+        size_t use_len = len;
+        if (comp_point > 0 && (size_t)comp_point < len) use_len = (size_t)comp_point;
+
+        char *buf = malloc(use_len + 1);
+        if (buf) {
+            memcpy(buf, comp_line, use_len);
+            buf[use_len] = '\0';
+
+            char *saveptr = NULL;
+            char *tok = strtok_r(buf, " \t", &saveptr);
+            /* skip program name */
+            if (tok) tok = strtok_r(NULL, " \t", &saveptr);
+            const char *last_token = NULL;
+            while (tok) {
+                if (strcmp(tok, "install") == 0 || strcmp(tok, "-i") == 0 || strcmp(tok, "--install") == 0) {
+                    strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0) {
+                    strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "--list") == 0) {
+                    strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
+                    strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                }
+                last_token = tok;
+                tok = strtok_r(NULL, " \t", &saveptr);
+            }
+            free(buf);
+
+            /* If nothing inferred and last token is a flag, scan full line for hints */
+            if (inferred_cmd[0] == '\0' && last_token && last_token[0] == '-') {
+                char *full = strdup(comp_line);
+                if (full) {
+                    char *save2 = NULL;
+                    char *t2 = strtok_r(full, " \t", &save2);
+                    if (t2) t2 = strtok_r(NULL, " \t", &save2);
+                    while (t2) {
+                        if (strcmp(t2, "install") == 0 || strcmp(t2, "-i") == 0 || strcmp(t2, "--install") == 0) {
+                            strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "remove") == 0 || strcmp(t2, "-r") == 0 || strcmp(t2, "--remove") == 0) {
+                            strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "--list") == 0) {
+                            strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
+                            strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                            break;
+                        }
+                        t2 = strtok_r(NULL, " \t", &save2);
+                    }
+                    free(full);
+                }
+            }
+        }
+    }
+
+    /* If we have an inferred command prefer it */
+    if (inferred_cmd[0] != '\0') {
+        if (strcmp(inferred_cmd, "install") == 0) {
+            if (partial[0] == '-') {
+                if (strncmp(partial, "--", 2) == 0) {
+                    const char *long_opts[] = {"--force", "--verbose"};
+                    int n = sizeof(long_opts)/sizeof(long_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                } else {
+                    const char *short_opts[] = {"-f", "-v"};
+                    int n = sizeof(short_opts)/sizeof(short_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                }
+            } else {
+                complete_deb_files(partial);
+            }
+            return;
+        }
+        if (strcmp(inferred_cmd, "remove") == 0) {
+            if (partial[0] == '-') {
+                if (strncmp(partial, "--", 2) == 0) {
+                    const char *long_opts[] = {"--purge", "--verbose"};
+                    int n = sizeof(long_opts)/sizeof(long_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                } else {
+                    const char *short_opts[] = {"-v"};
+                    int n = sizeof(short_opts)/sizeof(short_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                }
+            } else {
+                prefix_search_and_print(partial);
+            }
+            return;
+        }
+        if (strcmp(inferred_cmd, "list") == 0 || strcmp(inferred_cmd, "status") == 0) {
+            prefix_search_and_print(partial);
+            return;
+        }
+    }
+
+    /* Fallback: original prev-based behavior */
+    if (strcmp(prev, "runepkg") == 0) {
+        if (partial[0] == '-') {
+            if (strncmp(partial, "--", 2) == 0) {
+                const char *long_opts[] = {
+                    "--install", "--remove", "--list", "--status", "--list-files", "--search",
+                    "--verbose", "--force", "--version", "--help",
+                    "--print-config", "--print-config-file", "--print-pkglist-file", "--print-auto-pkgs"
+                };
+                int num_long = sizeof(long_opts) / sizeof(long_opts[0]);
+                for (int i = 0; i < num_long; i++) {
+                    if (strncmp(long_opts[i], partial, strlen(partial)) == 0) printf("%s\n", long_opts[i]);
+                }
+            } else {
+                const char *short_opts[] = {"-i", "-r", "-l", "-s", "-L", "-S", "-v", "-f", "-h"};
+                int num_short = sizeof(short_opts) / sizeof(short_opts[0]);
+                for (int i = 0; i < num_short; i++) {
+                    if (strncmp(short_opts[i], partial, strlen(partial)) == 0) printf("%s\n", short_opts[i]);
+                }
+            }
+        } else {
+            const char *sub_cmds[] = {
+                "install", "remove", "list", "status", "list-files", "search",
+                "download-only", "depends", "verify", "update"
+            };
+            int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
+            for (int i = 0; i < num_sub; i++) {
+                if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) printf("%s\n", sub_cmds[i]);
+            }
+        }
+    } else if (partial[0] == '-') {
+        if (strcmp(prev, "install") == 0) {
+            printf("--force\n--verbose\n");
+        } else if (strcmp(prev, "remove") == 0) {
+            printf("--purge\n--verbose\n");
+        } else {
+            printf("--help\n--version\n--verbose\n--force\n");
+        }
+        /* If the previous token is a flag but we couldn't infer command
+         * context (e.g. interleaved flags like `-i -f`), also include file
+         * completions so users still get .deb suggestions. This makes the
+         * self-completing binary more forgiving when Bash doesn't provide
+         * full COMP_LINE context.
+         */
+        if (prev && prev[0] == '-') {
+            complete_deb_files(partial);
+            prefix_search_and_print(partial);
+        }
+    } else if (strcmp(prev, "install") == 0 || strcmp(prev, "-i") == 0) {
+        complete_deb_files(partial);
+    } else if (strcmp(prev, "remove") == 0 || strcmp(prev, "-r") == 0) {
+        prefix_search_and_print(partial);
+    } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 ||
+               strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0) {
+        prefix_search_and_print(partial);
+    }
+}
+
+void handle_print_auto_pkgs(void) {
+    /* Print header like -l */
+    print_package_data_header();
+    printf("Listing installed packages...\n");
+
+    char index_path[PATH_MAX];
+    if (!g_runepkg_db_dir) {
+        printf("Error: runepkg database directory not configured.\n");
+        return;
+    }
+    snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
+
+    int fd = open(index_path, O_RDONLY);
+    if (fd < 0) {
+        printf("Error: Autocomplete index not found: %s\n", index_path);
+        return;
+    }
+
+    struct stat st;
+    if (fstat(fd, &st) < 0) {
+        printf("Error: Cannot stat index file.\n");
+        close(fd);
+        return;
+    }
+
+    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mapped == MAP_FAILED) {
+        printf("Error: Cannot mmap index file.\n");
+        close(fd);
+        return;
+    }
+
+    AutocompleteHeader *hdr = (AutocompleteHeader *)mapped;
+    if (hdr->magic != 0x52554E45) {
+        printf("Error: Invalid index file magic.\n");
+        munmap(mapped, st.st_size);
+        close(fd);
+        return;
+    }
+
+    uint32_t *offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
+    char *names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
+
+    char *packages[1024];
+    uint32_t count = hdr->entry_count;
+    size_t max_len = 0;
+    for (uint32_t i = 0; i < count && i < 1024; i++) {
+        packages[i] = names + offsets[i];
+        size_t len = strlen(packages[i]);
+        if (len > max_len) max_len = len;
+    }
+
+    if (count == 0) {
+        munmap(mapped, st.st_size);
+        close(fd);
+        return;
+    }
+
+    struct winsize w;
+    int width = 80; /* default */
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
+        width = w.ws_col;
+    }
+
+    int col_width = max_len + 2;
+    int cols = width / col_width;
+    if (cols < 1) cols = 1;
+
+    int rows = (count + cols - 1) / cols;
+    for (int r = 0; r < rows; r++) {
+        for (int c = 0; c < cols; c++) {
+            int idx = r * cols + c;
+            if ((uint32_t)idx < count) {
+                printf("%-*s", (int)col_width, packages[idx]);
+            }
+        }
+        printf("\n");
+    }
+
+    munmap(mapped, st.st_size);
+    close(fd);
+}
+
 
 #ifdef __ANDROID__
 int getloadavg(double loadavg[], int nelem) {
@@ -419,6 +795,53 @@ int handle_install(const char *deb_file_path) {
         return -1;
     }
 
+    /* Fast-path: if given a concrete .deb filename (no wildcards), try
+     * to parse package name/version from the filename and check the
+     * installed/in-flight tables before doing a full extraction. This
+     * makes re-checks snappy when a package is already present. */
+    if (strstr(deb_file_path, ".deb") != NULL && strchr(deb_file_path, '*') == NULL) {
+        const char *baseptr = strrchr(deb_file_path, '/');
+        const char *base = baseptr ? baseptr + 1 : deb_file_path;
+        char base_copy[PATH_MAX];
+        strncpy(base_copy, base, sizeof(base_copy) - 1);
+        base_copy[sizeof(base_copy) - 1] = '\0';
+        char *dot = strrchr(base_copy, '.');
+        if (dot && strcmp(dot, ".deb") == 0) {
+            *dot = '\0';
+            char *u1 = strchr(base_copy, '_');
+            char *u2 = u1 ? strchr(u1 + 1, '_') : NULL;
+            if (u1 && u2) {
+                size_t name_len = (size_t)(u1 - base_copy);
+                size_t ver_len = (size_t)(u2 - (u1 + 1));
+                if (name_len > 0 && name_len < PATH_MAX && ver_len > 0 && ver_len < PATH_MAX) {
+                    char name_buf[PATH_MAX];
+                    char ver_buf[PATH_MAX];
+                    memcpy(name_buf, base_copy, name_len);
+                    name_buf[name_len] = '\0';
+                    memcpy(ver_buf, u1 + 1, ver_len);
+                    ver_buf[ver_len] = '\0';
+                    PkgInfo *installed = NULL;
+                    if (runepkg_main_hash_table) installed = runepkg_hash_search(runepkg_main_hash_table, name_buf);
+                    if (!installed && installing_packages) installed = runepkg_hash_search(installing_packages, name_buf);
+                    if (installed && installed->version && strcmp(installed->version, ver_buf) == 0) {
+                        if (runepkg_hash_search(runepkg_main_hash_table, name_buf)) {
+                            if (!g_force_mode) {
+                                printf("Package %s is already installed (%s), skipping. Use -f/--force to reinstall.\n", name_buf, ver_buf);
+                                return 0;
+                            }
+                            /* If force mode is enabled, continue into full install
+                             * path so the --force behavior can run normally. */
+                        } else {
+                            /* in-flight; be quiet */
+                            runepkg_log_verbose("Package %s is currently being installed (fast-path), skipping.\n", name_buf);
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (g_verbose_mode) {
         struct stat file_stat;
         if (stat(deb_file_path, &file_stat) == 0) {
@@ -441,11 +864,89 @@ int handle_install(const char *deb_file_path) {
     int result = runepkg_pack_extract_and_collect_info(deb_file_path, g_control_dir, &pkg_info);
 
     if (result == 0) {
-        // Check if already installed
-        if (runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name)) {
-            runepkg_log_verbose("Package %s already installed, skipping\n", pkg_info.package_name);
+        /* If this package is already in the installing table, we're in a
+         * recursive install path (dependency cycle or repeated request).
+         * Skip to avoid infinite recursion/hangs; treat as satisfied.
+         */
+        if (installing_packages && runepkg_hash_search(installing_packages, pkg_info.package_name)) {
+            runepkg_log_verbose("Skipping install of %s: already installing (recursive).\n", pkg_info.package_name);
             runepkg_pack_free_package_info(&pkg_info);
             return 0;
+        }
+        // Check if already installed
+        PkgInfo *existing_inst_main = runepkg_hash_search(runepkg_main_hash_table, pkg_info.package_name);
+        PkgInfo *existing_inst = existing_inst_main;
+        /* Also check installing table for in-flight packages (but keep
+         * track of whether the package is truly installed or only in-flight)
+         */
+        if (!existing_inst && installing_packages) {
+            existing_inst = runepkg_hash_search(installing_packages, pkg_info.package_name);
+        }
+        if (existing_inst) {
+            if (g_force_mode) {
+                /* Prepare to reinstall/upgrade: save current version, remove
+                 * persistent metadata and hash entry so installation can proceed.
+                 * Note: do NOT dereference `existing_inst` after removal since
+                 * the hash remove may free the pointed data.
+                 */
+                char *old_ver = existing_inst->version ? strdup(existing_inst->version) : NULL;
+                runepkg_hash_remove_package(runepkg_main_hash_table, pkg_info.package_name);
+                if (old_ver) {
+                    runepkg_storage_remove_package(pkg_info.package_name, old_ver);
+                }
+                /* Use saved `old_ver` for comparisons/printing instead of
+                 * `existing_inst->version` (which may be freed).
+                 */
+                if (pkg_info.version && old_ver && strcmp(old_ver, pkg_info.version) != 0) {
+                    printf("Upgrading %s from %s to %s (force)\n",
+                           pkg_info.package_name,
+                           old_ver ? old_ver : "(unknown)",
+                           pkg_info.version ? pkg_info.version : "(unknown)");
+                } else {
+                    printf("Reinstalling %s (%s) due to --force\n",
+                           pkg_info.package_name,
+                           pkg_info.version ? pkg_info.version : (old_ver ? old_ver : "(unknown)"));
+                }
+                if (old_ver) free(old_ver);
+            } else {
+                /* If the package is only present in the installing table, it
+                 * means an in-flight install is happening; do not confuse the
+                 * user with 'already installed' messages or -f/--force hints.
+                 */
+                if (existing_inst_main) {
+                    /* Check whether the package directory was created very recently
+                     * (i.e., likely installed earlier in this run). In that case
+                     * avoid showing the '-f/--force' guidance which is misleading
+                     * during a dependency-driven install sequence.
+                     */
+                    char pkg_dir[PATH_MAX];
+                    int recent_installed = 0;
+                    if (runepkg_storage_get_package_path(pkg_info.package_name, existing_inst->version ? existing_inst->version : "", pkg_dir) == 0) {
+                        struct stat st;
+                        if (stat(pkg_dir, &st) == 0) {
+                            time_t now = time(NULL);
+                            if (now != (time_t)-1 && (now - st.st_mtime) < 5) recent_installed = 1;
+                        }
+                    }
+                    if (recent_installed) {
+                        runepkg_log_verbose("Package %s appears to have been installed recently; skipping duplicate message.\n", pkg_info.package_name);
+                    } else {
+                        if (existing_inst->version && pkg_info.version && strcmp(existing_inst->version, pkg_info.version) == 0) {
+                            printf("Package %s is already installed (%s), skipping. Use -f/--force to reinstall.\n",
+                                   pkg_info.package_name, pkg_info.version);
+                        } else {
+                            printf("Package %s is already installed (version %s). Use -f/--force to reinstall or upgrade.\n",
+                                   pkg_info.package_name,
+                                   existing_inst->version ? existing_inst->version : "(unknown)");
+                        }
+                    }
+                } else {
+                    /* in-flight — be silent (or give a concise status) */
+                    runepkg_log_verbose("Package %s is already being installed (in-flight), skipping duplicate.\n", pkg_info.package_name);
+                }
+                runepkg_pack_free_package_info(&pkg_info);
+                return 0;
+            }
         }
 
         // Mark as installing to prevent recursive installs
@@ -453,16 +954,28 @@ int handle_install(const char *deb_file_path) {
         runepkg_pack_init_package_info(&dummy);
         dummy.package_name = strdup(pkg_info.package_name);
         if (pkg_info.version) dummy.version = strdup(pkg_info.version);
-        runepkg_hash_add_package(runepkg_main_hash_table, &dummy);
+        /* Use the installing_packages table so the main hash remains the
+         * authoritative list of installed packages. Previously this added
+         * the dummy into runepkg_main_hash_table which caused subsequent
+         * dependency checks in the same install session to incorrectly
+         * report packages as already installed. */
+        runepkg_hash_add_package(installing_packages, &dummy);
         runepkg_pack_free_package_info(&dummy);
 
         // Resolve dependencies
         Dependency **deps = parse_depends_with_constraints(pkg_info.depends);
         if (deps) {
-            Dependency **unsatisfied = NULL;
-            int num_unsatisfied = 0;
-            for (int j = 0; deps[j]; j++) {
+                Dependency **unsatisfied = NULL;
+                int num_unsatisfied = 0;
+                /* Track which dependency package names we've already attempted to
+                 * install during this top-level install to avoid repeated attempts
+                 * that can cause cycling/hangs when multiple deps reference the
+                 * same package. */
+                char **attempted_deps = NULL;
+                int attempted_count = 0;
+                for (int j = 0; deps[j]; j++) {
                 PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
+                if (!installed && installing_packages) installed = runepkg_hash_search(installing_packages, deps[j]->package);
                 int satisfied = 0;
                 if (installed) {
                     if (deps[j]->constraint) {
@@ -488,8 +1001,19 @@ int handle_install(const char *deb_file_path) {
                         snprintf(pattern, sizeof(pattern), "%s/%s*.deb", dir, deps[j]->package);
                         glob_t globbuf;
                         if (glob(pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
-                            runepkg_log_verbose("Installing dependency: %s from %s\n", deps[j]->package, globbuf.gl_pathv[0]);
-                            handle_install(globbuf.gl_pathv[0]);
+                            /* Avoid attempting the same dependency repeatedly */
+                            int already = 0;
+                            for (int a = 0; a < attempted_count; a++) {
+                                if (strcmp(attempted_deps[a], deps[j]->package) == 0) { already = 1; break; }
+                            }
+                            if (!already) {
+                                runepkg_log_verbose("Installing dependency: %s from %s\n", deps[j]->package, globbuf.gl_pathv[0]);
+                                attempted_deps = realloc(attempted_deps, (attempted_count + 1) * sizeof(char*));
+                                attempted_deps[attempted_count++] = strdup(deps[j]->package);
+                                handle_install(globbuf.gl_pathv[0]);
+                            } else {
+                                runepkg_log_verbose("Skipping duplicate install attempt for dependency: %s\n", deps[j]->package);
+                            }
                         } else {
                             if (!g_force_mode) {
                                 unsatisfied = realloc(unsatisfied, (num_unsatisfied + 1) * sizeof(Dependency*));
@@ -507,7 +1031,7 @@ int handle_install(const char *deb_file_path) {
                     }
                 }
             }
-            if (num_unsatisfied > 0) {
+                if (num_unsatisfied > 0) {
                 printf("Error: The following dependencies are not satisfied:\n");
                 for(int k=0; k<num_unsatisfied; k++){
                     printf("  - %s%s%s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? " " : "", unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
@@ -527,9 +1051,14 @@ int handle_install(const char *deb_file_path) {
                     free(deps[j]);
                 }
                 free(deps);
+                /* free attempted_deps if any and return */
+                if (attempted_deps) {
+                    for (int a = 0; a < attempted_count; a++) free(attempted_deps[a]);
+                    free(attempted_deps);
+                }
                 runepkg_pack_free_package_info(&pkg_info);
                 return -1;
-            } else {
+                } else {
                 // Free deps
                 for (int j = 0; deps[j]; j++) {
                     free(deps[j]->package);
@@ -537,6 +1066,11 @@ int handle_install(const char *deb_file_path) {
                     free(deps[j]);
                 }
                 free(deps);
+                /* free attempted_deps if any */
+                if (attempted_deps) {
+                    for (int a = 0; a < attempted_count; a++) free(attempted_deps[a]);
+                    free(attempted_deps);
+                }
             }
         }
 
@@ -555,6 +1089,12 @@ int handle_install(const char *deb_file_path) {
                 if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
                     if (g_verbose_mode) {
                         printf("Package successfully added to persistent storage.\n");
+                    }
+                    /* Add to main installed-package hash so further dependency
+                     * checks during this run see it as installed. This prevents
+                     * repeated reinstallation attempts for the same package. */
+                    if (runepkg_main_hash_table) {
+                        runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
                     }
                 } else {
                     printf("Warning: Failed to write package info to persistent storage.\n");

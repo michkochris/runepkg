@@ -49,6 +49,12 @@ void handle_print_pkglist_file(void);
 void handle_version(void);
 void handle_update_pkglist(void);
 
+/* Completion helpers (moved from runepkg_cli.c) */
+int is_completion_trigger(char *argv[]);
+void handle_binary_completion(const char *partial, const char *prev);
+
+/* Print the autocomplete index contents (used by --print-auto-pkgs) */
+void handle_print_auto_pkgs(void);
 int print_package_data_header(void);
 
 #ifdef __cplusplus
