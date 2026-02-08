@@ -146,7 +146,7 @@ runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
     table->size = initial_size;
     table->count = 0;
 
-    runepkg_util_log_verbose("Hash table created with size %zu\n", table->size);
+    /* suppressed per-table creation message to reduce startup noise */
     return table;
 }
 
@@ -393,7 +393,7 @@ void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
 
     free(table->buckets);
     free(table);
-    runepkg_util_log_verbose("Hash table destroyed and memory freed.\n");
+    /* suppressed per-table destroy message to avoid duplicate verbose output; caller should summarize */
 }
 
 // --- Display Functions ---

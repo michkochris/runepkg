@@ -36,6 +36,8 @@
 
 // External global variable for verbose logging
 extern bool g_verbose_mode;
+// External global variable for debug logging
+extern bool g_debug_mode;
 
 // --- Logging Functions ---
 
@@ -49,19 +51,10 @@ void runepkg_util_log_verbose(const char *format, ...) {
     va_end(args);
 }
 
-// Main verbose logging function used throughout the application
-void runepkg_log_verbose(const char *format, ...) {
-    if (!g_verbose_mode) return;
-    
-    va_list args;
-    va_start(args, format);
-    printf("[VERBOSE] ");
-    vprintf(format, args);
-    va_end(args);
-}
+/* `runepkg_log_verbose` is mapped to `runepkg_util_log_verbose` via header macro. */
 
 void runepkg_util_log_debug(const char *format, ...) {
-    if (!g_verbose_mode) return;
+    if (!g_debug_mode) return;
     
     va_list args;
     va_start(args, format);
@@ -459,7 +452,7 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
 // --- Configuration File Operations ---
 
 char *runepkg_util_get_config_value(const char *filepath, const char *key, char separator) {
-    runepkg_util_log_debug("Entering get_config_value for key '%s' from file '%s'\n", key, filepath);
+    /* entry log removed to reduce verbose noise */
 
     FILE *file = fopen(filepath, "r");
     if (file == NULL) {
@@ -472,67 +465,66 @@ char *runepkg_util_get_config_value(const char *filepath, const char *key, char 
     size_t key_len = strlen(key);
 
     while (fgets(line, sizeof(line), file) != NULL) {
-        runepkg_util_log_debug("Reading line: %s", line);
         char *trimmed_line = runepkg_util_trim_whitespace(line);
         if (strlen(trimmed_line) == 0 || trimmed_line[0] == '#') {
-            runepkg_util_log_debug("Skipping empty or comment line.\n");
             continue;
         }
 
-        if (strncmp(trimmed_line, key, key_len) == 0) {
-            runepkg_util_log_debug("Found line starting with key '%s'.\n", key);
-            char *potential_separator = trimmed_line + key_len;
-            while (*potential_separator != '\0' && isspace((unsigned char)*potential_separator)) {
-                potential_separator++;
-            }
-
-            if (*potential_separator == separator) {
-                runepkg_util_log_debug("Found separator '%c'.\n", separator);
-                char *start_of_value = potential_separator + 1;
-                while (*start_of_value != '\0' && isspace((unsigned char)*start_of_value)) {
-                    start_of_value++;
-                }
-
-                char *raw_value = strdup(start_of_value);
-                if (!raw_value) {
-                    runepkg_util_log_debug("Memory allocation failed for raw_value.\n");
-                    break;
-                }
-
-                char *trimmed_value = runepkg_util_trim_whitespace(raw_value);
-                runepkg_util_log_debug("Extracted raw value: '%s'\n", trimmed_value);
-
-                if (trimmed_value[0] == '~' && (trimmed_value[1] == '/' || trimmed_value[1] == '\0')) {
-                    char *home_dir = getenv("HOME");
-                    if (home_dir) {
-                        size_t home_len = strlen(home_dir);
-                        size_t value_len = strlen(trimmed_value);
-                        value = (char *)malloc(home_len + value_len + 1);
-                        if (value) {
-                            snprintf(value, home_len + value_len + 1, "%s%s", home_dir, trimmed_value + 1);
-                            runepkg_util_log_debug("Expanded '~' to full path: '%s'\n", value);
-                            free(raw_value);
-                        } else {
-                            runepkg_util_log_debug("Memory allocation failed for expanded config value.\n");
-                            free(raw_value);
-                            value = NULL;
-                        }
-                    } else {
-                        runepkg_util_log_debug("Failed to expand '~': HOME environment variable not set.\n");
-                        free(raw_value);
-                        value = NULL;
-                    }
-                } else {
-                    runepkg_util_log_debug("No '~' expansion needed.\n");
-                    value = raw_value;
-                }
-                break;
-            }
+        if (strncmp(trimmed_line, key, key_len) != 0) {
+            continue;
         }
+
+        char *potential_separator = trimmed_line + key_len;
+        while (*potential_separator != '\0' && isspace((unsigned char)*potential_separator)) {
+            potential_separator++;
+        }
+
+        if (*potential_separator != separator) {
+            continue;
+        }
+
+        char *start_of_value = potential_separator + 1;
+        while (*start_of_value != '\0' && isspace((unsigned char)*start_of_value)) {
+            start_of_value++;
+        }
+
+        char *raw_value = strdup(start_of_value);
+        if (!raw_value) {
+            /* memory failure; nothing to return */
+            break;
+        }
+
+        char *trimmed_value = runepkg_util_trim_whitespace(raw_value);
+
+        if (trimmed_value[0] == '~' && (trimmed_value[1] == '/' || trimmed_value[1] == '\0')) {
+            char *home_dir = getenv("HOME");
+            if (home_dir) {
+                size_t home_len = strlen(home_dir);
+                size_t value_len = strlen(trimmed_value);
+                value = (char *)malloc(home_len + value_len + 1);
+                if (value) {
+                    snprintf(value, home_len + value_len + 1, "%s%s", home_dir, trimmed_value + 1);
+                    free(raw_value);
+                } else {
+                    free(raw_value);
+                    value = NULL;
+                }
+            } else {
+                free(raw_value);
+                value = NULL;
+            }
+        } else {
+            value = raw_value;
+        }
+        break;
     }
 
     fclose(file);
-    runepkg_util_log_debug("Exiting get_config_value. Result: %s\n", value ? value : "NULL");
+    if (value) {
+        runepkg_util_log_debug("Collected config '%s' = '%s' from '%s'\n", key, value, filepath);
+    } else {
+        runepkg_util_log_debug("No config value for '%s' in '%s'\n", key, filepath);
+    }
     return value;
 }
 

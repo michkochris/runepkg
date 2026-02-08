@@ -47,7 +47,7 @@ char *g_pkglist_bin_path = NULL;
 extern bool g_verbose_mode; // Defined in main.c
 
 // --- External Function Declarations ---
-extern void runepkg_log_verbose(const char *format, ...);
+/* `runepkg_log_verbose` is available as a macro mapping to `runepkg_util_log_verbose` */
 
 // --- Internal Function Declarations ---
 void runepkg_config_cleanup(void);
@@ -61,7 +61,6 @@ char *runepkg_get_config_file_path() {
     // 1. Check for environment variable override
     char *env_config_path = getenv("RUNEPKG_CONFIG_PATH");
     if (env_config_path && runepkg_util_file_exists(env_config_path)) {
-        runepkg_log_verbose("Using configuration from RUNEPKG_CONFIG_PATH: %s\n", env_config_path);
         config_file_path = strdup(env_config_path);
         if (!config_file_path) {
             fprintf(stderr, "Error: Memory allocation failed for config path.\n");
@@ -73,7 +72,6 @@ char *runepkg_get_config_file_path() {
     // 2. Check for system-wide configuration
     const char *system_config_path = "/etc/runepkg/runepkgconfig";
     if (runepkg_util_file_exists(system_config_path)) {
-        runepkg_log_verbose("Using system-wide configuration: %s\n", system_config_path);
         config_file_path = strdup(system_config_path);
         if (!config_file_path) {
             fprintf(stderr, "Error: Memory allocation failed for config path.\n");
@@ -88,7 +86,6 @@ char *runepkg_get_config_file_path() {
         char user_config_path[PATH_MAX];
         snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkgconfig", home_dir);
         if (runepkg_util_file_exists(user_config_path)) {
-            runepkg_log_verbose("Using user-specific configuration: %s\n", user_config_path);
             config_file_path = strdup(user_config_path);
             if (!config_file_path) {
                 fprintf(stderr, "Error: Memory allocation failed for config path.\n");
@@ -156,14 +153,8 @@ int runepkg_config_load() {
             runepkg_config_cleanup();
             return -1;
         }
-        // Create directories
-        if (runepkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
-            runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 ||
-            runepkg_util_create_dir_recursive(g_install_dir_internal, 0755) != 0) {
-            fprintf(stderr, "Error: Failed to create necessary runepkg directories based on default config.\n");
-            runepkg_config_cleanup();
-            return -1;
-        }
+        /* Directories will be created by runepkg_init_paths() later.
+         * Avoid creating them here to prevent duplicate verbose/debug logs. */
     } else {
         // Free any existing global path variables to prevent leaks on re-entry (if applicable)
         runepkg_config_cleanup();
@@ -236,32 +227,41 @@ int runepkg_config_load() {
             return -1;
         }
 
-        runepkg_log_verbose("Creating necessary runepkg directories...\n");
-        if (runepkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
-            runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 || // New directory creation
-            runepkg_util_create_dir_recursive(g_install_dir_internal, 0755) != 0) {
-            fprintf(stderr, "Error: Failed to create necessary runepkg directories based on config. Exiting.\n");
-            runepkg_util_free_and_null(&config_file_path);
-            runepkg_config_cleanup();
-            return -1;
-        }
-        runepkg_util_free_and_null(&config_file_path);
+        /* Directories will be created by runepkg_init_paths() later.
+         * Avoid creating them here to prevent duplicate verbose/debug logs. */
+        /* keep config_file_path until after verbose summary so we can report source */
     }
 
-    runepkg_log_verbose("Configuration loaded successfully:\n");
-    runepkg_log_verbose("  runepkg_base_dir: %s\n", g_runepkg_base_dir);
-    runepkg_log_verbose("  control_dir: %s\n", g_control_dir);
-    runepkg_log_verbose("  runepkg_db_dir: %s\n", g_runepkg_db_dir); // New log message
-    runepkg_log_verbose("  internal_install_dir: %s\n", g_install_dir_internal);
-    runepkg_log_verbose("  system_install_root: %s\n", g_system_install_root);
-    runepkg_log_verbose("  pkglist_txt_path: %s\n", g_pkglist_txt_path);
-    runepkg_log_verbose("  pkglist_bin_path: %s\n", g_pkglist_bin_path);
+    /* Concise summary for verbose mode: one-line summary instead of
+     * multiple repeated lines. If detailed inspection is needed, -v
+     * still enables internal verbose logs elsewhere. */
+    if (g_verbose_mode) {
+        if (config_file_path) {
+            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s\n",
+                               config_file_path,
+                               g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
+                               g_control_dir ? g_control_dir : "(null)",
+                               g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
+                               g_install_dir_internal ? g_install_dir_internal : "(null)");
+        } else {
+            runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s\n",
+                               g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
+                               g_control_dir ? g_control_dir : "(null)",
+                               g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
+                               g_install_dir_internal ? g_install_dir_internal : "(null)");
+        }
+        runepkg_log_verbose("Autocomplete files: txt=%s bin=%s\n",
+                           g_pkglist_txt_path ? g_pkglist_txt_path : "(null)",
+                           g_pkglist_bin_path ? g_pkglist_bin_path : "(null)");
+    }
+
+    /* free config file path now that we've reported it */
+    runepkg_util_free_and_null(&config_file_path);
 
     return 0;
 }
 
 void runepkg_config_cleanup() {
-    runepkg_log_verbose("Cleaning up global path variables...\n");
     runepkg_util_free_and_null(&g_runepkg_base_dir);
     runepkg_util_free_and_null(&g_control_dir);
     runepkg_util_free_and_null(&g_runepkg_db_dir); // New cleanup call
@@ -273,6 +273,7 @@ void runepkg_config_cleanup() {
 
 void runepkg_init_paths() {
     // NEW LOGIC: Load paths from runepkgconfig
+    /* Initialization summary (concise) */
     runepkg_log_verbose("Initializing runepkg paths from config...\n");
     if (runepkg_config_load() != 0) {
         fprintf(stderr, "Error: Failed to load runepkg configuration. Exiting.\n");
@@ -287,19 +288,41 @@ void runepkg_init_paths() {
         exit(EXIT_FAILURE);
     }
 
-    runepkg_log_verbose("Creating necessary runepkg directories...\n");
-    if (runepkg_util_create_dir_recursive(g_control_dir, 0755) != 0 ||
-        runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) != 0 || // New directory creation
-        runepkg_util_create_dir_recursive(g_install_dir_internal, 0755) != 0) {
-        fprintf(stderr, "Error: Failed to create necessary runepkg directories based on config. Exiting.\n");
-        runepkg_config_cleanup();
-        exit(EXIT_FAILURE);
+    /* Create configured runepkg directories once and report concise results.
+     * For each configured directory, print a single debug line if it was created. */
+    bool created_base = false, created_control = false, created_db = false, created_install = false;
+
+    if (!runepkg_util_file_exists(g_runepkg_base_dir)) {
+        if (runepkg_util_create_dir_recursive(g_runepkg_base_dir, 0755) == 0) created_base = true;
+        else { fprintf(stderr, "Error: Failed to create base directory %s\n", g_runepkg_base_dir); runepkg_config_cleanup(); exit(EXIT_FAILURE); }
     }
 
-    runepkg_log_verbose("runepkg directories initialized from config:\n");
-    runepkg_log_verbose("  Base: %s\n", g_runepkg_base_dir);
-    runepkg_log_verbose("  Control: %s\n", g_control_dir);
-    runepkg_log_verbose("  Database: %s\n", g_runepkg_db_dir); // New log message
-    runepkg_log_verbose("  Internal Install Records: %s\n", g_install_dir_internal);
-    runepkg_log_verbose("  System Root (actual install target): %s\n", g_system_install_root);
+    if (!runepkg_util_file_exists(g_control_dir)) {
+        if (runepkg_util_create_dir_recursive(g_control_dir, 0755) == 0) created_control = true;
+        else { fprintf(stderr, "Error: Failed to create control directory %s\n", g_control_dir); runepkg_config_cleanup(); exit(EXIT_FAILURE); }
+    }
+
+    if (!runepkg_util_file_exists(g_runepkg_db_dir)) {
+        if (runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755) == 0) created_db = true;
+        else { fprintf(stderr, "Error: Failed to create db directory %s\n", g_runepkg_db_dir); runepkg_config_cleanup(); exit(EXIT_FAILURE); }
+    }
+
+    if (!runepkg_util_file_exists(g_install_dir_internal)) {
+        if (runepkg_util_create_dir_recursive(g_install_dir_internal, 0755) == 0) created_install = true;
+        else { fprintf(stderr, "Error: Failed to create install directory %s\n", g_install_dir_internal); runepkg_config_cleanup(); exit(EXIT_FAILURE); }
+    }
+
+    if (g_verbose_mode) {
+        if (created_base) runepkg_util_log_debug("Created runepkg_dir: %s\n", g_runepkg_base_dir);
+        if (created_control) runepkg_util_log_debug("Created control_dir: %s\n", g_control_dir);
+        if (created_db) runepkg_util_log_debug("Created runepkg_db: %s\n", g_runepkg_db_dir);
+        if (created_install) runepkg_util_log_debug("Created install_dir: %s\n", g_install_dir_internal);
+
+        runepkg_log_verbose("runepkg directories initialized: base=%s control=%s db=%s install=%s root=%s\n",
+                           g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
+                           g_control_dir ? g_control_dir : "(null)",
+                           g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
+                           g_install_dir_internal ? g_install_dir_internal : "(null)",
+                           g_system_install_root ? g_system_install_root : "(null)");
+    }
 }

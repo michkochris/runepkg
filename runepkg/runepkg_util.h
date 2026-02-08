@@ -39,10 +39,8 @@
  */
 void runepkg_util_log_verbose(const char *format, ...);
 
-/**
- * @brief Main verbose logging function used throughout the application
- */
-void runepkg_log_verbose(const char *format, ...);
+/* Maintain compatibility: map old name to the single implementation */
+#define runepkg_log_verbose runepkg_util_log_verbose
 
 /**
  * @brief Logging function for debug output

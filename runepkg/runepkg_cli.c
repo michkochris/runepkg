@@ -39,6 +39,7 @@
 bool g_verbose_mode = false;
 bool g_force_mode = false;
 bool g_did_install = false;
+bool g_debug_mode = false;
 
 /* Completion and autocomplete implementations moved to runepkg_handle.c */
 
@@ -59,6 +60,7 @@ void usage(void) {
     printf("  -L, --list-files <package-name>         List files for a package.\n");
     printf("  -S, --search <file-path>                Search for packages containing files matching path.\n");
     printf("  -v, --verbose                           Enable verbose output.\n");
+    printf("  -d, --debug                             Enable debug output (developer traces).\n");
     printf("  -f, --force                             Force install even if dependencies are missing.\n");
     printf("      --version                           Print version information.\n");
     printf("  -h, --help                              Display this help message.\n\n");
@@ -94,6 +96,9 @@ int main(int argc, char *argv[]) {
         }
         if (strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0) {
             g_force_mode = true;
+        }
+        if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
+            g_debug_mode = true;
         }
     }
     

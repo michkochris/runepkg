@@ -141,8 +141,6 @@ int runepkg_init(void) {
         if (!runepkg_main_hash_table) {
             fprintf(stderr, "Error: Failed to create hash table for package management.\n");
             return -1;
-        } else {
-            runepkg_log_verbose("Hash table initialized for package management.\n");
         }
     }
 
@@ -152,10 +150,11 @@ int runepkg_init(void) {
         if (!installing_packages) {
             fprintf(stderr, "Error: Failed to create installing hash table.\n");
             return -1;
-        } else {
-            runepkg_log_verbose("Installing hash table initialized.\n");
         }
     }
+
+    /* One concise verbose message summarizing hash table initialization */
+    runepkg_log_verbose("Hash tables initialized for package management.\n");
     
     /* TODO: Load installed packages into hash table from persistent storage */
     /* COMPLETED: The call is now handled by the helper, validation done via assumption */
@@ -208,9 +207,11 @@ void runepkg_cleanup(void) {
         runepkg_hash_destroy_table(installing_packages);
         installing_packages = NULL;
     }
-    
+    /* One concise message for destroyed hash tables */
+    runepkg_log_verbose("Hash tables destroyed and memory freed.\n");
+
     runepkg_config_cleanup();
-    
+
     runepkg_log_verbose("runepkg cleanup completed.\n");
 }
 
