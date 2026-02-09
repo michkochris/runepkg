@@ -197,14 +197,21 @@ void handle_binary_completion(const char *partial, const char *prev) {
     if (inferred_cmd[0] != '\0') {
         if (strcmp(inferred_cmd, "install") == 0) {
             if (partial[0] == '-') {
+                /* Suggest the full set of global options when the user types a dash
+                 * so flags like -r and -i are available even when interleaved.
+                 */
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *long_opts[] = {"--force", "--verbose"};
-                    int n = sizeof(long_opts)/sizeof(long_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                    const char *all_long_opts[] = {
+                        "--install","--remove","--list","--status","--list-files","--search",
+                        "--verbose","--force","--help","--version",
+                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
+                    };
+                    int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
                 } else {
-                    const char *short_opts[] = {"-f", "-v"};
-                    int n = sizeof(short_opts)/sizeof(short_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                    int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
                 }
             } else {
                 complete_deb_files(partial);
@@ -214,13 +221,17 @@ void handle_binary_completion(const char *partial, const char *prev) {
         if (strcmp(inferred_cmd, "remove") == 0) {
             if (partial[0] == '-') {
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *long_opts[] = {"--purge", "--verbose"};
-                    int n = sizeof(long_opts)/sizeof(long_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                    const char *all_long_opts[] = {
+                        "--install","--remove","--list","--status","--list-files","--search",
+                        "--verbose","--force","--help","--version",
+                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
+                    };
+                    int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
                 } else {
-                    const char *short_opts[] = {"-v"};
-                    int n = sizeof(short_opts)/sizeof(short_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                    int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
+                    for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
                 }
             } else {
                 prefix_search_and_print(partial);
@@ -264,12 +275,44 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
         }
     } else if (partial[0] == '-') {
-        if (strcmp(prev, "install") == 0) {
-            printf("--force\n--verbose\n");
-        } else if (strcmp(prev, "remove") == 0) {
-            printf("--purge\n--verbose\n");
+        /* If we previously inferred a command from COMP_LINE, respect it here
+         * even when `prev` is a non-flag (e.g., a package name). This ensures
+         * that typing `-` after an install argument offers `-f`/`-v`.
+         */
+            if (inferred_cmd[0] != '\0') {
+            if (strcmp(inferred_cmd, "install") == 0) {
+                const char *short_opts[] = {"-f", "-v"};
+                int n = sizeof(short_opts)/sizeof(short_opts[0]);
+                for (int i = 0; i < n; i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                if (strncmp(partial, "--", 2) == 0) {
+                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-auto-pkgs"};
+                    int m = sizeof(long_opts)/sizeof(long_opts[0]);
+                    for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                }
+            } else if (strcmp(inferred_cmd, "remove") == 0) {
+                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
+                for (int i = 0; i < n; i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
+                if (strncmp(partial, "--", 2) == 0) {
+                    const char *all_long_opts[] = {
+                        "--install","--remove","--list","--status","--list-files","--search",
+                        "--verbose","--force","--help","--version",
+                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
+                    };
+                    int m = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+                    for (int i = 0; i < m; i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
+                }
+            } else {
+                printf("--help\n--version\n--verbose\n--force\n");
+            }
         } else {
-            printf("--help\n--version\n--verbose\n--force\n");
+            if (strcmp(prev, "install") == 0) {
+                printf("--force\n--verbose\n");
+            } else if (strcmp(prev, "remove") == 0) {
+                printf("--purge\n--verbose\n");
+            } else {
+                printf("--help\n--version\n--verbose\n--force\n");
+            }
         }
         if (prev && prev[0] == '-') {
             complete_deb_files(partial);

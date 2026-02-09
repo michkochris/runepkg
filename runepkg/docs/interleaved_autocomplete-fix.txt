@@ -1,0 +1,10 @@
+runepkg is mostly stable for what it does in its current functionality.
+runepkg -i pkgname-version auto completes
+ruenpkg -i somedir/pkgname-version auto completes
+multiple interleaved commands dont get executed in the order of the command though like:
+runepkg -i pkgname-version --print-config
+
+i wanted consistant execution of interleaved commands in the right order for commands like:
+runepkg -r pkgname-version -i pkgname-version.deb --print-config
+should be executed in order...
+

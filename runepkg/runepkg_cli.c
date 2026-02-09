@@ -121,41 +121,6 @@ int main(int argc, char *argv[]) {
             handle_version();
             return EXIT_SUCCESS;
         }
-        if (strcmp(argv[i], "--print-config") == 0) {
-            // Initialize first to load config, then print
-            if (runepkg_init() != 0) {
-                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
-                return EXIT_FAILURE;
-            }
-            handle_print_config();
-            runepkg_cleanup();
-            return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--print-auto-pkgs") == 0) {
-            // Initialize to load config, then print autocomplete index
-            if (runepkg_init() != 0) {
-                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
-                return EXIT_FAILURE;
-            }
-            handle_print_auto_pkgs();
-            runepkg_cleanup();
-            return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--print-config-file") == 0) {
-            // No need to initialize for this - just find the config file
-            handle_print_config_file();
-            return EXIT_SUCCESS;
-        }
-        if (strcmp(argv[i], "--print-pkglist-file") == 0) {
-            // Initialize first to load config, then print pkglist paths
-            if (runepkg_init() != 0) {
-                fprintf(stderr, "ERROR: Failed to initialize runepkg configuration\n");
-                return EXIT_FAILURE;
-            }
-            handle_print_pkglist_file();
-            runepkg_cleanup();
-            return EXIT_SUCCESS;
-        }
     }
 
     if (argc < 2) {
@@ -312,6 +277,14 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             // Already handled at the start of main
+        } else if (strcmp(argv[i], "--print-config") == 0) {
+            handle_print_config();
+        } else if (strcmp(argv[i], "--print-auto-pkgs") == 0) {
+            handle_print_auto_pkgs();
+        } else if (strcmp(argv[i], "--print-config-file") == 0) {
+            handle_print_config_file();
+        } else if (strcmp(argv[i], "--print-pkglist-file") == 0) {
+            handle_print_pkglist_file();
         } else if (strcmp(argv[i], "search") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 printf("Silly placeholder: Searching for '%s' with magical unicorns and sparkles!\n", argv[i+1]);
@@ -348,6 +321,12 @@ int main(int argc, char *argv[]) {
             // For now, let's just break on an unknown command
             break;
         }
+        /* Ensure any output produced by the handler is flushed before
+         * moving on to the next argument to keep console output ordered
+         * as the user expects when commands are interleaved.
+         */
+        fflush(stdout);
+        fflush(stderr);
     }
 
     // handle_update_pkglist();  // Removed to avoid excessive updates

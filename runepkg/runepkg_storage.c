@@ -340,9 +340,21 @@ int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version
     }
 
     runepkg_log_verbose("Removing package directory: %s\n", pkg_dir_path);
+    /* If the package directory does not exist, treat as success. This
+     * avoids noisy warnings when interleaving remove/install for the
+     * same package where the directory may already be absent.
+     */
+    if (!runepkg_util_file_exists(pkg_dir_path)) {
+        runepkg_log_verbose("Package directory not present, nothing to remove: %s\n", pkg_dir_path);
+        return 0;
+    }
 
     if (runepkg_storage_remove_dir_recursive(pkg_dir_path) != 0) {
-        printf("Warning: Failed to remove package directory: %s\n", pkg_dir_path);
+        /* Failures here are non-fatal for higher-level flows that may
+         * immediately reinstall the package; log verbosely instead of
+         * printing a user-visible warning so output remains clean.
+         */
+        runepkg_log_verbose("Warning: Failed to remove package directory: %s\n", pkg_dir_path);
         return -1;
     }
 
