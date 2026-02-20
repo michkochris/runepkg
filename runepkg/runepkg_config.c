@@ -68,37 +68,57 @@ char *runepkg_get_config_file_path() {
         }
         return config_file_path;
     }
-
-    // 2. Check for system-wide configuration
+    /* Determine config file strictly by privilege level to avoid mixing
+     * system and user configs. Behavior:
+     * 1) If $RUNEPKG_CONFIG_PATH is set and exists, use it.
+     * 2) If running as root (geteuid() == 0) -> use only system config
+     *    (/etc/runepkg/runepkgconfig) if present; do NOT fall back to
+     *    user config to avoid mixing.
+     * 3) If running as non-root -> prefer user config (~/.runepkgconfig)
+     *    if present; otherwise fall back to system config if present.
+     */
     const char *system_config_path = "/etc/runepkg/runepkgconfig";
-    if (runepkg_util_file_exists(system_config_path)) {
-        config_file_path = strdup(system_config_path);
-        if (!config_file_path) {
-            fprintf(stderr, "Error: Memory allocation failed for config path.\n");
-            return NULL;
-        }
-        return config_file_path;
-    }
-
-    // 3. Check for user-specific configuration
     char *home_dir = getenv("HOME");
-    if (home_dir) {
-        char user_config_path[PATH_MAX];
-        snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkgconfig", home_dir);
-        if (runepkg_util_file_exists(user_config_path)) {
-            config_file_path = strdup(user_config_path);
+
+    if (geteuid() == 0) {
+        /* Running as root: only consider system config */
+        if (runepkg_util_file_exists(system_config_path)) {
+            config_file_path = strdup(system_config_path);
             if (!config_file_path) {
                 fprintf(stderr, "Error: Memory allocation failed for config path.\n");
                 return NULL;
             }
             return config_file_path;
         }
-    }
+        /* No system config found; return NULL to let caller use defaults */
+        return NULL;
+    } else {
+        /* Non-root: prefer user config, then system config */
+        if (home_dir) {
+            char user_config_path[PATH_MAX];
+            snprintf(user_config_path, sizeof(user_config_path), "%s/.runepkgconfig", home_dir);
+            if (runepkg_util_file_exists(user_config_path)) {
+                config_file_path = strdup(user_config_path);
+                if (!config_file_path) {
+                    fprintf(stderr, "Error: Memory allocation failed for config path.\n");
+                    return NULL;
+                }
+                return config_file_path;
+            }
+        }
 
-    // If no configuration file was found
-    fprintf(stderr, "Error: No configuration file found.\n");
-    fprintf(stderr, "Looked for: 1. $RUNEPKG_CONFIG_PATH, 2. /etc/runepkg/runepkgconfig, 3. ~/.runepkgconfig\n");
-    return NULL;
+        if (runepkg_util_file_exists(system_config_path)) {
+            config_file_path = strdup(system_config_path);
+            if (!config_file_path) {
+                fprintf(stderr, "Error: Memory allocation failed for config path.\n");
+                return NULL;
+            }
+            return config_file_path;
+        }
+
+        /* No config file found for non-root; return NULL to let caller use defaults */
+        return NULL;
+    }
 }
 
 int runepkg_config_load() {

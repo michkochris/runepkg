@@ -544,11 +544,27 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 int attempted_count = 0;
                 for (int j = 0; deps[j]; j++) {
                 PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
+                /* Diagnostic: show what the installer finds for this dependency */
+                if (!installed) {
+                    runepkg_util_log_debug("dependency '%s' not found in installed hash table\n", deps[j]->package);
+                } else {
+                    runepkg_util_log_debug("dependency '%s' found: version='%s' pkgname='%s'\n",
+                           deps[j]->package,
+                           installed->version ? installed->version : "(null)",
+                           installed->package_name ? installed->package_name : "(null)");
+                }
                 if (!installed && installing_packages) installed = runepkg_hash_search(installing_packages, deps[j]->package);
                 int satisfied = 0;
                 if (installed) {
                     if (deps[j]->constraint) {
                         satisfied = runepkg_util_check_version_constraint(installed->version, deps[j]->constraint);
+                           /* Extra diagnostic: only log at debug level to avoid
+                            * noisy output during normal runs. */
+                           runepkg_util_log_debug("DBG-CHECK: dep='%s' installed_ver='%s' constraint='%s' -> satisfied=%d\n",
+                               deps[j]->package,
+                               installed->version ? installed->version : "(null)",
+                               deps[j]->constraint ? deps[j]->constraint : "(null)",
+                               satisfied);
                         if (satisfied == -1) {
                             printf("Warning: Unknown constraint '%s' for %s\n", deps[j]->constraint, deps[j]->package);
                             satisfied = 1;  // Assume satisfied for unknown

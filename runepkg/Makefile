@@ -153,8 +153,9 @@ DESTDIR ?=
 PREFIX ?= /usr
 # ETCDIR is where the system-wide configuration goes
 ETCDIR ?= /etc
-# COMPLETION_DIR is where bash completion scripts go
-COMPLETION_DIR ?= /usr/share/bash-completion/completions
+# Bash completion scripts are no longer used; runepkg uses the
+# built-in binary autocompletion exclusively.
+# COMPLETION_DIR removed.
 # TERMUX_PREFIX is the base directory for Termux installs
 TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 
@@ -192,9 +193,7 @@ test-binary: $(TARGET)
 # The main install target for standard Linux systems
 # This installs the binary to PREFIX/bin and config based on privileges
 # With sudo/elevated privileges: installs config to ETCDIR/runepkg/runepkgconfig
-# Without sudo: installs config to ~/.runepkgconfig
-# To install with system config, run 'sudo make install'
-# To install with user config, run 'make install'
+# To install system config, run 'sudo make install'
 # To create a package, run 'make DESTDIR=/path/to/staging/ install'
 install: WITH_RUST=0
 install: WITH_CPP=0
@@ -217,45 +216,34 @@ install: runepkg
 			echo "Installing system-wide configuration to $(DESTDIR)$(ETCDIR)/runepkg..."; \
 			mkdir -p $(DESTDIR)$(ETCDIR)/runepkg; \
 			cp runepkgconfig $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
-			sed -i 's|~/|/var/lib/|g' $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
 			chmod 644 $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
 			echo "Configuration file installed to $(ETCDIR)/runepkg/runepkgconfig"; \
 			echo "=== Linux Installation Complete (System-wide) ==="; \
 			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
 			echo "System config: $(ETCDIR)/runepkg/runepkgconfig"; \
-			echo "Bash completion: $(COMPLETION_DIR)/runepkg"; \
 			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
 				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 			fi; \
 		else \
-			echo "No elevated privileges detected. Installing user-specific configuration..."; \
-			cp runepkgconfig ~/.runepkgconfig; \
-			chmod 644 ~/.runepkgconfig; \
-			echo "Configuration file installed to ~/.runepkgconfig"; \
-			echo "=== Linux Installation Complete (User-specific) ==="; \
-			echo "Binary: $(PREFIX)/bin/$(TARGET)"; \
-			echo "User config: ~/.runepkgconfig"; \
-			echo "Bash completion: $(COMPLETION_DIR)/runepkg"; \
-			if [ -f "$(DESTDIR)$(PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
-				echo "Rust library: $(PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
-			fi; \
+			echo "ERROR: No elevated privileges detected. Configuration requires system install."; \
+			echo "Please run 'sudo make install' or provide a writable ETCDIR via DESTDIR/ETCDIR."; \
+			exit 1; \
 		fi; \
 	else \
 		echo "WARNING: runepkgconfig file not found in current directory!"; \
 	fi
 	@echo "Bash completion: using built-in self-completing binary (no external script installed)."
 	@echo ""
-	@echo "The cascading configuration will check:"
+	@echo "The configuration will check:"
 	@echo "  1. \$$RUNEPKG_CONFIG_PATH environment variable"
 	@echo "  2. $(ETCDIR)/runepkg/runepkgconfig (system-wide)"
-	@echo "  3. ~/.runepkgconfig (user-specific)"
 	@echo ""
 	@echo "Bash completion will be loaded automatically in new bash sessions."
 	@echo "No manual sourcing needed - the binary handles completion internally."
 	@echo ""
 
 # Termux-specific install target
-# This installs the binary to TERMUX_PREFIX/bin and creates user config at ~/.runepkgconfig
+# This installs the binary to TERMUX_PREFIX/bin and places config in $(TERMUX_PREFIX)/etc/runepkg
 # This assumes the user is running 'make termux-install' inside Termux.
 termux-install: all
 	@echo "Installing $(TARGET) for Termux to $(TERMUX_PREFIX)/bin..."
@@ -270,30 +258,30 @@ termux-install: all
 		chmod 755 $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
 		echo "Rust library installed to $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 	fi
-	@echo "Creating user-specific configuration file at ~/.runepkgconfig..."
+	@echo "Installing configuration file to $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig..."
 	@if [ -f runepkgconfig ]; then \
-		cp runepkgconfig ~/.runepkgconfig; \
-		chmod 644 ~/.runepkgconfig; \
-		echo "Configuration file created at ~/.runepkgconfig"; \
+		mkdir -p $(TERMUX_PREFIX)/etc/runepkg; \
+		cp runepkgconfig $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig; \
+		chmod 644 $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig; \
+		echo "Configuration file installed to $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig"; \
 	else \
 		echo "ERROR: runepkgconfig file not found in current directory!"; \
 		exit 1; \
 	fi
-	@echo "Adding self-completing binary completion to ~/.bashrc..."
-	@grep -q "complete -o nosort -C runepkg runepkg" ~/.bashrc || echo "complete -o nosort -C runepkg runepkg" >> ~/.bashrc
-	@echo "Completion added to ~/.bashrc (if not already present)."
+	@echo "No external bash completion installed; runepkg binary handles completion." \
+    
 	@echo ""
 	@echo "=== Termux Installation Complete ==="
 	@echo "Binary: $(TERMUX_PREFIX)/bin/$(TARGET)"
-	@echo "User config: ~/.runepkgconfig"
+	@echo "Config: $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig"
 	@if [ -f "$(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so" ]; then \
 		echo "Rust library: $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so"; \
 	fi
 	@echo ""
-	@echo "The cascading configuration will check:"
+	@echo "The configuration will check:"
 	@echo "  1. \$$RUNEPKG_CONFIG_PATH environment variable"
-	@echo "  2. /etc/runepkg/runepkgconfig (system-wide - not available in Termux)"
-	@echo "  3. ~/.runepkgconfig (user-specific - PRIMARY for Termux)"
+	@echo "  2. /etc/runepkg/runepkgconfig (system-wide)"
+	@echo "  3. $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig (Termux system path)"
 	@echo ""
 	@echo "For bash completion in Termux, the binary is self-completing."
 	@echo "No manual sourcing needed - completion works automatically."
@@ -338,7 +326,7 @@ uninstall:
 	# Remove bash completion
 	# No external shell completion script is installed by modern runepkg; nothing to remove.
 	# Remove runepkg work dirs (from config if available)
-	@CONFIG_CANDIDATES="$$RUNEPKG_CONFIG_PATH $(ETCDIR)/runepkg/runepkgconfig $$HOME/.runepkgconfig"; \
+	@CONFIG_CANDIDATES="$$RUNEPKG_CONFIG_PATH $(ETCDIR)/runepkg/runepkgconfig $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig"; \
 	FOUND_CONFIG=""; \
 	for c in $$CONFIG_CANDIDATES; do \
 		if [ -n "$$c" ] && [ -f "$$c" ]; then FOUND_CONFIG="$$c"; break; fi; \
@@ -393,24 +381,12 @@ uninstall:
 			echo "ERROR: System config exists but cannot be removed without elevated privileges. To remove manually run: sudo rm -f $(ETCDIR)/runepkg/runepkgconfig"; \
 		fi; \
 	fi
-	# Remove user config if it exists (no privileges needed)
+	# Note about legacy user config (if present)
 	@if [ -f ~/.runepkgconfig ]; then \
-		echo "Found user config at ~/.runepkgconfig"; \
-		echo "NOTE: User-specific config file ~/.runepkgconfig was NOT automatically removed."; \
-		echo "To remove it manually, run: rm ~/.runepkgconfig"; \
+		echo "Legacy user config found at ~/.runepkgconfig. This build no longer uses per-user config by default."; \
+		echo "If you want to remove it manually run: rm ~/.runepkgconfig"; \
 	fi
-	# Remove bash completion
-	@if [ -f $(ETCDIR)/bash_completion.d/runepkg ]; then \
-		echo "Found bash completion at $(ETCDIR)/bash_completion.d/runepkg"; \
-		if [ "$(shell id -u)" = "0" ] || [ -w "$(ETCDIR)/bash_completion.d" ] 2>/dev/null; then \
-			echo "Removing bash completion..."; rm -f $(ETCDIR)/bash_completion.d/runepkg; echo "Bash completion removed."; \
-		elif command -v sudo >/dev/null 2>&1; then \
-			echo "Attempting to remove bash completion with sudo..."; sudo rm -f $(ETCDIR)/bash_completion.d/runepkg && echo "Removed bash completion (via sudo)" || echo "Failed to remove bash completion via sudo"; \
-		else \
-			echo "ERROR: Bash completion exists but cannot be removed without elevated privileges. To remove manually run: sudo rm -f $(ETCDIR)/bash_completion.d/runepkg"; \
-		fi; \
-	fi
-	@echo "No shell completion cleanup needed (self-completing binary)."
+	@echo "No external shell completion files to remove (runepkg uses binary completion)."
 	# Termux uninstall
 	@if [ -f $(TERMUX_PREFIX)/bin/$(TARGET) ]; then \
 		echo "Removing $(TERMUX_PREFIX)/bin/$(TARGET)..."; \
@@ -423,9 +399,7 @@ uninstall:
 		rm -f $(TERMUX_PREFIX)/lib/lib$(RUST_LIB_NAME).so; \
 		echo "Termux Rust library removed."; \
 	fi
-	@echo "Removing self-completing binary completion from ~/.bashrc..."
-	@sed -i '/complete -o nosort -C runepkg runepkg/d' ~/.bashrc
-	@echo "Completion removed from ~/.bashrc."
+	@echo "No user shell modifications present (binary completion only)."
 	@echo "Uninstallation complete."
 
 # Debug build with extra debugging symbols and verbose output
@@ -470,12 +444,11 @@ info:
 	@echo "Linux Binary: $(PREFIX)/bin/$(TARGET)"
 	@echo "Linux Config: $(ETCDIR)/runepkg/runepkgconfig"
 	@echo "Termux Binary: $(TERMUX_PREFIX)/bin/$(TARGET)"
-	@echo "User Config: ~/.runepkgconfig"
+	@echo "User Config: (not used)"
 	@echo ""
 	@echo "=== Config File Cascading Order ==="
 	@echo "1. \$$RUNEPKG_CONFIG_PATH (environment override)"
 	@echo "2. $(ETCDIR)/runepkg/runepkgconfig (system-wide)"
-	@echo "3. ~/.runepkgconfig (user-specific)"
 	@echo ""
 	@echo "=== Available Targets ==="
 	@echo "make runepkg       - Build the binary (C only)"

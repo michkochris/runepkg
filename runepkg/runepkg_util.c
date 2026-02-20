@@ -206,33 +206,49 @@ int runepkg_util_compare_versions(const char *v1, const char *v2) {
 int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint) {
     if (!installed_version || !constraint) return -1;
 
-    // Parse operator and version
-    // Operator is sequence of non-space, non-digit characters
-    size_t op_len = strcspn(constraint, " 0123456789");
-    if (op_len == 0 || op_len > 2) return -1;
+    // Make a trimmed copy of the constraint to simplify parsing and logging
+    char *cons = strdup(constraint);
+    if (!cons) return -1;
+    char *cons_trim = runepkg_util_trim_whitespace(cons);
+
+    // Parse operator and version from the trimmed copy
+    size_t op_len = strcspn(cons_trim, " 0123456789");
+    if (op_len == 0 || op_len > 2) {
+        free(cons);
+        return -1;
+    }
 
     char op[3] = {0};
-    memcpy(op, constraint, op_len);
+    memcpy(op, cons_trim, op_len);
     op[op_len] = '\0';
 
-    char ver[64] = {0};
-    if (strlen(constraint + op_len) >= sizeof(ver)) return -1;
-    strcpy(ver, constraint + op_len);
+    char ver[128] = {0};
+    if (strlen(cons_trim + op_len) >= sizeof(ver)) {
+        free(cons);
+        return -1;
+    }
+    strcpy(ver, cons_trim + op_len);
+    char *ver_trim = runepkg_util_trim_whitespace(ver);
 
-    // Trim leading/trailing whitespace from ver
-    runepkg_util_trim_whitespace(ver);
+    int cmp = runepkg_util_compare_versions(installed_version, ver_trim);
 
-    int cmp = runepkg_util_compare_versions(installed_version, ver);
-    if (strcmp(op, ">=") == 0) return cmp >= 0;
-    if (strcmp(op, "<=") == 0) return cmp <= 0;
-    if (strcmp(op, "==") == 0) return cmp == 0;
-    if (strcmp(op, "=") == 0) return cmp == 0;  // Debian uses = for exact match
-    if (strcmp(op, "!=") == 0) return cmp != 0;
-    if (strcmp(op, ">") == 0) return cmp > 0;
-    if (strcmp(op, "<") == 0) return cmp < 0;
-    if (strcmp(op, "<<") == 0) return cmp < 0;  // dpkg uses << for strict less
-    if (strcmp(op, ">>") == 0) return cmp > 0;  // dpkg uses >> for strict greater
-    return -1;  // Unknown op
+    int result = -1;
+    if (strcmp(op, ">=") == 0) result = (cmp >= 0);
+    else if (strcmp(op, "<=") == 0) result = (cmp <= 0);
+    else if (strcmp(op, "==") == 0) result = (cmp == 0);
+    else if (strcmp(op, "=") == 0) result = (cmp == 0);  // Debian uses = for exact match
+    else if (strcmp(op, "!=") == 0) result = (cmp != 0);
+    else if (strcmp(op, ">") == 0) result = (cmp > 0);
+    else if (strcmp(op, "<") == 0) result = (cmp < 0);
+    else if (strcmp(op, "<<") == 0) result = (cmp < 0);  // dpkg uses << for strict less
+    else if (strcmp(op, ">>") == 0) result = (cmp > 0);  // dpkg uses >> for strict greater
+    else result = -1;  // Unknown op
+
+    runepkg_util_log_debug("check_version_constraint(installed='%s', constraint='%s') -> op='%s' ver='%s' cmp=%d result=%d\n",
+        installed_version, cons_trim, op, ver_trim, cmp, result);
+
+    free(cons);
+    return result;
 }
 
 // --- Dependency Parsing ---

@@ -8,6 +8,7 @@
 int is_completion_trigger(char *argv[]);
 int prefix_search_and_print(const char *prefix);
 void complete_deb_files(const char *partial);
+void complete_file_paths(const char *partial);
 void handle_binary_completion(const char *partial, const char *prev);
 void handle_print_auto_pkgs(void);
 

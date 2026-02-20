@@ -256,17 +256,67 @@ int main(int argc, char *argv[]) {
             handle_list(pattern);
         } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0) {
             if (i + 1 < argc) {
-                int ret = handle_status(argv[i+1]);
-                if (ret == -2) {
-                    // Suggestions shown, no status displayed - do nothing
-                    // The suggestions were already displayed by handle_status
-                } else if (ret != 0) {
-                    // Error occurred
-                    runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+1]);
+                char *next_arg = argv[i+1];
+                /* Support interleaved forms:
+                 *  -s -L <pkg>  -> show status then list-files
+                 *  -s -r <pkg>  -> show status then remove
+                 */
+                if (next_arg[0] == '-' && (strcmp(next_arg, "-L") == 0 || strcmp(next_arg, "--list-files") == 0)) {
+                    if (i + 2 < argc && argv[i+2][0] != '-') {
+                        int ret = handle_status(argv[i+2]);
+                        if (ret == -2) {
+                            /* suggestions shown */
+                        } else if (ret != 0) {
+                            runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+2]);
+                        }
+                        handle_list_files(argv[i+2]);
+                        i += 2;
+                    } else {
+                        runepkg_log_verbose("Error: -s/--status with -L requires a package name.");
+                    }
+                } else if (next_arg[0] == '-' && (strcmp(next_arg, "-r") == 0 || strcmp(next_arg, "--remove") == 0)) {
+                    if (i + 2 < argc && argv[i+2][0] != '-') {
+                        int ret = handle_status(argv[i+2]);
+                        if (ret == -2) {
+                            /* suggestions shown */
+                        } else if (ret != 0) {
+                            runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+2]);
+                        }
+                        /* Call remove for the same package name and report summary
+                         * like the non-interleaved path so the user sees immediate
+                         * confirmation when commands are interleaved.
+                         */
+                        int rem_ret = handle_remove(argv[i+2]);
+                        if (rem_ret == 0) {
+                            printf("Successfully removed packages:\n%s\n", argv[i+2]);
+                        } else if (rem_ret == -2) {
+                            /* suggestions shown by handle_remove */
+                        } else {
+                            printf("Failed to remove package: %s\n", argv[i+2]);
+                        }
+                        i += 2;
+                    } else {
+                        runepkg_log_verbose("Error: -s/--status with -r requires a package name.");
+                    }
+                } else {
+                    int ret = handle_status(argv[i+1]);
+                    if (ret == -2) {
+                        // Suggestions shown, no status displayed - do nothing
+                    } else if (ret != 0) {
+                        // Error occurred
+                        runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+1]);
+                    }
+                    i++;
                 }
-                i++;
             } else {
                 runepkg_log_verbose("Error: -s/--status requires a package name.");
+            }
+        } else if (strcmp(argv[i], "-L") == 0 || strcmp(argv[i], "--list-files") == 0) {
+            if (i + 1 < argc) {
+                handle_list_files(argv[i+1]);
+                i++;
+            } else {
+                runepkg_log_verbose("Error: -L/--list-files requires a package name.");
             }
         } else if (strcmp(argv[i], "-S") == 0 || strcmp(argv[i], "--search") == 0) {
             if (i + 1 < argc) {

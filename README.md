@@ -64,16 +64,7 @@ Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3
 ```
 
 ### **Autocompletion**
-runepkg supports intelligent bash autocompletion for commands, options, and package names. It handles interleaved commands seamlessly.
-
-#### Setup
-```bash
-# Source the completion script
-source runepkg/runepkg_completions
-
-# Or add to your ~/.bashrc for permanent setup
-echo "source /path/to/runepkg/runepkg_completions" >> ~/.bashrc
-```
+runepkg provides fast, built-in binary autocompletion for commands, options, and package names — no external shell scripts or manual setup required.
 
 #### Features
 - **Interleaved Commands**: Completes correctly in complex command sequences (e.g., `runepkg -i pkg1 -r <tab>` suggests package names).

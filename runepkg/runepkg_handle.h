@@ -41,6 +41,7 @@ int handle_remove(const char *package_name);
 void handle_remove_stdin(void);
 
 void handle_list(const char *pattern);
+void handle_list_files(const char *package_name);
 int handle_status(const char *package_name);
 void handle_search(const char *query);
 void handle_print_config(void);

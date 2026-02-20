@@ -166,16 +166,25 @@ int runepkg_init(void) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-                    // Parse package name and version from directory name
+                    // Parse package name and version from directory name.
+                    // Prefer the last '-' that is followed by a digit (version start),
+                    // since Debian versions often contain dashes.
                     char pkg_name[PATH_MAX] = {0};
                     char pkg_version[PATH_MAX] = {0};
-                    const char *last_dash = strrchr(entry->d_name, '-');
-                    if (last_dash && last_dash != entry->d_name) {
-                        size_t name_len = (size_t)(last_dash - entry->d_name);
+                    const char *ver_dash = NULL;
+                    for (const char *p = entry->d_name; *p; p++) {
+                        if (*p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
+                            ver_dash = p;
+                            break; /* first dash before version */
+                        }
+                    }
+                    if (ver_dash && ver_dash != entry->d_name) {
+                        size_t name_len = (size_t)(ver_dash - entry->d_name);
                         if (name_len < sizeof(pkg_name)) {
                             memcpy(pkg_name, entry->d_name, name_len);
                             pkg_name[name_len] = '\0';
-                            strncpy(pkg_version, last_dash + 1, sizeof(pkg_version) - 1);
+                            strncpy(pkg_version, ver_dash + 1, sizeof(pkg_version) - 1);
+                            pkg_version[sizeof(pkg_version) - 1] = '\0';
                         }
                     }
                     
@@ -585,6 +594,98 @@ void handle_search(const char *file_pattern) {
 
     if (!found_matches) {
         printf("No packages found containing files matching '%s'\n", file_pattern);
+    }
+}
+
+void handle_list_files(const char *package_name) {
+    if (!package_name || !g_runepkg_db_dir) {
+        printf("Error: Invalid package name or config.\n");
+        return;
+    }
+
+    print_package_data_header();
+
+    // Try to resolve the package directory similarly to handle_status
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) {
+        printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
+        return;
+    }
+
+    struct dirent *entry;
+    int match_count = 0;
+    char match_name[PATH_MAX] = {0};
+    char match_version[PATH_MAX] = {0};
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        // Exact match of full dir name
+        if (strcmp(entry->d_name, package_name) == 0) {
+            // parse version after last '-'
+            char *last_dash = NULL;
+            for (char *p = entry->d_name; *p; p++) {
+                if (!last_dash && *p == '-' && *(p + 1) && isdigit(*(p + 1))) {
+                    last_dash = p;
+                }
+            }
+            if (last_dash) {
+                size_t name_len = last_dash - entry->d_name;
+                strncpy(match_name, entry->d_name, name_len);
+                match_name[name_len] = '\0';
+                strncpy(match_version, last_dash + 1, sizeof(match_version) - 1);
+            } else {
+                strncpy(match_name, entry->d_name, sizeof(match_name) - 1);
+                match_version[0] = '\0';
+            }
+            match_count = 1;
+            break;
+        }
+
+        // prefix match like 'binutils' matching 'binutils-2.45-8'
+        size_t input_len = strlen(package_name);
+        if (strncmp(entry->d_name, package_name, input_len) == 0 && entry->d_name[input_len] == '-') {
+            const char *ver = entry->d_name + input_len + 1;
+            if (*ver != '\0') {
+                match_count++;
+                if (match_count == 1) {
+                    strncpy(match_name, package_name, sizeof(match_name) - 1);
+                    strncpy(match_version, ver, sizeof(match_version) - 1);
+                }
+            }
+        }
+    }
+    closedir(dir);
+
+    if (match_count == 1) {
+        PkgInfo pkg_info;
+        runepkg_pack_init_package_info(&pkg_info);
+        if (runepkg_storage_read_package_info(match_name, match_version, &pkg_info) == 0) {
+            if (pkg_info.file_count > 0 && pkg_info.file_list) {
+                for (int i = 0; i < pkg_info.file_count; i++) {
+                    if (pkg_info.file_list[i] && pkg_info.file_list[i][0]) printf("%s\n", pkg_info.file_list[i]);
+                }
+            } else {
+                printf("No files recorded for %s-%s\n", match_name, match_version);
+            }
+            runepkg_pack_free_package_info(&pkg_info);
+            return;
+        } else {
+            printf("Failed to read package info for %s %s.\n", match_name, match_version);
+            runepkg_pack_free_package_info(&pkg_info);
+            return;
+        }
+    }
+
+    // Multiple or no matches - show suggestions
+    printf("Looking for package... '%s' did you mean?\n", package_name);
+    char suggestions[100][PATH_MAX];
+    int suggestion_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
+    if (suggestion_count > 0) {
+        const char *items[100];
+        for (int i = 0; i < suggestion_count; i++) items[i] = suggestions[i];
+        runepkg_util_print_columns(items, suggestion_count);
     }
 }
 

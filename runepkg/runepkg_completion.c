@@ -65,6 +65,73 @@ void complete_deb_files(const char *partial) {
     scan_deb_recursive(".", partial, 0);
 }
 
+/* Complete generic file paths. Only complete actual filesystem names;
+ * callers should decide whether to call this (i.e., don't call when the
+ * user has started typing '-' and expects option completions).
+ */
+void complete_file_paths(const char *partial) {
+    const char *prefix = partial ? partial : "";
+
+    /* If a directory component exists, change search dir */
+    char dirbuf[PATH_MAX];
+    char namebuf[PATH_MAX];
+    const char *last_slash = strrchr(prefix, '/');
+    const char *search_dir = ".";
+    const char *match_prefix = prefix;
+    if (last_slash) {
+        size_t dirlen = last_slash - prefix;
+        if (dirlen >= sizeof(dirbuf)) dirlen = sizeof(dirbuf)-1;
+        memcpy(dirbuf, prefix, dirlen);
+        dirbuf[dirlen] = '\0';
+        search_dir = dirbuf[0] ? dirbuf : ".";
+        match_prefix = last_slash + 1;
+    }
+
+    DIR *d = opendir(search_dir);
+    if (!d) return;
+    struct dirent *e;
+    while ((e = readdir(d)) != NULL) {
+        if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
+        if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
+
+        /* Build output path relative to current working dir to match other
+         * completion outputs. Preserve provided directory prefix if present. */
+        if (last_slash) {
+            size_t n = sizeof(namebuf);
+            namebuf[0] = '\0';
+            size_t dirlen = strlen(search_dir);
+            size_t copy1 = (dirlen < n - 1) ? dirlen : n - 1;
+            memcpy(namebuf, search_dir, copy1);
+            size_t pos = copy1;
+            if (pos < n - 1) {
+                if (pos == 0 || namebuf[pos - 1] != '/') {
+                    namebuf[pos++] = '/';
+                }
+            }
+            size_t namelen = strlen(e->d_name);
+            size_t copy2 = 0;
+            if (pos < n - 1) copy2 = (namelen < (n - pos - 1)) ? namelen : (n - pos - 1);
+            if (copy2 > 0) memcpy(namebuf + pos, e->d_name, copy2);
+            namebuf[pos + copy2] = '\0';
+        } else {
+            size_t n = sizeof(namebuf);
+            size_t namelen = strlen(e->d_name);
+            size_t copy = (namelen < n - 1) ? namelen : n - 1;
+            memcpy(namebuf, e->d_name, copy);
+            namebuf[copy] = '\0';
+        }
+
+        /* Append '/' for directories to help shells know it's a directory */
+        struct stat st;
+        if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
+            printf("%s/\n", namebuf);
+        } else {
+            printf("%s\n", namebuf);
+        }
+    }
+    closedir(d);
+}
+
 /* Search the binary autocomplete index for prefix matches and print them. */
 int prefix_search_and_print(const char *prefix) {
     char index_path[PATH_MAX];
@@ -154,7 +221,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0) {
                     strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "--list") == 0) {
+                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0) {
                     strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
                     strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
@@ -178,7 +245,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "remove") == 0 || strcmp(t2, "-r") == 0 || strcmp(t2, "--remove") == 0) {
                             strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
                             break;
-                        } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "--list") == 0) {
+                        } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "-L") == 0 || strcmp(t2, "--list") == 0) {
                             strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                             break;
                         } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
@@ -238,13 +305,56 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
             return;
         }
-        if (strcmp(inferred_cmd, "list") == 0 || strcmp(inferred_cmd, "status") == 0) {
+        if (strcmp(inferred_cmd, "list") == 0) {
+            prefix_search_and_print(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "status") == 0) {
+            /* When the user types a dash after -s prefer option completions
+             * so `runepkg -s -<TAB>` suggests `-r`/`-L` rather than package names.
+             */
+            if (partial && partial[0] == '-') {
+                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
+                for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
+                if (strncmp(partial, "--", 2) == 0) {
+                    const char *all_long_opts[] = {
+                        "--install","--remove","--list","--status","--list-files","--search",
+                        "--verbose","--force","--help","--version",
+                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
+                    };
+                    int m = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+                    for (int j = 0; j < m; j++) if (strncmp(all_long_opts[j], partial, strlen(partial))==0) printf("%s\n", all_long_opts[j]);
+                }
+                return;
+            }
             prefix_search_and_print(partial);
             return;
         }
     }
 
     /* Fallback: original prev-based behavior */
+    /* Special-case: when previous token is a flag that expects a filename,
+     * offer file path completions normally, BUT if the user typed a dash
+     * (they started a new flag) prefer option completions so interleaved
+     * usage like `--print-config-file --pr<TAB>` works as expected.
+     */
+    if (prev && (strcmp(prev, "--print-config-file") == 0 || strcmp(prev, "--print-config") == 0)) {
+        if (partial && partial[0] == '-') {
+            const char *all_long_opts[] = {
+                "--install","--remove","--list","--status","--list-files","--search",
+                "--verbose","--force","--help","--version",
+                "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
+            };
+            int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+            for (int i = 0; i < n; i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
+            return;
+        } else {
+            complete_file_paths(partial);
+            return;
+        }
+    }
+
     if (strcmp(prev, "runepkg") == 0) {
         if (partial[0] == '-') {
             if (strncmp(partial, "--", 2) == 0) {
@@ -322,7 +432,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         complete_deb_files(partial);
     } else if (strcmp(prev, "remove") == 0 || strcmp(prev, "-r") == 0) {
         prefix_search_and_print(partial);
-    } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 ||
+    } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 || strcmp(prev, "-L") == 0 ||
                strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0) {
         prefix_search_and_print(partial);
     }
