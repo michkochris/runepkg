@@ -26,9 +26,9 @@ make termux-install
 
 # This automatically installs:
 # - Binary to /usr/bin/runepkg
-# bashrc here ---
+# - Installs a line into .bashrc thats needed for autocompletion: complete -C runepkg runepkg
 # - System config to /etc/runepkg/runepkgconfig
-# Termux install friendly 
+# - Termux install friendly
 ```
 ⚡ Build complete messages are shown by the build system.
 
@@ -42,7 +42,7 @@ make clean
 make termux-uninstall
 
 ```
-🧹 Clean complete is shown after cleanup. This removes the binary, completion, and config file.
+🧹 Clean complete is shown after cleanup. This removes the binary, completion bashrc line, and config file along with all directories related to runepkg including the install_dir.
 ### **Basic Usage**
 ```
 runepkg - (fast effiecient old schoold .deb package manager)
