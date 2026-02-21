@@ -714,7 +714,6 @@ void handle_print_config_file(void) {
         printf("Searched locations:\n");
         printf("  1. $RUNEPKG_CONFIG_PATH environment variable\n");
         printf("  2. /etc/runepkg/runepkgconfig (system-wide)\n");
-        printf("  3. ~/.runepkgconfig (user-specific)\n");
     }
 }
 

@@ -381,11 +381,7 @@ uninstall:
 			echo "ERROR: System config exists but cannot be removed without elevated privileges. To remove manually run: sudo rm -f $(ETCDIR)/runepkg/runepkgconfig"; \
 		fi; \
 	fi
-	# Note about legacy user config (if present)
-	@if [ -f ~/.runepkgconfig ]; then \
-		echo "Legacy user config found at ~/.runepkgconfig. This build no longer uses per-user config by default."; \
-		echo "If you want to remove it manually run: rm ~/.runepkgconfig"; \
-	fi
+
 	@echo "No external shell completion files to remove (runepkg uses binary completion)."
 	# Termux uninstall
 	@if [ -f $(TERMUX_PREFIX)/bin/$(TARGET) ]; then \

@@ -50,7 +50,6 @@ void runepkg_init_paths();
  * This function determines the configuration file path by checking:
  * 1. The RUNEPKG_CONFIG_PATH environment variable.
  * 2. The system-wide location at /etc/runepkg/runepkgconfig.
- * 3. The user-specific location at ~/.runepkgconfig.
  * Once a file is found, it reads the critical path variables (runepkg_dir, control_dir, etc.)
  * from that file and populates the global path variables.
  *
@@ -71,7 +70,6 @@ void runepkg_config_cleanup();
  * This function determines which configuration file is being used by checking:
  * 1. The RUNEPKG_CONFIG_PATH environment variable.
  * 2. The system-wide location at /etc/runepkg/runepkgconfig.
- * 3. The user-specific location at ~/.runepkgconfig.
  *
  * @return A dynamically allocated string containing the config file path,
  *         or NULL if no config file is found. The caller is responsible for freeing the returned string.

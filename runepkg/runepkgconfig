@@ -25,8 +25,7 @@
 # and use full linux path names ie.
 # full directory paths
 
-# main config file
-config_file=~/.runepkgconfig
+# main config file (system-wide installed at /etc/runepkg/runepkgconfig)
 
 # main directory where runepkg does work
 runepkg_dir=~/runepkg_dir
