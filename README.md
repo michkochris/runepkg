@@ -1,4 +1,4 @@
-## runepkg (fast effiecient old schoold .deb package manager)
+## runepkg (fast efficient old schoold .deb package manager)
 
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![FFI: Rust](https://img.shields.io/badge/FFI-Rust-orange.svg)](https://www.rust-lang.org/)
@@ -45,7 +45,7 @@ make termux-uninstall
 🧹 Clean complete is shown after cleanup. This removes the binary, completion bashrc line, and config file along with all directories related to runepkg including the install_dir.
 ### **Basic Usage**
 ```
-runepkg - (fast effiecient old schoold .deb package manager)
+runepkg - (fast efficient old schoold .deb package manager)
 
 Usage:
     runepkg <COMMAND> [OPTIONS] [ARGUMENTS]

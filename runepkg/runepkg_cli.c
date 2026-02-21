@@ -45,7 +45,7 @@ bool g_debug_mode = false;
 
 // * @brief Prints the program's usage information.
 void usage(void) {
-    printf("runepkg - The Runar Linux package manager.\n\n");
+    printf("runepkg (fast efficient old schoold .deb package manager)\n\n");
     printf("Usage:\n");
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
     printf("Commands and Options:\n");
