@@ -1,4 +1,4 @@
-# runepkg
+## runepkg (fast effiecient old schoold .deb package manager)
 
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![FFI: Rust](https://img.shields.io/badge/FFI-Rust-orange.svg)](https://www.rust-lang.org/)
