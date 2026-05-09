@@ -1,0 +1,7 @@
+Suggested Next Steps:
+1.
+Repo-Aware Autocompletion: We can modify runepkg_completion.c to search repo_index.bin as well. This would allow <TAB> completion for packages you haven't even installed yet, pulling suggestions directly from the Kali/Debian repos.
+2.
+The runepkg install <pkgname> flow: Now that we can detect a package in the repo and know its latest version, we can write the C++ logic to download the specific .deb and its dependencies automatically.
+3.
+Repo Search: Implement a runepkg search-repo <query> that uses the binary index to instantly find package names and descriptions in the remote metadata.

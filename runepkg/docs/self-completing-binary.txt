@@ -1,0 +1,320 @@
+self-completing-binary.txt
+​1. Executive Summary: The Self-Completing Binary
+​Project: runepkg (Low-level C .deb Package Manager)
+Mechanism: Native Shell Interposition via complete -C
+​The goal is to eliminate slow, external shell scripts. Instead of Bash parsing text, the runepkg binary will detect when it is being invoked by the shell for completion and handle the logic internally. This leverages the speed of C and the efficiency of a pre-compiled binary index.
+​2. The Execution Flow: complete -C
+​Instead of complex shell functions, we use the Bash built-in:
+complete -C runepkg runepkg
+​Argument Injection:
+When [TAB] is pressed, Bash executes runepkg with three specific positional arguments:
+​$1: The name of the command (e.g., runepkg).
+​$2: The partial word currently being completed (e.g., liba).
+​$3: The word preceding the current word (used for context, e.g., install).
+​3. Implementation Logic (C-Side)
+​A. Context Detection & Entry Point
+​Inside main(), we implement a lightweight check to pivot into "Completion Mode" before the main engine initializes. This prevents unnecessary overhead.
+int main(int argc, char *argv[]) {
+    /* Optimization: Check for completion context immediately.
+       Bash sends 3 args + program name = 4 total.
+    */
+    if (argc == 4 && is_completion_trigger(argv)) {
+        // argv[2] is the prefix to match, argv[3] is the command context
+        handle_binary_completion(argv[2], argv[3]); 
+        return 0;
+    }
+    // Standard runepkg logic follows...
+}
+B. High-Speed Lookup Method
+​To achieve sub-millisecond completion, we utilize a Memory-Mapped (mmap) binary index (runepkg_autocomplete.bin).
+​Index Structure (The "Sorted Offset" Design):
+​Header: uint32_t magic_number, uint32_t version, uint32_t entry_count.
+​String Blob: A contiguous block of null-terminated package names, alphabetically sorted.
+​Offset Table: An array of pointers (or file offsets) pointing to the start of each name in the blob.
+​The Search Algorithm:
+Since the names are sorted, we perform a Binary Search (O(\log N)) over the Offset Table. Once the first prefix match is found, we iterate linearly and print all subsequent matches until the prefix no longer aligns.
+​4. Advanced Improvements for runepkg
+​I. Memory Mapping (mmap)
+​Instead of fread(), we use mmap() to map the .bin file into the process's address space.
+​Benefit: Zero-copy. The OS only loads the pages of the file we actually touch during the binary search. It is significantly faster than standard I/O for large package lists.
+​II. Contextual Awareness (State Engine)
+​The completion engine should check argv[3] (the preceding word) to filter results:
+​If argv[3] == "install", suggest package names from the remote/available cache.
+​If argv[3] == "remove", suggest only currently installed packages.
+​If argv[1] == "runepkg" (at the start), suggest sub-commands (install, query, purge).
+​III. Atomic Cache Updates
+​The .bin index should be regenerated only when the system's package state changes (e.g., after an update or install operation).
+​Method: Compare the st_mtime of /var/lib/dpkg/status with runepkg_autocomplete.bin. If the system status is newer, trigger a background rebuild.
+​5. Technical Requirements for Implementation
+​Sorting: Use qsort() during the .bin generation phase to ensure binary search compatibility.
+​Output: All matches must be printed to stdout separated by newlines (\n). Bash handles the rest.
+​Safety: If the .bin file is missing or corrupt, the binary must fail silently and exit 0 to avoid breaking the user's shell prompt.
+6. Low-Level Implementation Details
+​A. Memory-Mapped Binary Search Logic
+​To achieve the fastest possible lookup, we avoid standard I/O and treat the .bin file as a virtual array.
+// Binary search for the first occurrence of a prefix
+void handle_binary_completion(const char *prefix, void *mapped_data) {
+    Header *hdr = (Header *)mapped_data;
+    uint32_t *offsets = (uint32_t *)((char *)mapped_data + sizeof(Header));
+    char *names = (char *)mapped_data + hdr->names_blob_offset;
+    int low = 0, high = hdr->entry_count - 1;
+    int first_match = -1;
+    while (low <= high) {
+        int mid = low + (high - low) / 2;
+        char *current_name = names + offsets[mid];
+        int cmp = strncmp(prefix, current_name, strlen(prefix));
+        if (cmp == 0) {
+            first_match = mid;
+            high = mid - 1; // Keep looking left for the VERY first match
+        } else if (cmp < 0) {
+            high = mid - 1;
+        } else {
+            low = mid + 1;
+        }
+    }
+    // Print all subsequent prefix matches
+    if (first_match != -1) {
+        for (int i = first_match; i < hdr->entry_count; i++) {
+            char *name = names + offsets[i];
+            if (strncmp(prefix, name, strlen(prefix)) != 0) break;
+            printf("%s\n", name);
+        }
+    }
+}
+B. The "Header-Offset-Blob" File Layout
+​The .bin file should be structured for direct casting to structs. This avoids any runtime "parsing."
+Data Block
+Type
+Purpose
+Header
+struct
+Stores magic, version, count, and offset_to_blob.
+Offset Array
+uint32_t[]
+Array of indices pointing into the String Blob.
+String Blob
+char[]
+All package names, \0 separated, in alphabetical order.
+C. Context-Aware Filter Logic
+​runepkg must differentiate between completing a command and completing a package.
+​State 1: Root Command If argv[3] is runepkg, the user is typing a sub-command. The logic should bypass the .bin file and return hardcoded strings: install, remove, update, list.
+​State 2: Package Name If argv[3] is install or remove, the logic invokes the mmap binary search on the package list.
+​State 3: Flag/Option If argv[2] starts with -, the logic should return options based on the command found in argv[3].
+​D. Efficient Index Generation (The "Post-Transaction" Hook)
+​To keep the .bin fresh without slowing down every execution:
+​Check Ticks: Compare the stat.st_mtime of /var/lib/dpkg/status.
+​Fast Write: Use fwrite to dump a sorted std::vector or a custom C-array to disk.
+​Alpha Sorting: Use qsort with strcmp to ensure the .bin is always ready for O(\log N) searching.
+​7. Optimization Benchmarks
+​Time Complexity: O(\log N) for initial hit + O(K) for K matches.
+​Space Complexity: O(1) additional memory beyond the file mapping.
+​Latency: Targeting < 5ms to ensure zero "Tab-lag."
+8. Memory-Mapped Binary Format (.bin Specification)
+​To avoid any overhead, the index file is designed for direct memory casting. No parsing is allowed at runtime.
+​Data Layout:
+​Header (Fixed 32 bytes):
+​uint32_t magic: 0x52554E45 ("RUNE") to verify file integrity.
+​uint32_t version: To handle schema changes.
+​uint32_t entry_count: Total number of packages.
+​uint32_t strings_size: Size of the string blob in bytes.
+​Pointer Table (Array of uint32_t):
+​Size: entry_count * sizeof(uint32_t).
+​Contains relative offsets into the string blob for each package name.
+​String Blob (Contiguous):
+​All package names are \0 terminated and stored in lexicographical order.
+​9. Branching Logic for Completion Context
+​The binary uses the "Preceding Word" (argv[3]) and "Partial Word" (argv[2]) provided by Bash to determine the completion scope.
+​Logic Flow in C:
+void handle_binary_completion(const char *partial, const char *prev) {
+    // 1. Command Scope: User just typed 'runepkg '
+    if (strcmp(prev, "runepkg") == 0) {
+        // Return hardcoded sub-commands (fastest)
+        printf("install\nremove\nupdate\nquery\nlist\n");
+        return;
+    }
+    // 2. Flag Scope: User typed '-[TAB]'
+    if (partial[0] == '-') {
+        // Logic branches based on command in argv[3]
+        if (strcmp(prev, "install") == 0) printf("--no-recommends\n--force-yes\n");
+        else if (strcmp(prev, "remove") == 0) printf("--purge\n");
+        return;
+    }
+    // 3. Package Scope: User typed 'runepkg install lib[TAB]'
+    // Map the .bin and use Binary Search (O(log N))
+    prefix_search_and_print(partial);
+}
+10. Performance Improvements & "Old School" Efficiency
+​I. The "No-Alloc" Strategy
+​Method: Use mmap() with MAP_PRIVATE. Do not use malloc() for result strings.
+​Logic: Since package names are already null-terminated in the .bin file, simply iterate through the memory map and use puts() to dump matches directly to stdout. This results in zero memory copies between the file and the terminal output.
+​II. The "Prefix Pivot" Search
+​Standard binary search finds an exact match. We implement a First-Occurrence Binary Search:
+​Search for the prefix.
+​If found at index mid, don't stop; set high = mid - 1 and keep searching left until the earliest match is found.
+​Once the start is found, print linearly until the prefix check fails.
+​III. Stat-Check Rebuilds
+​To ensure the completion binary doesn't get "stale":
+​Binary performs a stat() on /var/lib/dpkg/status.
+​If the timestamp is newer than runepkg_autocomplete.bin, it forks a background process to rebuild the index.
+​The completion logic continues immediately using the "stale" index to avoid blocking the user's shell interaction.
+​11. Bash-Specific Protocol Details
+​Environment Variables: runepkg can also inspect COMP_LINE and COMP_POINT for advanced multi-word completion logic (e.g., completing the 4th word in a complex command string).
+​Exit Codes: Always return 0 even if no matches are found, otherwise Bash may fall back to default filename completion, which is distracting when managing packages.
+12. Hybrid Filesystem & Binary Index Logic
+​runepkg does not rely on a central database. It operates on a high-speed directory tree:
+runepkg_dir/install_dir/[pkgname-version]/pkginfo.bin
+​The "Shadow Index" Method
+​Walking the entire runepkg_dir every time the user hits [TAB] is too heavy on I/O. Instead, we maintain a lightweight Global Symbol Map specifically for completion.
+​Logic:
+​Direct Directory Probing: If the user is completing a package name, the binary probes the install_dir for directory names.
+​Stat-Caching: We use a completion_cache.bin that stores only the directory names (package names) found in the runepkg_dir.
+​Lazy Sync: The binary only re-scans the directory structure if the mtime (modification time) of install_dir has changed, indicating a package was added or removed.
+​13. Implementation: Navigating the Hybrid Tree
+​A. Fast Directory Scanning (getdents64)
+​To build the list of package names for completion, use the low-level getdents64 system call instead of the standard readdir.
+​Reason: getdents64 retrieves multiple directory entries in a single syscall, significantly reducing the overhead when scanning thousands of package directories in install_dir.
+​B. Extracting Data from pkginfo.bin
+​If the user requests completion for a specific version or a specific package-related flag, the binary performs a "Point Lookup":
+​Jump directly to runepkg_dir/install_dir/[partial_match]/.
+​mmap the pkginfo.bin found inside that specific folder.
+​Extract only the necessary completion strings (e.g., specific binaries provided by that package).
+​14. Advanced Logic: Multi-Stage Completion
+​Stage 1: The Command (Hardcoded)
+​If argv[3] is runepkg, return the core verbs: install, remove, query.
+​Stage 2: The Package (Filesystem Map)
+​If argv[3] is a verb like install:
+​The binary opens install_dir.
+​It reads the sub-directory names (the package names).
+​Improvement: Use a Bloom Filter stored at the root of runepkg_dir. This allows the binary to instantly check if a package name exists in your hybrid structure without even hitting the disk for a full directory scan.
+​Stage 3: The Version (Deep Probe)
+​If the user has already typed a package name and adds an @ or - for a version:
+​runepkg looks into the specific pkgname-version folders.
+​It returns the version string extracted from the pkginfo.bin headers within those folders.
+​15. "Old School" C Optimization Checklist
+​Avoid stdarg.h and heavy formatting: Use write(1, match, length) and write(1, "\n", 1) instead of printf. This avoids the overhead of the printf engine's internal buffer management.
+​Path Buffers: Use a fixed-size PATH_MAX buffer (usually 4096 bytes) on the stack to construct the paths to pkginfo.bin files. Avoid malloc to keep the completion routine's memory footprint near zero.
+​Static Linking: Ensure the completion logic doesn't depend on heavy shared libraries. It should be as close to the metal as possible to ensure the shell feels "snappy."
+16. The Hybrid-Path Resolution Logic
+​Because runepkg stores data in install_dir/pkgname-version/pkginfo.bin, the completion engine must navigate the filesystem hierarchy efficiently. The "Self-Completing" logic treats the directory structure as a live database.
+​A. The "Stat-Short-Circuit" Strategy
+​To avoid walking the entire tree on every keystroke, the binary implements a short-circuit check:
+​Check Root Entropy: Perform a stat() on install_dir.
+​Compare d_ino: If the directory's inode change-time hasn't moved, use a small, hidden .cache_index file in runepkg_dir.
+​Direct Probe: If the user is completing a full package name (e.g., runepkg query libcrypt[TAB]), the binary skips the index and attempts a direct access() or stat() on install_dir/libcrypt*.
+​17. Technical Logic: The Directory-to-Binary Bridge
+​I. Fast-Scan with getdents64
+​Instead of the overhead of libc's readdir(), use the raw syscall to pull directory entries directly into a stack-allocated buffer. This allows you to process multiple package folders in a single context switch.
+// Low-level buffer-based directory scanning logic
+struct linux_dirent64 {
+    uint64_t        d_ino;
+    int64_t         d_off;
+    unsigned short  d_reclen;
+    unsigned char   d_type;
+    char            d_name[];
+};
+void scan_pkg_dirs(const char *prefix) {
+    int fd = open("runepkg_dir/install_dir", O_RDONLY | O_DIRECTORY);
+    char buf[4096]; // Stack buffer for zero-alloc speed
+    int nread;
+    while ((nread = syscall(SYS_getdents64, fd, buf, sizeof(buf))) > 0) {
+        for (int bpos = 0; bpos < nread; ) {
+            struct linux_dirent64 *d = (struct linux_dirent64 *)(buf + bpos);
+            // Prefix match against d->d_name
+            if (strncmp(prefix, d->d_name, strlen(prefix)) == 0) {
+                write(1, d->d_name, strlen(d->d_name));
+                write(1, "\n", 1);
+            }
+            bpos += d->d_reclen;
+        }
+    }
+    close(fd);
+}
+II. The pkginfo.bin Header Peek
+​When completing specific version metadata (e.g., runepkg install pkgname@v[TAB]), the binary performs a "Header Peek":
+​Locate the directory via the getdents64 match.
+​open() the pkginfo.bin inside that directory.
+​Read only the first X bytes (the header) containing the version string and architecture.
+​Optimization: Do not mmap the entire pkginfo.bin if only the version is needed; a fixed-size read() into a stack buffer is faster for small metadata.
+​18. Logic for Multi-Component Completion
+​Since your structure includes pkgname-version, the completion binary needs a delimeter-aware parser:
+​Split-Point Logic: When the binary detects a hyphen (-) or "at" symbol (@) in argv[2], it splits the string.
+​Context Pivot: It treats everything before the delimeter as the directory name and everything after as the prefix for the version search inside pkginfo.bin.
+​19. Implementation Constraints (Low-Level C)
+​No malloc in the Loop: All directory names and prefix comparisons must happen using stack-allocated buffers or the memory-mapped index to prevent heap fragmentation and latency.
+​O_NONBLOCK: Open the install_dir with O_NONBLOCK to ensure the shell never hangs if a network mount or slow disk is busy.
+​Direct Sycalls: Use write() for output. The overhead of stdio.h buffering is unnecessary for simple newline-separated completion lists.
+20. Deep Metadata Extraction (The Version Probe)
+​When the user moves past the package name (e.g., runepkg install pkgname@ or runepkg install pkgname-), the binary shifts from directory scanning to targeted file probing.
+​A. The "Partial-Path" Construction
+​The binary must resolve the package name part to a directory, then open the internal .bin.
+​Identify Delimiter: Search argv[2] for the version separator (@ or -).
+​Verify Directory: Confirm runepkg_dir/install_dir/<pkgname> exists.
+​Target Read: Access runepkg_dir/install_dir/<pkgname>/pkginfo.bin.
+​B. Header-Only Memory Mapping
+​Instead of reading the whole file, use mmap with a specific offset and length to only map the Metadata Header.
+// Logic for extracting version from the hybrid pkginfo.bin
+void complete_version(const char *pkg_path, const char *v_prefix) {
+    int fd = open(pkg_path, O_RDONLY);
+    if (fd < 0) return;
+    // Map only the first 1KB - typically contains the version/metadata
+    void *map = mmap(NULL, 1024, PROT_READ, MAP_PRIVATE, fd, 0);
+    // Cast to your internal PkgInfo struct
+    PkgHeader *h = (PkgHeader *)map;
+    // If the version in the .bin matches the user's typed prefix
+    if (strncmp(v_prefix, h->version, strlen(v_prefix)) == 0) {
+        // Output the full pkgname-version string for Bash
+        printf("%s-%s\n", h->name, h->version);
+    }
+    munmap(map, 1024);
+    close(fd);
+}
+21. Efficiency Improvements: The "In-Memory Symlink" Cache
+​In a hybrid setup, checking pkginfo.bin for 100 packages is slower than checking one file.
+​The Improvement: During the runepkg install/build process, create a Global Version Table inside runepkg_dir/meta_cache.bin.
+​Structure: A simple list of package_name:version_string.
+​Logic: When Bash asks for a version, runepkg checks this one file first. It only falls back to the deep directory probe if the cache is missing.
+​22. Advanced Signal Handling (Tab-Abortion)
+​"Old school" tools must be responsive. If a user mashes [TAB] and then hits Ctrl+C or starts typing something else:
+​Signal Masking: The binary should ignore SIGINT during the completion routine to ensure it finishes its clean write() and doesn't leave the terminal in a weird state.
+​Time-Out: If a getdents64 scan takes longer than 100ms (rare on local SSD, common on network mounts), the binary should exit(0) and return nothing. Silence is better than lag.
+​23. Summary of Binary Completion Flow
+​Entry: main() detects argc == 4.
+​Verb Check: Matches argv[3] (prev) to see if we are in install, remove, or query mode.
+​Path Resolution: Build the search path for install_dir.
+​Fast Scan: Run getdents64 to find directory matches.
+​Deep Probe: If a version delimiter is present, mmap the specific pkginfo.bin.
+​Direct Write: Pipe results to stdout using raw write() syscalls.
+​Exit: Fast exit to return control to the shell prompt.
+24. The Bash Integration Hook (Low-Level Handoff)
+​To finalize the self-completing nature of the binary, the shell must be instructed how to pass context. We use the -C (Command) flag for maximum performance, avoiding the overhead of loading a secondary script file.
+​Shell Registration:
+# This line goes into the user's .bashrc or a global /etc/bash_completion.d/runepkg
+complete -o nospace -C runepkg runepkg
+​-o nospace: Prevents Bash from adding a space after a directory name match, allowing the user to immediately type @ or - for version completion without backspacing.
+​-C runepkg: Tells Bash the binary itself is the completion engine.
+​24. Stat-Inconsistency Resolution (The "Ghost" Package Logic)
+​In a hybrid pkgname-version/ directory setup, a package might be partially deleted or renamed. The completion logic must handle these "Ghost" entries without crashing.
+​The "Validation Gate" Logic:
+​When getdents64 finds a directory match (e.g., libssl-1.1), the binary performs a fast-fstat on pkginfo.bin.
+​If pkginfo.bin is missing or the directory is empty, the match is discarded immediately.
+​This ensures the user only sees "completable" packages that actually contain a valid binary header.
+​25. Final Logic Flow: The Multi-Tier Lookup
+​The binary follows this hierarchy of execution when argc == 4:
+Tier Target Logic
+Tier 1 Sub-commands If prev == "runepkg", return hardcoded strings from a static array.
+Tier 2 Directory Scan If prev == "install", run getdents64 on install_dir/.
+Tier 3 Binary Probe If partial contains @, open install_dir/pkg/pkginfo.bin and read the version header.
+Tier 4 System Flags If partial starts with -, return flags filtered by the prev command.
+ Implementation Conclusion for AI Colleague
+​Speed Goal: < 10ms.
+​Safety: Always return 0 to Bash. Use O_NONBLOCK on all file descriptors.
+​Memory: Zero heap allocation (malloc). Use alloca() or stack-fixed buffers for path concatenation.
+​Output: Newline-delimited strings to stdout.
+​Recommended Internal Struct for pkginfo.bin Header:
+typedef struct {
+    uint32_t magic;      // 0x52554E45
+    char pkgname[64];    // Fixed width for zero-offset seeking
+    char version[32];    // Fixed width
+    uint64_t data_start; // Offset to actual package payload
+} PkgHeader;
+Using fixed-width strings in the header allows the completion logic to lseek() directly to the version string without reading the entire file.
