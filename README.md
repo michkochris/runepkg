@@ -1,3 +1,5 @@
+# runepkg
+
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
@@ -36,7 +38,8 @@ sudo make uninstall
 
 ---
 
-### **Usage**
+## **Usage**
+
 ```bash
 runepkg (fast efficient old-school .deb package manager)
 
@@ -81,16 +84,14 @@ Experimental/Future:
 
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 Note: FFI features (C++) are enabled based on your build target (`make all`).
+
+  [#######]  runepkg
+  [# \ / #]  version 1.0.4
+  [#  V  #]
+  [#######]  GPL-V3
 ```
 
 ---
-
-```ansi
-[90m [#######][0m  [1;37mrunepkg[0m
-[90m [# [1;36m\ / [90m#][0m  [37mversion 1.0.4[0m
-[90m [#  [1;36mV  [90m#][0m
-[90m [#######][0m  [37mGPL-V3[0m
-```
 
 *Built with ❤️ for the old school GNU/Linux community...*
 
