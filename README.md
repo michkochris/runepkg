@@ -84,22 +84,17 @@ Experimental/Future:
 
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 Note: FFI features (C++) are enabled based on your build target (`make all`).
-```
 
----
-
-### **Version & Signature**
-To see the colored rune in your terminal, you can run `runepkg --version` or use:
-```bash
-echo -e "  \e[90m[#######]\e[0m  \e[1;37mrunepkg\e[0m"
-echo -e "  \e[90m[# \e[1;36m\\ / \e[90m#]\e[0m  \e[37mversion 1.0.4\e[0m"
-echo -e "  \e[90m[#  \e[1;36mV  \e[90m#]\e[0m"
-echo -e "  \e[90m[#######]\e[0m  \e[37mGPL-V3\e[0m"
-```
-
----
+  [#######]  runepkg
+  [# \ / #]  version 1.0.4
+  [#  V  #]
+  [#######]  GPL-V3
 
 *Built with ❤️ for the old school GNU/Linux community...*
+Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
+Licensed under GPL v3
+```
 
-## **License**
-This project is licensed under the **GNU General Public License v3.0**.
+---
+
+
