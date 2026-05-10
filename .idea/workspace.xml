@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="3bf43154-d53b-4066-92d9-203124fd64cb" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cli.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cli.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_completion.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_completion.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_completion.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_completion.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_config.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_config.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_handle.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_handle.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_install.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_install.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_storage.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_storage.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_util.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_util.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_util.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_util.h" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 6,
+  &quot;fromUser&quot;: false
+}</component>
+  <component name="ProjectId" id="3DVUn1DjsyN2FWRdlDc1WlSaCHZ" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/michk/Downloads/projects/runepkg",
+    "settings.editor.selected.configurable": "templates.modelproviders.configurable"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="3bf43154-d53b-4066-92d9-203124fd64cb" name="Changes" comment="" />
+      <created>1778366894517</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1778366894517</updated>
+    </task>
+    <servers />
+  </component>
+</project>

@@ -426,7 +426,7 @@ int runepkg_storage_list_packages(const char *pattern) {
     size_t max_len = 0;
     
     while ((entry = readdir(dir)) != NULL && count < 1024) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
             if (!pattern || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) {
                 packages[count] = strdup(entry->d_name);
                 if (packages[count]) {
@@ -500,7 +500,7 @@ int runepkg_storage_build_autocomplete_index(void) {
     int count = 0;
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
             packages = realloc(packages, (count + 1) * sizeof(char *));
             if (!packages) {
                 runepkg_log_verbose("Error: Memory allocation failed.\n");

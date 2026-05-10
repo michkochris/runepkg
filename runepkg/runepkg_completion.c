@@ -13,6 +13,7 @@
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
 #include <errno.h>
+#include <ctype.h>
 
 #include "runepkg_completion.h"
 #include "runepkg_handle.h"
@@ -200,10 +201,10 @@ struct RepoIndexEntry {
     uint32_t offset;
 };
 
-int repo_prefix_search_and_print(const char *prefix) {
+static int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
     char index_path[PATH_MAX];
     if (!g_runepkg_db_dir) return 0;
-    snprintf(index_path, sizeof(index_path), "%s/repo_index.bin", g_runepkg_db_dir);
+    snprintf(index_path, sizeof(index_path), "%s/%s", g_runepkg_db_dir, index_filename);
 
     int fd = open(index_path, O_RDONLY);
     if (fd < 0) return 0;
@@ -239,8 +240,6 @@ int repo_prefix_search_and_print(const char *prefix) {
         char last_printed[64] = {0};
         for (int i = first_match; i < (int)count; i++) {
             if (strncmp(prefix, entries[i].name, prefix_len) != 0) break;
-
-            /* The index can have duplicates (same package in different repos/components) */
             if (strcmp(last_printed, entries[i].name) != 0) {
                 printf("%s\n", entries[i].name);
                 strncpy(last_printed, entries[i].name, sizeof(last_printed)-1);
@@ -251,6 +250,14 @@ int repo_prefix_search_and_print(const char *prefix) {
     munmap(mapped, st.st_size);
     close(fd);
     return (first_match != -1) ? 1 : 0;
+}
+
+int repo_prefix_search_and_print(const char *prefix) {
+    return repo_generic_prefix_search(prefix, "repo_index.bin");
+}
+
+int repo_src_prefix_search_and_print(const char *prefix) {
+    return repo_generic_prefix_search(prefix, "repo_src_index.bin");
 }
 
 void handle_binary_completion(const char *partial, const char *prev) {
@@ -284,6 +291,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
                     strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "source") == 0) {
+                    strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                 }
                 last_token = tok;
                 tok = strtok_r(NULL, " \t", &saveptr);
@@ -310,6 +319,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
                             strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
                             break;
+                        } else if (strcmp(t2, "source") == 0) {
+                            strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
+                            break;
                         }
                         t2 = strtok_r(NULL, " \t", &save2);
                     }
@@ -323,9 +335,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
     if (inferred_cmd[0] != '\0') {
         if (strcmp(inferred_cmd, "install") == 0) {
             if (partial[0] == '-') {
-                /* Suggest the full set of global options when the user types a dash
-                 * so flags like -r and -i are available even when interleaved.
-                 */
                 if (strncmp(partial, "--", 2) == 0) {
                     const char *all_long_opts[] = {
                         "--install","--remove","--list","--status","--list-files","--search",
@@ -370,9 +379,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
             return;
         }
         if (strcmp(inferred_cmd, "status") == 0) {
-            /* When the user types a dash after -s prefer option completions
-             * so `runepkg -s -<TAB>` suggests `-r`/`-L` rather than package names.
-             */
             if (partial && partial[0] == '-') {
                 const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
                 int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
@@ -388,29 +394,13 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 }
                 return;
             }
-            prefix_search_and_print(partial);
+            if (!prefix_search_and_print(partial)) {
+                repo_prefix_search_and_print(partial);
+            }
             return;
         }
-    }
-
-    /* Fallback: original prev-based behavior */
-    /* Special-case: when previous token is a flag that expects a filename,
-     * offer file path completions normally, BUT if the user typed a dash
-     * (they started a new flag) prefer option completions so interleaved
-     * usage like `--print-config-file --pr<TAB>` works as expected.
-     */
-    if (prev && (strcmp(prev, "--print-config-file") == 0 || strcmp(prev, "--print-config") == 0)) {
-        if (partial && partial[0] == '-') {
-            const char *all_long_opts[] = {
-                "--install","--remove","--list","--status","--list-files","--search",
-                "--verbose","--force","--help","--version",
-                "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
-            };
-            int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-            for (int i = 0; i < n; i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
-            return;
-        } else {
-            complete_file_paths(partial);
+        if (strcmp(inferred_cmd, "source") == 0) {
+            repo_src_prefix_search_and_print(partial);
             return;
         }
     }
@@ -437,7 +427,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             const char *sub_cmds[] = {
                 "install", "remove", "list", "status", "list-files", "search",
-                "download-only", "depends", "verify", "update"
+                "download-only", "depends", "verify", "update", "upgrade", "source"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
             for (int i = 0; i < num_sub; i++) {
@@ -445,11 +435,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
         }
     } else if (partial[0] == '-') {
-        /* If we previously inferred a command from COMP_LINE, respect it here
-         * even when `prev` is a non-flag (e.g., a package name). This ensures
-         * that typing `-` after an install argument offers `-f`/`-v`.
-         */
-            if (inferred_cmd[0] != '\0') {
+        if (inferred_cmd[0] != '\0') {
             if (strcmp(inferred_cmd, "install") == 0) {
                 const char *short_opts[] = {"-f", "-v"};
                 int n = sizeof(short_opts)/sizeof(short_opts[0]);
@@ -459,30 +445,11 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     int m = sizeof(long_opts)/sizeof(long_opts[0]);
                     for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
                 }
-            } else if (strcmp(inferred_cmd, "remove") == 0) {
-                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
-                int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
-                for (int i = 0; i < n; i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
-                if (strncmp(partial, "--", 2) == 0) {
-                    const char *all_long_opts[] = {
-                        "--install","--remove","--list","--status","--list-files","--search",
-                        "--verbose","--force","--help","--version",
-                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
-                    };
-                    int m = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-                    for (int i = 0; i < m; i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
-                }
             } else {
                 printf("--help\n--version\n--verbose\n--force\n");
             }
         } else {
-            if (strcmp(prev, "install") == 0) {
-                printf("--force\n--verbose\n");
-            } else if (strcmp(prev, "remove") == 0) {
-                printf("--purge\n--verbose\n");
-            } else {
-                printf("--help\n--version\n--verbose\n--force\n");
-            }
+            printf("--help\n--version\n--verbose\n--force\n");
         }
         if (prev && prev[0] == '-') {
             complete_deb_files(partial);
@@ -496,15 +463,15 @@ void handle_binary_completion(const char *partial, const char *prev) {
     } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 || strcmp(prev, "-L") == 0) {
         prefix_search_and_print(partial);
     } else if (strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0) {
-        /* Status can apply to installed or repo packages */
         if (!prefix_search_and_print(partial)) {
             repo_prefix_search_and_print(partial);
         }
+    } else if (strcmp(prev, "source") == 0) {
+        repo_src_prefix_search_and_print(partial);
     }
 }
 
 void handle_print_auto_pkgs(void) {
-    /* Print header like -l */
     print_package_data_header();
     printf("Listing installed packages...\n");
 
@@ -546,12 +513,10 @@ void handle_print_auto_pkgs(void) {
     uint32_t *offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
     char *names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
 
-    char *packages[1024];
     uint32_t count = hdr->entry_count;
     size_t max_len = 0;
-    for (uint32_t i = 0; i < count && i < 1024; i++) {
-        packages[i] = names + offsets[i];
-        size_t len = strlen(packages[i]);
+    for (uint32_t i = 0; i < count; i++) {
+        size_t len = strlen(names + offsets[i]);
         if (len > max_len) max_len = len;
     }
 
@@ -562,7 +527,7 @@ void handle_print_auto_pkgs(void) {
     }
 
     struct winsize w;
-    int width = 80; /* default */
+    int width = 80;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         width = w.ws_col;
     }
@@ -576,7 +541,7 @@ void handle_print_auto_pkgs(void) {
         for (int c = 0; c < cols; c++) {
             int idx = r * cols + c;
             if ((uint32_t)idx < count) {
-                printf("%-*s", (int)col_width, packages[idx]);
+                printf("%-*s", (int)col_width, names + offsets[idx]);
             }
         }
         printf("\n");

@@ -91,7 +91,7 @@ int print_package_data_header(void) {
     int pkg_count = 0;
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
             pkg_count++;
         }
     }
@@ -165,7 +165,7 @@ int runepkg_init(void) {
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
                     // Parse package name and version from directory name.
                     // Prefer the last '-' that is followed by a digit (version start),
                     // since Debian versions often contain dashes.
@@ -289,7 +289,7 @@ int handle_remove(const char *package_name) {
 
         while ((entry = readdir(dir)) != NULL) {
             if (entry->d_type != DT_DIR) continue;
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
             size_t input_len = strlen(trimmed);
             if (strncmp(entry->d_name, trimmed, input_len) == 0 && entry->d_name[input_len] == '-') {
@@ -321,7 +321,7 @@ int handle_remove(const char *package_name) {
             if (list_dir) {
                 struct dirent *entry;
                 while ((entry = readdir(list_dir)) != NULL && match_idx < 100) {
-                    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
                         if (strstr(entry->d_name, trimmed) != NULL) {
                             strncpy(matches[match_idx], entry->d_name, PATH_MAX - 1);
                             matches[match_idx][PATH_MAX - 1] = '\0';
@@ -413,7 +413,8 @@ int handle_remove(const char *package_name) {
 }
 
 void handle_version(void) {
-    printf("runepkg v0.1.0 - The Runar Linux package manager\n");
+    runepkg_util_motd();
+    printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
     printf("Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.\n");
     printf("Licensed under GPL v3\n");
 }
@@ -453,7 +454,7 @@ int handle_status(const char *package_name) {
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_DIR) continue;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         // Check for exact match first
         if (strcmp(entry->d_name, package_name) == 0) {
@@ -552,20 +553,29 @@ void handle_search(const char *file_pattern) {
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_DIR) continue;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         // Parse package name and version from directory name
+        // Use the smarter logic: find the first dash followed by a digit
         char *pkg_name = NULL;
         char *pkg_version = NULL;
-        char *last_dash = strrchr(entry->d_name, '-');
-        if (last_dash) {
-            size_t name_len = last_dash - entry->d_name;
+        char *ver_dash = NULL;
+
+        for (char *p = entry->d_name; *p; p++) {
+            if (*p == '-' && *(p + 1) && isdigit(*(p + 1))) {
+                ver_dash = p;
+                break;
+            }
+        }
+
+        if (ver_dash) {
+            size_t name_len = ver_dash - entry->d_name;
             pkg_name = malloc(name_len + 1);
             if (pkg_name) {
                 strncpy(pkg_name, entry->d_name, name_len);
                 pkg_name[name_len] = '\0';
             }
-            pkg_version = strdup(last_dash + 1);
+            pkg_version = strdup(ver_dash + 1);
         } else {
             pkg_name = strdup(entry->d_name);
             pkg_version = strdup("");
@@ -579,7 +589,8 @@ void handle_search(const char *file_pattern) {
             // Check if any files match the pattern
             for (int i = 0; i < pkg_info.file_count; i++) {
                 if (strstr(pkg_info.file_list[i], file_pattern) != NULL) {
-                    printf("%s: %s\n", pkg_name, pkg_info.file_list[i]);
+                    // Match dpkg -S style: "package: /path/to/file"
+                    printf("%s: /%s\n", pkg_name, pkg_info.file_list[i]);
                     found_matches = 1;
                 }
             }
@@ -619,7 +630,7 @@ void handle_list_files(const char *package_name) {
 
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type != DT_DIR) continue;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         // Exact match of full dir name
         if (strcmp(entry->d_name, package_name) == 0) {
@@ -742,7 +753,7 @@ void handle_update_pkglist(void) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
                 if (entry->d_type != DT_DIR) continue;
-                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
                 // Use the full directory name as package name
                 fprintf(txt_file, "%s\n", entry->d_name);
@@ -761,4 +772,3 @@ void handle_update_pkglist(void) {
         runepkg_log_verbose("Autocomplete list updated and binary index built.\n");
     }
 }
-

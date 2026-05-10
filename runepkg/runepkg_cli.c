@@ -42,6 +42,7 @@ bool g_verbose_mode = false;
 bool g_force_mode = false;
 bool g_did_install = false;
 bool g_debug_mode = false;
+bool g_auto_confirm_deps = false;
 
 /* Completion and autocomplete implementations moved to runepkg_handle.c */
 
@@ -50,35 +51,46 @@ void usage(void) {
     printf("runepkg (fast efficient old-school .deb package manager)\n\n");
     printf("Usage:\n");
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
-    printf("Commands and Options:\n");
+
+    printf("Package Management (Local):\n");
     printf("  -i, --install <path-to-package.deb>...  Install one or more .deb files.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
-    printf("  -r, --remove <package-name>             Remove a package.\n");
+    printf("  -r, --remove <package-name>             Remove an installed package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
-    printf("  -l, --list                              List all installed packages.\n");
-    printf("      --list <pattern>                    List installed packages matching pattern.\n");
-    printf("  -s, --status <package-name>             Show detailed information about a package.\n");
-    printf("  -L, --list-files <package-name>         List files for a package.\n");
-    printf("  -S, --search <file-path>                Search for packages containing files matching path.\n");
-    printf("  -v, --verbose                           Enable verbose output.\n");
+    printf("  -l, --list [pattern]                    List installed packages (optionally matching pattern).\n");
+    printf("  -s, --status <package-name>             Show detailed info about an installed package.\n");
+    printf("  -L, --list-files <package-name>         List all files owned by an installed package.\n");
+    printf("  -S, --search <file-path>                Search installed packages for a specific file.\n\n");
+
+    printf("Repository Management (Network):\n");
+    printf("  update                                  Sync metadata and check for upgradable packages.\n");
+    printf("  upgrade                                 Download and install all available upgrades.\n");
+    printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
+    printf("                                          (Use \"quotes\" to search for multiple words).\n");
+    printf("  source <pkg>                            Download source package files into download_dir.\n");
+    printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
+
+    printf("Global Options:\n");
+    printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
     printf("  -d, --debug                             Enable debug output (developer traces).\n");
-    printf("  -f, --force                             Force install even if dependencies are missing.\n");
-    printf("      --version                           Print version information.\n");
+    printf("  -f, --force                             Force install/upgrade despite missing dependencies.\n");
+    printf("      --version                           Print version and license information.\n");
     printf("  -h, --help                              Display this help message.\n\n");
-    printf("      --print-config                      Print current configuration settings.\n");
-    printf("      --print-config-file                 Print path to configuration file in use.\n");
-    printf("      --print-pkglist-file                Print paths to autocomplete files.\n");
-    printf("      --print-auto-pkgs                   Print contents of autocomplete index.\n");
-    printf("      --rebuild-autocomplete              Rebuild autocomplete text and binary index.\n");
+
+    printf("Maintenance & Diagnostics:\n");
+    printf("      --print-config                      Print all active path and repository settings.\n");
+    printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
+    printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
+    printf("      --rebuild-autocomplete              Rebuild the local package name index.\n\n");
+
+    printf("Experimental/Future:\n");
+    printf("  depends <pkg>                           Placeholder: Graphical dependency visualizer.\n");
+    printf("  verify <pkg>                            Placeholder: Cryptographic package verification.\n\n");
+
     printf("Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'\n");
-    printf("\nPlaceholder Commands (silly fun for future features):\n");
-    printf("  search <pattern>                       Placeholder: Searches packages with silly magic.\n");
-    printf("  download-only <pkg>                    Placeholder: Downloads but skips install, teehee.\n");
-    printf("  depends <pkg>                          Placeholder: Shows deps in a goofy way.\n");
-    printf("  verify <pkg>                           Placeholder: Verifies package with funny checks.\n");
-    printf("  update                                Placeholder: Updates system with wacky updates.\n");
-    printf("\nNote: Optional Rust/C++ FFI features are enabled when you build with `make all` (toolchains permitting).\n");
+    printf("Note: FFI features (C++/Rust) are enabled based on your build target (`make all`).\n\n");
+    handle_version();
 }
 
 // --- Main Function ---
@@ -413,6 +425,23 @@ int main(int argc, char *argv[]) {
 #else
             printf("Silly placeholder: Updating the system with confetti, balloons, and virtual hugs!\n");
 #endif
+        } else if (strcmp(argv[i], "upgrade") == 0) {
+#ifdef ENABLE_CPP_FFI
+            runepkg_upgrade();
+#else
+            printf("Silly placeholder: Upgrading the system with a shiny new coat of paint and a bow!\n");
+#endif
+        } else if (strcmp(argv[i], "source") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                runepkg_repo_source_download(argv[i+1]);
+#else
+                printf("Silly placeholder: Downloading source for '%s' with a magnifying glass!\n", argv[i+1]);
+#endif
+                i++;
+            } else {
+                printf("Error: source command requires a package name.\n");
+            }
         } else {
             cli_failed = 1;
             runepkg_log_verbose("Error: Unknown argument or command: %s", argv[i]);

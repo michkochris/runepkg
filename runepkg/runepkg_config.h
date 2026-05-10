@@ -39,6 +39,9 @@ extern char *g_download_dir;
 /* When true (default), delete per-package extraction trees under control_dir after install/skip paths. */
 extern bool g_cleanup_extract_dirs;
 
+/* When true, automatically confirm dependency installation from repositories. */
+extern bool g_auto_confirm_deps;
+
 // --- Source Configuration ---
 
 typedef struct {

@@ -249,4 +249,9 @@ void runepkg_util_print_columns(const char *items[], int count);
  */
 int runepkg_util_get_package_suggestions(const char *search_name, const char *db_dir, char suggestions[][PATH_MAX], int max_suggestions);
 
+/**
+ * @brief Prints the runepkg MOTD with ASCII art.
+ */
+void runepkg_util_motd(void);
+
 #endif // RUNEPKG_UTIL_H
