@@ -22,12 +22,12 @@
 # file description: runepkg config settings
 
 # make sure to not to leave ending / forward slash!
-# and use full linux path names ie.
-# full directory paths
+# and use full linux path names ie. or ~/ for user home directory...
 
 # main config file (system-wide installed at /etc/runepkg/runepkgconfig)
 
-# main directory where runepkg does work
+# main directory where runepkg does work, can change for optional alternate install location of packages...
+# just change all appropriote values...runepkg_dir, control_dir, install_dir, runepkg_db, download_dir...
 runepkg_dir=~/runepkg_dir
 
 # directory where runepkg unpacks .deb pkg info
@@ -35,8 +35,7 @@ runepkg_dir=~/runepkg_dir
 control_dir=~/runepkg_dir/control_dir
 
 # main directory where runepkg installs programs
-# normally / unless testing and developing
-#installdir=
+# normally / unless testing and development...
 install_dir=~/runepkg_dir/install_dir
 
 # directory where runepkg stores its persistent package database
@@ -51,12 +50,13 @@ download_dir=~/runepkg_dir/download_dir
 # Set to no to keep unpacked control/data directories for debugging.
 cleanup=yes
 
-# runepkg debian style sources.list info here, ekg experimental or in development
-#
-# See: https://www.kali.org/docs/general-use/kali-linux-sources-list-repositories/
-deb http://http.kali.org/kali kali-last-snapshot main contrib non-free non-free-firmware
+# runepkg debian style sources.list info here
+# runepkg and runar linux use kali rolling latest release style packages,
+# change if user prefers stable debian or ubuntu style sources.list...
 
-# Additional line for source packages
-deb-src http://http.kali.org/kali kali-last-snapshot main contrib non-free non-free-firmware
+# Kali Linux (Optional/Rolling)
+# See: https://www.kali.org/docs/general-use/kali-linux-sources-list-repositories/
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 
 # end of file...

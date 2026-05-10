@@ -273,7 +273,7 @@ int runepkg_config_load() {
      * still enables internal verbose logs elsewhere. */
     if (g_verbose_mode) {
         if (config_file_path) {
-            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s cleanup_extract=%s\n",
+            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s cleanup=%s\n",
                                config_file_path,
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
                                g_control_dir ? g_control_dir : "(null)",
@@ -281,7 +281,7 @@ int runepkg_config_load() {
                                g_install_dir_internal ? g_install_dir_internal : "(null)",
                                g_cleanup_extract_dirs ? "yes" : "no");
         } else {
-            runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s cleanup_extract=%s\n",
+            runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s cleanup=%s\n",
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
                                g_control_dir ? g_control_dir : "(null)",
                                g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",

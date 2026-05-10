@@ -89,7 +89,7 @@ void usage(void) {
     printf("  verify <pkg>                            Placeholder: Cryptographic package verification.\n\n");
 
     printf("Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'\n");
-    printf("Note: FFI features (C++/Rust) are enabled based on your build target (`make all`).\n\n");
+    printf("Note: FFI features (C++) are enabled based on your build target (`make all`).\n\n");
     handle_version();
 }
 

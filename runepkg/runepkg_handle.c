@@ -703,19 +703,36 @@ void handle_list_files(const char *package_name) {
 void handle_print_config(void) {
     printf("runepkg Configuration:\n");
     printf("=====================\n");
-    if (g_runepkg_base_dir) printf("  Base Directory:     %s\n", g_runepkg_base_dir);
-    else printf("  Base Directory:     (not set)\n");
-    if (g_control_dir) printf("  Control Directory:  %s\n", g_control_dir);
-    else printf("  Control Directory:  (not set)\n");
-    if (g_install_dir_internal) printf("  Install Directory:  %s\n", g_install_dir_internal);
-    else printf("  Install Directory:  (not set)\n");
+    if (g_runepkg_base_dir) printf("  Base Directory:      %s\n", g_runepkg_base_dir);
+    else printf("  Base Directory:      (not set)\n");
+    if (g_control_dir) printf("  Control Directory:   %s\n", g_control_dir);
+    else printf("  Control Directory:   (not set)\n");
+    if (g_install_dir_internal) printf("  Install Directory:   %s\n", g_install_dir_internal);
+    else printf("  Install Directory:   (not set)\n");
     if (g_system_install_root) printf("  System Install Root: %s\n", g_system_install_root);
     else printf("  System Install Root: (not set)\n");
-    if (g_runepkg_db_dir) printf("  Database Directory: %s\n", g_runepkg_db_dir);
-    else printf("  Database Directory: (not set)\n");
-    if (g_download_dir) printf("  Download Directory: %s\n", g_download_dir);
-    else printf("  Download Directory: (not set)\n");
-    printf("  Cleanup extract dirs: %s\n", g_cleanup_extract_dirs ? "yes" : "no");
+    if (g_runepkg_db_dir) printf("  Database Directory:  %s\n", g_runepkg_db_dir);
+    else printf("  Database Directory:  (not set)\n");
+    if (g_download_dir) printf("  Download Directory:  %s\n", g_download_dir);
+    else printf("  Download Directory:  (not set)\n");
+
+    printf("  Cleanup: %s\n", g_cleanup_extract_dirs ? "yes" : "no");
+
+    if (g_sources_count > 0 && g_sources) {
+        printf("\nConfigured Sources:\n");
+        printf("==================\n");
+        for (int i = 0; i < g_sources_count; i++) {
+            if (g_sources[i]) {
+                printf("  [%d] %s %s %s %s\n", i + 1,
+                       g_sources[i]->type,
+                       g_sources[i]->url,
+                       g_sources[i]->suite,
+                       g_sources[i]->components ? g_sources[i]->components : "");
+            }
+        }
+    } else {
+        printf("\nNo sources configured.\n");
+    }
 }
 
 void handle_print_config_file(void) {
