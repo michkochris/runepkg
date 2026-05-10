@@ -1,82 +1,98 @@
-```text
- [#######]  runepkg
- [# \ / #]  version 1.0.4
- [#  V  #]
- [#######]  GPL-V3
-```
-
-## runepkg (fast efficient old-school .deb package manager)
-
 [![Language: C](https://img.shields.io/badge/Language-C-blue.svg)](https://github.com/michkochris/runepkg)
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a high-performance, repository-aware package manager for `.deb` files, designed with an "old-school" philosophy but modern internal architecture. It bridges the gap between low-level tools like `dpkg` and high-level managers like `apt`.
+**runepkg** is a fast, efficient, old-school `.deb` package manager.
 
-### **Architecture & Internals**
+---
 
-runepkg is built with a clear separation of concerns:
-- **C Core**: The low-level package management logic (installation, removal, filesystem operations) is written in pure C, maintaining a footprint and behavior similar to `dpkg`.
-- **C++ FFI**: Extended "apt-like" features—including network operations, repository synchronization, and advanced dependency resolution—are implemented via a high-performance C++ FFI (Foreign Function Interface) layer.
+## **Installation**
 
-#### **Hybrid Persistent Storage**
-The storage engine is a custom hybrid design that borrows the best ideas from legendary package managers:
-- **Arch Linux Inspired**: Fast package lookup is achieved through a `pkgname` subdirectory structure, significantly reducing directory traversal overhead during queries.
-- **RPM Inspired**: Detailed package metadata is stored in binary `pkginfo` files, allowing for near-instant parsing of package state and requirements compared to traditional text-based control files.
+### **Embedded Installation (Minimal)**
+For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality.
 
-#### **Binary Autocompletion**
-runepkg features a fully-featured, interleaved binary autocompletion system. Unlike shell-script based completion, the `runepkg` binary itself handles completion logic:
-- **Repo Detection**: It automatically detects package names from both local databases and remote repository indexes.
-- **Interleaved Flags**: It understands interleaved commands and flags (e.g., `runepkg -v -i <TAB>`), providing context-aware suggestions for both local `.deb` files and repository packages.
+```bash
+make runepkg
+sudo make install
+```
+
+### **Standard Installation (Full)**
+For a full installation including advanced C++ networking features (similar to `apt` or `apt-get`), use:
+
+```bash
+make all
+sudo make install
+```
+
+### **Uninstallation & Cleanup**
+To remove build artifacts or uninstall the program:
+
+```bash
+make clean
+sudo make uninstall
+```
+
+*Note: You may receive a notification if certain system directories require manual removal.*
 
 ---
 
 ### **Usage**
-
-#### **Local Package Management**
 ```bash
-runepkg -i package.deb     # Install a local .deb file
-runepkg -r <pkg-name>      # Remove an installed package
-runepkg -l [pattern]       # List installed packages
-runepkg -s <pkg-name>      # Show detailed status for a package
-runepkg -L <pkg-name>      # List all files owned by a package
-runepkg -S <file-path>     # Search installed packages for a specific file
-```
+runepkg (fast efficient old-school .deb package manager)
 
-#### **Repository Management**
-```bash
-runepkg update             # Sync metadata and check for upgrades
-runepkg upgrade            # Download and install available upgrades
-runepkg search <query>     # Search repositories for packages
-                           # (searches both package names and descriptions)
-                           # Note: Use "quotes" for multi-word descriptions
-                           # e.g., runepkg search "web browser"
-runepkg download-only <pkg># Download a .deb without installing it
-runepkg source <pkg>       # Download source package files
-```
+Usage:
+  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
-#### **Maintenance & Diagnostics**
-```bash
-runepkg --rebuild-autocomplete # Force a rebuild of the package index
-runepkg --print-config         # Show active path and repo settings
+Package Management (Local):
+  -i, --install <path-to-package.deb>...  Install one or more .deb files.
+      --install -                         Read .deb paths from stdin.
+      --install @file                     Read .deb paths from a list file.
+  -r, --remove <package-name>             Remove an installed package.
+      --remove -                          Read package names from stdin.
+  -l, --list [pattern]                    List installed packages (optionally matching pattern).
+  -s, --status <package-name>             Show detailed info about an installed package.
+  -L, --list-files <package-name>         List all files owned by an installed package.
+  -S, --search <file-path>                Search installed packages for a specific file.
+
+Repository Management (Network):
+  update                                  Sync metadata and check for upgradable packages.
+  upgrade                                 Download and install all available upgrades.
+  search <pkg|pattern>                    Search repositories for packages or patterns.
+                                          (Use "quotes" to search for multiple words).
+  source <pkg>                            Download source package files into download_dir.
+  download-only <pkg>                     Download a .deb to download_dir without installing.
+
+Global Options:
+  -v, --verbose                           Enable verbose output (detailed logging).
+  -d, --debug                             Enable debug output (developer traces).
+  -f, --force                             Force install/upgrade despite missing dependencies.
+      --version                           Print version and license information.
+  -h, --help                              Display this help message.
+
+Maintenance & Diagnostics:
+      --print-config                      Print all active path and repository settings.
+      --print-config-file                 Show the path to the runepkgconfig file in use.
+      --print-pkglist-file                Show paths to the autocomplete index files.
+      --rebuild-autocomplete              Rebuild the local package name index.
+
+Experimental/Future:
+  depends <pkg>                           Placeholder: Graphical dependency visualizer.
+  verify <pkg>                            Placeholder: Cryptographic package verification.
+
+Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
+Note: FFI features (C++) are enabled based on your build target (`make all`).
 ```
 
 ---
 
-### **Installation**
-
-```bash
-git clone https://github.com/michkochris/runepkg.git
-cd runepkg/runepkg
-
-# Build with FFI extensions (requires g++, libcurl)
-make all
-
-# System-wide install
-sudo make install
+```ansi
+[90m [#######][0m  [1;37mrunepkg[0m
+[90m [# [1;36m\ / [90m#][0m  [37mversion 1.0.4[0m
+[90m [#  [1;36mV  [90m#][0m
+[90m [#######][0m  [37mGPL-V3[0m
 ```
 
 *Built with ❤️ for the old school GNU/Linux community...*
 
-## License
+## **License**
 This project is licensed under the **GNU General Public License v3.0**.
