@@ -106,6 +106,8 @@ void* install_single_file(void *arg) {
 int handle_install(const char *deb_file_path) {
     int ret = handle_install_internal(deb_file_path, 1);
     g_auto_confirm_deps = false;
+    g_auto_confirm_siblings = false;
+    g_asked_siblings = false;
     return ret;
 }
 
@@ -162,16 +164,12 @@ void handle_install_listfile(const char *path) {
     fclose(fp);
 }
 
-/* Attempt to find an uninstalled sibling .deb (e.g., in the same directory)
- * matching `pkg_name` and install it. This avoids network dependency
- * resolution when the package .deb is present alongside the current one.
+/* Helper to find a sibling .deb for a package name in the same directory as origin_deb_path.
+ * Returns a newly allocated string path if found, or NULL otherwise.
  */
-int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path, char ***attempted_list, int *attempted_count) {
-    if (!pkg_name || !origin_deb_path) return 0;
+char* clandestine_find_sibling(const char *pkg_name, const char *origin_deb_path) {
+    if (!pkg_name || !origin_deb_path) return NULL;
 
-    /* Extract origin basename & version (if present) before calling dirname
-     * since dirname may modify the string. This helps prefer candidates with
-     * the same version as the origin .deb. */
     const char *origin_baseptr = strrchr(origin_deb_path, '/');
     const char *origin_base = origin_baseptr ? origin_baseptr + 1 : origin_deb_path;
     char origin_version[PATH_MAX];
@@ -189,40 +187,31 @@ int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path
     }
 
     char *origin_copy = strdup(origin_deb_path);
-    if (!origin_copy) return 0;
+    if (!origin_copy) return NULL;
     char *dir = dirname(origin_copy);
     if (!dir) {
         free(origin_copy);
-        return 0;
+        return NULL;
     }
 
     char pattern[PATH_MAX];
-    /* Match only files that begin with the package name followed by an
-     * underscore (Debian filename convention): name_version_arch.deb
-     */
     snprintf(pattern, sizeof(pattern), "%s/%s_*.deb", dir, pkg_name);
     glob_t globbuf;
-    int found = 0;
+    char *result = NULL;
+
     if (glob(pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
         const char *fallback_candidate = NULL;
         for (size_t gi = 0; gi < globbuf.gl_pathc; gi++) {
             const char *candidate = globbuf.gl_pathv[gi];
-            /* Avoid trying the origin file itself */
             if (strcmp(candidate, origin_deb_path) == 0) continue;
 
-            /* Verify candidate's basename starts with exactly pkg_name plus '_' */
             const char *baseptr = strrchr(candidate, '/');
             const char *base = baseptr ? baseptr + 1 : candidate;
             const char *u = strchr(base, '_');
-            if (!u) continue; /* not a well-formed deb filename */
+            if (!u) continue;
             size_t name_len = (size_t)(u - base);
-            if (name_len == 0) continue;
-            if (strlen(pkg_name) != name_len) continue; /* ensure exact match */
-            if (strncmp(base, pkg_name, name_len) != 0) continue;
+            if (name_len == 0 || strlen(pkg_name) != name_len || strncmp(base, pkg_name, name_len) != 0) continue;
 
-            /* Parse candidate version for smarter selection. Prefer exact
-             * version matches with the origin package's version when present.
-             */
             char candidate_version[PATH_MAX];
             candidate_version[0] = '\0';
             const char *c_u1 = strchr(base, '_');
@@ -237,84 +226,123 @@ int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path
                 }
             }
 
-            runepkg_log_verbose("clandestine: candidate %s matches dependency %s (cand_ver=%s origin_ver=%s)\n",
-                               candidate, pkg_name, candidate_version, origin_version[0] ? origin_version : "(none)");
-
-            /* If origin version is known and matches candidate, try it first */
             if (origin_version[0] != '\0' && candidate_version[0] != '\0' && strcmp(candidate_version, origin_version) == 0) {
-                /* Avoid duplicate attempts */
-                int already_attempted = 0;
-                if (attempted_list && attempted_count && *attempted_list) {
-                    for (int i = 0; i < *attempted_count; i++) {
-                        if (strcmp((*attempted_list)[i], candidate) == 0) { already_attempted = 1; break; }
-                    }
-                }
-                if (already_attempted) continue;
-
-                if (attempted_list && attempted_count) {
-                    *attempted_list = realloc(*attempted_list, (*attempted_count + 1) * sizeof(char*));
-                    (*attempted_list)[*attempted_count] = strdup(candidate);
-                    (*attempted_count)++;
-                }
-
-                if (handle_install_internal(candidate, 0) == 0) {
-                    found = 1;
-                    break;
-                }
-                /* if it failed, continue searching other candidates */
-                continue;
-            }
-
-            /* Record first viable candidate as fallback */
-            if (!fallback_candidate) fallback_candidate = candidate;
-
-            /* Avoid trying the same candidate multiple times */
-            int already_attempted = 0;
-            if (attempted_list && attempted_count && *attempted_list) {
-                for (int i = 0; i < *attempted_count; i++) {
-                    if (strcmp((*attempted_list)[i], candidate) == 0) { already_attempted = 1; break; }
-                }
-            }
-            if (already_attempted) continue;
-
-            /* Record attempted */
-            if (attempted_list && attempted_count) {
-                *attempted_list = realloc(*attempted_list, (*attempted_count + 1) * sizeof(char*));
-                (*attempted_list)[*attempted_count] = strdup(candidate);
-                (*attempted_count)++;
-            }
-
-            /* Call internal install on candidate as non-top-level so we do
-             * not re-trigger top-level force-driven dependency reinstalls.
-             */
-            if (handle_install_internal(candidate, 0) == 0) {
-                found = 1;
+                result = strdup(candidate);
                 break;
             }
+            if (!fallback_candidate) fallback_candidate = candidate;
         }
-
-        /* If none matched origin version exactly but we have a fallback, try it */
-        if (!found && fallback_candidate) {
-            runepkg_log_verbose("clandestine: trying fallback candidate %s for %s\n", fallback_candidate, pkg_name);
-            int already_attempted = 0;
-            if (attempted_list && attempted_count && *attempted_list) {
-                for (int i = 0; i < *attempted_count; i++) {
-                    if (strcmp((*attempted_list)[i], fallback_candidate) == 0) { already_attempted = 1; break; }
-                }
-            }
-            if (!already_attempted) {
-                if (attempted_list && attempted_count) {
-                    *attempted_list = realloc(*attempted_list, (*attempted_count + 1) * sizeof(char*));
-                    (*attempted_list)[*attempted_count] = strdup(fallback_candidate);
-                    (*attempted_count)++;
-                }
-            }
-            if (handle_install_internal(fallback_candidate, 0) == 0) found = 1;
-        }
+        if (!result && fallback_candidate) result = strdup(fallback_candidate);
     }
     globfree(&globbuf);
     free(origin_copy);
-    return found;
+    return result;
+}
+
+typedef struct {
+    char **paths;
+    char **names;
+    int count;
+    int capacity;
+} SiblingCollection;
+
+static void clandestine_spider_recursive(const char *deb_path, SiblingCollection *coll, const char *origin_deb_path) {
+    PkgInfo info;
+    runepkg_pack_init_package_info(&info);
+    if (runepkg_pack_extract_and_collect_info(deb_path, g_control_dir, &info) != 0) {
+        runepkg_pack_free_package_info(&info);
+        return;
+    }
+
+    Dependency **deps = parse_depends_with_constraints(info.depends);
+    if (deps) {
+        for (int i = 0; deps[i]; i++) {
+            bool already = false;
+            for (int k = 0; k < coll->count; k++) {
+                if (strcmp(coll->names[k], deps[i]->package) == 0) { already = true; break; }
+            }
+            if (already) continue;
+
+            if (runepkg_hash_search(runepkg_main_hash_table, deps[i]->package)) continue;
+            if (installing_packages && runepkg_hash_search(installing_packages, deps[i]->package)) continue;
+
+            char *sibling = clandestine_find_sibling(deps[i]->package, origin_deb_path);
+            if (sibling) {
+                if (coll->count >= coll->capacity) {
+                    coll->capacity = (coll->capacity == 0) ? 10 : coll->capacity * 2;
+                    coll->paths = realloc(coll->paths, coll->capacity * sizeof(char*));
+                    coll->names = realloc(coll->names, coll->capacity * sizeof(char*));
+                }
+                coll->paths[coll->count] = sibling;
+                coll->names[coll->count] = strdup(deps[i]->package);
+                coll->count++;
+
+                clandestine_spider_recursive(sibling, coll, origin_deb_path);
+            }
+        }
+        for (int i = 0; deps[i]; i++) {
+            free(deps[i]->package);
+            if (deps[i]->constraint) free(deps[i]->constraint);
+            free(deps[i]);
+        }
+        free(deps);
+    }
+    runepkg_pack_cleanup_extraction_workspace(&info);
+    runepkg_pack_free_package_info(&info);
+}
+
+/* Attempt to find an uninstalled sibling .deb (e.g., in the same directory)
+ * matching `pkg_name` and install it. This avoids network dependency
+ * resolution when the package .deb is present alongside the current one.
+ */
+int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path, char ***attempted_list, int *attempted_count) {
+    if (!pkg_name || !origin_deb_path) return 0;
+
+    char *candidate = clandestine_find_sibling(pkg_name, origin_deb_path);
+    if (!candidate) return 0;
+
+    /* Prompt user for sibling installation if not already confirmed or forced */
+    if (!g_force_mode && !g_auto_confirm_siblings) {
+        if (!g_asked_siblings) {
+            printf("\033[1;33m[dependencies]\033[0m Found other .deb files in this directory that might satisfy requirements.\n");
+            printf("Would you like to search this directory for missing dependencies? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
+            fflush(stdout);
+            char resp[16];
+            if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+                g_auto_confirm_siblings = true;
+            }
+            g_asked_siblings = true;
+        }
+        if (!g_auto_confirm_siblings) {
+            /* User declined sibling installation */
+            free(candidate);
+            return 0;
+        }
+    }
+
+    /* Avoid duplicate attempts */
+    int already_attempted = 0;
+    if (attempted_list && attempted_count && *attempted_list) {
+        for (int i = 0; i < *attempted_count; i++) {
+            if (strcmp((*attempted_list)[i], candidate) == 0) { already_attempted = 1; break; }
+        }
+    }
+
+    if (!already_attempted) {
+        if (attempted_list && attempted_count) {
+            *attempted_list = realloc(*attempted_list, (*attempted_count + 1) * sizeof(char*));
+            (*attempted_list)[*attempted_count] = strdup(candidate);
+            (*attempted_count)++;
+        }
+
+        if (handle_install_internal(candidate, 0) == 0) {
+            free(candidate);
+            return 1;
+        }
+    }
+
+    free(candidate);
+    return 0;
 }
 /* Internal install entry that accepts an `is_top_level` flag. When
  * `is_top_level` is zero, we avoid some top-level behaviors such as
@@ -560,6 +588,33 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                  * same package. */
                 char **attempted_deps = NULL;
                 int attempted_count = 0;
+
+                // Pre-scan for local siblings to provide a more informative prompt (Recursive "Spider")
+                if (is_top_level && !g_force_mode && !g_auto_confirm_siblings && !g_asked_siblings) {
+                    SiblingCollection coll = {NULL, NULL, 0, 0};
+                    clandestine_spider_recursive(deb_file_path, &coll, deb_file_path);
+
+                    if (coll.count > 0) {
+                        printf("\033[1;33m[dependencies]\033[0m Found %d required dependencies in this directory:\n", coll.count);
+                        for (int s = 0; s < coll.count; s++) {
+                            const char *base = strrchr(coll.paths[s], '/');
+                            printf("  -> %s\n", base ? base + 1 : coll.paths[s]);
+                            free(coll.paths[s]);
+                            free(coll.names[s]);
+                        }
+                        free(coll.paths);
+                        free(coll.names);
+
+                        printf("Would you like to install these local files to satisfy dependencies? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
+                        fflush(stdout);
+                        char resp[16];
+                        if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+                            g_auto_confirm_siblings = true;
+                        }
+                        g_asked_siblings = true;
+                    }
+                }
+
                 for (int j = 0; deps[j]; j++) {
                 PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
                 /* Diagnostic: show what the installer finds for this dependency */
@@ -603,11 +658,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                      * (already-installed) path.
                      */
                     /* Only attempt force-driven dependency reinstalls when
-                     * this is the top-level install request. Recursive
-                     * installs triggered by clandestine helpers should not
-                     * re-enter this path to avoid cycles.
+                     * this is the top-level install request and the user hasn't
+                     * indicated they want a "minimal" force install.
                      */
-                    if (is_top_level && g_force_mode) {
+                    if (is_top_level && g_force_mode && g_auto_confirm_siblings) {
                         char *cl_debug_env = getenv("RUNEPKG_CLAND_DEBUG");
                         int cl_debug = cl_debug_env && cl_debug_env[0];
                         if (cl_debug) printf("clandestine: force mode will attempt sibling install for dep %s\n", deps[j]->package);
@@ -615,8 +669,15 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                     }
                 }
                 if (!satisfied) {
-                    /* Try the clandestine helper to find and install a sibling .deb */
-                    int cfound = clandestine_handle_install(deps[j]->package, deb_file_path, &attempted_deps, &attempted_count);
+                    /* Try the clandestine helper to find and install a sibling .deb
+                     * but ONLY if we are not in force mode OR the user has explicitly
+                     * allowed/confirmed siblings.
+                     */
+                    int cfound = 0;
+                    if (!g_force_mode || g_auto_confirm_siblings) {
+                        cfound = clandestine_handle_install(deps[j]->package, deb_file_path, &attempted_deps, &attempted_count);
+                    }
+
                     if (!cfound) {
                         if (!g_force_mode) {
                             unsatisfied = realloc(unsatisfied, (num_unsatisfied + 1) * sizeof(Dependency*));
@@ -637,14 +698,23 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                     if (is_top_level) {
                         printf("\033[1;33m[dependencies]\033[0m The following dependencies are missing for %s:\n", pkg_info.package_name);
                         for(int k=0; k<num_unsatisfied; k++){
-                            printf("  - %s %s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
+                            printf("  - %s%s%s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? " " : "", unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
                         }
-                        printf("Would you like to attempt to download and install them from repositories? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
-                        fflush(stdout);
-                        char resp[16];
-                        if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
-                            try_repo = 1;
-                            g_auto_confirm_deps = true;
+
+                        char index_path[PATH_MAX];
+                        snprintf(index_path, sizeof(index_path), "%s/repo_index.bin", g_runepkg_db_dir);
+                        if (runepkg_util_file_exists(index_path)) {
+                            printf("Would you like to attempt to download and install them from repositories? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
+                            fflush(stdout);
+                            char resp[16];
+                            if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+                                printf("\n"); // Add spacing before repo logs
+                                try_repo = 1;
+                                g_auto_confirm_deps = true;
+                                g_auto_confirm_siblings = true;
+                            }
+                        } else {
+                            printf("\033[1;31m[error]\033[0m Repository index missing. Please run 'runepkg update' to enable repository downloads.\n");
                         }
                     } else if (g_auto_confirm_deps) {
                         try_repo = 1;
@@ -684,7 +754,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                     }
 
                     if (num_unsatisfied > 0) {
-                        printf("Error: The following dependencies are not satisfied:\n");
+                        printf("\033[1;31mError:\033[0m The following dependencies are not satisfied:\n");
                         for(int k=0; k<num_unsatisfied; k++){
                             printf("  - %s%s%s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? " " : "", unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
                         }

@@ -282,6 +282,11 @@ Dependency **parse_depends_with_constraints(const char *depends) {
             continue;
         }
 
+        // Handle alternatives (OR dependency): take the first one
+        // Note: we do this before checking for parentheses so we get A even if it's A | B (>= 1)
+        char *pipe = strchr(token, '|');
+        if (pipe) *pipe = '\0';
+
         result[i] = calloc(1, sizeof(Dependency));
         if (!result[i]) {
             // Free all
@@ -865,6 +870,11 @@ char **parse_depends(const char *depends) {
     while (token && i < count) {
         // Trim leading whitespace
         while (*token == ' ' || *token == '\t') token++;
+
+        // Handle alternatives (OR dependency): take the first one
+        char *pipe = strchr(token, '|');
+        if (pipe) *pipe = '\0';
+
         // Find end: stop at space, tab, or '('
         char *end = token;
         while (*end && *end != ' ' && *end != '\t' && *end != '(') end++;

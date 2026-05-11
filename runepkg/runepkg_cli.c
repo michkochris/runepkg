@@ -43,6 +43,8 @@ bool g_force_mode = false;
 bool g_did_install = false;
 bool g_debug_mode = false;
 bool g_auto_confirm_deps = false;
+bool g_auto_confirm_siblings = false;
+bool g_asked_siblings = false;
 
 /* Completion and autocomplete implementations moved to runepkg_handle.c */
 

@@ -310,7 +310,7 @@ int handle_remove(const char *package_name) {
         } else if (match_count > 1) {
             // Multiple matches - show them like -l does
             print_package_data_header();
-            printf("Looking for package... '%s' did you mean?\n", package_name);
+            printf("Looking for package... '%s' did you mean?\n\n", package_name);
             
             // Collect and display matching packages
             char matches[100][PATH_MAX];
@@ -348,7 +348,7 @@ int handle_remove(const char *package_name) {
             if (suggestion_count > 0) {
                 // Show suggestions in the same clean format
                 print_package_data_header();
-                printf("Looking for package... '%s' did you mean?\n", package_name);
+                printf("Looking for package... '%s' did you mean?\n\n", package_name);
                 
                 const char *items[100];
                 for (int i = 0; i < suggestion_count; i++) {
@@ -424,7 +424,7 @@ void handle_list(const char *pattern) {
 
     print_package_data_header();
 
-    printf("Listing installed packages...\n");
+    printf("Listing installed packages...\n\n");
     int listed = runepkg_storage_list_packages(pattern);
     if (pattern && listed == 0) {
         printf("No packages match '%s'.\n", pattern);
@@ -520,7 +520,7 @@ int handle_status(const char *package_name) {
         }
     } else {
         // Multiple matches or no matches - show suggestions
-        printf("Looking for package... '%s' did you mean?\n", package_name);
+        printf("Looking for package... '%s' did you mean?\n\n", package_name);
         char suggestions[100][PATH_MAX];
         int match_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
         if (match_count > 0) {
@@ -690,7 +690,7 @@ void handle_list_files(const char *package_name) {
     }
 
     // Multiple or no matches - show suggestions
-    printf("Looking for package... '%s' did you mean?\n", package_name);
+    printf("Looking for package... '%s' did you mean?\n\n", package_name);
     char suggestions[100][PATH_MAX];
     int suggestion_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
     if (suggestion_count > 0) {

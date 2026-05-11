@@ -42,6 +42,12 @@ extern bool g_cleanup_extract_dirs;
 /* When true, automatically confirm dependency installation from repositories. */
 extern bool g_auto_confirm_deps;
 
+/* When true, automatically confirm installation of sibling .deb files found locally. */
+extern bool g_auto_confirm_siblings;
+
+/* Tracks whether the user has been asked about sibling installations in the current operation. */
+extern bool g_asked_siblings;
+
 // --- Source Configuration ---
 
 typedef struct {
