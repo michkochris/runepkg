@@ -2,22 +2,7 @@
 # * Filename:    runepkgconfig
 # * Author:      <michkochris@gmail.com>
 # * Date:        started 12-31-2024
-# * Description: runepkg manages linux .deb pkg's for Runar Linux
-# *
-# * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
-# * GPLV3
-# * This program is free software: you can redistribute it and/or modify it
-# * under the terms of the GNU General Public License as published by the Free
-# * Software Foundation, either version 3 of the License, or (at your option)
-# * any later version.
-# *
-# * This program is distributed in the hope that it will be useful, but WITHOUT
-# * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
-# * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
-# * more details.
-# *
-# * You should have received a copy of the GNU General Public License along
-# * with this program. If not, see <https://www.gnu.org/licenses/>.
+# * Description:
 # ******************************************************************************/
 # file description: runepkg config settings
 
@@ -27,7 +12,7 @@
 # main config file (system-wide installed at /etc/runepkg/runepkgconfig)
 
 # main directory where runepkg does work, can change for optional alternate install location of packages...
-# just change all appropriote values...runepkg_dir, control_dir, install_dir, runepkg_db, download_dir...
+# just change all appropriate values...runepkg_dir, control_dir, install_dir, runepkg_db, download_dir...
 runepkg_dir=~/runepkg_dir
 
 # directory where runepkg unpacks .deb pkg info
@@ -35,7 +20,8 @@ runepkg_dir=~/runepkg_dir
 control_dir=~/runepkg_dir/control_dir
 
 # main directory where runepkg installs programs
-# normally / unless testing and development...
+# normally / unless testing and development... change if needed...
+#install_dir=/
 install_dir=~/runepkg_dir/install_dir
 
 # directory where runepkg stores its persistent package database
@@ -43,7 +29,6 @@ install_dir=~/runepkg_dir/install_dir
 runepkg_db=~/runepkg_dir/runepkg_db
 
 # main runepkg download directory for downloading .deb's from debian repo..
-#
 download_dir=~/runepkg_dir/download_dir
 
 # Delete per-package extraction trees under control_dir after install (yes/no, default yes).

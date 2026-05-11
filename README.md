@@ -8,6 +8,8 @@
 
 ---
 
+**runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
+
 ## **Installation**
 
 ### **Embedded Installation (Minimal)**
@@ -35,6 +37,11 @@ sudo make uninstall
 ```
 
 *Note: You may receive a notification if certain system directories require manual removal.*
+
+---
+
+## **Configuration**
+The configuration file is located at `/etc/runepkg/runepkgconfig`. This file contains various path variables, including the `install_dir`. Repository information is stored at the bottom of the file in a standard Debian `sources.list` format. You can use any Debian-based repositories (including Ubuntu, Kali, or legacy archives).
 
 ---
 
@@ -94,7 +101,5 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 Licensed under GPL v3
 ```
-
 ---
-
 
