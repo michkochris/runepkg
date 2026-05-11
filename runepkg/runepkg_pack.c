@@ -300,7 +300,7 @@ static int collect_files_recursive(const char *dir_path, const char *base_path, 
         }
         
         struct stat st;
-        if (stat(full_path, &st) != 0) {
+        if (lstat(full_path, &st) != 0) {
             runepkg_util_free_and_null(&full_path);
             continue;
         }
@@ -454,54 +454,16 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
     printf("\n");
 }
 
-static int extraction_root_under_control_dir(const char *root) {
-    if (!root || !g_control_dir || root[0] == '\0')
-        return 0;
-    if (strcmp(root, g_control_dir) == 0)
-        return 0;
-    size_t blen = strlen(g_control_dir);
-    if (strncmp(root, g_control_dir, blen) != 0)
-        return 0;
-    if (root[blen] != '/')
-        return 0;
-    return 1;
-}
-
 void runepkg_pack_cleanup_extraction_workspace(const PkgInfo *pkg_info) {
-    if (!g_cleanup_extract_dirs || !pkg_info || !pkg_info->control_dir_path || !g_control_dir)
-        return;
+    if (!g_cleanup_extract_dirs || !pkg_info) return;
 
-    const char *cp = pkg_info->control_dir_path;
-    size_t n = strlen(cp);
-    if (n == 0 || n >= PATH_MAX)
-        return;
-
-    char buf[PATH_MAX];
-    memcpy(buf, cp, n + 1);
-
-    while (n > 1 && buf[n - 1] == '/') {
-        buf[--n] = '\0';
+    if (pkg_info->control_dir_path) {
+        runepkg_util_log_verbose("cleanup: removing control dir: %s\n", pkg_info->control_dir_path);
+        runepkg_storage_remove_directory_tree(pkg_info->control_dir_path);
     }
-
-    static const char suf[] = "/control";
-    size_t sl = sizeof(suf) - 1;
-    if (n < sl || strcmp(buf + n - sl, suf) != 0) {
-        runepkg_util_log_verbose("cleanup: skip (path does not end with /control): %s\n", cp);
-        return;
+    if (pkg_info->data_dir_path) {
+        runepkg_util_log_verbose("cleanup: removing data dir: %s\n", pkg_info->data_dir_path);
+        runepkg_storage_remove_directory_tree(pkg_info->data_dir_path);
     }
-
-    buf[n - sl] = '\0';
-    size_t rootlen = n - sl;
-    while (rootlen > 0 && buf[rootlen - 1] == '/')
-        buf[--rootlen] = '\0';
-
-    if (!extraction_root_under_control_dir(buf)) {
-        runepkg_util_log_verbose("cleanup: refusing removal outside control_dir: %s\n", buf);
-        return;
-    }
-
-    runepkg_util_log_verbose("cleanup: removing extraction workspace %s\n", buf);
-    if (runepkg_storage_remove_directory_tree(buf) != 0)
-        runepkg_util_log_verbose("cleanup: warning: failed to fully remove %s\n", buf);
 }
 

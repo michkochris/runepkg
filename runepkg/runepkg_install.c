@@ -36,30 +36,19 @@ typedef struct {
     pthread_mutex_t *mutex;
 } FileInstallArgs;
 
-// Function to install a single file (for threading)
-void* install_single_file(void *arg) {
-    FileInstallArgs *args = (FileInstallArgs*)arg;
-    char *src = (char*)args->src;  // Cast away const for freeing
-    char *dst = (char*)args->dst;
-    int *error_count = args->error_count;
-    pthread_mutex_t *mutex = args->mutex;
-
+// Internal function to perform the actual file system operation for a single file/dir/link
+// Returns 0 on success, -1 on error.
+static int perform_file_install(const char *src, const char *dst) {
     struct stat st;
     if (lstat(src, &st) != 0) {
-        runepkg_log_verbose("Install: failed to stat %s: %s\n", src, strerror(errno));
-        pthread_mutex_lock(mutex);
-        (*error_count)++;
-        pthread_mutex_unlock(mutex);
-        free(src);
-        free(dst);
-        return NULL;
+        fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to stat source: %s (%s)\n", src, strerror(errno));
+        return -1;
     }
 
     if (S_ISDIR(st.st_mode)) {
         if (runepkg_util_create_dir_recursive(dst, 0755) != 0) {
-            pthread_mutex_lock(mutex);
-            (*error_count)++;
-            pthread_mutex_unlock(mutex);
+            fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create directory: %s\n", dst);
+            return -1;
         }
     } else if (S_ISREG(st.st_mode)) {
         char *dst_copy = strdup(dst);
@@ -68,10 +57,23 @@ void* install_single_file(void *arg) {
             if (parent) runepkg_util_create_dir_recursive(parent, 0755);
             free(dst_copy);
         }
+        // Unlink first to handle existing symlinks or mismatched types
+        struct stat dst_st;
+        if (lstat(dst, &dst_st) == 0) {
+            if (S_ISDIR(dst_st.st_mode)) {
+                // If it's a directory, we can't just unlink it.
+                // For now, we'll try to remove it if it's empty, or just fail gracefully.
+                if (rmdir(dst) != 0) {
+                    fprintf(stderr, "\033[1;31m[file error]\033[0m Cannot overwrite directory with file: %s\n", dst);
+                    return -1;
+                }
+            } else {
+                unlink(dst);
+            }
+        }
         if (runepkg_util_copy_file(src, dst) != 0) {
-            pthread_mutex_lock(mutex);
-            (*error_count)++;
-            pthread_mutex_unlock(mutex);
+            fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to copy file: %s\n", dst);
+            return -1;
         }
     } else if (S_ISLNK(st.st_mode)) {
         char link_target[PATH_MAX];
@@ -86,16 +88,29 @@ void* install_single_file(void *arg) {
             }
             unlink(dst);
             if (symlink(link_target, dst) != 0) {
-                pthread_mutex_lock(mutex);
-                (*error_count)++;
-                pthread_mutex_unlock(mutex);
+                fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create symlink: %s -> %s (%s)\n", dst, link_target, strerror(errno));
+                return -1;
             }
         } else {
-            runepkg_log_verbose("Install: failed to read symlink %s\n", src);
-            pthread_mutex_lock(mutex);
-            (*error_count)++;
-            pthread_mutex_unlock(mutex);
+            fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to read symlink source: %s\n", src);
+            return -1;
         }
+    }
+    return 0;
+}
+
+// Function to install a single file (for threading)
+void* install_single_file(void *arg) {
+    FileInstallArgs *args = (FileInstallArgs*)arg;
+    char *src = args->src;
+    char *dst = args->dst;
+    int *error_count = args->error_count;
+    pthread_mutex_t *mutex = args->mutex;
+
+    if (perform_file_install(src, dst) != 0) {
+        pthread_mutex_lock(mutex);
+        (*error_count)++;
+        pthread_mutex_unlock(mutex);
     }
 
     free(src);
@@ -287,7 +302,11 @@ static void clandestine_spider_recursive(const char *deb_path, SiblingCollection
         }
         free(deps);
     }
-    runepkg_pack_cleanup_extraction_workspace(&info);
+
+    /* Only clean up if this ISN'T the same file the main installer is using */
+    if (strcmp(deb_path, origin_deb_path) != 0) {
+        runepkg_pack_cleanup_extraction_workspace(&info);
+    }
     runepkg_pack_free_package_info(&info);
 }
 
@@ -894,38 +913,7 @@ else {
 
                 if (thread_idx == -1) {
                     // Should not happen, but fallback to sequential
-                    struct stat st;
-                    if (lstat(src, &st) != 0) {
-                        runepkg_log_verbose("Install: failed to stat %s: %s\n", src, strerror(errno));
-                        install_errors++;
-                    } else if (S_ISDIR(st.st_mode)) {
-                        if (runepkg_util_create_dir_recursive(dst, 0755) != 0) install_errors++;
-                    } else if (S_ISREG(st.st_mode)) {
-                        char *dst_copy = strdup(dst);
-                        if (dst_copy) {
-                            char *parent = dirname(dst_copy);
-                            if (parent) runepkg_util_create_dir_recursive(parent, 0755);
-                            free(dst_copy);
-                        }
-                        if (runepkg_util_copy_file(src, dst) != 0) install_errors++;
-                    } else if (S_ISLNK(st.st_mode)) {
-                        char link_target[PATH_MAX];
-                        ssize_t len = readlink(src, link_target, sizeof(link_target) - 1);
-                        if (len >= 0) {
-                            link_target[len] = '\0';
-                            char *dst_copy = strdup(dst);
-                            if (dst_copy) {
-                                char *parent = dirname(dst_copy);
-                                if (parent) runepkg_util_create_dir_recursive(parent, 0755);
-                                free(dst_copy);
-                            }
-                            unlink(dst);
-                            if (symlink(link_target, dst) != 0) install_errors++;
-                        } else {
-                            runepkg_log_verbose("Install: failed to read symlink %s\n", src);
-                            install_errors++;
-                        }
-                    }
+                    if (perform_file_install(src, dst) != 0) install_errors++;
                     runepkg_util_free_and_null(&src);
                     runepkg_util_free_and_null(&dst);
                     continue;
@@ -942,38 +930,7 @@ else {
                     active_threads++;
                 } else {
                     // Fallback to sequential on thread creation failure
-                    struct stat st;
-                    if (lstat(src, &st) != 0) {
-                        runepkg_log_verbose("Install: failed to stat %s: %s\n", src, strerror(errno));
-                        install_errors++;
-                    } else if (S_ISDIR(st.st_mode)) {
-                        if (runepkg_util_create_dir_recursive(dst, 0755) != 0) install_errors++;
-                    } else if (S_ISREG(st.st_mode)) {
-                        char *dst_copy = strdup(dst);
-                        if (dst_copy) {
-                            char *parent = dirname(dst_copy);
-                            if (parent) runepkg_util_create_dir_recursive(parent, 0755);
-                            free(dst_copy);
-                        }
-                        if (runepkg_util_copy_file(src, dst) != 0) install_errors++;
-                    } else if (S_ISLNK(st.st_mode)) {
-                        char link_target[PATH_MAX];
-                        ssize_t len = readlink(src, link_target, sizeof(link_target) - 1);
-                        if (len >= 0) {
-                            link_target[len] = '\0';
-                            char *dst_copy = strdup(dst);
-                            if (dst_copy) {
-                                char *parent = dirname(dst_copy);
-                                if (parent) runepkg_util_create_dir_recursive(parent, 0755);
-                                free(dst_copy);
-                            }
-                            unlink(dst);
-                            if (symlink(link_target, dst) != 0) install_errors++;
-                        } else {
-                            runepkg_log_verbose("Install: failed to read symlink %s\n", src);
-                            install_errors++;
-                        }
-                    }
+                    if (perform_file_install(src, dst) != 0) install_errors++;
                     runepkg_util_free_and_null(&src);
                     runepkg_util_free_and_null(&dst);
                 }

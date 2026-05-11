@@ -365,20 +365,40 @@ int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
     for (p = temp_path + 1; *p; p++) {
         if (*p == '/') {
             *p = '\0';
-            if (mkdir(temp_path, mode) == -1 && errno != EEXIST) {
-                perror("Failed to create directory");
-                fprintf(stderr, "Directory: %s\n", temp_path);
-                ret = -1;
-                break;
+            if (mkdir(temp_path, mode) == -1) {
+                if (errno != EEXIST) {
+                    perror("Failed to create directory");
+                    fprintf(stderr, "Directory: %s\n", temp_path);
+                    ret = -1;
+                    break;
+                } else {
+                    // Check if it's actually a directory
+                    struct stat st;
+                    if (stat(temp_path, &st) == 0) {
+                        if (!S_ISDIR(st.st_mode)) {
+                            fprintf(stderr, "\033[1;31m[error]\033[0m Path exists but is not a directory: %s\n", temp_path);
+                            ret = -1;
+                            break;
+                        }
+                    }
+                }
             }
             runepkg_util_log_debug("Created directory: %s\n", temp_path);
             *p = '/';
         }
     }
-    if (ret == 0 && mkdir(temp_path, mode) == -1 && errno != EEXIST) {
-        perror("Failed to create final directory");
-        fprintf(stderr, "Directory: %s\n", temp_path);
-        ret = -1;
+    if (ret == 0 && mkdir(temp_path, mode) == -1) {
+        if (errno != EEXIST) {
+            perror("Failed to create final directory");
+            fprintf(stderr, "Directory: %s\n", temp_path);
+            ret = -1;
+        } else {
+            struct stat st;
+            if (stat(temp_path, &st) == 0 && !S_ISDIR(st.st_mode)) {
+                fprintf(stderr, "\033[1;31m[error]\033[0m Path exists but is not a directory: %s\n", temp_path);
+                ret = -1;
+            }
+        }
     }
 
     free(temp_path);
