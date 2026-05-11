@@ -4,7 +4,7 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a fast, efficient, old-school `.deb` package manager.
+**runepkg** is a fast, efficient, old-school `.deb` package manager—i.e., built with the idea of unearthing and installing "runes" (ancient .debs) from the Debian archives.
 
 ---
 
@@ -13,11 +13,41 @@
 ### **Philosophy & Background**
 This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and a passion for Custom Cross Linux From Scratch (LFS).
 
+The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software safely in modern environments.
+
 If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed deep-dive in [INTERNALS.md](./INTERNALS.md).
 
 ---
 
 ## **Installation**
+
+### **Dependencies**
+The **Core** version of **runepkg** requires only a C compiler (e.g., `gcc` or `clang`) and `make`. The **Standard** version includes a C++ FFI layer for networking and repository management, which requires a C++ compiler (e.g., `g++` or `clang++`), **libcurl**, **OpenSSL**, and **zlib**.
+
+**Required Packages by Distribution:**
+
+- **Debian/Ubuntu:**
+  - **Core:** `gcc`, `make`, `libc6-dev`
+  - **Standard:** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`
+  - *Command:* `sudo apt update && sudo apt install gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
+- 
+- **Arch Linux:**
+  - **Core:** `base-devel`
+  - **Standard:** `curl`, `openssl`, `zlib`
+  - *Command:* `sudo pacman -S --needed base-devel curl openssl zlib`
+- 
+- **Fedora/RHEL:**
+  - **Core:** `gcc`, `make`, `glibc-devel`
+  - **Standard:** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
+  - *Command:* `sudo dnf install gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
+
+### **Customizing the Compiler**
+The `Makefile` supports overriding the default compilers. If you prefer to use `clang` instead of `gcc`, you can pass the variables directly to `make`:
+
+```bash
+CC=clang CXX=clang++ make all
+sudo make install
+```
 
 ### **Embedded Installation (Minimal)**
 For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality.

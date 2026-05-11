@@ -36,9 +36,22 @@ download_dir=~/runepkg_dir/download_dir
 cleanup=yes
 
 # runepkg debian style sources.list info here
-# runepkg and runar linux use kali rolling latest release style packages,
-# change if user prefers stable debian or ubuntu style sources.list...
+# You can use any Debian-based repository (Debian, Ubuntu, Kali, Debian archives, etc.).
+#
+# IMPORTANT: It is highly recommended to use ONLY ONE distribution ecosystem
+# at a time (e.g., just Kali, or just Debian Stable). While runepkg can aggregate
+# metadata from multiple sources, the current URL resolver prefers the first
+# base URL defined. Mixing repositories with different base URLs may cause
+# download failures (404) if a package exists in one but not the other.
 
+# Debian Stable (Bookworm) - Example of multiple sources sharing the SAME base URL
+# (This is safe because all metadata will point to the same server)
+# deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+# deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+# deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+# deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+
+# runepkg and runar linux use kali rolling latest release style packages by default.
 # Kali Linux (Optional/Rolling)
 # See: https://www.kali.org/docs/general-use/kali-linux-sources-list-repositories/
 deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware

@@ -10,17 +10,21 @@
 # ******************************************************************************/
 # Makefile for runepkg with consolidated configuration system.
 
-CC = gcc
-CXX = g++
+CC ?= gcc
+CXX ?= g++
 CFLAGS = -Wall -Wextra -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread
 CXXFLAGS = -Wall -Wextra -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread
 
 LDFLAGS = -pthread
 LIBS =
 
-# Force core build when explicitly targeting runepkg
-ifneq (,$(filter runepkg,$(MAKECMDGOALS)))
+# Force core build when explicitly targeting runepkg or install
+# This ensures 'make install' doesn't try to upgrade a core build to C++
+# unless 'make all install' is used.
+ifneq (,$(filter runepkg install,$(MAKECMDGOALS)))
+ifeq (,$(filter all with-all with-cpp,$(MAKECMDGOALS)))
 WITH_CPP := 0
+endif
 endif
 
 # C++ FFI support detection and configuration
@@ -74,6 +78,11 @@ OBJS = $(C_SOURCES:.c=.o) $(CPP_SOURCES:.cpp=.o)
 # Header dependencies
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h runepkg_defensive.h $(CPP_HEADERS)
 
+# Track configuration changes to force rebuilds when WITH_CPP changes
+.config_with_cpp:
+	@echo $(WITH_CPP) > $@.tmp
+	@if [ ! -f $@ ] || ! diff $@ $@.tmp >/dev/null; then mv $@.tmp $@; else rm $@.tmp; fi
+
 .PHONY: all clean clean-all install debug run termux-install uninstall test test-binary test-help info with-cpp clean-cpp with-all
 
 .DEFAULT_GOAL := runepkg
@@ -90,14 +99,14 @@ TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 
 all: with-all
 
-$(TARGET): $(OBJS)
+$(TARGET): $(OBJS) .config_with_cpp
 	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	@echo "⚡ Build complete: $(TARGET)"
 
-%.o: %.c $(HEADERS)
+%.o: %.c $(HEADERS) .config_with_cpp
 	$(CC) $(CFLAGS) -c $< -o $@
 
-%.o: %.cpp $(HEADERS)
+%.o: %.cpp $(HEADERS) .config_with_cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:

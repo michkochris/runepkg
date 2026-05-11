@@ -387,11 +387,12 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_CPP_FFI
                 runepkg_repo_search(argv[i+1]);
 #else
-                printf("Silly placeholder: Searching for '%s' with magical unicorns and sparkles!\n", argv[i+1]);
+                printf("Notice: Repository search requires a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
                 i++;
             } else {
-                printf("Silly placeholder: Search command needs a pattern, like 'runepkg search firefox'!\n");
+                printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
             }
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
@@ -399,44 +400,48 @@ int main(int argc, char *argv[]) {
                 char *path = runepkg_repo_download(argv[i+1]);
                 if (path) free(path);
 #else
-                printf("Silly placeholder: Downloading '%s' but not installing, because we're cheeky rebels!\n", argv[i+1]);
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
                 i++;
             } else {
-                printf("Silly placeholder: Download-only needs a package name!\n");
+                printf("Error: Download-only command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
-                printf("Silly placeholder: Dependencies for '%s' include rainbows, sunshine, and extra cheese!\n", argv[i+1]);
+                printf("Feature Pending: Graphical dependency visualizer for '%s' is not yet implemented.\n", argv[i+1]);
                 i++;
             } else {
-                printf("Silly placeholder: Depends needs a package name!\n");
+                printf("Error: depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "verify") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
-                printf("Silly placeholder: Verifying '%s' with funny checksums, giggles, and a wink!\n", argv[i+1]);
+                printf("Feature Pending: Cryptographic verification for '%s' is not yet implemented.\n", argv[i+1]);
                 i++;
             } else {
-                printf("Silly placeholder: Verify needs a package name!\n");
+                printf("Error: verify command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "update") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_update();
 #else
-            printf("Silly placeholder: Updating the system with confetti, balloons, and virtual hugs!\n");
+            printf("Notice: Repository synchronization requires a C++ build with networking enabled.\n");
+            printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
         } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();
 #else
-            printf("Silly placeholder: Upgrading the system with a shiny new coat of paint and a bow!\n");
+            printf("Notice: Automatic upgrades require a C++ build with networking enabled.\n");
+            printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
         } else if (strcmp(argv[i], "source") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
                 runepkg_repo_source_download(argv[i+1]);
 #else
-                printf("Silly placeholder: Downloading source for '%s' with a magnifying glass!\n", argv[i+1]);
+                printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
                 i++;
             } else {
