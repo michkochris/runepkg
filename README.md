@@ -8,7 +8,7 @@
 
 ---
 
-**runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
+**runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Its core is written in standard C, ensuring high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc**. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
 
 ### **Philosophy & Background**
 This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and a passion for Custom Cross Linux From Scratch (LFS).
