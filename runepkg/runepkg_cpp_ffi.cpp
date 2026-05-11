@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <set>
 #include <sys/stat.h>
 #include <zlib.h>
@@ -41,6 +42,9 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 }
 
 bool download_file(const std::string& url, const std::string& dest_path) {
+    if (runepkg_util_file_exists(dest_path.c_str())) {
+        return true;
+    }
     CURL *curl;
     FILE *fp;
     CURLcode res;
@@ -496,23 +500,172 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     return base_url + rel_path;
 }
 
+struct PkgMetadata {
+    std::string name;
+    std::string url;
+    std::string depends;
+    std::string filename;
+};
+
+PkgMetadata get_package_metadata(const std::string& pkg_name) {
+    PkgMetadata meta_data;
+    meta_data.name = pkg_name;
+
+    uint32_t offset = 0;
+    std::string meta_file;
+    std::string url = get_package_url(pkg_name.c_str(), false, &offset, &meta_file);
+    if (url.empty()) return meta_data;
+
+    meta_data.url = url;
+    meta_data.filename = url.substr(url.find_last_of('/') + 1);
+
+    std::ifstream meta(meta_file);
+    if (meta.is_open()) {
+        meta.seekg(offset);
+        std::string line;
+        while (std::getline(meta, line)) {
+            if (line.empty() || line == "\r") break;
+            if (line.compare(0, 9, "Depends: ") == 0) {
+                meta_data.depends = line.substr(9);
+                if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
+            }
+        }
+    }
+    return meta_data;
+}
+
+std::vector<std::string> parse_depends_cpp(const std::string& depends) {
+    std::vector<std::string> result;
+    if (depends.empty()) return result;
+    char **deps = parse_depends(depends.c_str());
+    if (deps) {
+        for (int i = 0; deps[i]; i++) {
+            result.push_back(deps[i]);
+            free(deps[i]);
+        }
+        free(deps);
+    }
+    return result;
+}
+
+void resolve_recursive(const std::string& pkg_name,
+                      std::unordered_map<std::string, PkgMetadata>& resolved,
+                      std::vector<std::string>& order,
+                      std::unordered_set<std::string>& visiting,
+                      bool ignore_installed) {
+    if (resolved.count(pkg_name)) return;
+    if (visiting.count(pkg_name)) return;
+
+    // Check if installed, unless we are forcing this specific package
+    if (!ignore_installed) {
+        if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) return;
+    }
+
+    PkgMetadata meta = get_package_metadata(pkg_name);
+    if (meta.url.empty()) return;
+
+    visiting.insert(pkg_name);
+    resolved[pkg_name] = meta;
+
+    std::vector<std::string> deps = parse_depends_cpp(meta.depends);
+    for (const auto& dep : deps) {
+        resolve_recursive(dep, resolved, order, visiting, false);
+    }
+
+    order.push_back(pkg_name);
+    visiting.erase(pkg_name);
+}
+
 extern "C" char* runepkg_repo_download(const char *pkg_name) {
-    std::string full_url = get_package_url(pkg_name, false, nullptr, nullptr);
-    if (full_url.empty()) return NULL;
+    if (!pkg_name) return NULL;
 
-    std::string deb_filename = full_url.substr(full_url.find_last_of('/') + 1);
-    std::string dest_path = std::string(g_download_dir) + "/" + deb_filename;
+    std::unordered_map<std::string, PkgMetadata> resolved;
+    std::vector<std::string> order;
+    std::unordered_set<std::string> visiting;
 
-    std::cout << "\033[1;34m[download]\033[0m Downloading " << pkg_name << "..." << std::endl;
-    std::cout << "  \033[1;34m->\033[0m " << deb_filename << std::endl;
+    // Use g_force_mode to decide if we should skip the "already installed" check for the root package
+    resolve_recursive(pkg_name, resolved, order, visiting, g_force_mode);
+
+    if (resolved.empty()) return NULL;
+
+    if (resolved.size() > 1) {
+        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << pkg_name << "..." << std::endl;
+        std::cout << "\033[1;33m[dependencies]\033[0m The following dependencies are required:" << std::endl;
+        int width = runepkg_util_get_terminal_width();
+        int current_line_len = 2;
+        std::cout << "  ";
+        for (size_t i = 0; i < order.size(); i++) {
+            if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) {
+                std::cout << "\n  ";
+                current_line_len = 2;
+            }
+            std::cout << order[i];
+            current_line_len += order[i].length();
+            if (i < order.size() - 1) {
+                std::cout << " ";
+                current_line_len += 1;
+            }
+        }
+        std::cout << std::endl;
+
+        std::cout << "Would you like to attempt to download and install them? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::fflush(stdout);
+        char resp[16];
+        if (!std::fgets(resp, sizeof(resp), stdin) || (resp[0] != 'y' && resp[0] != 'Y')) {
+            std::cout << "Installation cancelled." << std::endl;
+            return NULL;
+        }
+    }
+
+    bool needs_download = false;
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::string dest_path = std::string(g_download_dir) + "/" + meta.filename;
+        if (!runepkg_util_file_exists(dest_path.c_str())) {
+            needs_download = true;
+            break;
+        }
+    }
+
+    if (needs_download) {
+        if (resolved.size() > 1) {
+            std::cout << "\033[1;34m[runepkg]\033[0m Pre-fetching " << resolved.size() << " packages in parallel..." << std::endl;
+        } else {
+            std::string deb_filename = resolved[pkg_name].filename;
+            std::cout << "\033[1;34m[download]\033[0m Downloading " << pkg_name << "..." << std::endl;
+            std::cout << "  \033[1;34m->\033[0m " << deb_filename << std::endl;
+        }
+    }
+
+    std::vector<DownloadTask> tasks;
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::string dest_path = std::string(g_download_dir) + "/" + meta.filename;
+        tasks.push_back({meta.url, dest_path, name, false});
+    }
 
     curl_global_init(CURL_GLOBAL_ALL);
-    if (download_file(full_url, dest_path)) {
-        curl_global_cleanup();
-        return strdup(dest_path.c_str());
+    std::vector<std::future<bool>> futures;
+    for (auto& t : tasks) {
+        if (runepkg_util_file_exists(t.dest_path.c_str())) {
+            futures.push_back(std::async(std::launch::deferred, [](){ return true; }));
+        } else {
+            if (resolved.size() > 1) {
+                std::string deb_filename = t.url.substr(t.url.find_last_of('/') + 1);
+                std::cout << "  \033[1;34m->\033[0m " << deb_filename << std::endl;
+            }
+            futures.push_back(std::async(std::launch::async, download_file, t.url, t.dest_path));
+        }
+    }
+
+    for (size_t i = 0; i < tasks.size(); i++) {
+        tasks[i].success = futures[i].get();
     }
     curl_global_cleanup();
-    return NULL;
+
+    std::string top_filename = resolved[pkg_name].url.substr(resolved[pkg_name].url.find_last_of('/') + 1);
+    std::string top_dest = std::string(g_download_dir) + "/" + top_filename;
+    return strdup(top_dest.c_str());
 }
 
 extern "C" int runepkg_upgrade(void) {
@@ -581,9 +734,13 @@ extern "C" int runepkg_upgrade(void) {
     curl_global_init(CURL_GLOBAL_ALL);
     std::vector<std::future<bool>> futures;
     for (auto& t : tasks) {
-        std::string deb_filename = t.url.substr(t.url.find_last_of('/') + 1);
-        std::cout << "  \033[1;34m->\033[0m " << deb_filename << std::endl;
-        futures.push_back(std::async(std::launch::async, download_file, t.url, t.dest_path));
+        if (runepkg_util_file_exists(t.dest_path.c_str())) {
+            futures.push_back(std::async(std::launch::deferred, [](){ return true; }));
+        } else {
+            std::string deb_filename = t.url.substr(t.url.find_last_of('/') + 1);
+            std::cout << "  \033[1;34m->\033[0m " << deb_filename << std::endl;
+            futures.push_back(std::async(std::launch::async, download_file, t.url, t.dest_path));
+        }
     }
     for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
 

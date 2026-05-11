@@ -347,16 +347,26 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             } else {
                 snprintf(new_pattern, sizeof(new_pattern), "debs/%s*.deb", deb_file_path);
             }
-            globfree(&globbuf);
             if (glob(new_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
                 found = 1;
+            } else if (g_download_dir) {
+                // Try with download_dir/ prefix
+                char download_pattern[PATH_MAX];
+                if (strstr(deb_file_path, "*") != NULL) {
+                    snprintf(download_pattern, sizeof(download_pattern), "%s/%s", g_download_dir, deb_file_path);
+                } else {
+                    snprintf(download_pattern, sizeof(download_pattern), "%s/%s*.deb", g_download_dir, deb_file_path);
+                }
+                if (glob(download_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
+                    found = 1;
+                }
             }
         }
         if (found) {
             // Install the latest (first after sorting)
-            handle_install(globbuf.gl_pathv[0]);
+            int ret = handle_install(globbuf.gl_pathv[0]);
             globfree(&globbuf);
-            return 0;
+            return ret;
         }
         globfree(&globbuf);
         return -1;
@@ -645,6 +655,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                         int all_ok = 1;
                         for(int k=0; k<num_unsatisfied; k++) {
 #ifdef ENABLE_CPP_FFI
+                            /* Re-check if satisfied; a previous iteration might have installed this. */
+                            if (runepkg_hash_search(runepkg_main_hash_table, unsatisfied[k]->package)) continue;
+                            if (installing_packages && runepkg_hash_search(installing_packages, unsatisfied[k]->package)) continue;
+
                             char *path = runepkg_repo_download(unsatisfied[k]->package);
                             if (path) {
                                 if (handle_install_internal(path, 0) != 0) {

@@ -191,19 +191,32 @@ int main(int argc, char *argv[]) {
                     if (runepkg_util_file_exists(next_arg)) {
                         ret = handle_install(next_arg);
                     } else {
-#ifdef ENABLE_CPP_FFI
-                        char *downloaded_path = runepkg_repo_download(next_arg);
-                        if (downloaded_path) {
-                            ret = handle_install(downloaded_path);
-                            free(downloaded_path);
+                        // Check if it's an already installed package name
+                        if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, next_arg)) {
+                            if (!g_force_mode) {
+                                PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, next_arg);
+                                printf("Package %s is already installed (%s). Use -f/--force to reinstall.\n", next_arg, info->version ? info->version : "unknown");
+                                ret = 0;
+                            } else {
+                                // Force mode: proceed to repo download/reinstall
+                                goto try_repo;
+                            }
                         } else {
-                            fprintf(stderr, "Error: Cannot find local file '%s' and failed to download it from repositories.\n", next_arg);
-                            ret = -1;
-                        }
+                        try_repo:
+#ifdef ENABLE_CPP_FFI
+                            char *downloaded_path = runepkg_repo_download(next_arg);
+                            if (downloaded_path) {
+                                ret = handle_install(downloaded_path);
+                                free(downloaded_path);
+                            } else {
+                                fprintf(stderr, "Error: Cannot find local file '%s' and failed to download it from repositories.\n", next_arg);
+                                ret = -1;
+                            }
 #else
-                        fprintf(stderr, "Error: File '%s' not found and repository downloads are disabled.\n", next_arg);
-                        ret = -1;
+                            fprintf(stderr, "Error: File '%s' not found and repository downloads are disabled.\n", next_arg);
+                            ret = -1;
 #endif
+                        }
                     }
 
                     if (ret == 0) {
