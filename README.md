@@ -11,7 +11,7 @@
 **runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Its core is written in standard C, ensuring high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc**. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
 
 ### **Philosophy & Background**
-This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and an obsession for Custom Cross Linux From Scratch (LFS).
+This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS).
 
 The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software safely in modern environments.
 
