@@ -10,6 +10,13 @@
 
 **runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
 
+### **Philosophy & Background**
+This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and a passion for Custom Cross Linux From Scratch (LFS).
+
+If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed deep-dive in [INTERNALS.md](./INTERNALS.md).
+
+---
+
 ## **Installation**
 
 ### **Embedded Installation (Minimal)**
@@ -46,7 +53,7 @@ The configuration file is located at `/etc/runepkg/runepkgconfig`. This file con
 ---
 
 ## **Usage**
-
+For basic commands, see the help output below. For comprehensive examples, advanced workflows, and repository management details, please refer to [USAGELONG.md](./USAGELONG.md).
 ```bash
 runepkg (fast efficient old-school .deb package manager)
 
@@ -101,5 +108,7 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 Licensed under GPL v3
 ```
+
 ---
+
 
