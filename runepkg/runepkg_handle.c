@@ -416,7 +416,7 @@ void handle_version(void) {
     runepkg_util_motd();
     printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
     printf("Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.\n");
-    printf("Licensed under GPL v3\n");
+    printf("Contact: [michkochris@gmail.com] | [runepkg@gmail.com]\n");
 }
 
 void handle_list(const char *pattern) {
