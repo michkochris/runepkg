@@ -29,17 +29,17 @@ The **Core** version of **runepkg** requires only a C compiler (e.g., `gcc` or `
 - **Debian/Ubuntu:**
   - **Core:** `gcc`, `make`, `libc6-dev`
   - **Standard:** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`
-  - *Command:* `sudo apt update && sudo apt install gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
+  - `sudo apt update && sudo apt install gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
 - 
 - **Arch Linux:**
   - **Core:** `base-devel`
   - **Standard:** `curl`, `openssl`, `zlib`
-  - *Command:* `sudo pacman -S --needed base-devel curl openssl zlib`
+  - `sudo pacman -S --needed base-devel curl openssl zlib`
 - 
 - **Fedora/RHEL:**
   - **Core:** `gcc`, `make`, `glibc-devel`
   - **Standard:** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
-  - *Command:* `sudo dnf install gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
+  - `sudo dnf install gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
 
 ### **Customizing the Compiler**
 The `Makefile` supports overriding the default compilers. If you prefer to use `clang` instead of `gcc`, you can pass the variables directly to `make`:
