@@ -3,7 +3,6 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <thread>
 #include <future>
 #include <curl/curl.h>
 #include <fstream>
@@ -12,16 +11,13 @@
 #include <map>
 #include <unordered_map>
 #include <unordered_set>
-#include <set>
 #include <sys/stat.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <zlib.h>
 #include <cstring>
 #include <iomanip>
 #include <chrono>
 #include <mutex>
-#include <atomic>
 
 extern "C" {
     #include "runepkg_util.h"
@@ -33,7 +29,94 @@ extern "C" {
 // Architecture - default to amd64 for now
 const char* G_ARCH = "amd64";
 
+// Global state for parallel progress tracking
 std::mutex g_progress_mutex;
+std::map<std::string, double> g_active_downloads;
+std::unordered_set<std::string> g_completed_names;
+int g_finished_count = 0;
+int g_total_to_download = 0;
+
+// Elder Futhark runes for the thematic progress bar
+const char* ELDER_FUTHARK[] = {
+    "ᚠ", "ᚢ", "ᚦ", "ᚨ", "ᚱ", "ᚲ", "ᚷ", "ᚹ",
+    "ᚺ", "ᚾ", "ᛁ", "ᛃ", "ᛇ", "ᛈ", "ᛉ", "ᛊ",
+    "ᛏ", "ᛒ", "ᛖ", "ᛗ", "ᛚ", "ᛜ", "ᛞ", "ᛟ"
+};
+
+// Internal helper to render the runic bar consistently
+void render_runic_bar(int width, double fraction) {
+    int pos = (int)(width * fraction);
+    std::cout << "[";
+    for (int i = 0; i < width; ++i) {
+        if (i < pos) {
+            std::cout << ELDER_FUTHARK[i % 24];
+        } else {
+            std::cout << "·";
+        }
+    }
+    std::cout << "]";
+}
+
+void print_multi_progress() {
+    // This function assumes g_progress_mutex is already locked by the caller
+
+    // Find the download with the highest progress to feature it in runic style
+    std::string featured_name;
+    double featured_fraction = -1.0;
+    for (auto const& [name, fraction] : g_active_downloads) {
+        if (fraction > featured_fraction && fraction < 1.0) {
+            featured_fraction = fraction;
+            featured_name = name;
+        }
+    }
+
+    if (featured_name.empty()) {
+        if (g_finished_count >= g_total_to_download && g_total_to_download > 0) {
+            std::cout << "\r  \033[1;32m[runepkg]\033[0m Fetching complete. (" << g_finished_count << "/" << g_total_to_download << ")\033[K" << std::flush;
+        } else {
+            std::cout << "\r  \033[1;34m[runepkg]\033[0m Synchronizing queue... (" << g_finished_count << "/" << g_total_to_download << ")\033[K" << std::flush;
+        }
+        return;
+    }
+
+    std::string display_name = featured_name;
+    if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
+
+    // Consistent Runic style for active downloads
+    std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
+    render_runic_bar(20, featured_fraction);
+    std::cout << " " << std::fixed << std::setprecision(1) << std::right << std::setw(5) << (featured_fraction * 100.0) << "%";
+
+    // Summary info
+    if (g_active_downloads.size() > 1) {
+        std::cout << " (+" << (g_active_downloads.size() - 1) << " others)";
+    }
+    std::cout << " [" << g_finished_count << "/" << g_total_to_download << "]\033[K" << std::flush;
+}
+
+void update_progress(const std::string& name, double fraction) {
+    std::lock_guard<std::mutex> lock(g_progress_mutex);
+
+    if (fraction >= 1.0) {
+        if (g_completed_names.find(name) == g_completed_names.end()) {
+            g_completed_names.insert(name);
+            g_active_downloads.erase(name);
+            g_finished_count++;
+
+            // Print a clean "finished" line for this specific package
+            std::string display_name = name;
+            if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
+
+            std::cout << "\r  \033[1;32m->\033[0m " << std::left << std::setw(25) << display_name << " ";
+            render_runic_bar(20, 1.0);
+            std::cout << " 100.0%\033[K" << std::endl;
+        }
+    } else {
+        g_active_downloads[name] = fraction;
+    }
+
+    print_multi_progress();
+}
 
 struct DownloadTask {
     std::string url;
@@ -44,73 +127,29 @@ struct DownloadTask {
 };
 
 size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
-    size_t written = fwrite(ptr, size, nmemb, stream);
-    return written;
-}
-
-struct SegmentInfo {
-    int fd;
-    size_t current_offset;
-    size_t start_offset;
-    size_t end;
-    std::string url;
-    bool success;
-    std::atomic<size_t> *total_downloaded;
-    std::string pkg_name;
-    size_t total_size;
-};
-
-size_t write_to_fd(void *ptr, size_t size, size_t nmemb, void *userdata) {
-    SegmentInfo *seg = (SegmentInfo*)userdata;
-    size_t bytes = size * nmemb;
-    ssize_t written = pwrite(seg->fd, ptr, bytes, seg->current_offset);
-    if (written > 0) {
-        seg->current_offset += (size_t)written;
-        if (seg->total_downloaded) {
-            *(seg->total_downloaded) += (size_t)written;
-        }
-        return (size_t)written;
-    }
-    return 0;
-}
-
-void print_progress_bar(const std::string& name, double fraction) {
-    std::lock_guard<std::mutex> lock(g_progress_mutex);
-    int bar_width = 25;
-    int pos = (int)(bar_width * fraction);
-
-    std::string display_name = name;
-    if (display_name.length() > 30) {
-        display_name = display_name.substr(0, 27) + "...";
-    }
-
-    // Using specialized brackets: ⦗ and ⦘
-    std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(30) << display_name << " ⦗";
-    for (int i = 0; i < bar_width; ++i) {
-        if (i < pos) std::cout << "█";
-        else if (i == pos) std::cout << "▒";
-        else std::cout << "░";
-    }
-    std::cout << "⦘ " << std::fixed << std::setprecision(1) << std::right << std::setw(5) << (fraction * 100.0) << "%" << std::flush;
+    return fwrite(ptr, size, nmemb, stream);
 }
 
 int curl_progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-    if (dltotal <= 0) return 0;
     std::string *name = (std::string*)clientp;
-    print_progress_bar(*name, (double)dlnow / dltotal);
-    return 0;
-}
-
-int curl_multi_progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-    SegmentInfo *seg = (SegmentInfo*)clientp;
-    if (seg->total_size > 0 && seg->total_downloaded) {
-        print_progress_bar(seg->pkg_name, (double)(*(seg->total_downloaded)) / seg->total_size);
+    if (dltotal > 0) {
+        update_progress(*name, (double)dlnow / dltotal);
+    } else if (ultotal > 0) {
+        update_progress(*name + " [UP]", (double)ulnow / ultotal);
     }
     return 0;
 }
 
 bool download_file(const std::string& url, const std::string& dest_path, size_t expected_size = 0, std::string pkg_name = "") {
     if (runepkg_util_file_exists(dest_path.c_str())) {
+        {
+            std::lock_guard<std::mutex> lock(g_progress_mutex);
+            if (g_completed_names.find(pkg_name) == g_completed_names.end()) {
+                g_completed_names.insert(pkg_name);
+                g_finished_count++;
+                print_multi_progress();
+            }
+        }
         return true;
     }
 
@@ -118,111 +157,49 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
         pkg_name = url.substr(url.find_last_of('/') + 1);
     }
 
-    print_progress_bar(pkg_name, 0.0);
+    update_progress(pkg_name, 0.0);
 
-    const size_t SEGMENT_THRESHOLD = 8 * 1024 * 1024; // 8MB
-    const int NUM_THREADS = 4;
+    CURL *curl = curl_easy_init();
+    if (!curl) return false;
 
-    if (expected_size > SEGMENT_THRESHOLD) {
-        int fd = open(dest_path.c_str(), O_RDWR | O_CREAT | O_TRUNC, 0644);
-        if (fd >= 0) {
-            if (ftruncate(fd, expected_size) == 0) {
-                std::atomic<size_t> total_downloaded(0);
-                std::vector<SegmentInfo> segments(NUM_THREADS);
-                size_t seg_size = expected_size / NUM_THREADS;
-                std::vector<std::future<void>> futures;
+    FILE *fp = fopen(dest_path.c_str(), "wb");
+    if (!fp) {
+        curl_easy_cleanup(curl);
+        return false;
+    }
 
-                for (int i = 0; i < NUM_THREADS; i++) {
-                    segments[i].fd = fd;
-                    segments[i].start_offset = i * seg_size;
-                    segments[i].current_offset = segments[i].start_offset;
-                    segments[i].end = (i == NUM_THREADS - 1) ? expected_size - 1 : (i + 1) * seg_size - 1;
-                    segments[i].url = url;
-                    segments[i].success = false;
-                    segments[i].total_downloaded = &total_downloaded;
-                    segments[i].pkg_name = pkg_name;
-                    segments[i].total_size = expected_size;
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "runepkg/1.0");
+    curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_progress_cb);
+    curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &pkg_name);
+    curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 
-                    futures.push_back(std::async(std::launch::async, [&segments, i]() {
-                        CURL *curl = curl_easy_init();
-                        if (curl) {
-                            curl_easy_setopt(curl, CURLOPT_URL, segments[i].url.c_str());
-                            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_to_fd);
-                            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &segments[i]);
+    CURLcode res = curl_easy_perform(curl);
+    fclose(fp);
+    curl_easy_cleanup(curl);
 
-                            char range[64];
-                            snprintf(range, sizeof(range), "%zu-%zu", segments[i].current_offset, segments[i].end);
-                            curl_easy_setopt(curl, CURLOPT_RANGE, range);
-
-                            curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-                            curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
-                            curl_easy_setopt(curl, CURLOPT_USERAGENT, "runepkg/1.0");
-
-                            // Only first thread reports progress for the group to avoid too much overhead/jitter
-                            if (i == 0) {
-                                curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_multi_progress_cb);
-                                curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &segments[i]);
-                                curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-                            }
-
-                            CURLcode res = curl_easy_perform(curl);
-                            segments[i].success = (res == CURLE_OK);
-                            curl_easy_cleanup(curl);
-                        }
-                    }));
-                }
-
-                for (auto& f : futures) f.get();
-                bool all_success = true;
-                for (const auto& s : segments) if (!s.success) all_success = false;
-
-                close(fd);
-                if (all_success) {
-                    print_progress_bar(pkg_name, 1.0);
-                    std::cout << std::endl;
-                    return true;
-                }
+    if (res == CURLE_OK) {
+        // Truly clean up: Use expected_size for post-download integrity verification
+        if (expected_size > 0) {
+            struct stat st;
+            if (stat(dest_path.c_str(), &st) == 0 && (size_t)st.st_size != expected_size) {
+                std::cerr << "\n\033[1;31m[error]\033[0m Integrity check failed for " << pkg_name
+                          << ": expected " << expected_size << " bytes, got " << st.st_size << std::endl;
                 unlink(dest_path.c_str());
-            } else {
-                close(fd);
+                return false;
             }
         }
+        update_progress(pkg_name, 1.0);
+        return true;
     }
 
-    CURL *curl;
-    FILE *fp;
-    CURLcode res;
-    curl = curl_easy_init();
-    if (curl) {
-        fp = fopen(dest_path.c_str(), "wb");
-        if (!fp) {
-            curl_easy_cleanup(curl);
-            return false;
-        }
-        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "runepkg/1.0");
-
-        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_progress_cb);
-        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &pkg_name);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-
-        res = curl_easy_perform(curl);
-        fclose(fp);
-        curl_easy_cleanup(curl);
-
-        if (res == CURLE_OK) {
-            print_progress_bar(pkg_name, 1.0);
-            std::cout << std::endl;
-            return true;
-        }
-    }
+    unlink(dest_path.c_str());
     return false;
 }
-
 
 bool decompress_gz(const std::string& src, const std::string& dest) {
     gzFile src_file = gzopen(src.c_str(), "rb");
@@ -322,25 +299,50 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
         std::string line;
         uint32_t current_offset = 0;
         uint32_t stanza_offset = 0;
-        std::string pkg_name;
+        std::string pkg_name, provides_list;
 
         while (std::getline(infile, line)) {
             size_t len = line.length() + 1;
 
             if (line.empty() || line == "\r") {
                 if (!pkg_name.empty()) {
+                    // Real package entry
                     IndexEntry entry;
                     std::strncpy(entry.name, pkg_name.c_str(), 63);
                     entry.name[63] = '\0';
                     entry.file_id = current_file_id;
                     entry.offset = stanza_offset;
                     index.push_back(entry);
+
+                    // Virtual package entries (Provides)
+                    if (!provides_list.empty()) {
+                        std::stringstream ss(provides_list);
+                        std::string virt_pkg;
+                        while (std::getline(ss, virt_pkg, ',')) {
+                            // Trim whitespace
+                            virt_pkg.erase(0, virt_pkg.find_first_not_of(" \t"));
+                            virt_pkg.erase(virt_pkg.find_last_not_of(" \t") + 1);
+
+                            if (!virt_pkg.empty()) {
+                                IndexEntry v_entry;
+                                std::strncpy(v_entry.name, virt_pkg.c_str(), 63);
+                                v_entry.name[63] = '\0';
+                                v_entry.file_id = current_file_id;
+                                v_entry.offset = stanza_offset;
+                                index.push_back(v_entry);
+                            }
+                        }
+                    }
                     pkg_name.clear();
+                    provides_list.clear();
                 }
                 stanza_offset = current_offset + len;
             } else if (line.compare(0, 9, "Package: ") == 0) {
                 pkg_name = line.substr(9);
                 if (!pkg_name.empty() && pkg_name.back() == '\r') pkg_name.pop_back();
+            } else if (line.compare(0, 10, "Provides: ") == 0) {
+                provides_list = line.substr(10);
+                if (!provides_list.empty() && provides_list.back() == '\r') provides_list.pop_back();
             }
             current_offset += len;
         }
@@ -419,11 +421,19 @@ extern "C" int runepkg_update(void) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     std::vector<std::future<bool>> futures;
-    std::vector<DownloadTask*> all_tasks;
-    for (auto& t : bin_tasks) all_tasks.push_back(&t);
-    for (auto& t : src_tasks) all_tasks.push_back(&t);
+    std::vector<DownloadTask*> all_tasks_ptrs;
+    for (auto& t : bin_tasks) all_tasks_ptrs.push_back(&t);
+    for (auto& t : src_tasks) all_tasks_ptrs.push_back(&t);
 
-    for (auto* task : all_tasks) {
+    {
+        std::lock_guard<std::mutex> lock(g_progress_mutex);
+        g_finished_count = 0;
+        g_completed_names.clear();
+        g_active_downloads.clear();
+        g_total_to_download = all_tasks_ptrs.size();
+    }
+
+    for (auto* task : all_tasks_ptrs) {
         std::string display_name;
         size_t dists_pos = task->url.find("/dists/");
         if (dists_pos != std::string::npos) {
@@ -439,25 +449,26 @@ extern "C" int runepkg_update(void) {
         }));
     }
 
-    for (size_t i = 0; i < all_tasks.size(); i++) {
-        all_tasks[i]->success = futures[i].get();
-        if (all_tasks[i]->success) {
-            std::string decompressed = all_tasks[i]->dest_path;
+    for (size_t i = 0; i < all_tasks_ptrs.size(); i++) {
+        all_tasks_ptrs[i]->success = futures[i].get();
+        if (all_tasks_ptrs[i]->success) {
+            std::string decompressed = all_tasks_ptrs[i]->dest_path;
             if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") {
                 decompressed = decompressed.substr(0, decompressed.size() - 3);
             } else {
                 decompressed += ".unpacked";
             }
 
-            if (decompress_gz(all_tasks[i]->dest_path, decompressed)) {
+            if (decompress_gz(all_tasks_ptrs[i]->dest_path, decompressed)) {
                 // Determine if it was bin or src
                 bool is_bin = false;
-                for(auto& t : bin_tasks) if(&t == all_tasks[i]) is_bin = true;
+                for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
                 if(is_bin) bin_pkg_files.push_back(decompressed);
                 else src_pkg_files.push_back(decompressed);
             }
         }
     }
+    std::cout << std::endl;
 
     std::cout << "Building Hybrid Binary and Source Indexes..." << std::endl;
     build_index(bin_pkg_files, std::string(g_runepkg_db_dir) + "/repo_index.bin", std::string(g_runepkg_db_dir) + "/repo_files.txt");
@@ -529,11 +540,11 @@ extern "C" int runepkg_repo_search(const char *query) {
         std::ifstream infile(filename);
         if (!infile.is_open()) continue;
 
-        std::string pkg_name, pkg_version, pkg_arch, pkg_desc;
+        std::string pkg_name, pkg_version, pkg_arch, pkg_desc, pkg_provides;
         while (std::getline(infile, line)) {
             if (line.empty() || line == "\r") {
                 if (!pkg_name.empty()) {
-                    std::string combined = pkg_name + " " + pkg_desc;
+                    std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides;
                     std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
 
                     if (combined.find(q) != std::string::npos) {
@@ -548,7 +559,7 @@ extern "C" int runepkg_repo_search(const char *query) {
                             results[pkg_name] = res;
                         }
                     }
-                    pkg_name.clear(); pkg_version.clear(); pkg_arch.clear(); pkg_desc.clear();
+                    pkg_name.clear(); pkg_version.clear(); pkg_arch.clear(); pkg_desc.clear(); pkg_provides.clear();
                 }
                 continue;
             }
@@ -557,15 +568,17 @@ extern "C" int runepkg_repo_search(const char *query) {
             else if (line.compare(0, 9, "Version: ") == 0) pkg_version = line.substr(9);
             else if (line.compare(0, 14, "Architecture: ") == 0) pkg_arch = line.substr(14);
             else if (line.compare(0, 13, "Description: ") == 0) pkg_desc = line.substr(13);
+            else if (line.compare(0, 10, "Provides: ") == 0) pkg_provides = line.substr(10);
 
             if (!pkg_name.empty() && pkg_name.back() == '\r') pkg_name.pop_back();
             if (!pkg_version.empty() && pkg_version.back() == '\r') pkg_version.pop_back();
             if (!pkg_arch.empty() && pkg_arch.back() == '\r') pkg_arch.pop_back();
             if (!pkg_desc.empty() && pkg_desc.back() == '\r') pkg_desc.pop_back();
+            if (!pkg_provides.empty() && pkg_provides.back() == '\r') pkg_provides.pop_back();
         }
         // Handle last
         if (!pkg_name.empty()) {
-            std::string combined = pkg_name + " " + pkg_desc;
+            std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides;
             std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
             if (combined.find(q) != std::string::npos) {
                 SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
@@ -681,7 +694,11 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
         std::string line;
         while (std::getline(meta, line)) {
             if (line.empty() || line == "\r") break;
-            if (line.compare(0, 9, "Depends: ") == 0) {
+            if (line.compare(0, 9, "Package: ") == 0) {
+                // Important: Update to the REAL package name if this was a virtual package
+                meta_data.name = line.substr(9);
+                if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
+            } else if (line.compare(0, 9, "Depends: ") == 0) {
                 meta_data.depends = line.substr(9);
                 if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
             } else if (line.compare(0, 6, "Size: ") == 0) {
@@ -741,6 +758,16 @@ void resolve_recursive(const std::string& pkg_name,
 extern "C" char* runepkg_repo_download(const char *pkg_name) {
     if (!pkg_name) return NULL;
 
+    // Clean package name: strip architecture suffixes or restrictions if provided directly
+    std::string clean_pkg = pkg_name;
+    size_t extra_pos = clean_pkg.find_first_of(":[<");
+    if (extra_pos != std::string::npos) {
+        clean_pkg = clean_pkg.substr(0, extra_pos);
+    }
+    // Trim potential surrounding whitespace
+    clean_pkg.erase(0, clean_pkg.find_first_not_of(" \t"));
+    clean_pkg.erase(clean_pkg.find_last_not_of(" \t") + 1);
+
     std::string index_path = std::string(g_runepkg_db_dir) + "/repo_index.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         static bool warned = false;
@@ -756,12 +783,12 @@ extern "C" char* runepkg_repo_download(const char *pkg_name) {
     std::unordered_set<std::string> visiting;
 
     // Use g_force_mode to decide if we should skip the "already installed" check for the root package
-    resolve_recursive(pkg_name, resolved, order, visiting, g_force_mode);
+    resolve_recursive(clean_pkg, resolved, order, visiting, g_force_mode);
 
     if (resolved.empty()) return NULL;
 
     if (resolved.size() > 1) {
-        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << pkg_name << "..." << std::endl;
+        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << clean_pkg << "..." << std::endl;
         std::cout << "\033[1;33m[dependencies]\033[0m The following dependencies are required:" << std::endl;
         int width = runepkg_util_get_terminal_width();
         int current_line_len = 2;
@@ -814,7 +841,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name) {
         if (resolved.size() > 1) {
             std::cout << "\033[1;34m[runepkg]\033[0m Pre-fetching " << resolved.size() << " packages in parallel..." << std::endl;
         } else {
-            std::cout << "\033[1;34m[download]\033[0m Downloading " << pkg_name << "..." << std::endl;
+            std::cout << "\033[1;34m[download]\033[0m Downloading " << clean_pkg << "..." << std::endl;
         }
     }
 
@@ -827,9 +854,20 @@ extern "C" char* runepkg_repo_download(const char *pkg_name) {
 
     curl_global_init(CURL_GLOBAL_ALL);
     std::vector<std::future<bool>> futures;
+
+    {
+        std::lock_guard<std::mutex> lock(g_progress_mutex);
+        g_finished_count = 0;
+        g_completed_names.clear();
+        g_active_downloads.clear();
+        g_total_to_download = tasks.size();
+    }
+
     for (auto& t : tasks) {
         if (runepkg_util_file_exists(t.dest_path.c_str())) {
-            futures.push_back(std::async(std::launch::deferred, [](){ return true; }));
+            futures.push_back(std::async(std::launch::deferred, [&t](){
+                return download_file(t.url, t.dest_path, t.size, t.pkg_name);
+            }));
         } else {
             futures.push_back(std::async(std::launch::async, [&t]() {
                 return download_file(t.url, t.dest_path, t.size, t.pkg_name);
@@ -840,9 +878,10 @@ extern "C" char* runepkg_repo_download(const char *pkg_name) {
     for (size_t i = 0; i < tasks.size(); i++) {
         tasks[i].success = futures[i].get();
     }
+    std::cout << std::endl;
     curl_global_cleanup();
 
-    std::string top_filename = resolved[pkg_name].url.substr(resolved[pkg_name].url.find_last_of('/') + 1);
+    std::string top_filename = resolved[clean_pkg].url.substr(resolved[clean_pkg].url.find_last_of('/') + 1);
     std::string top_dest = std::string(g_download_dir) + "/" + top_filename;
     return strdup(top_dest.c_str());
 }
@@ -911,9 +950,20 @@ extern "C" int runepkg_upgrade(void) {
 
     curl_global_init(CURL_GLOBAL_ALL);
     std::vector<std::future<bool>> futures;
+
+    {
+        std::lock_guard<std::mutex> lock(g_progress_mutex);
+        g_finished_count = 0;
+        g_completed_names.clear();
+        g_active_downloads.clear();
+        g_total_to_download = tasks.size();
+    }
+
     for (auto& t : tasks) {
         if (runepkg_util_file_exists(t.dest_path.c_str())) {
-            futures.push_back(std::async(std::launch::deferred, [](){ return true; }));
+            futures.push_back(std::async(std::launch::deferred, [&t](){
+                return download_file(t.url, t.dest_path, t.size, t.pkg_name);
+            }));
         } else {
             futures.push_back(std::async(std::launch::async, [&t]() {
                 return download_file(t.url, t.dest_path, t.size, t.pkg_name);
@@ -921,6 +971,7 @@ extern "C" int runepkg_upgrade(void) {
         }
     }
     for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
+    std::cout << std::endl;
 
     int success_count = 0, fail_count = 0;
     for (const auto& t : tasks) {
@@ -987,6 +1038,15 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
     std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << files_to_download.size() << " files in parallel)..." << std::endl;
     curl_global_init(CURL_GLOBAL_ALL);
     std::vector<std::future<bool>> futures;
+
+    {
+        std::lock_guard<std::mutex> lock(g_progress_mutex);
+        g_finished_count = 0;
+        g_completed_names.clear();
+        g_active_downloads.clear();
+        g_total_to_download = files_to_download.size();
+    }
+
     for (const auto& sf : files_to_download) {
         std::string url = base_dir_url + "/" + sf.filename;
         std::string dest = std::string(g_download_dir) + "/" + sf.filename;
@@ -997,6 +1057,7 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
 
     int downloaded = 0;
     for (size_t i = 0; i < futures.size(); i++) if (futures[i].get()) downloaded++;
+    std::cout << std::endl;
     curl_global_cleanup();
 
     std::cout << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_download_dir << std::endl;

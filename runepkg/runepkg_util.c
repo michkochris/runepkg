@@ -306,7 +306,13 @@ Dependency **parse_depends_with_constraints(const char *depends) {
             *paren = '\0';
             char *close = strchr(paren + 1, ')');
             if (close) *close = '\0';
-            result[i]->package = strdup(runepkg_util_trim_whitespace(token));
+
+            // Strip :any, [arch], <profile> from package name
+            char *pkg_part = token;
+            char *extra = strpbrk(pkg_part, ":[<");
+            if (extra) *extra = '\0';
+            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+
             // Extract constraint without parentheses
             char *inner = paren + 1;
             while (*inner && (*inner == ' ' || *inner == '(')) inner++;
@@ -317,7 +323,11 @@ Dependency **parse_depends_with_constraints(const char *depends) {
             }
             result[i]->constraint = strdup(inner);
         } else {
-            result[i]->package = strdup(runepkg_util_trim_whitespace(token));
+            // Strip :any, [arch], <profile> from package name even if no version constraint
+            char *pkg_part = token;
+            char *extra = strpbrk(pkg_part, ":[<");
+            if (extra) *extra = '\0';
+            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
             result[i]->constraint = NULL;
         }
 
@@ -899,9 +909,15 @@ char **parse_depends(const char *depends) {
         char *end = token;
         while (*end && *end != ' ' && *end != '\t' && *end != '(') end++;
         *end = '\0';
+
+        // Strip Debian-specific suffixes and restrictions: :any, [arch], <profile>
+        char *extra = strpbrk(token, ":[<");
+        if (extra) *extra = '\0';
+        char *clean_name = runepkg_util_trim_whitespace(token);
+
         // If not empty, add
-        if (*token) {
-            result[i] = strdup(token);
+        if (*clean_name) {
+            result[i] = strdup(clean_name);
             if (!result[i]) {
                 // Free previous
                 for (int j = 0; j < i; j++) free(result[j]);

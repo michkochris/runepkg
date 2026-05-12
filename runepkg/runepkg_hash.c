@@ -93,6 +93,7 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->maintainer);
     runepkg_util_free_and_null(&pkg_info->description);
     runepkg_util_free_and_null(&pkg_info->depends);
+    runepkg_util_free_and_null(&pkg_info->provides);
     runepkg_util_free_and_null(&pkg_info->installed_size);
     runepkg_util_free_and_null(&pkg_info->section);
     runepkg_util_free_and_null(&pkg_info->priority);
@@ -244,6 +245,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         existing->maintainer = pkg_info->maintainer ? runepkg_secure_strdup(pkg_info->maintainer) : NULL;
         existing->description = pkg_info->description ? runepkg_secure_strdup(pkg_info->description) : NULL;
         existing->depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
+        existing->provides = pkg_info->provides ? runepkg_secure_strdup(pkg_info->provides) : NULL;
         existing->installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
         existing->section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
         existing->priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
@@ -298,6 +300,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.maintainer = pkg_info->maintainer ? runepkg_secure_strdup(pkg_info->maintainer) : NULL;
     new_node->data.description = pkg_info->description ? runepkg_secure_strdup(pkg_info->description) : NULL;
     new_node->data.depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
+    new_node->data.provides = pkg_info->provides ? runepkg_secure_strdup(pkg_info->provides) : NULL;
     new_node->data.installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
     new_node->data.section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
     new_node->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
@@ -434,6 +437,9 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->depends) {
         printf("Depends:      %s\n", pkg_info->depends);
+    }
+    if (pkg_info->provides) {
+        printf("Provides:     %s\n", pkg_info->provides);
     }
     if (pkg_info->homepage) {
         printf("Homepage:     %s\n", pkg_info->homepage);

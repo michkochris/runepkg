@@ -153,6 +153,7 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     WRITE_STRING(pkg_info->maintainer);
     WRITE_STRING(pkg_info->description);
     WRITE_STRING(pkg_info->depends);
+    WRITE_STRING(pkg_info->provides);
     WRITE_STRING(pkg_info->installed_size);
     WRITE_STRING(pkg_info->section);
     WRITE_STRING(pkg_info->priority);
@@ -241,6 +242,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     READ_STRING(pkg_info->maintainer);
     READ_STRING(pkg_info->description);
     READ_STRING(pkg_info->depends);
+    READ_STRING(pkg_info->provides);
     READ_STRING(pkg_info->installed_size);
     READ_STRING(pkg_info->section);
     READ_STRING(pkg_info->priority);

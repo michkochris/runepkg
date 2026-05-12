@@ -49,6 +49,7 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->maintainer = NULL;
     pkg_info->description = NULL;
     pkg_info->depends = NULL;
+    pkg_info->provides = NULL; // Added support for Virtual Packages
     pkg_info->installed_size = NULL;
     pkg_info->section = NULL;
     pkg_info->priority = NULL;
@@ -73,6 +74,7 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->maintainer);
     runepkg_util_free_and_null(&pkg_info->description);
     runepkg_util_free_and_null(&pkg_info->depends);
+    runepkg_util_free_and_null(&pkg_info->provides);
     runepkg_util_free_and_null(&pkg_info->installed_size);
     runepkg_util_free_and_null(&pkg_info->section);
     runepkg_util_free_and_null(&pkg_info->priority);
@@ -149,6 +151,7 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->maintainer = runepkg_util_get_config_value(control_file_path, "Maintainer", ':');
     pkg_info->description = runepkg_util_get_config_value(control_file_path, "Description", ':');
     pkg_info->depends = runepkg_util_get_config_value(control_file_path, "Depends", ':');
+    pkg_info->provides = runepkg_util_get_config_value(control_file_path, "Provides", ':');
     pkg_info->installed_size = runepkg_util_get_config_value(control_file_path, "Installed-Size", ':');
     pkg_info->section = runepkg_util_get_config_value(control_file_path, "Section", ':');
     pkg_info->priority = runepkg_util_get_config_value(control_file_path, "Priority", ':');
@@ -423,6 +426,9 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->depends) {
         printf("Depends:      %s\n", pkg_info->depends);
+    }
+    if (pkg_info->provides) {
+        printf("Provides:     %s\n", pkg_info->provides);
     }
     if (pkg_info->homepage) {
         printf("Homepage:     %s\n", pkg_info->homepage);

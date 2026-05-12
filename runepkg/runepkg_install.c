@@ -363,6 +363,31 @@ int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path
     free(candidate);
     return 0;
 }
+/* Helper to check if a virtual package is provided by any installed package */
+static int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
+    if (!table) return 0;
+    for (size_t i = 0; i < table->size; i++) {
+        runepkg_hash_node_t *node = table->buckets[i];
+        while (node) {
+            if (node->data.provides) {
+                char *provides_copy = strdup(node->data.provides);
+                char *token = strtok(provides_copy, ",");
+                while (token) {
+                    char *trimmed = runepkg_util_trim_whitespace(token);
+                    if (strcmp(trimmed, pkg_name) == 0) {
+                        free(provides_copy);
+                        return 1;
+                    }
+                    token = strtok(NULL, ",");
+                }
+                free(provides_copy);
+            }
+            node = node->next;
+        }
+    }
+    return 0;
+}
+
 /* Internal install entry that accepts an `is_top_level` flag. When
  * `is_top_level` is zero, we avoid some top-level behaviors such as
  * force-driven attempts to treat already-installed dependencies as
@@ -638,6 +663,15 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
                 /* Diagnostic: show what the installer finds for this dependency */
                 if (!installed) {
+                    /* Check if any installed package PROVIDES this virtual dependency */
+                    if (is_package_provided_by_table(runepkg_main_hash_table, deps[j]->package)) {
+                        runepkg_log_verbose("Dependency '%s' is satisfied by a virtual provider\n", deps[j]->package);
+                        continue;
+                    }
+                    if (installing_packages && is_package_provided_by_table(installing_packages, deps[j]->package)) {
+                        runepkg_log_verbose("Dependency '%s' is being satisfied by an in-flight virtual provider\n", deps[j]->package);
+                        continue;
+                    }
                     runepkg_util_log_debug("dependency '%s' not found in installed hash table\n", deps[j]->package);
                 } else {
                     runepkg_util_log_debug("dependency '%s' found: version='%s' pkgname='%s'\n",
@@ -746,7 +780,9 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
 #ifdef ENABLE_CPP_FFI
                             /* Re-check if satisfied; a previous iteration might have installed this. */
                             if (runepkg_hash_search(runepkg_main_hash_table, unsatisfied[k]->package)) continue;
+                            if (is_package_provided_by_table(runepkg_main_hash_table, unsatisfied[k]->package)) continue;
                             if (installing_packages && runepkg_hash_search(installing_packages, unsatisfied[k]->package)) continue;
+                            if (installing_packages && is_package_provided_by_table(installing_packages, unsatisfied[k]->package)) continue;
 
                             char *path = runepkg_repo_download(unsatisfied[k]->package);
                             if (path) {

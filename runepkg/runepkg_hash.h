@@ -43,6 +43,7 @@ typedef struct PkgInfo {
     char *maintainer;
     char *description;
     char *depends;
+    char *provides; // Added support for Virtual Packages
     char *installed_size;
     char *section;
     char *priority;
