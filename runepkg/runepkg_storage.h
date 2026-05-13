@@ -23,6 +23,10 @@
 #ifndef RUNEPKG_STORAGE_H
 #define RUNEPKG_STORAGE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "runepkg_pack.h"
@@ -126,5 +130,9 @@ int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_ver
  * @return 0 on success, -1 on failure
  */
 int runepkg_storage_build_autocomplete_index(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // RUNEPKG_STORAGE_H

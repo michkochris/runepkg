@@ -5,8 +5,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1e2a93c4-3386-448a-862b-33bcf8544ab1" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/caches/deviceStreaming.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/runepkg/runepkg_building.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cli.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cli.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_completion.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_completion.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_handle.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_handle.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_handle.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_handle.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_install.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_install.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_storage.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_storage.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_storage.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_storage.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_util.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_util.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,21 +39,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/michk/Downloads/projects/runepkg&quot;,
-    &quot;structure.view.defaults.are.configured&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "master",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/michk/Downloads/projects/runepkg",
+    "structure.view.defaults.are.configured": "true"
   }
-}</component>
+}]]></component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="1e2a93c4-3386-448a-862b-33bcf8544ab1" name="Changes" comment="" />

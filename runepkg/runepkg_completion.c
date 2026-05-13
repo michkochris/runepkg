@@ -39,7 +39,7 @@ static void scan_deb_recursive(const char *base, const char *partial, int depth)
     char path[PATH_MAX];
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-        snprintf(path, sizeof(path), "%s/%s", base, entry->d_name);
+        snprintf(path, sizeof(path), "%.*s/%s", (int)(sizeof(path)-258), base, entry->d_name);
         struct stat st;
         if (lstat(path, &st) != 0) continue;
         if (S_ISDIR(st.st_mode)) {
@@ -70,12 +70,12 @@ void complete_deb_files(const char *partial) {
  * callers should decide whether to call this (i.e., don't call when the
  * user has started typing '-' and expects option completions).
  */
-void complete_file_paths(const char *partial) {
+void complete_file_paths_ext(const char *partial, const char *extra_dir, const char *suffix_filter) {
     const char *prefix = partial ? partial : "";
 
     /* If a directory component exists, change search dir */
     char dirbuf[PATH_MAX];
-    char namebuf[PATH_MAX];
+    char namebuf[PATH_MAX + 512];
     const char *last_slash = strrchr(prefix, '/');
     const char *search_dir = ".";
     const char *match_prefix = prefix;
@@ -84,65 +84,172 @@ void complete_file_paths(const char *partial) {
         if (dirlen >= sizeof(dirbuf)) dirlen = sizeof(dirbuf)-1;
         memcpy(dirbuf, prefix, dirlen);
         dirbuf[dirlen] = '\0';
-        search_dir = dirbuf[0] ? dirbuf : ".";
+
+        if (dirlen == 0 && prefix[0] == '/') {
+            search_dir = "/";
+        } else {
+            search_dir = dirbuf[0] ? dirbuf : ".";
+        }
         match_prefix = last_slash + 1;
     }
 
     DIR *d = opendir(search_dir);
-    if (!d) return;
-    struct dirent *e;
-    while ((e = readdir(d)) != NULL) {
-        if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
-        if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
+    if (d) {
+        struct dirent *e;
+        while ((e = readdir(d)) != NULL) {
+            if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
+            if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
 
-        /* Build output path relative to current working dir to match other
-         * completion outputs. Preserve provided directory prefix if present. */
-        if (last_slash) {
-            size_t n = sizeof(namebuf);
-            namebuf[0] = '\0';
-            size_t dirlen = strlen(search_dir);
-            size_t copy1 = (dirlen < n - 1) ? dirlen : n - 1;
-            memcpy(namebuf, search_dir, copy1);
-            size_t pos = copy1;
-            if (pos < n - 1) {
-                if (pos == 0 || namebuf[pos - 1] != '/') {
-                    namebuf[pos++] = '/';
+            bool is_dir = (e->d_type == DT_DIR);
+            bool is_reg = (e->d_type == DT_REG);
+            if (e->d_type == DT_UNKNOWN) {
+                char full[PATH_MAX + 512];
+                snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), search_dir, e->d_name);
+                struct stat st;
+                if (stat(full, &st) == 0) {
+                    is_dir = S_ISDIR(st.st_mode);
+                    is_reg = S_ISREG(st.st_mode);
                 }
             }
-            size_t namelen = strlen(e->d_name);
-            size_t copy2 = 0;
-            if (pos < n - 1) copy2 = (namelen < (n - pos - 1)) ? namelen : (n - pos - 1);
-            if (copy2 > 0) memcpy(namebuf + pos, e->d_name, copy2);
-            namebuf[pos + copy2] = '\0';
-        } else {
-            size_t n = sizeof(namebuf);
-            size_t namelen = strlen(e->d_name);
-            size_t copy = (namelen < n - 1) ? namelen : n - 1;
-            memcpy(namebuf, e->d_name, copy);
-            namebuf[copy] = '\0';
-        }
 
-        /* Append '/' for directories to help shells know it's a directory */
-        struct stat st;
-        if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
-            printf("%s/\n", namebuf);
-        } else {
-            printf("%s\n", namebuf);
+            if (suffix_filter && is_reg) {
+                size_t nlen = strlen(e->d_name);
+                size_t slen = strlen(suffix_filter);
+                if (nlen < slen || strcmp(e->d_name + nlen - slen, suffix_filter) != 0) continue;
+            } else if (suffix_filter && !is_dir) {
+                continue;
+            }
+
+            if (last_slash) {
+                size_t sd_len = strlen(search_dir);
+                const char *sep = (sd_len > 0 && search_dir[sd_len-1] == '/') ? "" : "/";
+                snprintf(namebuf, sizeof(namebuf), "%.*s%s%s", (int)(sizeof(namebuf)-258), search_dir, sep, e->d_name);
+            } else {
+                snprintf(namebuf, sizeof(namebuf), "%s", e->d_name);
+            }
+
+            struct stat st;
+            if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
+                if (namebuf[strlen(namebuf)-1] != '/') {
+                    printf("%s/\n", namebuf);
+                } else {
+                    printf("%s\n", namebuf);
+                }
+            } else {
+                printf("%s\n", namebuf);
+            }
+        }
+        closedir(d);
+    }
+
+    /* Check for specific known virtual paths (user-facing only) */
+    const char* virtual_dirs[] = {g_runepkg_base_dir, g_download_dir, g_build_dir, g_debs_dir,
+                                  "/var/lib/runepkg_dir/", "/var/lib/runepkg_dir/download_dir/",
+                                  "/var/lib/runepkg_dir/build_dir/", "/var/lib/runepkg_dir/debs/"};
+    int num_v = sizeof(virtual_dirs)/sizeof(virtual_dirs[0]);
+    size_t plen = strlen(prefix);
+
+    for (int i=0; i<num_v; i++) {
+        if (!virtual_dirs[i]) continue;
+
+        // If the path we are typing matches the start of a virtual dir
+        if (strncmp(virtual_dirs[i], prefix, plen) == 0) {
+            const char* remainder = virtual_dirs[i] + plen;
+
+            // If prefix was exactly a virtual dir, suggest it (with /)
+            if (*remainder == '\0') {
+                printf("%s/\n", virtual_dirs[i]);
+                continue;
+            }
+
+            // Find the next segment of this virtual dir
+            char segment[PATH_MAX];
+            const char* remainder_start = remainder + (*remainder == '/' ? 1 : 0);
+            const char* next_slash = strchr(remainder_start, '/');
+            if (next_slash) {
+                size_t seg_len = (next_slash - virtual_dirs[i]) + 1;
+                strncpy(segment, virtual_dirs[i], seg_len);
+                segment[seg_len] = '\0';
+            } else {
+                strcpy(segment, virtual_dirs[i]);
+            }
+
+            if (strcmp(segment, prefix) != 0) {
+                /* If segment is just "/", and prefix is empty, suggest the first real component instead */
+                if (plen == 0 && strcmp(segment, "/") == 0) {
+                    const char *first_comp = strchr(virtual_dirs[i] + 1, '/');
+                    if (first_comp) {
+                        size_t flen = (first_comp - virtual_dirs[i]) + 1;
+                        strncpy(segment, virtual_dirs[i], flen);
+                        segment[flen] = '\0';
+                    }
+                }
+                printf("%s%s\n", segment, (segment[strlen(segment)-1] == '/') ? "" : "/");
+            }
         }
     }
-    closedir(d);
+
+    /* Also scan extra_dir if provided and we are not doing a deep path completion already */
+    if (extra_dir && !last_slash) {
+        DIR *ed = opendir(extra_dir);
+        if (ed) {
+            struct dirent *e;
+            while ((e = readdir(ed)) != NULL) {
+                if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
+                if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
+
+                bool is_dir = (e->d_type == DT_DIR);
+                bool is_reg = (e->d_type == DT_REG);
+                if (e->d_type == DT_UNKNOWN) {
+                    char full[PATH_MAX + 512];
+                    snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), extra_dir, e->d_name);
+                    struct stat st;
+                    if (stat(full, &st) == 0) {
+                        is_dir = S_ISDIR(st.st_mode);
+                        is_reg = S_ISREG(st.st_mode);
+                    }
+                }
+
+                if (suffix_filter && is_reg) {
+                    size_t nlen = strlen(e->d_name);
+                    size_t slen = strlen(suffix_filter);
+                    if (nlen < slen || strcmp(e->d_name + nlen - slen, suffix_filter) != 0) continue;
+                } else if (suffix_filter && !is_dir) {
+                    continue;
+                }
+
+                snprintf(namebuf, sizeof(namebuf), "%.*s/%s", (int)(sizeof(namebuf)-258), extra_dir, e->d_name);
+                struct stat st;
+                if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
+                    if (namebuf[strlen(namebuf)-1] != '/') {
+                        printf("%s/\n", namebuf);
+                    } else {
+                        printf("%s\n", namebuf);
+                    }
+                } else {
+                    printf("%s\n", namebuf);
+                }
+            }
+            closedir(ed);
+        }
+    }
 }
 
-/* Search the binary autocomplete index for prefix matches and print them. */
-int prefix_search_and_print(const char *prefix) {
+void complete_file_paths(const char *partial) {
+    complete_file_paths_ext(partial, NULL, NULL);
+}
+
+static void check_rebuild_autocomplete_index(void) {
     char index_path[PATH_MAX];
-    if (!g_runepkg_db_dir) return 0;
+    if (!g_runepkg_db_dir) return;
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
-    struct stat index_st, db_dir_st, build_dir_st;
+    struct stat index_st, db_dir_st, build_dir_st, debs_dir_st, download_dir_st;
     int index_exists = (stat(index_path, &index_st) == 0);
     int db_dir_stat = stat(g_runepkg_db_dir, &db_dir_st);
     int build_dir_stat = g_build_dir ? stat(g_build_dir, &build_dir_st) : -1;
+    int debs_dir_stat = g_debs_dir ? stat(g_debs_dir, &debs_dir_st) : -1;
+    int download_dir_stat = g_download_dir ? stat(g_download_dir, &download_dir_st) : -1;
 
     bool needs_rebuild = false;
     if (!index_exists) {
@@ -154,11 +261,26 @@ int prefix_search_and_print(const char *prefix) {
         if (build_dir_stat == 0 && build_dir_st.st_mtime > index_st.st_mtime) {
             needs_rebuild = true;
         }
+        if (debs_dir_stat == 0 && debs_dir_st.st_mtime > index_st.st_mtime) {
+            needs_rebuild = true;
+        }
+        if (download_dir_stat == 0 && download_dir_st.st_mtime > index_st.st_mtime) {
+            needs_rebuild = true;
+        }
     }
 
     if (needs_rebuild) {
         runepkg_storage_build_autocomplete_index();
     }
+}
+
+/* Search the binary autocomplete index for prefix matches and print them. */
+int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
+    char index_path[PATH_MAX];
+    if (!g_runepkg_db_dir) return 0;
+    snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
+
+    check_rebuild_autocomplete_index();
 
     int fd = open(index_path, O_RDONLY);
     if (fd < 0) return 0;
@@ -195,31 +317,96 @@ int prefix_search_and_print(const char *prefix) {
         if (strncmp(prefix, name, strlen(prefix)) == 0) first_match = low;
     }
 
+    int found = 0;
+    char last_printed[PATH_MAX] = {0};
     if (first_match != -1) {
         for (int i = first_match; i < (int)hdr->entry_count; i++) {
             char *name = names + offsets[i];
             if (strncmp(prefix, name, strlen(prefix)) != 0) break;
 
-            // If it's in build_dir, print the absolute path
-            if (g_build_dir) {
-                char *full = runepkg_util_concat_path(g_build_dir, name);
-                if (full) {
-                    struct stat st;
-                    if (stat(full, &st) == 0 && S_ISDIR(st.st_mode)) {
-                        printf("%s\n", full);
-                        free(full);
+            size_t plen = strlen(prefix);
+            bool prefix_has_slash = (prefix && strchr(prefix, '/') != NULL);
+            bool name_has_slash = (strchr(name, '/') != NULL);
+
+            if (plen > 0) {
+                /* If prefix is not empty, ensure strict path/basename matching */
+                if (prefix_has_slash != name_has_slash) continue;
+            }
+
+            if (name_has_slash && prefix_has_slash) {
+                /* Path navigation: suggest the next directory segment AND the full name.
+                 *
+                 * SOLUTION FOR "SKIPPING PAST" DIRECTORIES:
+                 * When Bash sees only one possible completion, it "jumps" to the end and
+                 * adds a space, which is frustrating when navigating deep paths.
+                 * By providing BOTH the next segment (e.g., /var/lib/) AND the full
+                 * deep path (e.g., /var/lib/runepkg_dir/...), we force Bash to see
+                 * multiple possibilities. Bash will then complete only up to the
+                 * common prefix (the next slash) and wait for the user to hit Tab
+                 * again, enabling clean, segment-by-segment navigation.
+                 */
+
+                /* If we are at a directory boundary (prefix ends in slash),
+                 * find the NEXT slash. If not, find the current level's slash. */
+                const char *search_start = name + plen;
+                const char *next_slash = strchr(search_start, '/');
+
+                /* If we found a slash, suggest only up to that slash */
+                if (next_slash) {
+                    char segment[PATH_MAX];
+                    size_t seg_len = (next_slash - name) + 1;
+                    if (seg_len < sizeof(segment)) {
+                        strncpy(segment, name, seg_len);
+                        segment[seg_len] = '\0';
+                        if (strcmp(segment, last_printed) != 0) {
+                            printf("%s\n", segment);
+                            strncpy(last_printed, segment, sizeof(last_printed)-1);
+                            found = 1;
+                        }
+                        /* Also print the full name as a "secondary" option to keep completion open and prevent jumping */
+                        printf("%s\n", name);
                         continue;
                     }
-                    free(full);
                 }
             }
-            printf("%s\n", name);
+
+            if (suffix_filter) {
+                if (strcmp(suffix_filter, ":pkg") == 0) {
+                    /* Only show entries that are NOT .deb, .dsc or -src files/dirs */
+                    size_t nlen = strlen(name);
+                    size_t clen = nlen;
+                    if (clen > 0 && name[clen-1] == '/') clen--;
+
+                    if (clen > 4 && (strncmp(name + clen - 4, ".deb", 4) == 0 || strncmp(name + clen - 4, ".dsc", 4) == 0)) {
+                        continue;
+                    }
+                    if (clen > 4 && strncmp(name + clen - 4, "-src", 4) == 0) {
+                        continue;
+                    }
+                    printf("%s\n", name);
+                    found = 1;
+                    continue;
+                }
+                size_t nlen = strlen(name);
+                size_t slen = strlen(suffix_filter);
+                if (nlen >= slen && strcmp(name + nlen - slen, suffix_filter) == 0) {
+                    printf("%s\n", name);
+                    found = 1;
+                }
+            } else {
+                printf("%s\n", name);
+                found = 1;
+            }
         }
     }
 
     munmap(mapped, st.st_size);
     close(fd);
-    return (first_match != -1) ? 1 : 0;
+    return found;
+}
+
+int prefix_search_and_print(const char *prefix) {
+    return prefix_search_and_print_ext(prefix, NULL);
 }
 
 struct RepoIndexEntry {
@@ -326,6 +513,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "source") == 0) {
                     strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "download-only") == 0) {
+                    strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "source-build") == 0) {
+                    strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
                 }
                 last_token = tok;
                 tok = strtok_r(NULL, " \t", &saveptr);
@@ -364,6 +555,12 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "source") == 0) {
                             strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                             break;
+                        } else if (strcmp(t2, "download-only") == 0) {
+                            strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "source-build") == 0) {
+                            strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
+                            break;
                         }
                         t2 = strtok_r(NULL, " \t", &save2);
                     }
@@ -377,88 +574,78 @@ void handle_binary_completion(const char *partial, const char *prev) {
     if (inferred_cmd[0] != '\0') {
         if (strcmp(inferred_cmd, "install") == 0) {
             if (partial[0] == '-') {
+                const char *short_opts[] = {"-f", "-v"};
+                int n = sizeof(short_opts)/sizeof(short_opts[0]);
+                for (int i = 0; i < n; i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *all_long_opts[] = {
-                        "--install","--remove","--list","--status","--list-files","--search",
-                        "--unpack","--build","--md5check",
-                        "--verbose","--force","--help","--version",
-                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
-                    };
-                    int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
-                } else {
-                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
-                    int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
+                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"};
+                    int m = sizeof(long_opts)/sizeof(long_opts[0]);
+                    for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
                 }
             } else {
-                complete_deb_files(partial);
+                prefix_search_and_print_ext(partial, ".deb");
+                prefix_search_and_print_ext(partial, ":pkg");
                 repo_prefix_search_and_print(partial);
+                complete_deb_files(partial);
+                complete_file_paths_ext(partial, g_download_dir, ".deb");
             }
             return;
         }
         if (strcmp(inferred_cmd, "remove") == 0) {
             if (partial[0] == '-') {
-                if (strncmp(partial, "--", 2) == 0) {
-                    const char *all_long_opts[] = {
-                        "--install","--remove","--list","--status","--list-files","--search",
-                        "--unpack","--build","--md5check",
-                        "--verbose","--force","--help","--version",
-                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
-                    };
-                    int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
-                } else {
-                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
-                    int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
-                    for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
-                }
+                // ... same as before but tighter
+                const char *all_long_opts[] = {
+                    "--remove","--verbose","--force","--help"
+                };
+                int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
+                for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
             } else {
-                prefix_search_and_print(partial);
+                prefix_search_and_print_ext(partial, ":pkg");
             }
             return;
         }
         if (strcmp(inferred_cmd, "list") == 0) {
-            prefix_search_and_print(partial);
+            prefix_search_and_print_ext(partial, ":pkg");
             return;
         }
         if (strcmp(inferred_cmd, "status") == 0) {
             if (partial && partial[0] == '-') {
-                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
-                int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
-                for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
-                if (strncmp(partial, "--", 2) == 0) {
-                    const char *all_long_opts[] = {
-                        "--install","--remove","--list","--status","--list-files","--search",
-                        "--unpack","--build","--md5check",
-                        "--verbose","--force","--help","--version",
-                        "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
-                    };
-                    int m = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-                    for (int j = 0; j < m; j++) if (strncmp(all_long_opts[j], partial, strlen(partial))==0) printf("%s\n", all_long_opts[j]);
-                }
+                printf("--help\n--verbose\n");
                 return;
             }
-            if (!prefix_search_and_print(partial)) {
-                repo_prefix_search_and_print(partial);
-            }
+            prefix_search_and_print_ext(partial, ":pkg");
+            repo_prefix_search_and_print(partial);
             return;
         }
         if (strcmp(inferred_cmd, "unpack") == 0) {
+            prefix_search_and_print_ext(partial, ".deb");
             complete_deb_files(partial);
+            complete_file_paths_ext(partial, g_download_dir, ".deb");
             return;
         }
         if (strcmp(inferred_cmd, "build") == 0) {
-            if (!prefix_search_and_print(partial)) {
-                complete_file_paths(partial);
-            }
+            /* For build, we want directories and potentially other files.
+             * Using NULL filter shows everything in the pool (filtered by path-ness). */
+            prefix_search_and_print(partial);
+            complete_file_paths_ext(partial, g_build_dir, NULL);
             return;
         }
         if (strcmp(inferred_cmd, "md5check") == 0) {
-            prefix_search_and_print(partial);
+            prefix_search_and_print_ext(partial, ":pkg");
             return;
         }
         if (strcmp(inferred_cmd, "source") == 0) {
+            repo_src_prefix_search_and_print(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "download-only") == 0) {
+            repo_prefix_search_and_print(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "source-build") == 0) {
+            /* Tighten up: ONLY .dsc */
+            prefix_search_and_print_ext(partial, ".dsc");
+            complete_file_paths_ext(partial, g_build_dir, ".dsc");
             repo_src_prefix_search_and_print(partial);
             return;
         }
@@ -471,7 +658,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     "--install", "--remove", "--list", "--status", "--list-files", "--search",
                     "--unpack", "--build", "--md5check",
                     "--verbose", "--force", "--version", "--help",
-                    "--print-config", "--print-config-file", "--print-pkglist-file", "--print-auto-pkgs"
+                    "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"
                 };
                 int num_long = sizeof(long_opts) / sizeof(long_opts[0]);
                 for (int i = 0; i < num_long; i++) {
@@ -487,7 +674,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             const char *sub_cmds[] = {
                 "install", "remove", "list", "status", "list-files", "search",
-                "download-only", "depends", "verify", "update", "upgrade", "source"
+                "download-only", "depends", "verify", "update", "upgrade", "source", "source-build"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
             for (int i = 0; i < num_sub; i++) {
@@ -501,7 +688,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 int n = sizeof(short_opts)/sizeof(short_opts[0]);
                 for (int i = 0; i < n; i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-auto-pkgs"};
+                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"};
                     int m = sizeof(long_opts)/sizeof(long_opts[0]);
                     for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
                 }
@@ -516,24 +703,40 @@ void handle_binary_completion(const char *partial, const char *prev) {
             prefix_search_and_print(partial);
         }
     } else if (strcmp(prev, "install") == 0 || strcmp(prev, "-i") == 0) {
-        complete_deb_files(partial);
+        prefix_search_and_print_ext(partial, ".deb");
+        prefix_search_and_print_ext(partial, ":pkg");
         repo_prefix_search_and_print(partial);
+        complete_deb_files(partial);
+        complete_file_paths_ext(partial, g_download_dir, ".deb");
     } else if (strcmp(prev, "remove") == 0 || strcmp(prev, "-r") == 0) {
-        prefix_search_and_print(partial);
+        prefix_search_and_print_ext(partial, ":pkg");
     } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 || strcmp(prev, "-L") == 0) {
-        prefix_search_and_print(partial);
+        prefix_search_and_print_ext(partial, ":pkg");
     } else if (strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0) {
-        if (!prefix_search_and_print(partial)) {
-            repo_prefix_search_and_print(partial);
-        }
+        prefix_search_and_print_ext(partial, ":pkg");
+        repo_prefix_search_and_print(partial);
     } else if (strcmp(prev, "source") == 0) {
         repo_src_prefix_search_and_print(partial);
+    } else if (strcmp(prev, "download-only") == 0) {
+        repo_prefix_search_and_print(partial);
+    } else if (strcmp(prev, "source-build") == 0) {
+        prefix_search_and_print_ext(partial, ".dsc");
+        complete_file_paths_ext(partial, g_build_dir, ".dsc");
+        repo_src_prefix_search_and_print(partial);
+    } else if (strcmp(prev, "unpack") == 0 || strcmp(prev, "-u") == 0) {
+        prefix_search_and_print_ext(partial, ".deb");
+        complete_deb_files(partial);
+        complete_file_paths_ext(partial, g_download_dir, ".deb");
+    } else if (strcmp(prev, "build") == 0 || strcmp(prev, "-b") == 0) {
+        prefix_search_and_print(partial);
+        complete_file_paths_ext(partial, g_build_dir, NULL);
     }
 }
 
-void handle_print_auto_pkgs(void) {
+void handle_print_autopool(void) {
+    check_rebuild_autocomplete_index();
     print_package_data_header();
-    printf("Listing installed packages...\n");
+    printf("Listing consolidated autocomplete pool entries...\n");
 
     char index_path[PATH_MAX];
     if (!g_runepkg_db_dir) {

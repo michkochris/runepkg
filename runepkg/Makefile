@@ -34,7 +34,7 @@ CPP_LDFLAGS = -lcurl -lssl -lcrypto -lz -lpthread
 CXX_AVAILABLE := $(shell command -v g++ >/dev/null 2>&1 && echo 1 || echo 0)
 LIBCURL_AVAILABLE := $(shell pkg-config --exists libcurl 2>/dev/null && echo 1 || echo 0)
 CPP_DEPS_AVAILABLE := $(shell command -v g++ >/dev/null 2>&1 && pkg-config --exists libcurl 2>/dev/null && echo 1 || echo 0)
-CPP_WRAPPER_EXISTS := $(if $(wildcard runepkg_cpp_ffi.cpp),1,0)
+CPP_WRAPPER_EXISTS := $(if $(wildcard runepkg_network.cpp),1,0)
 CPP_FFI_AVAILABLE := $(if $(and $(filter 1,$(CPP_DEPS_AVAILABLE)),$(filter 1,$(CPP_WRAPPER_EXISTS))),1,0)
 
 # Check if C++ FFI should be enabled
@@ -60,7 +60,7 @@ endif
 ifeq ($(WITH_CPP),1)
 CFLAGS += -DENABLE_CPP_FFI
 LDFLAGS += $(CPP_LDFLAGS)
-CPP_SOURCES = runepkg_cpp_ffi.cpp
+CPP_SOURCES = runepkg_network.cpp runepkg_building.cpp
 CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
 CPP_HEADERS = runepkg_cpp_ffi.h
 else

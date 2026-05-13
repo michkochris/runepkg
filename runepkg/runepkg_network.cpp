@@ -24,6 +24,7 @@ extern "C" {
     #include "runepkg_hash.h"
     #include "runepkg_handle.h"
     #include "runepkg_install.h"
+    #include "runepkg_storage.h"
 }
 
 // Architecture - default to amd64 for now
@@ -1049,7 +1050,7 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
 
     for (const auto& sf : files_to_download) {
         std::string url = base_dir_url + "/" + sf.filename;
-        std::string dest = std::string(g_download_dir) + "/" + sf.filename;
+        std::string dest = std::string(g_build_dir) + "/" + sf.filename;
         futures.push_back(std::async(std::launch::async, [url, dest, &sf]() {
             return download_file(url, dest, sf.size, sf.filename);
         }));
@@ -1060,6 +1061,12 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
     std::cout << std::endl;
     curl_global_cleanup();
 
-    std::cout << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_download_dir << std::endl;
-    return 0;
+    if (downloaded > 0) {
+        std::cout << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_build_dir << std::endl;
+        // Trigger autocomplete index rebuild so the .dsc is available immediately
+        runepkg_storage_build_autocomplete_index();
+    } else {
+        std::cout << "\033[1;31m[error]\033[0m Failed to download source package files." << std::endl;
+    }
+    return (downloaded > 0) ? 0 : -1;
 }

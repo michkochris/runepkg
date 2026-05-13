@@ -607,7 +607,8 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
-        execv(command_path, argv);
+        // Use execvp to search PATH and allow relative command names
+        execvp(argv[0], argv);
         perror("Failed to execute command");
         _exit(1);
     } else {
@@ -1078,7 +1079,7 @@ off_t runepkg_util_get_dir_size(const char *path) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
         char fullpath[PATH_MAX];
-        snprintf(fullpath, sizeof(fullpath), "%s/%s", path, entry->d_name);
+        snprintf(fullpath, sizeof(fullpath), "%.*s/%s", (int)(sizeof(fullpath)-258), path, entry->d_name);
 
         struct stat st;
         if (stat(fullpath, &st) == 0) {

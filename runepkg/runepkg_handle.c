@@ -38,6 +38,7 @@
 #include "runepkg_storage.h"
 #include "runepkg_util.h"
 #include "runepkg_md5sums.h"
+#include "runepkg_cpp_ffi.h"
 #include <stdint.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -57,6 +58,7 @@
 /* Completion implementations moved to runepkg_completion.c */
 
 /* Auto-package listing moved to runepkg_completion.c */
+void handle_print_autopool(void);
 
 
 #ifdef __ANDROID__
@@ -497,6 +499,7 @@ int handle_status(const char *package_name) {
                 if (exact_match_count == 1) {
                     // Store the first match
                     strncpy(exact_match_name, package_name, sizeof(exact_match_name) - 1);
+                    strncpy(exact_match_version, ver, sizeof(exact_match_version) - 1);
                 }
             }
         }
@@ -522,7 +525,11 @@ int handle_status(const char *package_name) {
             runepkg_pack_free_package_info(&pkg_info);
             return 0;
         } else {
-            printf("Failed to read package info for %s %s.\n", exact_match_name, exact_match_version);
+            if (exact_match_version[0] != '\0') {
+                printf("Failed to read package info for %s %s.\n", exact_match_name, exact_match_version);
+            } else {
+                printf("Failed to read package info for %s.\n", exact_match_name);
+            }
             runepkg_pack_free_package_info(&pkg_info);
             return -1;
         }
@@ -908,7 +915,7 @@ int handle_unpack(const char *deb_path) {
         return -1;
     }
 
-    printf("Successfully unpacked %s to %s\n", deb_path, target_dir);
+    printf("\033[1;32m[unpack]\033[0m Successfully unpacked %s to %s\n", deb_path, target_dir);
     free(target_dir);
     return 0;
 }
@@ -980,6 +987,16 @@ int handle_build(const char *source_dir, const char *output_name) {
 
     free(out_allocated);
     return ret;
+}
+
+int handle_source_build(const char *dsc_path) {
+#ifdef ENABLE_CPP_FFI
+    return runepkg_source_build(dsc_path);
+#else
+    printf("Notice: Source building requires a C++ build with FFI enabled.\n");
+    printf("Rebuild with 'make all' to enable this feature.\n");
+    return -1;
+#endif
 }
 
 int handle_md5_check(const char *package_name) {

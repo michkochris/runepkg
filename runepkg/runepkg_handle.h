@@ -46,6 +46,7 @@ int handle_status(const char *package_name);
 void handle_search(const char *query);
 int handle_unpack(const char *deb_path);
 int handle_build(const char *source_dir, const char *output_name);
+int handle_source_build(const char *dsc_path);
 int handle_md5_check(const char *package_name);
 void handle_print_config(void);
 void handle_print_config_file(void);
@@ -55,8 +56,8 @@ void handle_update_pkglist(void);
 
 /* Completion and install APIs are declared in runepkg_completion.h
  * and runepkg_install.h respectively. */
-/* Print the autocomplete index contents (used by --print-auto-pkgs) */
-void handle_print_auto_pkgs(void);
+/* Print the autocomplete index contents (used by --print-autopool) */
+void handle_print_autopool(void);
 int print_package_data_header(void);
 
 #ifdef __cplusplus

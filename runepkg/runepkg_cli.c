@@ -74,6 +74,7 @@ void usage(void) {
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
     printf("  source <pkg>                            Download source package files into download_dir.\n");
+    printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
     printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
 
@@ -88,6 +89,7 @@ void usage(void) {
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
+    printf("      --print-autopool                    Print the contents of the consolidated autocomplete pool.\n");
     printf("      --rebuild-autocomplete              Rebuild the local package name index.\n\n");
 
     printf("Experimental/Future:\n");
@@ -408,8 +410,8 @@ int main(int argc, char *argv[]) {
             // Already handled at the start of main
         } else if (strcmp(argv[i], "--print-config") == 0) {
             handle_print_config();
-        } else if (strcmp(argv[i], "--print-auto-pkgs") == 0) {
-            handle_print_auto_pkgs();
+        } else if (strcmp(argv[i], "--print-autopool") == 0) {
+            handle_print_autopool();
         } else if (strcmp(argv[i], "--rebuild-autocomplete") == 0) {
             handle_update_pkglist();
         } else if (strcmp(argv[i], "--print-config-file") == 0) {
@@ -492,6 +494,13 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: source command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "source-build") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                handle_source_build(argv[i+1]);
+                i++;
+            } else {
+                printf("Error: source-build command requires a .dsc file path.\n");
             }
         } else {
             cli_failed = 1;

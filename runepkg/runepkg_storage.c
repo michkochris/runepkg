@@ -399,7 +399,19 @@ int runepkg_storage_list_packages(const char *pattern) {
     size_t max_len = 0;
     
     while ((entry = readdir(dir)) != NULL && count < 1024) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
+
+        bool is_dir = (entry->d_type == DT_DIR);
+        if (entry->d_type == DT_UNKNOWN) {
+            char full[PATH_MAX];
+            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), g_runepkg_db_dir, entry->d_name);
+            struct stat st;
+            if (stat(full, &st) == 0) {
+                is_dir = S_ISDIR(st.st_mode);
+            }
+        }
+
+        if (is_dir) {
             if (!pattern || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) {
                 packages[count] = strdup(entry->d_name);
                 if (packages[count]) {
@@ -453,39 +465,114 @@ int runepkg_storage_list_packages(const char *pattern) {
 }
 
 /**
- * @brief Helper to scan a directory for subdirectories and add to a string array
+ * @brief Helper to scan a directory for subdirectories or specific files and add to a string array
  */
-static int scan_and_add_dirs(const char *dir_path, char ***packages, int *count) {
+static int scan_and_add_entries(const char *dir_path, char ***entries, int *count, bool subdirs_only, const char *suffix_filter, bool add_absolute) {
     if (!dir_path) return 0;
     DIR *dir = opendir(dir_path);
     if (!dir) return 0;
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
-            // Check for duplicates before adding
-            bool exists = false;
-            for (int i = 0; i < *count; i++) {
-                if (strcmp((*packages)[i], entry->d_name) == 0) {
-                    exists = true;
-                    break;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
+
+        bool is_dir = (entry->d_type == DT_DIR);
+        bool is_reg = (entry->d_type == DT_REG);
+
+        // Fallback for DT_UNKNOWN
+        if (entry->d_type == DT_UNKNOWN) {
+            char full[PATH_MAX + 256];
+            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), dir_path, entry->d_name);
+            struct stat st;
+            if (stat(full, &st) == 0) {
+                is_dir = S_ISDIR(st.st_mode);
+                is_reg = S_ISREG(st.st_mode);
+            }
+        }
+
+        if (subdirs_only && !is_dir) continue;
+
+        if (suffix_filter && is_reg) {
+            size_t nlen = strlen(entry->d_name);
+            size_t slen = strlen(suffix_filter);
+            if (nlen < slen || strcmp(entry->d_name + nlen - slen, suffix_filter) != 0) continue;
+        } else if (suffix_filter && !is_dir) {
+            // Not a directory and doesn't match suffix filter
+            continue;
+        }
+
+        char *to_add = NULL;
+        if (add_absolute) {
+            // Add the absolute path
+            char *full_path = runepkg_util_concat_path(dir_path, entry->d_name);
+            if (full_path) {
+                if (is_dir) {
+                    to_add = malloc(strlen(full_path) + 2);
+                    if (to_add) sprintf(to_add, "%s/", full_path);
+                    free(full_path);
+                } else {
+                    to_add = full_path;
                 }
             }
-            if (exists) continue;
 
-            char **temp = realloc(*packages, (*count + 1) * sizeof(char *));
-            if (!temp) {
-                closedir(dir);
-                return -1;
+            if (to_add) {
+                // Check for duplicates
+                bool exists = false;
+                for (int i = 0; i < *count; i++) {
+                    if (strcmp((*entries)[i], to_add) == 0) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (!exists) {
+                    char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
+                    if (temp) {
+                        *entries = temp;
+                        (*entries)[(*count)++] = to_add;
+                    } else free(to_add);
+                } else free(to_add);
             }
-            *packages = temp;
-            (*packages)[*count] = strdup(entry->d_name);
-            if (!(*packages)[*count]) {
-                closedir(dir);
-                return -1;
+
+            // Also add the basename for flexible matching
+            if (is_dir) {
+                to_add = malloc(strlen(entry->d_name) + 2);
+                if (to_add) sprintf(to_add, "%s/", entry->d_name);
+            } else {
+                to_add = strdup(entry->d_name);
             }
-            (*count)++;
+        } else {
+            if (is_dir) {
+                to_add = malloc(strlen(entry->d_name) + 2);
+                if (to_add) sprintf(to_add, "%s/", entry->d_name);
+            } else {
+                to_add = strdup(entry->d_name);
+            }
         }
+
+        if (!to_add) continue;
+
+        // Check for duplicates before adding
+        bool exists = false;
+        for (int i = 0; i < *count; i++) {
+            if (strcmp((*entries)[i], to_add) == 0) {
+                exists = true;
+                break;
+            }
+        }
+        if (exists) {
+            free(to_add);
+            continue;
+        }
+
+        char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
+        if (!temp) {
+            free(to_add);
+            closedir(dir);
+            return -1;
+        }
+        *entries = temp;
+        (*entries)[*count] = to_add;
+        (*count)++;
     }
     closedir(dir);
     return 0;
@@ -500,21 +587,51 @@ int runepkg_storage_build_autocomplete_index(void) {
         return -1;
     }
 
-    runepkg_log_verbose("Building autocomplete index from: %s and %s\n", g_runepkg_db_dir, g_build_dir ? g_build_dir : "(none)");
+    runepkg_log_verbose("Building consolidated autopool index...\n");
 
     char **packages = NULL;
     int count = 0;
 
-    // Scan installed packages
-    if (scan_and_add_dirs(g_runepkg_db_dir, &packages, &count) != 0) {
+    // 1. Scan installed packages (directories in db_dir) - store Basename
+    if (scan_and_add_entries(g_runepkg_db_dir, &packages, &count, true, NULL, false) != 0) {
         runepkg_log_verbose("Error: Failed to scan database directory.\n");
         goto error_cleanup;
     }
 
-    // Scan build directory
+    // 2. Scan build directory (directories and .dsc files) - store Absolute Path
     if (g_build_dir) {
-        if (scan_and_add_dirs(g_build_dir, &packages, &count) != 0) {
-            runepkg_log_verbose("Error: Failed to scan build directory.\n");
+        // Add directories (for -b)
+        if (scan_and_add_entries(g_build_dir, &packages, &count, true, NULL, true) != 0) {
+            runepkg_log_verbose("Error: Failed to scan build directory for subdirs.\n");
+            goto error_cleanup;
+        }
+        // Add .dsc files (for source-build)
+        if (scan_and_add_entries(g_build_dir, &packages, &count, false, ".dsc", true) != 0) {
+            runepkg_log_verbose("Error: Failed to scan build directory for .dsc files.\n");
+            goto error_cleanup;
+        }
+    }
+
+    // 3. Scan debs directory (for -i autocompletion of built packages) - store Absolute Path
+    if (g_debs_dir) {
+        if (scan_and_add_entries(g_debs_dir, &packages, &count, false, ".deb", true) != 0) {
+            runepkg_log_verbose("Error: Failed to scan debs directory for .deb files.\n");
+            goto error_cleanup;
+        }
+    }
+
+    // 4. Scan download directory (for -u and -i autocompletion of downloaded packages) - store Absolute Path
+    if (g_download_dir) {
+        if (scan_and_add_entries(g_download_dir, &packages, &count, false, ".deb", true) != 0) {
+            runepkg_log_verbose("Error: Failed to scan download directory for .deb files.\n");
+            goto error_cleanup;
+        }
+    }
+
+    // 4. Scan download directory (for -u and -i autocompletion of downloaded packages) - store Absolute Path
+    if (g_download_dir) {
+        if (scan_and_add_entries(g_download_dir, &packages, &count, false, ".deb", true) != 0) {
+            runepkg_log_verbose("Error: Failed to scan download directory for .deb files.\n");
             goto error_cleanup;
         }
     }

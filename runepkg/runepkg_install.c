@@ -311,7 +311,7 @@ char* clandestine_find_sibling(const char *pkg_name, const char *origin_deb_path
     }
 
     char pattern[PATH_MAX];
-    snprintf(pattern, sizeof(pattern), "%s/%s_*.deb", dir, pkg_name);
+    snprintf(pattern, sizeof(pattern), "%.*s/%s_*.deb", (int)(sizeof(pattern)-264), dir, pkg_name);
     glob_t globbuf;
     char *result = NULL;
 
