@@ -72,11 +72,11 @@ endif
 TARGET = runepkg
 
 # Source files
-C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c runepkg_completion.c runepkg_install.c
+C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c runepkg_completion.c runepkg_install.c runepkg_md5sums.c
 OBJS = $(C_SOURCES:.c=.o) $(CPP_SOURCES:.cpp=.o)
 
 # Header dependencies
-HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h runepkg_defensive.h $(CPP_HEADERS)
+HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h $(CPP_HEADERS)
 
 # Track configuration changes to force rebuilds when WITH_CPP changes
 .config_with_cpp:

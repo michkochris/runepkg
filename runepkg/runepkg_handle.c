@@ -37,6 +37,7 @@
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
 #include "runepkg_util.h"
+#include "runepkg_md5sums.h"
 #include <stdint.h>
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -382,6 +383,10 @@ int handle_remove(const char *package_name) {
     }
 
     if (g_system_install_root && pkg_info.file_list && pkg_info.file_count > 0) {
+        // Execute prerm
+        extern int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action);
+        runepkg_execute_maintainer_script(pkg_info.prerm, &pkg_info, "remove");
+
         for (int i = 0; i < pkg_info.file_count; i++) {
             const char *rel = pkg_info.file_list[i];
             if (!rel || rel[0] == '\0') continue;
@@ -392,6 +397,9 @@ int handle_remove(const char *package_name) {
             }
             runepkg_util_free_and_null(&dst);
         }
+
+        // Execute postrm
+        runepkg_execute_maintainer_script(pkg_info.postrm, &pkg_info, "purge");
     }
 
     runepkg_pack_free_package_info(&pkg_info);
@@ -715,8 +723,14 @@ void handle_print_config(void) {
     else printf("  Database Directory:  (not set)\n");
     if (g_download_dir) printf("  Download Directory:  %s\n", g_download_dir);
     else printf("  Download Directory:  (not set)\n");
+    if (g_build_dir) printf("  Build Directory:     %s\n", g_build_dir);
+    else printf("  Build Directory:     (not set)\n");
+    if (g_debs_dir) printf("  Debs Directory:      %s\n", g_debs_dir);
+    else printf("  Debs Directory:      (not set)\n");
 
     printf("  Cleanup: %s\n", g_cleanup_extract_dirs ? "yes" : "no");
+    extern bool g_md5_checks;
+    printf("  MD5 Checks: %s\n", g_md5_checks ? "yes" : "no");
 
     if (g_sources_count > 0 && g_sources) {
         printf("\nConfigured Sources:\n");
@@ -763,6 +777,9 @@ void handle_update_pkglist(void) {
         return;
     }
 
+    char **packages = NULL;
+    int count = 0;
+
     // Scan installed packages
     if (g_runepkg_db_dir) {
         DIR *dir = opendir(g_runepkg_db_dir);
@@ -772,11 +789,67 @@ void handle_update_pkglist(void) {
                 if (entry->d_type != DT_DIR) continue;
                 if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-                // Use the full directory name as package name
-                fprintf(txt_file, "%s\n", entry->d_name);
+                packages = realloc(packages, (count + 1) * sizeof(char *));
+                if (packages) {
+                    packages[count++] = strdup(entry->d_name);
+                }
             }
             closedir(dir);
         }
+    }
+
+    // Scan build directory
+    if (g_build_dir) {
+        DIR *dir = opendir(g_build_dir);
+        if (dir) {
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                if (entry->d_type != DT_DIR) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+                // Check for duplicates
+                bool exists = false;
+                for (int i = 0; i < count; i++) {
+                    if (strcmp(packages[i], entry->d_name) == 0) {
+                        exists = true;
+                        break;
+                    }
+                }
+                if (exists) continue;
+
+                packages = realloc(packages, (count + 1) * sizeof(char *));
+                if (packages) {
+                    packages[count++] = strdup(entry->d_name);
+                }
+            }
+            closedir(dir);
+        }
+    }
+
+    // Write sorted unique list to text file
+    if (count > 0) {
+        // qsort(packages, count, sizeof(char *), compare_packages); // compare_packages is static in storage.c, need it here or use local
+        // Using a simple bubble sort or just relying on binary index for speed,
+        // but for text file let's just write them.
+        for (int i = 0; i < count; i++) {
+            // If it's in build_dir, write the absolute path
+            if (g_build_dir) {
+                char *full = runepkg_util_concat_path(g_build_dir, packages[i]);
+                if (full) {
+                    struct stat st;
+                    if (stat(full, &st) == 0 && S_ISDIR(st.st_mode)) {
+                        fprintf(txt_file, "%s\n", full);
+                        free(full);
+                        free(packages[i]);
+                        continue;
+                    }
+                    free(full);
+                }
+            }
+            fprintf(txt_file, "%s\n", packages[i]);
+            free(packages[i]);
+        }
+        free(packages);
     }
 
     fclose(txt_file);
@@ -788,4 +861,230 @@ void handle_update_pkglist(void) {
     } else {
         runepkg_log_verbose("Autocomplete list updated and binary index built.\n");
     }
+}
+
+int handle_unpack(const char *deb_path) {
+    if (!deb_path) return -1;
+    if (!g_build_dir) {
+        runepkg_util_error("build_dir is not configured. Professional unpacking requires a workspace.\n");
+        return -1;
+    }
+
+    runepkg_log_verbose("Unpacking %s to build_dir...\n", deb_path);
+
+    PkgInfo pkg_info;
+    runepkg_pack_init_package_info(&pkg_info);
+
+    // Temporary extraction to get name/version
+    if (runepkg_pack_extract_and_collect_info(deb_path, g_control_dir, &pkg_info) != 0) {
+        runepkg_util_error("Failed to extract metadata from %s\n", deb_path);
+        runepkg_pack_free_package_info(&pkg_info);
+        return -1;
+    }
+
+    size_t pkg_ver_len = strlen(pkg_info.package_name) + strlen(pkg_info.version) + 2;
+    char *pkg_ver_name = malloc(pkg_ver_len);
+    if (!pkg_ver_name) {
+        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+        runepkg_pack_free_package_info(&pkg_info);
+        return -1;
+    }
+    snprintf(pkg_ver_name, pkg_ver_len, "%s-%s", pkg_info.package_name, pkg_info.version);
+
+    char *target_dir = runepkg_util_concat_path(g_build_dir, pkg_ver_name);
+    free(pkg_ver_name);
+
+    runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+    runepkg_pack_free_package_info(&pkg_info);
+
+    if (runepkg_util_create_dir_recursive(target_dir, 0755) != 0) {
+        free(target_dir);
+        return -1;
+    }
+
+    if (runepkg_util_extract_deb_complete(deb_path, target_dir) != 0) {
+        runepkg_util_error("Unpack failed for %s\n", deb_path);
+        free(target_dir);
+        return -1;
+    }
+
+    printf("Successfully unpacked %s to %s\n", deb_path, target_dir);
+    free(target_dir);
+    return 0;
+}
+
+int handle_build(const char *source_dir, const char *output_name) {
+    const char *src = source_dir;
+    if (!src) src = g_build_dir;
+    if (!src) {
+        runepkg_util_error("No source directory specified and build_dir not configured.\n");
+        return -1;
+    }
+
+    char *out_allocated = NULL;
+    const char *out = output_name;
+
+    if (!out) {
+        // Try to determine professional filename from control file
+        char *control_path = runepkg_util_concat_path(src, "control/control");
+        if (control_path && runepkg_util_file_exists(control_path)) {
+            char *pkg = runepkg_util_get_config_value(control_path, "Package", ':');
+            char *ver = runepkg_util_get_config_value(control_path, "Version", ':');
+            char *arch = runepkg_util_get_config_value(control_path, "Architecture", ':');
+
+            if (pkg && ver && arch) {
+                size_t len = strlen(pkg) + strlen(ver) + strlen(arch) + 7; // _ _ .deb \0
+                char *filename = malloc(len);
+                if (filename) {
+                    snprintf(filename, len, "%s_%s_%s.deb", pkg, ver, arch);
+
+                    // Route to g_debs_dir
+                    if (g_debs_dir) {
+                        out_allocated = runepkg_util_concat_path(g_debs_dir, filename);
+                        free(filename);
+                    } else {
+                        out_allocated = filename;
+                    }
+                    out = out_allocated;
+                }
+            }
+            free(pkg); free(ver); free(arch);
+        }
+        free(control_path);
+
+        // Fallback to basename if control parsing failed
+        if (!out) {
+            char *bname = basename((char*)src);
+            char *filename = malloc(strlen(bname) + 5);
+            if (filename) {
+                sprintf(filename, "%s.deb", bname);
+
+                // Route to g_debs_dir
+                if (g_debs_dir) {
+                    out_allocated = runepkg_util_concat_path(g_debs_dir, filename);
+                    free(filename);
+                } else {
+                    out_allocated = filename;
+                }
+                out = out_allocated;
+            }
+        }
+    }
+
+    if (!out) return -1;
+
+    int ret = runepkg_util_create_deb(src, out);
+    if (ret == 0) {
+        printf("\033[1;32m[build]\033[0m Successfully built package: %s\n", out);
+    }
+
+    free(out_allocated);
+    return ret;
+}
+
+int handle_md5_check(const char *package_name) {
+    if (!package_name) return -1;
+
+    print_package_data_header();
+
+    // Find installed package info
+    PkgInfo pkg_info;
+    runepkg_pack_init_package_info(&pkg_info);
+
+    // Simplified: reuse logic to find package dir from handle_status
+    DIR *dir = opendir(g_runepkg_db_dir);
+    if (!dir) return -1;
+
+    struct dirent *entry;
+    char found_pkg[PATH_MAX] = {0};
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type != DT_DIR) continue;
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
+
+        if (strcmp(entry->d_name, package_name) == 0) {
+            strncpy(found_pkg, entry->d_name, sizeof(found_pkg)-1);
+            break;
+        }
+        size_t len = strlen(package_name);
+        if (strncmp(entry->d_name, package_name, len) == 0 && entry->d_name[len] == '-') {
+            strncpy(found_pkg, entry->d_name, sizeof(found_pkg)-1);
+            break;
+        }
+    }
+    closedir(dir);
+
+    if (!found_pkg[0]) {
+        runepkg_util_error("Package %s not found.\n", package_name);
+        return -1;
+    }
+
+    // Parse version from found_pkg
+    char *v = strrchr(found_pkg, '-');
+    if (!v) return -1;
+    *v = '\0';
+    char *version = v + 1;
+
+    if (runepkg_storage_read_package_info(found_pkg, version, &pkg_info) != 0) {
+        runepkg_util_error("Failed to read metadata for %s-%s\n", found_pkg, version);
+        return -1;
+    }
+
+    // Use system root for verification
+    if (!g_system_install_root) return -1;
+
+    char pkg_db_path[PATH_MAX];
+    runepkg_storage_get_package_path(found_pkg, version, pkg_db_path);
+    char *md5sums_path = runepkg_util_concat_path(pkg_db_path, "md5sums");
+
+    if (!runepkg_util_file_exists(md5sums_path)) {
+        printf("No md5sums file for %s, cannot verify.\n", package_name);
+        free(md5sums_path);
+        runepkg_pack_free_package_info(&pkg_info);
+        return -1;
+    }
+
+    FILE *f = fopen(md5sums_path, "r");
+    if (!f) {
+        free(md5sums_path);
+        return -1;
+    }
+
+    printf("\033[1;34m[integrity]\033[0m Verifying %s integrity...\n", found_pkg);
+    char line[PATH_MAX + 64];
+    int total = 0, ok = 0, fail = 0;
+    while (fgets(line, sizeof(line), f)) {
+        char exp[33], rel[PATH_MAX];
+        if (sscanf(line, "%32s  %s", exp, rel) != 2) continue;
+        total++;
+
+        char *full = runepkg_util_concat_path(g_system_install_root, rel);
+
+        char act[33];
+        if (runepkg_md5_file(full, act) == 0) {
+            if (strcmp(exp, act) == 0) {
+                ok++;
+            } else {
+                printf("\033[1;31mFAILED\033[0m: %s (expected %s, got %s)\n", rel, exp, act);
+                fail++;
+            }
+        } else {
+            printf("\033[1;33mMISSING\033[0m: %s\n", rel);
+            fail++;
+        }
+        free(full);
+    }
+    fclose(f);
+    free(md5sums_path);
+
+    if (fail == 0) {
+        printf("\033[1;32m[integrity]\033[0m Verification complete: all %d files OK.\n", total);
+    } else {
+        printf("\033[1;31m[integrity]\033[0m Verification complete: %d ok, %d failed out of %d files.\n", ok, fail, total);
+    }
+
+    pkg_info.md5_verified = (fail == 0);
+    runepkg_storage_write_package_info(found_pkg, version, &pkg_info);
+
+    runepkg_pack_free_package_info(&pkg_info);
+    return (fail == 0) ? 0 : -1;
 }

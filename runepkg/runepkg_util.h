@@ -196,6 +196,21 @@ char *runepkg_util_get_config_value(const char *filepath, const char *key, char 
 int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_dir);
 
 /**
+ * @brief Creates a .deb package from a source directory.
+ * @param source_dir Directory containing 'control/' and 'data/'.
+ * @param output_deb Path to the output .deb file.
+ * @return 0 on success, -1 on failure.
+ */
+int runepkg_util_create_deb(const char *source_dir, const char *output_deb);
+
+/**
+ * @brief Initializes a standard FHS skeleton in the target root.
+ * @param root The target root directory.
+ * @return 0 on success, -1 on failure.
+ */
+int runepkg_util_init_fhs(const char *root);
+
+/**
  * @brief Executes an external command safely in a child process.
  * @param command_path The absolute path to the executable.
  * @param argv An array of null-terminated strings for the arguments.

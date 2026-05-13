@@ -44,6 +44,9 @@ char *g_pkglist_txt_path = NULL;
 char *g_pkglist_bin_path = NULL;
 char *g_runepkg_lists_dir = NULL;
 char *g_download_dir = NULL;
+char *g_build_dir = NULL;
+char *g_debs_dir = NULL;
+bool g_md5_checks = true;
 
 RuneSource **g_sources = NULL;
 int g_sources_count = 0;
@@ -161,6 +164,19 @@ int runepkg_config_load() {
             runepkg_config_cleanup();
             return -1;
         }
+        g_build_dir = runepkg_util_concat_path(g_runepkg_base_dir, "build_dir");
+        if (!g_build_dir) {
+            fprintf(stderr, "Error: Failed to create default build_dir path.\n");
+            runepkg_config_cleanup();
+            return -1;
+        }
+        g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
+        if (!g_debs_dir) {
+            fprintf(stderr, "Error: Failed to create default debs_dir path.\n");
+            runepkg_config_cleanup();
+            return -1;
+        }
+        g_md5_checks = true;
         g_cleanup_extract_dirs = true;
         /* Directories will be created by runepkg_init_paths() later.
          * Avoid creating them here to prevent duplicate verbose/debug logs. */
@@ -246,6 +262,22 @@ int runepkg_config_load() {
             return -1;
         }
 
+        g_build_dir = runepkg_util_get_config_value(config_file_path, "build_dir", '=');
+        if (!g_build_dir) {
+             g_build_dir = runepkg_util_concat_path(g_runepkg_base_dir, "build_dir");
+        }
+
+        g_debs_dir = runepkg_util_get_config_value(config_file_path, "runepkg_debs", '=');
+        if (!g_debs_dir) {
+             g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
+        }
+        if (!g_build_dir) {
+            fprintf(stderr, "Error: Failed to determine build_dir.\n");
+            runepkg_util_free_and_null(&config_file_path);
+            runepkg_config_cleanup();
+            return -1;
+        }
+
         // Now, create the directories based on the loaded config paths
         // Check for NULL pointers before calling create_dir_recursive
         if (!g_runepkg_base_dir || !g_control_dir || !g_runepkg_db_dir || !g_install_dir_internal) {
@@ -266,6 +298,10 @@ int runepkg_config_load() {
         char *cleanup_val = runepkg_util_get_config_value(config_file_path, "cleanup", '=');
         g_cleanup_extract_dirs = runepkg_util_parse_yes_no(cleanup_val, true);
         free(cleanup_val);
+
+        char *md5_checks_val = runepkg_util_get_config_value(config_file_path, "md5_checks", '=');
+        g_md5_checks = runepkg_util_parse_yes_no(md5_checks_val, true);
+        free(md5_checks_val);
     }
 
     /* Concise summary for verbose mode: one-line summary instead of
@@ -273,20 +309,22 @@ int runepkg_config_load() {
      * still enables internal verbose logs elsewhere. */
     if (g_verbose_mode) {
         if (config_file_path) {
-            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s cleanup=%s\n",
+            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s cleanup=%s md5_checks=%s\n",
                                config_file_path,
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
                                g_control_dir ? g_control_dir : "(null)",
                                g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
                                g_install_dir_internal ? g_install_dir_internal : "(null)",
-                               g_cleanup_extract_dirs ? "yes" : "no");
+                               g_cleanup_extract_dirs ? "yes" : "no",
+                               g_md5_checks ? "yes" : "no");
         } else {
-            runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s cleanup=%s\n",
+            runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s cleanup=%s md5_checks=%s\n",
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
                                g_control_dir ? g_control_dir : "(null)",
                                g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
                                g_install_dir_internal ? g_install_dir_internal : "(null)",
-                               g_cleanup_extract_dirs ? "yes" : "no");
+                               g_cleanup_extract_dirs ? "yes" : "no",
+                               g_md5_checks ? "yes" : "no");
         }
         runepkg_log_verbose("Autocomplete files: txt=%s bin=%s\n",
                            g_pkglist_txt_path ? g_pkglist_txt_path : "(null)",
@@ -309,6 +347,8 @@ void runepkg_config_cleanup() {
     runepkg_util_free_and_null(&g_pkglist_bin_path);
     runepkg_util_free_and_null(&g_runepkg_lists_dir);
     runepkg_util_free_and_null(&g_download_dir);
+    runepkg_util_free_and_null(&g_build_dir);
+    runepkg_util_free_and_null(&g_debs_dir);
 
     if (g_sources) {
         for (int i = 0; i < g_sources_count; i++) {
@@ -423,18 +463,42 @@ void runepkg_init_paths() {
         }
     }
 
+    if (!runepkg_util_file_exists(g_build_dir)) {
+        if (runepkg_util_create_dir_recursive(g_build_dir, 0755) != 0) {
+            fprintf(stderr, "Error: Failed to create build directory %s\n", g_build_dir);
+            runepkg_config_cleanup();
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    if (!runepkg_util_file_exists(g_debs_dir)) {
+        if (runepkg_util_create_dir_recursive(g_debs_dir, 0755) != 0) {
+            fprintf(stderr, "Error: Failed to create debs directory %s\n", g_debs_dir);
+            runepkg_config_cleanup();
+            exit(EXIT_FAILURE);
+        }
+    }
+
     if (g_verbose_mode) {
         if (created_base) runepkg_util_log_debug("Created runepkg_dir: %s\n", g_runepkg_base_dir);
         if (created_control) runepkg_util_log_debug("Created control_dir: %s\n", g_control_dir);
         if (created_db) runepkg_util_log_debug("Created runepkg_db: %s\n", g_runepkg_db_dir);
         if (created_install) runepkg_util_log_debug("Created install_dir: %s\n", g_install_dir_internal);
 
-        runepkg_log_verbose("runepkg directories initialized: base=%s control=%s db=%s install=%s download=%s root=%s\n",
+        runepkg_log_verbose("runepkg directories initialized: base=%s control=%s db=%s install=%s download=%s build=%s debs=%s root=%s\n",
                            g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
                            g_control_dir ? g_control_dir : "(null)",
                            g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
                            g_install_dir_internal ? g_install_dir_internal : "(null)",
                            g_download_dir ? g_download_dir : "(null)",
+                           g_build_dir ? g_build_dir : "(null)",
+                           g_debs_dir ? g_debs_dir : "(null)",
                            g_system_install_root ? g_system_install_root : "(null)");
+    }
+
+    // Auto-init FHS skeleton if we are bootstrapping a custom root
+    // Only perform this if NOT in completion mode to avoid noisy errors and unnecessary I/O
+    if (!g_completion_mode && g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
+        runepkg_util_init_fhs(g_system_install_root);
     }
 }

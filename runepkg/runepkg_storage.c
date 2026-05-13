@@ -60,7 +60,10 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
         return -1;
     }
 
-    snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+    int ret = snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+    if (ret >= PATH_MAX) {
+        return -1;
+    }
     return 0;
 }
 
@@ -99,31 +102,19 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     }
 
     char pkg_dir_path[PATH_MAX];
-    char binary_file_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    size_t pkg_dir_len = strlen(pkg_dir_path);
-    if (pkg_dir_len + strlen(RUNEPKG_STORAGE_BINARY_FILE) + 2 > sizeof(binary_file_path)) {
-        printf("Error: Package directory path too long for binary file\n");
-        return -1;
-    }
-
-    int ret = snprintf(binary_file_path, sizeof(binary_file_path), "%s/%s", 
-                       pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
-    
-    if (ret >= (int)sizeof(binary_file_path)) {
-        printf("Error: Path truncation occurred during formatting\n");
-        return -1;
-    }
+    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
 
     runepkg_log_verbose("Writing package info to: %s\n", binary_file_path);
 
     FILE *bin_file = fopen(binary_file_path, "wb");
     if (!bin_file) {
         runepkg_log_verbose("Failed to open binary file for writing: %s\n", binary_file_path);
+        free(binary_file_path);
         return -1;
     }
 
@@ -172,6 +163,7 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     // --- END NEW CODE ---
 
     fclose(bin_file);
+    free(binary_file_path);
 
     runepkg_log_verbose("Package info written successfully to persistent storage\n");
     return 0;
@@ -187,25 +179,12 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     }
 
     char pkg_dir_path[PATH_MAX];
-    char binary_file_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    size_t pkg_dir_len = strlen(pkg_dir_path);
-    if (pkg_dir_len + strlen(RUNEPKG_STORAGE_BINARY_FILE) + 2 > sizeof(binary_file_path)) {
-        printf("Error: Package directory path too long for binary file\n");
-        return -1;
-    }
-
-    int ret = snprintf(binary_file_path, sizeof(binary_file_path), "%s/%s", 
-                       pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
-    
-    if (ret >= (int)sizeof(binary_file_path)) {
-        printf("Error: Path truncation occurred during formatting\n");
-        return -1;
-    }
+    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
 
     runepkg_log_verbose("Reading package info from: %s\n", binary_file_path);
 
@@ -214,6 +193,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     FILE *bin_file = fopen(binary_file_path, "rb");
     if (!bin_file) {
         runepkg_log_verbose("Failed to open binary file for reading: %s\n", binary_file_path);
+        free(binary_file_path);
         return -1;
     }
 
@@ -266,6 +246,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     // --- END NEW CODE ---
 
     fclose(bin_file);
+    free(binary_file_path);
     runepkg_log_verbose("Package info read successfully from persistent storage\n");
     return 0;
 
@@ -273,6 +254,7 @@ read_error:
     if (bin_file) {
         fclose(bin_file);
     }
+    free(binary_file_path);
     runepkg_pack_free_package_info(pkg_info);
     printf("Error: Failed to read package info from binary file\n");
     return -1;
@@ -287,27 +269,15 @@ int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version
     }
 
     char pkg_dir_path[PATH_MAX];
-    char binary_file_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    size_t pkg_dir_len = strlen(pkg_dir_path);
-    if (pkg_dir_len + strlen(RUNEPKG_STORAGE_BINARY_FILE) + 2 > sizeof(binary_file_path)) {
-        printf("Error: Package directory path too long for binary file\n");
-        return -1;
-    }
-
-    int ret = snprintf(binary_file_path, sizeof(binary_file_path), "%s/%s", 
-                       pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
-    
-    if (ret >= (int)sizeof(binary_file_path)) {
-        printf("Error: Path truncation occurred during formatting\n");
-        return -1;
-    }
-
-    return runepkg_util_file_exists(binary_file_path) ? 1 : 0;
+    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
+    int exists = runepkg_util_file_exists(binary_file_path) ? 1 : 0;
+    free(binary_file_path);
+    return exists;
 }
 
 /**
@@ -377,11 +347,11 @@ int runepkg_storage_remove_directory_tree(const char *path) {
             continue;
         }
 
-        char child[PATH_MAX];
-        snprintf(child, sizeof(child), "%s/%s", path, entry->d_name);
+        char *child = runepkg_util_concat_path(path, entry->d_name);
 
         struct stat st;
         if (lstat(child, &st) != 0) {
+            free(child);
             ret = -1;
             continue;
         }
@@ -395,6 +365,7 @@ int runepkg_storage_remove_directory_tree(const char *path) {
                 ret = -1;
             }
         }
+        free(child);
     }
 
     closedir(dir);
@@ -482,6 +453,45 @@ int runepkg_storage_list_packages(const char *pattern) {
 }
 
 /**
+ * @brief Helper to scan a directory for subdirectories and add to a string array
+ */
+static int scan_and_add_dirs(const char *dir_path, char ***packages, int *count) {
+    if (!dir_path) return 0;
+    DIR *dir = opendir(dir_path);
+    if (!dir) return 0;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
+            // Check for duplicates before adding
+            bool exists = false;
+            for (int i = 0; i < *count; i++) {
+                if (strcmp((*packages)[i], entry->d_name) == 0) {
+                    exists = true;
+                    break;
+                }
+            }
+            if (exists) continue;
+
+            char **temp = realloc(*packages, (*count + 1) * sizeof(char *));
+            if (!temp) {
+                closedir(dir);
+                return -1;
+            }
+            *packages = temp;
+            (*packages)[*count] = strdup(entry->d_name);
+            if (!(*packages)[*count]) {
+                closedir(dir);
+                return -1;
+            }
+            (*count)++;
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+/**
  * @brief Builds the binary autocomplete index (runepkg_autocomplete.bin)
  */
 int runepkg_storage_build_autocomplete_index(void) {
@@ -490,40 +500,27 @@ int runepkg_storage_build_autocomplete_index(void) {
         return -1;
     }
 
-    runepkg_log_verbose("Building autocomplete index from: %s\n", g_runepkg_db_dir);
-
-    DIR *dir = opendir(g_runepkg_db_dir);
-    if (!dir) {
-        runepkg_log_verbose("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
-        return -1;
-    }
+    runepkg_log_verbose("Building autocomplete index from: %s and %s\n", g_runepkg_db_dir, g_build_dir ? g_build_dir : "(none)");
 
     char **packages = NULL;
     int count = 0;
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
-            packages = realloc(packages, (count + 1) * sizeof(char *));
-            if (!packages) {
-                runepkg_log_verbose("Error: Memory allocation failed.\n");
-                closedir(dir);
-                return -1;
-            }
-            packages[count] = strdup(entry->d_name);
-            if (!packages[count]) {
-                runepkg_log_verbose("Error: String duplication failed.\n");
-                closedir(dir);
-                for (int i = 0; i < count; i++) free(packages[i]);
-                free(packages);
-                return -1;
-            }
-            count++;
+
+    // Scan installed packages
+    if (scan_and_add_dirs(g_runepkg_db_dir, &packages, &count) != 0) {
+        runepkg_log_verbose("Error: Failed to scan database directory.\n");
+        goto error_cleanup;
+    }
+
+    // Scan build directory
+    if (g_build_dir) {
+        if (scan_and_add_dirs(g_build_dir, &packages, &count) != 0) {
+            runepkg_log_verbose("Error: Failed to scan build directory.\n");
+            goto error_cleanup;
         }
     }
-    closedir(dir);
 
     if (count == 0) {
-        runepkg_log_verbose("No packages found, skipping index build.\n");
+        runepkg_log_verbose("No packages or build directories found, skipping index build.\n");
         return 0;
     }
 
@@ -543,9 +540,7 @@ int runepkg_storage_build_autocomplete_index(void) {
     FILE *fp = fopen(index_path, "wb");
     if (!fp) {
         runepkg_log_verbose("Error: Cannot create index file: %s\n", index_path);
-        for (int i = 0; i < count; i++) free(packages[i]);
-        free(packages);
-        return -1;
+        goto error_cleanup;
     }
 
     // Write header
@@ -582,4 +577,11 @@ int runepkg_storage_build_autocomplete_index(void) {
 
     runepkg_log_verbose("Autocomplete index built: %d entries, %s\n", count, index_path);
     return 0;
+
+error_cleanup:
+    if (packages) {
+        for (int i = 0; i < count; i++) free(packages[i]);
+        free(packages);
+    }
+    return -1;
 }

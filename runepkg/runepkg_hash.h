@@ -49,6 +49,11 @@ typedef struct PkgInfo {
     char *priority;
     char *homepage;
     char *filename;
+    char *preinst;
+    char *postinst;
+    char *prerm;
+    char *postrm;
+    bool md5_verified;
     char **file_list;
     int file_count;
     char *control_dir_path; // Re-added: Path to the extracted 'control' directory.

@@ -139,11 +139,24 @@ int prefix_search_and_print(const char *prefix) {
     if (!g_runepkg_db_dir) return 0;
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
-    struct stat index_st, dir_st;
+    struct stat index_st, db_dir_st, build_dir_st;
     int index_exists = (stat(index_path, &index_st) == 0);
-    int dir_stat = stat(g_runepkg_db_dir, &dir_st);
+    int db_dir_stat = stat(g_runepkg_db_dir, &db_dir_st);
+    int build_dir_stat = g_build_dir ? stat(g_build_dir, &build_dir_st) : -1;
 
-    if (dir_stat == 0 && (!index_exists || dir_st.st_mtime > index_st.st_mtime)) {
+    bool needs_rebuild = false;
+    if (!index_exists) {
+        needs_rebuild = true;
+    } else {
+        if (db_dir_stat == 0 && db_dir_st.st_mtime > index_st.st_mtime) {
+            needs_rebuild = true;
+        }
+        if (build_dir_stat == 0 && build_dir_st.st_mtime > index_st.st_mtime) {
+            needs_rebuild = true;
+        }
+    }
+
+    if (needs_rebuild) {
         runepkg_storage_build_autocomplete_index();
     }
 
@@ -186,6 +199,20 @@ int prefix_search_and_print(const char *prefix) {
         for (int i = first_match; i < (int)hdr->entry_count; i++) {
             char *name = names + offsets[i];
             if (strncmp(prefix, name, strlen(prefix)) != 0) break;
+
+            // If it's in build_dir, print the absolute path
+            if (g_build_dir) {
+                char *full = runepkg_util_concat_path(g_build_dir, name);
+                if (full) {
+                    struct stat st;
+                    if (stat(full, &st) == 0 && S_ISDIR(st.st_mode)) {
+                        printf("%s\n", full);
+                        free(full);
+                        continue;
+                    }
+                    free(full);
+                }
+            }
             printf("%s\n", name);
         }
     }
@@ -291,6 +318,12 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
                     strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "-u") == 0 || strcmp(tok, "--unpack") == 0) {
+                    strncpy(inferred_cmd, "unpack", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "-b") == 0 || strcmp(tok, "--build") == 0) {
+                    strncpy(inferred_cmd, "build", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "-m") == 0 || strcmp(tok, "--md5check") == 0) {
+                    strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "source") == 0) {
                     strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                 }
@@ -319,6 +352,15 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
                             strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
                             break;
+                        } else if (strcmp(t2, "-u") == 0 || strcmp(t2, "--unpack") == 0) {
+                            strncpy(inferred_cmd, "unpack", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "-b") == 0 || strcmp(t2, "--build") == 0) {
+                            strncpy(inferred_cmd, "build", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "-m") == 0 || strcmp(t2, "--md5check") == 0) {
+                            strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
+                            break;
                         } else if (strcmp(t2, "source") == 0) {
                             strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                             break;
@@ -338,13 +380,14 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 if (strncmp(partial, "--", 2) == 0) {
                     const char *all_long_opts[] = {
                         "--install","--remove","--list","--status","--list-files","--search",
+                        "--unpack","--build","--md5check",
                         "--verbose","--force","--help","--version",
                         "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
                     };
                     int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
                     for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
                 } else {
-                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
                     int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
                     for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
                 }
@@ -359,13 +402,14 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 if (strncmp(partial, "--", 2) == 0) {
                     const char *all_long_opts[] = {
                         "--install","--remove","--list","--status","--list-files","--search",
+                        "--unpack","--build","--md5check",
                         "--verbose","--force","--help","--version",
                         "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
                     };
                     int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
                     for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
                 } else {
-                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                    const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
                     int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
                     for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
                 }
@@ -380,12 +424,13 @@ void handle_binary_completion(const char *partial, const char *prev) {
         }
         if (strcmp(inferred_cmd, "status") == 0) {
             if (partial && partial[0] == '-') {
-                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-v","-f","-h"};
+                const char *all_short_opts[] = {"-i","-r","-l","-L","-s","-S","-u","-b","-m","-v","-f","-h"};
                 int n = sizeof(all_short_opts)/sizeof(all_short_opts[0]);
                 for (int i=0;i<n;i++) if (strncmp(all_short_opts[i], partial, strlen(partial))==0) printf("%s\n", all_short_opts[i]);
                 if (strncmp(partial, "--", 2) == 0) {
                     const char *all_long_opts[] = {
                         "--install","--remove","--list","--status","--list-files","--search",
+                        "--unpack","--build","--md5check",
                         "--verbose","--force","--help","--version",
                         "--print-config","--print-config-file","--print-pkglist-file","--print-auto-pkgs"
                     };
@@ -399,6 +444,20 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
             return;
         }
+        if (strcmp(inferred_cmd, "unpack") == 0) {
+            complete_deb_files(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "build") == 0) {
+            if (!prefix_search_and_print(partial)) {
+                complete_file_paths(partial);
+            }
+            return;
+        }
+        if (strcmp(inferred_cmd, "md5check") == 0) {
+            prefix_search_and_print(partial);
+            return;
+        }
         if (strcmp(inferred_cmd, "source") == 0) {
             repo_src_prefix_search_and_print(partial);
             return;
@@ -410,6 +469,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             if (strncmp(partial, "--", 2) == 0) {
                 const char *long_opts[] = {
                     "--install", "--remove", "--list", "--status", "--list-files", "--search",
+                    "--unpack", "--build", "--md5check",
                     "--verbose", "--force", "--version", "--help",
                     "--print-config", "--print-config-file", "--print-pkglist-file", "--print-auto-pkgs"
                 };
@@ -418,7 +478,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     if (strncmp(long_opts[i], partial, strlen(partial)) == 0) printf("%s\n", long_opts[i]);
                 }
             } else {
-                const char *short_opts[] = {"-i", "-r", "-l", "-s", "-L", "-S", "-v", "-f", "-h"};
+                const char *short_opts[] = {"-i", "-r", "-l", "-s", "-L", "-S", "-u", "-b", "-m", "-v", "-f", "-h"};
                 int num_short = sizeof(short_opts) / sizeof(short_opts[0]);
                 for (int i = 0; i < num_short; i++) {
                     if (strncmp(short_opts[i], partial, strlen(partial)) == 0) printf("%s\n", short_opts[i]);

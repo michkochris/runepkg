@@ -40,6 +40,7 @@
 // Global variables
 bool g_verbose_mode = false;
 bool g_force_mode = false;
+bool g_completion_mode = false;
 bool g_did_install = false;
 bool g_debug_mode = false;
 bool g_auto_confirm_deps = false;
@@ -58,10 +59,12 @@ void usage(void) {
     printf("  -i, --install <path-to-package.deb>...  Install one or more .deb files.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
+    printf("  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.\n");
     printf("  -r, --remove <package-name>             Remove an installed package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
     printf("  -l, --list [pattern]                    List installed packages (optionally matching pattern).\n");
     printf("  -s, --status <package-name>             Show detailed info about an installed package.\n");
+    printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
     printf("  -L, --list-files <package-name>         List all files owned by an installed package.\n");
     printf("  -S, --search <file-path>                Search installed packages for a specific file.\n\n");
 
@@ -71,6 +74,7 @@ void usage(void) {
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
     printf("  source <pkg>                            Download source package files into download_dir.\n");
+    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
 
     printf("Global Options:\n");
@@ -101,6 +105,7 @@ int main(int argc, char *argv[]) {
     // variables are present to avoid confusing real invocations that happen
     // to have three user arguments (argc == 4).
     if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
+        g_completion_mode = true;
         if (runepkg_init() != 0) return 0;
         handle_binary_completion(argv[2], argv[3]);
         return 0;
@@ -230,6 +235,20 @@ int main(int argc, char *argv[]) {
                 }
             } else {
                 handle_install_stdin();
+            }
+        } else if (strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--unpack") == 0) {
+            if (i + 1 < argc) {
+                handle_unpack(argv[i+1]);
+                i++;
+            } else {
+                printf("Error: --unpack requires a .deb file path.\n");
+            }
+        } else if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--md5check") == 0) {
+            if (i + 1 < argc) {
+                handle_md5_check(argv[i+1]);
+                i++;
+            } else {
+                printf("Error: --md5check requires a package name.\n");
             }
         } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0) {
             char *removed_packages[100];
@@ -409,6 +428,18 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
             }
+        } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0) {
+            const char *src = NULL;
+            const char *out = NULL;
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                src = argv[i+1];
+                i++;
+                if (i + 1 < argc && argv[i+1][0] != '-') {
+                    out = argv[i+1];
+                    i++;
+                }
+            }
+            handle_build(src, out);
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI

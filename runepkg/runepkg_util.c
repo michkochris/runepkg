@@ -873,7 +873,139 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
     runepkg_util_log_verbose("Complete .deb extraction finished successfully.\n");
     runepkg_util_log_verbose("Control files extracted to: %s/control/\n", extract_dir);
     runepkg_util_log_verbose("Data files extracted to: %s/data/\n", extract_dir);
-    
+
+    return 0;
+}
+
+int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
+    if (!source_dir || !output_deb) {
+        runepkg_util_error("create_deb: NULL source_dir or output_deb.\n");
+        return -1;
+    }
+
+    runepkg_util_log_verbose("Building .deb package: %s from %s\n", output_deb, source_dir);
+
+    char *control_dir = runepkg_util_concat_path(source_dir, "control");
+    char *data_dir = runepkg_util_concat_path(source_dir, "data");
+
+    if (!runepkg_util_file_exists(control_dir)) {
+        runepkg_util_error("Control directory not found: %s\n", control_dir);
+        free(control_dir); free(data_dir);
+        return -1;
+    }
+    if (!runepkg_util_file_exists(data_dir)) {
+        runepkg_util_error("Data directory not found: %s\n", data_dir);
+        free(control_dir); free(data_dir);
+        return -1;
+    }
+
+    char cwd[PATH_MAX];
+    if (!getcwd(cwd, sizeof(cwd))) {
+        perror("getcwd");
+        free(control_dir); free(data_dir);
+        return -1;
+    }
+
+    // 1. Create debian-binary
+    char *deb_bin_path = runepkg_util_concat_path(source_dir, "debian-binary");
+    FILE *f = fopen(deb_bin_path, "w");
+    if (!f) {
+        perror("fopen debian-binary");
+        free(control_dir); free(data_dir); free(deb_bin_path);
+        return -1;
+    }
+    fprintf(f, "2.0\n");
+    fclose(f);
+
+    // 2. Create control.tar.gz
+    char *control_tar = runepkg_util_concat_path(source_dir, "control.tar.gz");
+    if (chdir(control_dir) != 0) {
+        perror("chdir control");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar);
+        return -1;
+    }
+    char *argv_control[] = {"tar", "-czf", control_tar, ".", NULL};
+    if (runepkg_util_execute_command("/usr/bin/tar", argv_control) != 0) {
+        runepkg_util_error("Failed to create control.tar.gz\n");
+        chdir(cwd);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar);
+        return -1;
+    }
+
+    // 3. Create data.tar.xz
+    char *data_tar = runepkg_util_concat_path(source_dir, "data.tar.xz");
+    if (chdir(data_dir) != 0) {
+        perror("chdir data");
+        chdir(cwd);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar);
+        return -1;
+    }
+    char *argv_data[] = {"tar", "-cJf", data_tar, ".", NULL};
+    if (runepkg_util_execute_command("/usr/bin/tar", argv_data) != 0) {
+        runepkg_util_error("Failed to create data.tar.xz\n");
+        chdir(cwd);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar);
+        return -1;
+    }
+
+    // 4. Assemble with ar
+    chdir(source_dir);
+    // Use absolute path for output if it doesn't start with /
+    char *abs_output = output_deb[0] == '/' ? strdup(output_deb) : runepkg_util_concat_path(cwd, output_deb);
+
+    char *argv_ar[] = {"ar", "-rc", abs_output, "debian-binary", "control.tar.gz", "data.tar.xz", NULL};
+    if (runepkg_util_execute_command("/usr/bin/ar", argv_ar) != 0) {
+        runepkg_util_error("Failed to assemble .deb with ar\n");
+        chdir(cwd);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output);
+        return -1;
+    }
+
+    chdir(cwd);
+    runepkg_util_log_verbose(".deb package built successfully: %s\n", abs_output);
+
+    free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output);
+    return 0;
+}
+
+int runepkg_util_init_fhs(const char *root) {
+    if (!root) return -1;
+
+    // Standard LFS-style directories (without leading slash for security check compatibility)
+    const char *dirs[] = {
+        "bin", "sbin", "etc", "lib", "lib64",
+        "usr/bin", "usr/sbin", "usr/lib", "usr/local/bin",
+        "var/lib/dpkg", "var/log", "tmp", "root", "proc", "sys", "dev"
+    };
+    int num_dirs = sizeof(dirs) / sizeof(dirs[0]);
+
+    runepkg_util_log_verbose("Initializing FHS skeleton in: %s\n", root);
+
+    for (int i = 0; i < num_dirs; i++) {
+        char *path = runepkg_util_concat_path(root, dirs[i]);
+        if (path) {
+            if (!runepkg_util_file_exists(path)) {
+                runepkg_util_create_dir_recursive(path, 0755);
+            }
+            free(path);
+        }
+    }
+
+    // Create basic /etc/passwd if it doesn't exist
+    char *etc_dir = runepkg_util_concat_path(root, "etc");
+    if (etc_dir) {
+        char *passwd = runepkg_util_concat_path(etc_dir, "passwd");
+        if (passwd && !runepkg_util_file_exists(passwd)) {
+            FILE *f = fopen(passwd, "w");
+            if (f) {
+                fprintf(f, "root:x:0:0:root:/root:/bin/sh\n");
+                fclose(f);
+            }
+        }
+        free(passwd);
+        free(etc_dir);
+    }
+
     return 0;
 }
 

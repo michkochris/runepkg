@@ -5,6 +5,7 @@
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
 #include "runepkg_handle.h"
+#include "runepkg_md5sums.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -27,6 +28,106 @@
 /* forward-declare internal installer to avoid implicit declaration when
  * `handle_install` (wrapper) calls it before its definition. */
 static int handle_install_internal(const char *deb_file_path, int is_top_level);
+
+int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action) {
+    if (!script_path || !runepkg_util_file_exists(script_path)) return 0;
+
+    // Smart check: Only execute scripts if we are installing to the actual system root.
+    // In LFS/ISO creation scenarios (alternate root), we skip them to avoid breakage.
+    if (!g_system_install_root || strcmp(g_system_install_root, "/") != 0) {
+        char *script_name = basename((char*)script_path);
+        printf("\033[1;33m[warning]\033[0m (non-root install) detected skipping %s for %s\n",
+               script_name, pkg_info->package_name);
+        return 0;
+    }
+
+    char *script_name = basename((char*)script_path);
+    printf("\033[1;33m[warning]\033[0m Running %s for %s (%s)...\n", script_name, pkg_info->package_name, action);
+    runepkg_util_log_verbose("Executing maintainer script %s for %s (%s)\n", script_name, pkg_info->package_name, action);
+
+    // Set environment variables
+    setenv("DPKG_MAINTSCRIPT_PACKAGE", pkg_info->package_name, 1);
+    setenv("DPKG_MAINTSCRIPT_NAME", script_name, 1);
+    if (pkg_info->architecture) setenv("DPKG_MAINTSCRIPT_ARCH", pkg_info->architecture, 1);
+    if (pkg_info->version) setenv("DPKG_MAINTSCRIPT_VERSION", pkg_info->version, 1);
+
+    // Set DPKG_ROOT if we are not installing to actual system root
+    if (g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
+        setenv("DPKG_ROOT", g_system_install_root, 1);
+        runepkg_util_log_verbose("Set DPKG_ROOT=%s for relocatable script execution\n", g_system_install_root);
+    }
+
+    char *argv[] = {"sh", (char*)script_path, (char*)action, NULL};
+    int ret = runepkg_util_execute_command("/bin/sh", argv);
+
+    unsetenv("DPKG_MAINTSCRIPT_PACKAGE");
+    unsetenv("DPKG_MAINTSCRIPT_NAME");
+    unsetenv("DPKG_MAINTSCRIPT_ARCH");
+    unsetenv("DPKG_MAINTSCRIPT_VERSION");
+    unsetenv("DPKG_ROOT");
+
+    if (ret != 0) {
+        runepkg_util_error("Maintainer script %s failed with status %d\n", script_name, ret);
+    }
+    return ret;
+}
+
+int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
+    if (!pkg_info || !pkg_info->control_dir_path || !pkg_info->data_dir_path) return -1;
+
+    char *md5sums_path = runepkg_util_concat_path(pkg_info->control_dir_path, "md5sums");
+
+    if (!runepkg_util_file_exists(md5sums_path)) {
+        runepkg_util_log_verbose("No md5sums file found for %s, skipping verification.\n", pkg_info->package_name);
+        free(md5sums_path);
+        return 0;
+    }
+
+    FILE *f = fopen(md5sums_path, "r");
+    if (!f) {
+        free(md5sums_path);
+        return -1;
+    }
+
+    runepkg_util_log_verbose("Verifying MD5 checksums for %s...\n", pkg_info->package_name);
+
+    char line[PATH_MAX + 64];
+    int errors = 0;
+    int total = 0;
+    while (fgets(line, sizeof(line), f)) {
+        char expected_md5[33];
+        char rel_path[PATH_MAX];
+        if (sscanf(line, "%32s  %s", expected_md5, rel_path) != 2) continue;
+        total++;
+
+        char *full_path = runepkg_util_concat_path(pkg_info->data_dir_path, rel_path);
+
+        char actual_md5[33];
+        if (runepkg_md5_file(full_path, actual_md5) != 0) {
+            runepkg_util_error("Failed to compute MD5 for %s\n", full_path);
+            free(full_path);
+            errors++;
+            continue;
+        }
+
+        if (strcmp(expected_md5, actual_md5) != 0) {
+            runepkg_util_error("MD5 mismatch for %s: expected %s, got %s\n", rel_path, expected_md5, actual_md5);
+            errors++;
+        }
+        free(full_path);
+    }
+
+    fclose(f);
+    free(md5sums_path);
+
+    if (errors == 0) {
+        printf("\033[1;32m[integrity]\033[0m Verified %d files for %s.\n", total, pkg_info->package_name);
+        return 0;
+    } else {
+        runepkg_util_error("MD5 verification failed with %d errors for %s.\n", errors, pkg_info->package_name);
+        return -1;
+    }
+}
 
 // Struct for thread arguments in file installation
 typedef struct {
@@ -613,13 +714,24 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         runepkg_pack_init_package_info(&dummy);
         dummy.package_name = strdup(pkg_info.package_name);
         if (pkg_info.version) dummy.version = strdup(pkg_info.version);
-        /* Use the installing_packages table so the main hash remains the
-         * authoritative list of installed packages. Previously this added
-         * the dummy into runepkg_main_hash_table which caused subsequent
-         * dependency checks in the same install session to incorrectly
-         * report packages as already installed. */
         runepkg_hash_add_package(installing_packages, &dummy);
         runepkg_pack_free_package_info(&dummy);
+
+        // MD5 Verification
+        extern bool g_md5_checks;
+        if (g_md5_checks) {
+            if (runepkg_install_verify_md5(&pkg_info) != 0) {
+                runepkg_util_error("MD5 verification failed for %s. Aborting installation.\n", pkg_info.package_name);
+                runepkg_hash_remove_package(installing_packages, pkg_info.package_name);
+                runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                runepkg_pack_free_package_info(&pkg_info);
+                return -1;
+            }
+            pkg_info.md5_verified = true;
+        }
+
+        // Execute preinst
+        runepkg_execute_maintainer_script(pkg_info.preinst, &pkg_info, "install");
 
         // Resolve dependencies
         Dependency **deps = parse_depends_with_constraints(pkg_info.depends);
@@ -983,6 +1095,9 @@ else {
 
             if (install_errors == 0 && g_verbose_mode) printf("Files installed to: %s\n", g_system_install_root);
             else if (install_errors > 0) printf("Install completed with %d file errors.\n", install_errors);
+
+            // Execute postinst
+            runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
         }
 
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);

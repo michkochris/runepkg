@@ -99,6 +99,10 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->priority);
     runepkg_util_free_and_null(&pkg_info->homepage);
     runepkg_util_free_and_null(&pkg_info->filename);
+    runepkg_util_free_and_null(&pkg_info->preinst);
+    runepkg_util_free_and_null(&pkg_info->postinst);
+    runepkg_util_free_and_null(&pkg_info->prerm);
+    runepkg_util_free_and_null(&pkg_info->postrm);
     runepkg_util_free_and_null(&pkg_info->control_dir_path);
     runepkg_util_free_and_null(&pkg_info->data_dir_path);
 
@@ -251,6 +255,11 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         existing->priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
         existing->homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
         existing->filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+        existing->preinst = pkg_info->preinst ? runepkg_secure_strdup(pkg_info->preinst) : NULL;
+        existing->postinst = pkg_info->postinst ? runepkg_secure_strdup(pkg_info->postinst) : NULL;
+        existing->prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
+        existing->postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
+        existing->md5_verified = pkg_info->md5_verified;
         existing->control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
         existing->data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
         
@@ -306,6 +315,11 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
     new_node->data.homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
     new_node->data.filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+    new_node->data.preinst = pkg_info->preinst ? runepkg_secure_strdup(pkg_info->preinst) : NULL;
+    new_node->data.postinst = pkg_info->postinst ? runepkg_secure_strdup(pkg_info->postinst) : NULL;
+    new_node->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
+    new_node->data.postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
+    new_node->data.md5_verified = pkg_info->md5_verified;
     new_node->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
     new_node->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
 

@@ -35,6 +35,9 @@ extern char *g_pkglist_txt_path;
 extern char *g_pkglist_bin_path;
 extern char *g_runepkg_lists_dir;
 extern char *g_download_dir;
+extern char *g_build_dir;
+extern char *g_debs_dir;
+extern bool g_md5_checks;
 
 /* When true (default), delete per-package extraction trees under control_dir after install/skip paths. */
 extern bool g_cleanup_extract_dirs;
@@ -47,6 +50,9 @@ extern bool g_auto_confirm_siblings;
 
 /* Tracks whether the user has been asked about sibling installations in the current operation. */
 extern bool g_asked_siblings;
+
+/* When true, we are providing autocompletion results (avoid heavy I/O). */
+extern bool g_completion_mode;
 
 // --- Source Configuration ---
 

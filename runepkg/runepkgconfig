@@ -1,42 +1,68 @@
 # ******************************************************************************
 # * Filename:    runepkgconfig
 # * Author:      <michkochris@gmail.com>
-# * Date:        started 12-31-2024
-# * Description:
+# * Date:        2025-05-12
+# * Description: Professional configuration for runepkg package manager
 # ******************************************************************************/
-# file description: runepkg config settings
 
-# make sure to not to leave ending / forward slash!
-# and use full linux path names ie. or ~/ for user home directory...
+# [IMPORTANT]
+# - Do NOT leave a trailing forward slash (/) at the end of paths.
+# - Use absolute Linux path names.
+# - The system-wide location for this file is: /etc/runepkg/runepkgconfig
 
-# main config file (system-wide installed at /etc/runepkg/runepkgconfig)
+# --- Core Paths (FHS Compliant) ---
 
-# main directory where runepkg does work, can change for optional alternate install location of packages...
-# just change all appropriate values...runepkg_dir, control_dir, install_dir, runepkg_db, download_dir...
-runepkg_dir=~/runepkg_dir
+# [runepkg_dir]
+# The primary base directory for runepkg tool data.
+# Recommended: /var/cache/runepkg
+runepkg_dir=/var/lib/runepkg_dir
 
-# directory where runepkg unpacks .deb pkg info
-# where runepkg processes .deb control files  
-control_dir=~/runepkg_dir/control_dir
+# [control_dir]
+# Temporary workspace where .deb control archives are extracted for processing.
+# This is a cache directory that can be safely cleared between runs.
+control_dir=/var/lib/runepkg_dir/control_dir
 
-# main directory where runepkg installs programs
-# normally / unless testing and development... change if needed...
-#install_dir=/
-install_dir=~/runepkg_dir/install_dir
+# [install_dir]
+# The target root for package installation.
+# Set to '/' for system-wide installation.
+# For LFS/ISO creation or development, set to your custom mount point or directory.
+install_dir=/var/lib/runepkg_dir/install_dir
 
-# directory where runepkg stores its persistent package database
-# a subdirectory for each installed package and a binary Pkginfo file inside
-runepkg_db=~/runepkg_dir/runepkg_db
+# [runepkg_db]
+# Persistent storage for the package manager's state.
+# Contains metadata for all installed packages and the binary autocompletion index.
+# Recommended: /var/lib/runepkg (standard for Linux package managers)
+runepkg_db=/var/lib/runepkg_dir/runepkg_db
 
-# main runepkg download directory for downloading .deb's from debian repo..
-download_dir=~/runepkg_dir/download_dir
+# [download_dir]
+# Cache directory where downloaded .deb files are stored before installation.
+download_dir=/var/lib/runepkg_dir/download_dir
 
-# Delete per-package extraction trees under control_dir after install (yes/no, default yes).
-# Set to no to keep unpacked control/data directories for debugging.
+# [build_dir]
+# Standard workspace for building and unpacking packages locally.
+# runepkg -u (--unpack) will extract .debs into 'pkgname-version' subdirectories here.
+# runepkg -b (--build) will look here by default for package sources.
+build_dir=/var/lib/runepkg_dir/build_dir
+
+# [runepkg_debs]
+# Dedicated output directory for built .deb files.
+# When running runepkg -b, the resulting package will be placed here by default.
+runepkg_debs=/var/lib/runepkg_dir/runepkg_debs
+
+# --- Behavior Settings ---
+
+# [cleanup]
+# Automatically delete per-package extraction trees under 'control_dir' after
+# installation or removal (yes/no, default yes).
 cleanup=yes
 
-# runepkg debian style sources.list info here
-# You can use any Debian-based repository (Debian, Ubuntu, Kali, Debian archives, etc.).
+# [md5_checks]
+# Enable low-level MD5 integrity verification during installation (yes/no).
+# When enabled, runepkg will verify every file against the 'md5sums' control file.
+md5_checks=yes
+
+# --- Repository Sources ---
+# runepkg supports standard Debian sources.list syntax.
 #
 # IMPORTANT: It is highly recommended to use ONLY ONE distribution ecosystem
 # at a time (e.g., just Kali, or just Debian Stable). While runepkg can aggregate
@@ -44,16 +70,15 @@ cleanup=yes
 # base URL defined. Mixing repositories with different base URLs may cause
 # download failures (404) if a package exists in one but not the other.
 
-# Debian Stable (Bookworm) - Example of multiple sources sharing the SAME base URL
-# (This is safe because all metadata will point to the same server)
+# [Example: Debian Stable (Bookworm)]
+# This is safe because all sources share the same base URL (deb.debian.org)
 # deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
 # deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
 # deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
 # deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
 
+# [Kali Linux Rolling]
 # runepkg and runar linux use kali rolling latest release style packages by default.
-# Kali Linux (Optional/Rolling)
-# See: https://www.kali.org/docs/general-use/kali-linux-sources-list-repositories/
 deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 

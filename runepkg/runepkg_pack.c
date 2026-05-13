@@ -55,6 +55,11 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->priority = NULL;
     pkg_info->homepage = NULL;
     pkg_info->filename = NULL;
+    pkg_info->preinst = NULL;
+    pkg_info->postinst = NULL;
+    pkg_info->prerm = NULL;
+    pkg_info->postrm = NULL;
+    pkg_info->md5_verified = false;
     pkg_info->control_dir_path = NULL;
     pkg_info->data_dir_path = NULL;
     pkg_info->file_list = NULL;
@@ -80,6 +85,10 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->priority);
     runepkg_util_free_and_null(&pkg_info->homepage);
     runepkg_util_free_and_null(&pkg_info->filename);
+    runepkg_util_free_and_null(&pkg_info->preinst);
+    runepkg_util_free_and_null(&pkg_info->postinst);
+    runepkg_util_free_and_null(&pkg_info->prerm);
+    runepkg_util_free_and_null(&pkg_info->postrm);
     runepkg_util_free_and_null(&pkg_info->control_dir_path);
     runepkg_util_free_and_null(&pkg_info->data_dir_path);
     
@@ -156,7 +165,30 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->section = runepkg_util_get_config_value(control_file_path, "Section", ':');
     pkg_info->priority = runepkg_util_get_config_value(control_file_path, "Priority", ':');
     pkg_info->homepage = runepkg_util_get_config_value(control_file_path, "Homepage", ':');
-    
+
+    // Check for maintainer scripts in control directory
+    char *control_dir_copy = strdup(control_file_path);
+    char *dir_name = dirname(control_dir_copy);
+
+    char *p;
+    p = runepkg_util_concat_path(dir_name, "preinst");
+    if (runepkg_util_file_exists(p)) pkg_info->preinst = strdup(p);
+    free(p);
+
+    p = runepkg_util_concat_path(dir_name, "postinst");
+    if (runepkg_util_file_exists(p)) pkg_info->postinst = strdup(p);
+    free(p);
+
+    p = runepkg_util_concat_path(dir_name, "prerm");
+    if (runepkg_util_file_exists(p)) pkg_info->prerm = strdup(p);
+    free(p);
+
+    p = runepkg_util_concat_path(dir_name, "postrm");
+    if (runepkg_util_file_exists(p)) pkg_info->postrm = strdup(p);
+    free(p);
+
+    free(control_dir_copy);
+
     if (!pkg_info->package_name) {
         runepkg_util_error("Failed to parse Package name from control file.\n");
         return -1;
