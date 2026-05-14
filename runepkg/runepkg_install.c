@@ -896,7 +896,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                             if (installing_packages && runepkg_hash_search(installing_packages, unsatisfied[k]->package)) continue;
                             if (installing_packages && is_package_provided_by_table(installing_packages, unsatisfied[k]->package)) continue;
 
-                            char *path = runepkg_repo_download(unsatisfied[k]->package);
+                            char *path = runepkg_repo_download(unsatisfied[k]->package, true);
                             if (path) {
                                 if (handle_install_internal(path, 0) != 0) {
                                     all_ok = 0;

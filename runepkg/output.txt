@@ -1,83 +1,111 @@
-[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg source hello
-[source] Downloading source package hello (4 files in parallel)...
-  -> hello_2.10-5.debian.ta... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> hello_2.10-5.dsc          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> hello_2.10.orig.tar.gz... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> hello_2.10.orig.tar.gz    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  [runepkg] Fetching complete. (4/4)
-[success] Downloaded 4 files to /var/lib/runepkg_dir/build_dir
-[build] Extracting source hello (2.10-5) to "/var/lib/runepkg_dir/build_dir/hello-2.10-5-src"...
-  -> Extracting hello_2.10.orig.tar.gz...
-  -> Extracting hello_2.10-5.debian.tar.xz...
-  -> Found source tree root: "/var/lib/runepkg_dir/build_dir/hello-2.10-5-src/hello-2.10"
-  -> Integrating debian/ directory into source tree...
-[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg source-depends hell
-hellfire  hello
-[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg source-depends hello
-[runepkg] Resolving source runtime-dependencies for hello...
-[dependencies] The following source packages (runtime-deps) are required:
-  hello glibc gcc-16
-Do you want to continue? [y/N] y
-[source] Downloading hello (4 files)...
-  [runepkg] Fetching complete. (4/4)
-[build] Extracting source hello (2.10-5) to "/var/lib/runepkg_dir/build_dir/hello-2.10-5-src"...
-  -> Extracting hello_2.10.orig.tar.gz...
-  -> Extracting hello_2.10-5.debian.tar.xz...
-  -> Found source tree root: "/var/lib/runepkg_dir/build_dir/hello-2.10-5-src/hello-2.10"
-  -> Integrating debian/ directory into source tree...
-[source] Downloading glibc (3 files)...
-  -> glibc_2.42-13.dsc         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> glibc_2.42-13.debian.t... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> glibc_2.42.orig.tar.xz    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  [runepkg] Fetching complete. (3/3)
-[build] Extracting source glibc (2.42-13) to "/var/lib/runepkg_dir/build_dir/glibc-2.42-13-src"...
-  -> Extracting glibc_2.42.orig.tar.xz...
-  -> Extracting glibc_2.42-13.debian.tar.xz...
-  -> Found source tree root: "/var/lib/runepkg_dir/build_dir/glibc-2.42-13-src/glibc-2.42"
-  -> Integrating debian/ directory into source tree...
-[source] Downloading gcc-16 (3 files)...
-  -> gcc-16_16-20260322-1.dsc  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc-16_16-20260322-1.d... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc-16_16-20260322.ori... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  [runepkg] Fetching complete. (3/3)
-[build] Extracting source gcc-16 (16-20260322-1) to "/var/lib/runepkg_dir/build_dir/gcc-16-16-20260322-1-src"...
-  -> Extracting gcc-16_16-20260322.orig.tar.gz...
-  -> Extracting gcc-16_16-20260322-1.debian.tar.xz...
-  -> Found source tree root: "/var/lib/runepkg_dir/build_dir/gcc-16-16-20260322-1-src/gcc-16-16-20260322"
-  -> Integrating debian/ directory into source tree...
-[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg source-build-depends hello
-[runepkg] Resolving source build-dependencies for hello...
-[dependencies] The following source packages (build-deps) are required:
-  automake pkgconf file liblocale-gettext-perl help2man libmodule-build-perl po4a po-debconf dh-autoreconf flex m4 bison t1utils
-  fonts-urw-base35 dh-linktree rename ghostscript psutils texlive-base groff dh-python sharutils antlr junit junit5
-  libcommons-cli-java libcommons-collections3-java libcommons-lang-java libtest-pod-perl gnulib man-db debhelper liboro-java ivy
-  libxml-commons-resolver1.1-java libxerces2-java ant-contrib maven-ant-helper maven-debian-helper libcommons-logging-java
-  libslf4j-java bnd jflex cup jlex libregexp-java libxalan2-java libbsf-java libjaxen-java libjdom1-java libjdom2-java
-  librelaxng-datatype-java libstax2-api-java libwoodstox-java libjettison-java libjoda-time-java libxpp3-java libxstream-java
-  testng unzip groovy libcommons-compress-java libcommons-lang3-java libgoogle-gson-java libjcip-annotations-java libjna-java
-  libminlog-java libreflectasm-java libkryo-java libnative-platform-java gradle gradle-debian-helper libhamcrest-java junit4
-  libcommons-net-java libjdepend-java ant maven-repo-helper autoconf libtool xz-utils gettext cpio netbase faketime dejagnu procps
-  dist perl pod2pdf libpod-pom-view-restructured-perl swig lua5.4 autotools-dev chrpath bash-completion net-tools
-  libmodule-build-tiny-perl libhttp-daemon-perl wget subversion libyaml-perl libhttp-date-perl libcgi-pm-perl liberror-perl
-  libmailtools-perl tzdata cvs cvsps libtest-simple-perl libdbi-perl libdbd-sqlite3-perl libio-pty-perl git cmake sassc doxygen
-  graphviz parallel bats dh-exec asciidoc docbook-xml docbook5-xml docbook-xsl jdupes re2c ninja-build gnustep-make googletest
-  libipc-run3-perl libstring-shellquote-perl gobject-introspection bzip2 gawk elfutils mig gdb dwz debugedit binutils
-  ca-certificates autoconf-archive iproute2 strace netcat-openbsd openssl haskell-devscripts ghc happy alex pandoc stunnel4 curl
-  yui-compressor node-fortawesome-fontawesome-free rustc itstool docbook valgrind sgml-base xmlto patchutils zip less mercurial
-  gcovr libjson-perl libperlio-gzip-perl libcapture-tiny-perl libcpan-meta-requirements-perl libmodule-metadata-perl
-  libcpan-meta-check-perl libdatetime-locale-perl libdatetime-timezone-perl libdist-checkconflicts-perl
-  libnamespace-autoclean-perl libparams-validationcompiler-perl libspecio-perl libtest-cleannamespaces-perl libtest-fatal-perl
-  libtest-warnings-perl libtest-without-module-perl libtry-tiny-perl libdatetime-perl libtimedate-perl libdbm-deep-perl
-  libhtml-tagset-perl libhttp-message-perl liburi-perl libhtml-parser-perl libmoo-perl libclass-load-perl
-  libmodule-implementation-perl libtest-needs-perl libclass-load-xs-perl libdata-optlist-perl libdatetime-format-mysql-perl
-  libdevel-globaldestruction-perl libdevel-overloadinfo-perl libdevel-partialdump-perl libdevel-stacktrace-perl
-  libeval-closure-perl liblocale-us-perl libmodule-install-perl libmodule-refresh-perl libmodule-runtime-conflicts-perl
-  libmodule-runtime-perl libmro-compat-perl libpackage-deprecationmanager-perl libpackage-stash-perl libvariable-magic-perl
-  libpackage-stash-xs-perl libpadwalker-perl libparams-coerce-perl libconfig-autoconf-perl libtest-leaktrace-perl
-  libparams-util-perl libregexp-common-perl libscalar-list-utils-perl libsub-exporter-perl libsuper-perl libtest-deep-perl
-  libtest-memory-cycle-perl libtest-output-perl libtest-warn-perl libwww-perl libmoose-perl libpod-coverage-perl libppi-html-perl
-  libreadonly-perl libtemplate-perl libtest-differences-perl libdevel-cover-perl lcov nasm meson desktop-file-utils libintl-perl
-  libtext-unidecode-perl texinfo hello
-Do you want to continue? [y/N] n
-Source download cancelled.
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖ·]  95.9% [8/8]
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 5.1s
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg download-only nano
+  -> nano                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  [runepkg] Fetching complete. (1/1)
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# ls /var/lib/runepkg_dir/download_dir/
+nano_9.0-1_amd64.deb
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg download-depends nano
+[runepkg] Resolving recursive dependencies for nano...
+[dependencies] The following dependencies are required:
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libtinfo6 libncursesw6 nano
+Would you like to attempt to download them? [y/N] y
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncursesw6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  [runepkg] Fetching complete. (7/7)
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# ls /var/lib/runepkg_dir/download_dir/
+gcc-16-base_16-20260322-1_amd64.deb         libgcc-s1_16-20260322-1_amd64.deb         nano_9.0-1_amd64.deb
+libc6_2.42-13_amd64.deb                     libncursesw6_6.6+20251231-1+b1_amd64.deb
+libc-gconv-modules-extra_2.42-13_amd64.deb  libtinfo6_6.6+20251231-1+b1_amd64.deb
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# runepkg download-build-depends nano
+[runepkg] Resolving binary build-dependencies for nano...
+[dependencies] The following binary packages (build-deps) are required:
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libtinfo6 libncurses6 libncursesw6 libc-dev-bin linux-libc-dev rpcsvc-proto
+  libc6-dev libncurses-dev libpkgconf7 pkgconf-bin pkgconf perl-base perl-modules-5.40 libbz2-1.0 libcrypt1 libdb5.3t64
+  libgdbm6t64 libgdbm-compat4t64 zlib1g libperl5.40 perl libtext-unidecode-perl libintl-perl libxml2-16 perlapi-5.40.1
+  libxml-namespacesupport-perl libxml-sax-base-perl debconf libtext-charwidth-perl libtext-wrapi18n-perl libsystemd0 libproc2-0
+  init-system-helpers procps sensible-utils ucf libxml-sax-perl libxml-libxml-perl texinfo-lib bzip2 tex-common texinfo
+Would you like to attempt to download them? [y/N] y
+  -> libgdbm-compat4t64        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml-sax-perl           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm6t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtext-wrapi18n-perl     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sensible-utils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> pkgconf-bin               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> pkgconf                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> rpcsvc-proto              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml-namespacesuppor... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debconf                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpkgconf7               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtext-charwidth-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml2-16                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ucf                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init-system-helpers       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncurses-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtext-unidecode-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tex-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml-sax-base-perl      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bzip2                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncurses6               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdb5.3t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml-libxml-perl        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libintl-perl              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> procps                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> texinfo-lib               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libproc2-0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perlapi-5.40.1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> texinfo                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-modules-5.40         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libperl5.40               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml2-16                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖ·]  99.7% [46/46]
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]# ls /var/lib/runepkg_dir/download_dir/
+bzip2_1.0.8-6+b2_amd64.deb                   libtext-unidecode-perl_1.30-3_all.deb
+debconf_1.5.92_all.deb                       libtext-wrapi18n-perl_0.06-10_all.deb
+gcc-16-base_16-20260322-1_amd64.deb          libtinfo6_6.6+20251231-1+b1_amd64.deb
+init-system-helpers_1.69+kali1_all.deb       libxml2-16_2.15.2+dfsg-0.1_amd64.deb
+libbz2-1.0_1.0.8-6+b2_amd64.deb              libxml-libxml-perl_2.0207+dfsg+really+2.0134-7_amd64.deb
+libc6_2.42-13_amd64.deb                      libxml-namespacesupport-perl_1.12-2_all.deb
+libc6-dev_2.42-13_amd64.deb                  libxml-sax-base-perl_1.09-3_all.deb
+libc-dev-bin_2.42-13_amd64.deb               libxml-sax-perl_1.02+dfsg-5_all.deb
+libc-gconv-modules-extra_2.42-13_amd64.deb   linux-libc-dev_6.19.14-1+kali1_all.deb
+libcrypt1_4.5.1-1+b1_amd64.deb               nano_9.0-1_amd64.deb
+libdb5.3t64_5.3.28+dfsg2-11+b1_amd64.deb     perl_5.40.1-7+b1_amd64.deb
+libgcc-s1_16-20260322-1_amd64.deb            perl-base_5.40.1-7+b1_amd64.deb
+libgdbm6t64_1.26-1+b2_amd64.deb              perl-modules-5.40_5.40.1-7_all.deb
+libgdbm-compat4t64_1.26-1+b2_amd64.deb       pkgconf_2.5.1-4_amd64.deb
+libintl-perl_1.37-1_all.deb                  pkgconf-bin_2.5.1-4_amd64.deb
+libncurses6_6.6+20251231-1+b1_amd64.deb      procps_4.0.4-9+b2_amd64.deb
+libncurses-dev_6.6+20251231-1+b1_amd64.deb   rpcsvc-proto_1.4.3-1_amd64.deb
+libncursesw6_6.6+20251231-1+b1_amd64.deb     sensible-utils_0.0.26_all.deb
+libperl5.40_5.40.1-7+b1_amd64.deb            tex-common_6.20_all.deb
+libpkgconf7_2.5.1-4_amd64.deb                texinfo_7.3-2_all.deb
+libproc2-0_4.0.4-9+b2_amd64.deb              texinfo-lib_7.3-2_amd64.deb
+libsystemd0_260.1-1_amd64.deb                ucf_3.0053_all.deb
+libtext-charwidth-perl_0.04-11+b5_amd64.deb  zlib1g_1.3.dfsg+really1.3.2-3_amd64.deb
 [ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg/runepkg ]#

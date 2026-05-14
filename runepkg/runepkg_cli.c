@@ -78,7 +78,9 @@ void usage(void) {
     printf("  source-depends <pkg>                    Download source package and its runtime-dependencies.\n");
     printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n");
     printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
-    printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
+    printf("  download-only <pkg>                     Download a .deb to download_dir without dependencies.\n");
+    printf("  download-depends <pkg>                  Download a .deb and its binary dependencies.\n");
+    printf("  download-build-depends <pkg>            Download binary .debs required to build a source package.\n\n");
 
     printf("Global Options:\n");
     printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
@@ -215,7 +217,7 @@ int main(int argc, char *argv[]) {
                         } else {
                         try_repo:
 #ifdef ENABLE_CPP_FFI
-                            char *downloaded_path = runepkg_repo_download(next_arg);
+                            char *downloaded_path = runepkg_repo_download(next_arg, true);
                             if (downloaded_path) {
                                 ret = handle_install(downloaded_path);
                                 free(downloaded_path);
@@ -447,7 +449,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                char *path = runepkg_repo_download(argv[i+1]);
+                char *path = runepkg_repo_download(argv[i+1], false);
                 if (path) free(path);
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
@@ -456,6 +458,31 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: Download-only command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "download-build-depends") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                runepkg_repo_build_depends_download(argv[i+1]);
+#else
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: Download-build-depends command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "download-depends") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                char *path = runepkg_repo_download(argv[i+1], true);
+                if (path) free(path);
+#else
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: Download-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {

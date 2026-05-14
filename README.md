@@ -155,7 +155,9 @@ Advanced Repository Management (Network/FFI):
   source-depends <pkg>                    Download source package and its runtime-dependencies.
   source-build-depends <pkg>              Download source package and its build-dependencies.
   source-build <package.dsc>              Build a Debian source package into runepkg_debs.
-  download-only <pkg>                     Download a .deb to download_dir without installing.
+  download-only <pkg>                     Download a .deb to download_dir without dependencies.
+  download-depends <pkg>                  Download a .deb and its binary dependencies.
+  download-build-depends <pkg>            Download binary .debs required to build a source package.
 
 Global Options:
   -v, --verbose                           Enable verbose output (detailed logging).
