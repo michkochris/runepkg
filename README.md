@@ -34,10 +34,10 @@ Unlike `apt-get source`, which often pulls in a massive tree of build-dependenci
 - **Build**: Use `runepkg source-build /path/to/<package.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools.
 
 ### **3. Manual Assembly & Custom Builders**
-For those creating custom distros or using automation scripts (like a `some_linux_builder`), **runepkg** provides:
+For those creating custom distros or using automation scripts (like `some_linux_builder`), **runepkg** provides:
 - **Direct Build**: `runepkg -b <dir> [output.deb]` builds a `.deb` instantly from any standard .deb folder structure.
 - **FHS Initialization**: `runepkg_util_init_fhs` (available via C API) can bootstrap a full filesystem skeleton in seconds.
-- **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `apt` or `python` are unavailable.
+- **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `c++`, are unavailable for example...
 
 ---
 
@@ -54,8 +54,8 @@ For those creating custom distros or using automation scripts (like a `some_linu
 #### **2. Runtime Utilities & BusyBox Integration**
 For package extraction and assembly, and debian source package building, **runepkg** relies on standard system utilities. **runepkg is designed to be fully compatible with BusyBox**, making it perfect for minimal environments.
 
-- **Standard Environment:** Uses `ar` (from `binutils`) for managing the `.deb` archive format, and `tar` (along with `gzip` or `xz`) for extracting and compressing the control and data components.
-- **BusyBox (Embedded/LFS):** In resource-constrained environments, BusyBox can provide all necessary applets (`ar`, `tar`, `gz`, `xz`). This allows for a "zero-dependency" runtime where **runepkg** acts as the high-level orchestrator for the BusyBox primitives, even for complex tasks like source package extraction and building.
+- **Standard Utilities:** Uses `ar` (from `binutils`) for managing the `.deb` archive format, and `tar` (along with `gzip` or `xz`) for extracting and compressing the control and data components.
+- **BusyBox low level (Embedded/LFS):** In resource-constrained environments, BusyBox can provide all necessary applets (`ar`, `tar`, `gz`, `xz`).
 
 **Required Packages by Distribution:**
 
@@ -90,6 +90,12 @@ CC=clang CXX=clang++ make all
 sudo make install
 ```
 
+## **Configuration runepkgconfig**
+Edit before install for user preferences...
+The configuration file will be installed to `/etc/runepkg/runepkgconfig` like other standard Linux programs. This file contains various path variables, including the `install_dir`. Repository information Debian (sources.list) info is stored at the bottom of the file in a standard Debian format. You can use any Debian-based repositories (including Ubuntu, Kali, or legacy debian archives)...
+
+---
+
 ### **Embedded Installation (Minimal)**
 For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality similar to `apt` or `apt-get`
 
@@ -114,12 +120,7 @@ make clean
 sudo make uninstall
 ```
 
-*Note: You may receive a notification if certain system directories require manual removal.*
-
----
-
-## **Configuration**
-The configuration file is located at `/etc/runepkg/runepkgconfig`. This file contains various path variables, including the `install_dir`. Repository information is stored at the bottom of the file in a standard Debian `sources.list` format. You can use any Debian-based repositories (including Ubuntu, Kali, or legacy archives).
+*Note: You may receive a notification if certain system directories require manual removal...*
 
 ---
 

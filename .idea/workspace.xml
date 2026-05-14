@@ -6,12 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="1e2a93c4-3386-448a-862b-33bcf8544ab1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/INTERNALS.md" beforeDir="false" afterPath="$PROJECT_DIR$/INTERNALS.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cli.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cli.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_completion.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_completion.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_cpp_ffi.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_network.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_network.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
