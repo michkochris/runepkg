@@ -67,7 +67,12 @@ void usage(void) {
     printf("  -S, --search <file-path>                Search installed packages for a specific file.\n");
     printf("  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.\n");
     printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
-    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n\n");
+    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
+    printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
+    printf("  -d, --debug                             Enable debug output (developer traces).\n");
+    printf("  -f, --force                             Force install/upgrade despite missing dependencies.\n");
+    printf("      --version                           Print version and license information.\n");
+    printf("  -h, --help                              Display this help message.\n\n");
 
     printf("Advanced Repository Management (Network/FFI):\n");
     printf("  update                                  Sync metadata and check for upgradable packages.\n");
@@ -81,13 +86,6 @@ void usage(void) {
     printf("  download-only <pkg>                     Download a .deb to download_dir without dependencies.\n");
     printf("  download-depends <pkg>                  Download a .deb and its binary dependencies.\n");
     printf("  download-build-depends <pkg>            Download binary .debs required to build a source package.\n\n");
-
-    printf("Global Options:\n");
-    printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
-    printf("  -d, --debug                             Enable debug output (developer traces).\n");
-    printf("  -f, --force                             Force install/upgrade despite missing dependencies.\n");
-    printf("      --version                           Print version and license information.\n");
-    printf("  -h, --help                              Display this help message.\n\n");
 
     printf("Maintenance & Diagnostics:\n");
     printf("      --print-config                      Print all active path and repository settings.\n");

@@ -145,6 +145,11 @@ Core Package Management (Local/Low-Level):
   -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.
   -m, --md5check <package-name>           Verify MD5 checksums of an installed package.
   -b, --build [dir] [output.deb]          Build a .deb from a directory structure.
+  -v, --verbose                           Enable verbose output (detailed logging).
+  -d, --debug                             Enable debug output (developer traces).
+  -f, --force                             Force install/upgrade despite missing dependencies.
+      --version                           Print version and license information.
+  -h, --help                              Display this help message.
 
 Advanced Repository Management (Network/FFI):
   update                                  Sync metadata and check for upgradable packages.
@@ -158,13 +163,6 @@ Advanced Repository Management (Network/FFI):
   download-only <pkg>                     Download a .deb to download_dir without dependencies.
   download-depends <pkg>                  Download a .deb and its binary dependencies.
   download-build-depends <pkg>            Download binary .debs required to build a source package.
-
-Global Options:
-  -v, --verbose                           Enable verbose output (detailed logging).
-  -d, --debug                             Enable debug output (developer traces).
-  -f, --force                             Force install/upgrade despite missing dependencies.
-      --version                           Print version and license information.
-  -h, --help                              Display this help message.
 
 Maintenance & Diagnostics:
       --print-config                      Print all active path and repository settings.
