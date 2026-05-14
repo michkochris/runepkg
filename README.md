@@ -197,8 +197,8 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 ![runepkg Logo](./runepkg/docs/runepkg_logo.svg)
 
 **Built with ❤️ for the old school GNU/Linux community...**
+
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
-Contact: [michkochris@gmail.com] | [runepkg@gmail.com]
 
 ## **Contact**
 For feedback, bug reports, or "rune" discoveries, reach out at:
