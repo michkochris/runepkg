@@ -126,7 +126,7 @@ Add the following line to the end of your `~/.bashrc`:
 complete -C runepkg runepkg
 ```
 
-### **Uninstallation & Cleanup 🧹**
+### **🧹 Uninstallation & Cleanup**
 To remove build artifacts or uninstall the program:
 
 ```bash
