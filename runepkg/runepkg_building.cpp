@@ -34,9 +34,7 @@ public:
     SourceBuilder(const std::string& dsc_path) : dsc_path_(dsc_path) {}
 
     int build() {
-        if (!parse_dsc()) return -1;
-        if (!setup_workspace()) return -1;
-        if (!extract_source()) return -1;
+        if (unpack() != 0) return -1;
 
         // Try standard debian/rules first
         if (execute_rules()) {
@@ -50,6 +48,13 @@ public:
         }
 
         return -1;
+    }
+
+    int unpack() {
+        if (!parse_dsc()) return -1;
+        if (!setup_workspace()) return -1;
+        if (!extract_source()) return -1;
+        return 0;
     }
 
 private:
@@ -405,4 +410,11 @@ extern "C" int runepkg_source_build(const char *dsc_path) {
 
     SourceBuilder builder(dsc_path);
     return builder.build();
+}
+
+extern "C" int runepkg_source_unpack(const char *dsc_path) {
+    if (!dsc_path) return -1;
+
+    SourceBuilder builder(dsc_path);
+    return builder.unpack();
 }

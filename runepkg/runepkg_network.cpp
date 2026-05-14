@@ -1111,7 +1111,21 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
 
     if (downloaded > 0) {
         std::cout << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_build_dir << std::endl;
-        // Trigger autocomplete index rebuild so the .dsc is available immediately
+
+        // Find the .dsc file and unpack it automatically for the user
+        std::string dsc_path;
+        for (const auto& sf : meta.files) {
+            if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") {
+                dsc_path = std::string(g_build_dir) + "/" + sf.filename;
+                break;
+            }
+        }
+
+        if (!dsc_path.empty()) {
+            runepkg_source_unpack(dsc_path.c_str());
+        }
+
+        // Trigger autocomplete index rebuild so the .dsc and unpacked dir are available immediately
         runepkg_storage_build_autocomplete_index();
     } else {
         std::cout << "\033[1;31m[error]\033[0m Failed to download source package files." << std::endl;
@@ -1198,6 +1212,18 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
 
         for (size_t i = 0; i < futures.size(); i++) futures[i].get();
         std::cout << std::endl;
+
+        // Auto-unpack each source package as it is downloaded
+        std::string dsc_path;
+        for (const auto& sf : meta.files) {
+            if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") {
+                dsc_path = std::string(g_build_dir) + "/" + sf.filename;
+                break;
+            }
+        }
+        if (!dsc_path.empty()) {
+            runepkg_source_unpack(dsc_path.c_str());
+        }
     }
 
     curl_global_cleanup();

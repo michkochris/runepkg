@@ -20,6 +20,7 @@ char* runepkg_repo_download(const char *pkg_name);
 int runepkg_upgrade(void);
 int runepkg_repo_source_download(const char *pkg_name);
 int runepkg_repo_source_depends_download(const char *pkg_name);
+int runepkg_source_unpack(const char *dsc_path);
 int runepkg_source_build(const char *dsc_path);
 
 #ifdef __cplusplus

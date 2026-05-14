@@ -25,11 +25,11 @@ If you are interested in the technical and insightful architectural decisions be
 While traditional tools like **apt-get** are built to maintain a strict, consistent system state, **runepkg** is built for the builder. It excels in performance through its **Parallel FFI Engine**, which handles metadata updates and package fetches significantly faster than sequential tools. Beyond speed, runepkg's dependency resolution is designed to be "context-aware"—it prioritizes local 'sibling' packages and allows for manual overrides that would typically trigger a deadlock in apt. This makes it not just a faster alternative, but a more flexible one for experimental and custom environments. While **runepkg** can manage repositories like `apt` with incredible speed and efficiency, matching and often exceeding its core performance, it is fundamentally designed for manual control and surgical precision, making it an ideal tool for **Custom Linux From Scratch (LFS)** and advanced system builders.
 
 ### **1. Surgical Precision**
-Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, **runepkg source <pkg>** downloads only the "raw runes" (upstream source + Debian patches). This allows you to inspect and modify the code, the `rules` Debian build script, or the `control` file, metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
+Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches). This allows you to inspect and modify the code, the `rules` Debian build script, or the `control` file, metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
 
 ### **2. The "Hacker" Build Loop**
 **runepkg** provides high-speed package management that matches the convenience of `apt-get` while enabling a power user for a "fetch-edit-build" workflow:
-- **Fetch**: Use `rnepkg source` to downlaod a debian source package into your `build_dir`.
+- **Fetch**: Use `runepkg source` to downlaod a debian source package into your `build_dir`.
 - **Edit**: Manually modify `debian/rules`, `control`, or the source code itself to strip dependencies or apply custom cross-compilation flags.
 - **Build**: Use `runepkg source-build /path/to/<package.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools.
 
