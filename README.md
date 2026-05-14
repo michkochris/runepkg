@@ -4,45 +4,86 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a fast, efficient, old-school `.deb` package manager—i.e., built with the idea of unearthing and installing "runes" (ancient .debs) from the Debian archives.
+**runepkg** is a lightning-fast, high-performance .deb package manager. It is designed to be both a high-level tool such as `apt` or `apt-get` for managing repositories, packages and dependencies with incredible speed, or a low-level package management tool for minimal embedded systems. It provides surgical precision required for custom .deb package builds and installs with the freedom to bypass the strict or rigid policy requirements of mainstream distributions.
 
 ---
 
-**runepkg** can be used as a standalone, low-level package management tool (similar to `dpkg`) for embedded systems, or as an advanced high-level package manager (similar to `apt` or `apt-get`). It can safely coexist with `dpkg` and `apt`. Its core is written in standard C, ensuring high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc**. Additionally, you can customize the `install_dir` in the configuration file to install packages to alternate locations.
+**runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc**. 
 
-### **Philosophy & Background**
-This program was built for the love of Open Source software, drawing on my experience as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS).
+**runepkg's** advanced C++ FFI features include high-speed parallel networking, repository synchronization, and a pure C++ Debian source package builder.
 
-The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software safely in modern environments.
+### **Philosophy & Background** 
+*Built with ❤️ for the old school GNU/Linux community and open source software with the freedom of compiling, building .deb's the way a power user wants without all the strict system specific rules such as an official Debian based Linux distribution. **runepkg** allows you to treat software or packages as components rather than strict rigid system parts*
 
-If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed deep-dive in [INTERNALS.md](./INTERNALS.md).
+**runepkg** has been developed using my experience and expertise as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS). The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software from the debian archives safely in modern environments.
+
+If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed technical expalination in [INTERNALS.md](./INTERNALS.md).
+
+---
+
+## **The runepkg Difference: Beyond apt-get**
+While traditional tools like **apt-get** are built to maintain a strict, consistent system state, **runepkg** is built for the builder. It excels in performance through its **Parallel FFI Engine**, which handles metadata updates and package fetches significantly faster than sequential tools. Beyond speed, runepkg's dependency resolution is designed to be "context-aware"—it prioritizes local 'sibling' packages and allows for manual overrides that would typically trigger a deadlock in apt. This makes it not just a faster alternative, but a more flexible one for experimental and custom environments. While **runepkg** can manage repositories like `apt` with incredible speed and efficiency, matching and often exceeding its core performance, it is fundamentally designed for manual control and surgical precision, making it an ideal tool for **Custom Linux From Scratch (LFS)** and advanced system builders.
+
+### **1. Surgical Precision**
+Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, **runepkg source <pkg>** downloads only the "raw runes" (upstream source + Debian patches). This allows you to inspect and modify the code, the `rules` Debian build script, or the `control` file, metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
+
+### **2. The "Hacker" Build Loop**
+**runepkg** provides high-speed package management that matches the convenience of `apt-get` while enabling a power user for a "fetch-edit-build" workflow:
+- **Fetch**: Use `rnepkg source` to downlaod a debian source package into your `build_dir`.
+- **Edit**: Manually modify `debian/rules`, `control`, or the source code itself to strip dependencies or apply custom cross-compilation flags.
+- **Build**: Use `runepkg source-build /path/to/<package.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools.
+
+### **3. Manual Assembly & Custom Builders**
+For those creating custom distros or using automation scripts (like a `some_linux_builder`), **runepkg** provides:
+- **Direct Build**: `runepkg -b <dir> [output.deb]` builds a `.deb` instantly from any standard .deb folder structure.
+- **FHS Initialization**: `runepkg_util_init_fhs` (available via C API) can bootstrap a full filesystem skeleton in seconds.
+- **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `apt` or `python` are unavailable.
 
 ---
 
 ## **Installation**
 
 ### **Dependencies**
-The **Core** version of **runepkg** requires only a C compiler (e.g., `gcc` or `clang`) and `make`. The **Standard** version includes a C++ FFI layer for networking and repository management, which requires a C++ compiler (e.g., `g++` or `clang++`), **libcurl**, **OpenSSL**, and **zlib**.
+
+**runepkg** is built for extreme portability and minimal footprint. Its dependencies are split between the compilation requirements of the binary itself and the runtime utilities required for package manipulation and source building.
+
+#### **1. Compilation Dependencies**
+- **Core (Minimal):** Requires only a standard C compiler (e.g., `gcc`, `clang`, or `tcc`) and `make`. This version is ideal for minimal LFS or embedded targets.
+- **Standard (Full):** Includes the C++ FFI layer for advanced networking and repository synchronization. Requires a C++ compiler (e.g., `g++` or `clang++`), **libcurl**, **OpenSSL**, and **zlib**.
+
+#### **2. Runtime Utilities & BusyBox Integration**
+For package extraction and assembly, and debian source package building, **runepkg** relies on standard system utilities. **runepkg is designed to be fully compatible with BusyBox**, making it perfect for minimal environments.
+
+- **Standard Environment:** Uses `ar` (from `binutils`) for managing the `.deb` archive format, and `tar` (along with `gzip` or `xz`) for extracting and compressing the control and data components.
+- **BusyBox (Embedded/LFS):** In resource-constrained environments, BusyBox can provide all necessary applets (`ar`, `tar`, `gz`, `xz`). This allows for a "zero-dependency" runtime where **runepkg** acts as the high-level orchestrator for the BusyBox primitives, even for complex tasks like source package extraction and building.
 
 **Required Packages by Distribution:**
 
+**runepkg** can safely coexist with other package managers as long as the `install_dir` from the configuration file `runepkgconfig` is set to an alternate location.
+
 - **Debian/Ubuntu:**
-  - **Core:** `gcc`, `make`, `libc6-dev`
-  - **Standard:** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`
-  - `sudo apt update && sudo apt install gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
+  - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz-utils`
+  - **Build Dependencies (C Core):** `gcc`, `make`, `libc6-dev`
+  - `sudo apt update && sudo apt install binutils tar gzip xz-utils gcc make libc6-dev`
+  - **Full Advanced Dependencies (C++ FFI Features):** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`
+  - `sudo apt update && sudo apt install binutils tar gzip xz-utils gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
 - 
 - **Arch Linux:**
-  - **Core:** `base-devel`
-  - **Standard:** `curl`, `openssl`, `zlib`
-  - `sudo pacman -S --needed base-devel curl openssl zlib`
+  - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz`
+  - **Build Dependencies (C Core):** `base-devel`
+  - `sudo pacman -S --needed binutils tar gzip xz base-devel`
+  - **Full Advanced Dependencies (C++ FFI Features):** `curl`, `openssl`, `zlib`
+  - `sudo pacman -S --needed binutils tar gzip xz base-devel curl openssl zlib`
 - 
 - **Fedora/RHEL:**
-  - **Core:** `gcc`, `make`, `glibc-devel`
-  - **Standard:** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
-  - `sudo dnf install gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
+  - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz`
+  - **Build Dependencies (C Core):** `gcc`, `make`, `glibc-devel`
+  - `sudo dnf install binutils tar gzip xz gcc make glibc-devel`
+  - **Full Advanced Dependencies (C++ FFI Features):** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
+  - `sudo dnf install binutils tar gzip xz gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
 
 ### **Customizing the Compiler**
-The `Makefile` supports overriding the default compilers. If you prefer to use `clang` instead of `gcc`, you can pass the variables directly to `make`:
+The `Makefile` supports overriding the default compilers. If you prefer to use `clang` or `tcc` instead of `gcc`, you can pass the variables directly to `make`:
 
 ```bash
 CC=clang CXX=clang++ make all
@@ -50,7 +91,7 @@ sudo make install
 ```
 
 ### **Embedded Installation (Minimal)**
-For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality.
+For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality similar to `apt` or `apt-get`
 
 ```bash
 make runepkg
@@ -107,6 +148,8 @@ Repository Management (Network):
   search <pkg|pattern>                    Search repositories for packages or patterns.
                                           (Use "quotes" to search for multiple words).
   source <pkg>                            Download source package files into download_dir.
+  source-depends <pkg>                    Download source package and its build dependencies.
+  source-build <package.dsc>              Build a Debian source package into runepkg_debs.
   download-only <pkg>                     Download a .deb to download_dir without installing.
 
 Global Options:

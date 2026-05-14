@@ -203,6 +203,7 @@ To maintain the project's "speed-first" philosophy, repository data is stored in
 When performing an `upgrade` or a `source` download, **runepkg** doesn't wait for one file to finish before starting the next.
 - **Batch Downloading**: In "upgrade" mode, all required `.deb` files are pre-fetched in parallel into the `download_dir`. This ensures that even if a network connection is lost midway, the installer already has all the necessary artifacts to proceed safely.
 - **Source Package Parallelism**: For source packages (which often consist of multiple `.dsc`, `.orig.tar.gz`, and `.diff.gz` files), the engine triggers simultaneous downloads for every component, drastically reducing the total wait time.
+- **Recursive Source Dependencies**: The `source-depends` command extends this by recursively parsing `Build-Depends` and pre-fetching the entire source dependency tree. This is essential for bootstrapping environments where you need to build a chain of related software from source.
 
 ### E. Modern Observability
 The FFI layer includes a color-coded logging system that provides real-time feedback on networking states:

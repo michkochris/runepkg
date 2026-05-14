@@ -1001,42 +1001,90 @@ extern "C" int runepkg_upgrade(void) {
     return fail_count == 0 ? 0 : -1;
 }
 
-extern "C" int runepkg_repo_source_download(const char *pkg_name) {
-    uint32_t offset;
-    std::string metafile;
-    std::string base_dir_url = get_package_url(pkg_name, true, &offset, &metafile);
-    if (base_dir_url.empty()) return -1;
+struct SourceFile {
+    std::string filename;
+    size_t size;
+};
 
-    struct SourceFile {
-        std::string filename;
-        size_t size;
-    };
-    std::vector<SourceFile> files_to_download;
-    std::ifstream meta(metafile);
-    meta.seekg(offset);
-    std::string line;
-    bool in_files = false;
-    while (std::getline(meta, line)) {
-        if (line.empty() || line == "\r") break;
-        if (line.compare(0, 7, "Files: ") == 0) {
-            in_files = true;
-        } else if (in_files && line[0] == ' ') {
-            std::stringstream ss(line);
-            std::string hash, size_str, filename;
-            ss >> hash >> size_str >> filename;
-            if (!filename.empty()) {
-                try {
-                    files_to_download.push_back({filename, (size_t)std::stoull(size_str)});
-                } catch (...) {
-                    files_to_download.push_back({filename, 0});
+struct SourceMetadata {
+    std::string name;
+    std::string base_url;
+    std::string build_depends;
+    std::vector<SourceFile> files;
+};
+
+SourceMetadata get_source_package_metadata(const std::string& pkg_name) {
+    SourceMetadata meta_data;
+    meta_data.name = pkg_name;
+
+    uint32_t offset = 0;
+    std::string meta_file;
+    std::string base_url = get_package_url(pkg_name.c_str(), true, &offset, &meta_file);
+    if (base_url.empty()) return meta_data;
+
+    meta_data.base_url = base_url;
+
+    std::ifstream meta(meta_file);
+    if (meta.is_open()) {
+        meta.seekg(offset);
+        std::string line;
+        bool in_files = false;
+        while (std::getline(meta, line)) {
+            if (line.empty() || line == "\r") break;
+            if (line.compare(0, 9, "Package: ") == 0) {
+                meta_data.name = line.substr(9);
+                if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
+            } else if (line.compare(0, 15, "Build-Depends: ") == 0) {
+                meta_data.build_depends = line.substr(15);
+                if (!meta_data.build_depends.empty() && meta_data.build_depends.back() == '\r') meta_data.build_depends.pop_back();
+            } else if (line.compare(0, 7, "Files: ") == 0) {
+                in_files = true;
+            } else if (in_files && line[0] == ' ') {
+                std::stringstream ss(line);
+                std::string hash, size_str, filename;
+                ss >> hash >> size_str >> filename;
+                if (!filename.empty()) {
+                    try {
+                        meta_data.files.push_back({filename, (size_t)std::stoull(size_str)});
+                    } catch (...) {
+                        meta_data.files.push_back({filename, 0});
+                    }
                 }
+            } else if (in_files && line[0] != ' ') {
+                in_files = false;
             }
-        } else if (in_files && line[0] != ' ') {
-            break; // Stop after the first file section (Files) to avoid double-counting with Checksums-Sha256
         }
     }
+    return meta_data;
+}
 
-    std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << files_to_download.size() << " files in parallel)..." << std::endl;
+void resolve_source_recursive(const std::string& pkg_name,
+                             std::unordered_map<std::string, SourceMetadata>& resolved,
+                             std::vector<std::string>& order,
+                             std::unordered_set<std::string>& visiting) {
+    if (resolved.count(pkg_name)) return;
+    if (visiting.count(pkg_name)) return;
+
+    SourceMetadata meta = get_source_package_metadata(pkg_name);
+    if (meta.base_url.empty()) return;
+
+    visiting.insert(pkg_name);
+    resolved[pkg_name] = meta;
+
+    std::vector<std::string> deps = parse_depends_cpp(meta.build_depends);
+    for (const auto& dep : deps) {
+        resolve_source_recursive(dep, resolved, order, visiting);
+    }
+
+    order.push_back(pkg_name);
+    visiting.erase(pkg_name);
+}
+
+extern "C" int runepkg_repo_source_download(const char *pkg_name) {
+    SourceMetadata meta = get_source_package_metadata(pkg_name);
+    if (meta.base_url.empty()) return -1;
+
+    std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << meta.files.size() << " files in parallel)..." << std::endl;
     curl_global_init(CURL_GLOBAL_ALL);
     std::vector<std::future<bool>> futures;
 
@@ -1045,13 +1093,13 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
         g_finished_count = 0;
         g_completed_names.clear();
         g_active_downloads.clear();
-        g_total_to_download = files_to_download.size();
+        g_total_to_download = meta.files.size();
     }
 
-    for (const auto& sf : files_to_download) {
-        std::string url = base_dir_url + "/" + sf.filename;
+    for (const auto& sf : meta.files) {
+        std::string url = meta.base_url + "/" + sf.filename;
         std::string dest = std::string(g_build_dir) + "/" + sf.filename;
-        futures.push_back(std::async(std::launch::async, [url, dest, &sf]() {
+        futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
             return download_file(url, dest, sf.size, sf.filename);
         }));
     }
@@ -1069,4 +1117,90 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
         std::cout << "\033[1;31m[error]\033[0m Failed to download source package files." << std::endl;
     }
     return (downloaded > 0) ? 0 : -1;
+}
+
+extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
+    if (!pkg_name) return -1;
+
+    std::unordered_map<std::string, SourceMetadata> resolved;
+    std::vector<std::string> order;
+    std::unordered_set<std::string> visiting;
+
+    std::cout << "\033[1;34m[runepkg]\033[0m Resolving source dependencies for " << pkg_name << "..." << std::endl;
+    resolve_source_recursive(pkg_name, resolved, order, visiting);
+
+    if (resolved.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not find source package " << pkg_name << std::endl;
+        return -1;
+    }
+
+    if (order.size() > 1) {
+        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages are required:" << std::endl;
+        int width = runepkg_util_get_terminal_width();
+        int current_line_len = 2;
+        std::cout << "  ";
+        for (size_t i = 0; i < order.size(); i++) {
+            if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) {
+                std::cout << "\n  ";
+                current_line_len = 2;
+            }
+            std::cout << order[i];
+            current_line_len += order[i].length();
+            if (i < order.size() - 1) {
+                std::cout << " ";
+                current_line_len += 1;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    if (order.size() > 1) {
+        std::cout << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::fflush(stdout);
+        char resp[16];
+        bool confirmed = false;
+        if (g_auto_confirm_deps) {
+            std::cout << "\033[1;33my (auto)\033[0m" << std::endl;
+            confirmed = true;
+        } else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+            confirmed = true;
+            g_auto_confirm_deps = true;
+        }
+
+        if (!confirmed) {
+            std::cout << "Source download cancelled." << std::endl;
+            return 0;
+        }
+    }
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
+
+        std::vector<std::future<bool>> futures;
+        {
+            std::lock_guard<std::mutex> lock(g_progress_mutex);
+            g_finished_count = 0;
+            g_completed_names.clear();
+            g_active_downloads.clear();
+            g_total_to_download = meta.files.size();
+        }
+
+        for (const auto& sf : meta.files) {
+            std::string url = meta.base_url + "/" + sf.filename;
+            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
+            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
+                return download_file(url, dest, sf.size, sf.filename);
+            }));
+        }
+
+        for (size_t i = 0; i < futures.size(); i++) futures[i].get();
+        std::cout << std::endl;
+    }
+
+    curl_global_cleanup();
+    runepkg_storage_build_autocomplete_index();
+    return 0;
 }
