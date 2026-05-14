@@ -97,7 +97,7 @@ sudo make install
 ```
 
 ### **Embedded Installation (Minimal)**
-For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality similar to `apt` or `apt-get`
+For embedded systems, you can build the core `runepkg` in pure C. This version excludes the Extended C++ FFI features...
 
 ```bash
 make runepkg
@@ -105,7 +105,7 @@ sudo make install
 ```
 
 ### **Standard Installation (Full)**
-For a full installation including advanced C++ networking features (similar to `apt` or `apt-get`), use:
+For a full installation including advanced C++ FFI networking features and debian source package building (similar to `apt` or `apt-get`), use:
 
 ```bash
 make all
@@ -132,7 +132,7 @@ runepkg (fast efficient old-school .deb package manager)
 Usage:
   runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
-Package Management (Local):
+Core Package Management (Local/Low-Level):
   -i, --install <path-to-package.deb>...  Install one or more .deb files.
       --install -                         Read .deb paths from stdin.
       --install @file                     Read .deb paths from a list file.
@@ -142,8 +142,11 @@ Package Management (Local):
   -s, --status <package-name>             Show detailed info about an installed package.
   -L, --list-files <package-name>         List all files owned by an installed package.
   -S, --search <file-path>                Search installed packages for a specific file.
+  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.
+  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.
+  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.
 
-Repository Management (Network):
+Advanced Repository Management (Network/FFI):
   update                                  Sync metadata and check for upgradable packages.
   upgrade                                 Download and install all available upgrades.
   search <pkg|pattern>                    Search repositories for packages or patterns.

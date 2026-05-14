@@ -55,20 +55,21 @@ void usage(void) {
     printf("Usage:\n");
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
 
-    printf("Package Management (Local):\n");
+    printf("Core Package Management (Local/Low-Level):\n");
     printf("  -i, --install <path-to-package.deb>...  Install one or more .deb files.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
-    printf("  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.\n");
     printf("  -r, --remove <package-name>             Remove an installed package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
     printf("  -l, --list [pattern]                    List installed packages (optionally matching pattern).\n");
     printf("  -s, --status <package-name>             Show detailed info about an installed package.\n");
-    printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
     printf("  -L, --list-files <package-name>         List all files owned by an installed package.\n");
-    printf("  -S, --search <file-path>                Search installed packages for a specific file.\n\n");
+    printf("  -S, --search <file-path>                Search installed packages for a specific file.\n");
+    printf("  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.\n");
+    printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
+    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n\n");
 
-    printf("Repository Management (Network):\n");
+    printf("Advanced Repository Management (Network/FFI):\n");
     printf("  update                                  Sync metadata and check for upgradable packages.\n");
     printf("  upgrade                                 Download and install all available upgrades.\n");
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
@@ -76,7 +77,6 @@ void usage(void) {
     printf("  source <pkg>                            Download source package files into download_dir.\n");
     printf("  source-depends <pkg>                    Download source package and its build dependencies.\n");
     printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
-    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
 
     printf("Global Options:\n");
