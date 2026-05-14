@@ -13,7 +13,7 @@
 **runepkg's** advanced C++ FFI features include high-speed parallel networking, repository synchronization, and a pure C++ Debian source package builder.
 
 ### **Philosophy & Background** 
-*Built with ❤️ for the old school GNU/Linux community and open source software with the freedom of compiling, building .deb's the way a power user wants without all the strict system specific rules such as an official Debian based Linux distribution. **runepkg** allows you to treat software or packages as components rather than strict rigid system parts*
+*Built with ❤️ for the old school GNU/Linux community and open source software with the freedom of compiling, building .deb's the way a power user wants without all the strict system specific rules such as an official Debian based Linux distribution. **runepkg** allows you to treat packages as building blocks or components rather than strict system policy...*
 
 **runepkg** has been developed using my experience and expertise as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS). The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software from the debian archives safely in modern environments.
 
