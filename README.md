@@ -6,8 +6,6 @@
 
 **runepkg** is a lightning-fast, high-performance .deb package manager. It is designed to be both a high-level tool such as `apt` or `apt-get` for managing repositories, packages and dependencies with incredible speed, or a low-level package management tool for minimal embedded systems. It provides surgical precision required for custom .deb package builds and installs with the freedom to bypass the strict or rigid policy requirements of mainstream distributions.
 
----
-
 **runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as `gcc`, `clang`, or `tcc` and use with `busybox`. 
 
 **runepkg's** advanced C++ FFI features include high-speed parallel networking, repository synchronization, and a pure C++ Debian source package builder.
@@ -16,8 +14,6 @@
 *Built with ❤️ for the old school GNU/Linux community and open source software with the freedom of compiling, building .deb's the way a power user wants without all the strict system specific rules such as an official Debian based Linux distribution. **runepkg** allows you to treat packages as building blocks or components rather than strict system policy...*
 
 **runepkg** has been developed using my experience and expertise as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS). The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software from the debian archives safely in modern environments.
-
----
 
 ## **The runepkg Difference: Beyond dpkg and apt-get**
 **runepkg** evolves package management by replacing the sequential, text-heavy bottlenecks of `dpkg` and `apt` with a performance-first hybrid architecture. While traditional tools parse large flat files on every invocation, **runepkg** utilizes **binary-serialized metadata** (`pkginfo.bin`) and **memory-mapped repository indices** (`mmap`), enabling $O(\log n)$ search speeds across tens of thousands of packages. Its core engine uses a custom **FNV-1a hash table** with prime-sized buckets to maintain $O(1)$ lookup performance regardless of database size. Beyond mere installation, it introduces **parallel file extraction** via `pthread` and **"clandestine" dependency resolution** , which intelligently looks for and detects local sibling dependency `.deb` files in the correct order before reaching for the network to satisfy dependencies. The combination of a hardened C plumbing (featuring `secure_malloc` and zero-wiping) and a C++ FFI for asynchronous networking provides a level of speed, security, and surgical control that monolithic managers cannot match.
@@ -39,8 +35,6 @@ For those creating custom Linux distros, bootable custom Linux iso's or using au
 - **Direct Build**: `runepkg -b <dir> [output.deb]` builds a `.deb` instantly from any standard .deb folder structure.
 - **FHS Initialization**: `runepkg_util_init_fhs` (available via C API) can bootstrap a full filesystem skeleton in seconds.
 - **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `c++`, are unavailable for example...
-
----
 
 ## **Installation**
 
@@ -86,8 +80,6 @@ For package extraction and assembly, and debian source package building, **runep
 ## **Configuration runepkgconfig**
 Edit before install for user preferences...
 The configuration file will be installed to `/etc/runepkg/runepkgconfig` like other standard Linux programs. This file contains various path variables, including the `install_dir`. Repository information Debian (sources.list) info is stored at the bottom of the file in a standard Debian format. You can use any Debian-based repositories (including Debian, Ubuntu, Kali, or legacy debian archives)...
-
----
 
 ### **Customizing the Compiler**
 The `Makefile` supports overriding the default compilers. If you prefer to use `clang` or `tcc` instead of `gcc`, you can pass the variables directly to `make`:
@@ -147,8 +139,6 @@ sudo make uninstall
 ```
 
 *Note: You may receive a notification if certain system directories require manual removal...*
-
----
 
 ## **Usage**
 For basic commands, see the help output below. For comprehensive examples, advanced workflows, and repository management details, please refer to [USAGELONG.md](./USAGELONG.md).
@@ -210,12 +200,9 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 Contact: [michkochris@gmail.com] | [runepkg@gmail.com]
 
----
-
 ## **Contact**
 For feedback, bug reports, or "rune" discoveries, reach out at:
 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
 
----
 
 
