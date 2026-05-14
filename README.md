@@ -8,7 +8,7 @@
 
 ---
 
-**runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc** and use with `busybox`. 
+**runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as `gcc`, `clang`, or `tcc` and use with `busybox`. 
 
 **runepkg's** advanced C++ FFI features include high-speed parallel networking, repository synchronization, and a pure C++ Debian source package builder.
 
@@ -17,7 +17,7 @@
 
 **runepkg** has been developed using my experience and expertise as an old-school GNU/Linux hobbyist and my obsession for Custom Cross Linux From Scratch (LFS). The name **runepkg** stems from the vision of treating ancient `.deb` packages as "runes"—valuable historical artifacts preserved in the Debian archives. This tool is designed to give you the power to unearth and run this legacy software from the debian archives safely in modern environments.
 
-If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed technical expalination in [INTERNALS.md](./INTERNALS.md).
+If you are interested in the technical and insightful architectural decisions behind how **runepkg** was built, you can find a detailed technical explanation in [INTERNALS.md](./INTERNALS.md).
 
 ---
 
@@ -25,7 +25,7 @@ If you are interested in the technical and insightful architectural decisions be
 While traditional tools like **apt-get** are built to maintain a strict, consistent system state, **runepkg** is built for the builder. It excels in performance through its **Parallel FFI Engine**, which handles metadata updates and package fetches significantly faster than sequential tools. Beyond speed, runepkg's dependency resolution is designed to be "context-aware"—it prioritizes local 'sibling' packages and allows for manual overrides that would typically trigger a deadlock in apt. This makes it not just a faster alternative, but a more flexible one for experimental and custom environments. While **runepkg** can manage repositories like `apt` with incredible speed and efficiency, matching and often exceeding its core performance, it is fundamentally designed for manual control and surgical precision, making it an ideal tool for **Custom Linux From Scratch (LFS)** and advanced system builders.
 
 ### **1. Surgical Precision**
-Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches). This allows you to inspect and modify the code, the `rules` Debian build script, or the `control` file, metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
+Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches) single Debian source package. This allows you to inspect and modify the `rules` Debian build script, or the `control` file for metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
 
 ### **2. The "Hacker" Build Loop**
 **runepkg** provides high-speed package management that matches the convenience of `apt-get` while enabling a power user for a "fetch-edit-build" workflow:
@@ -119,7 +119,7 @@ sudo make install
 chmod +x make_runepkg_deb.sh
 ./make_runepkg_deb.sh
 ```
-This script will compile the project and use the resulting binary to assemble a professional `.deb` package.
+This script will compile the project and use the resulting binary to assemble a professional grade `.deb` package.
 
 *Note: For a minimal embedded version, edit `make_runepkg_deb.sh` and change `make all` to `make runepkg`.*
 
@@ -201,23 +201,23 @@ Experimental/Future:
 
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 Note: FFI features (C++) are enabled based on your build target (`make all`).
+```
 
   [#######]  runepkg
   [# \ / #]  version 1.0.4
   [#  V  #]
   [#######]  GPL-V3
 
-*Built with ❤️ for the old school GNU/Linux community...*
+**Built with ❤️ for the old school GNU/Linux community...**
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 Contact: [michkochris@gmail.com] | [runepkg@gmail.com]
-```
+
 
 ---
 
 ## **Contact**
-For feedback, bug reports, or "rune" discoveries, you can reach out at:
-- **Primary:** [michkochris@gmail.com](mailto:michkochris@gmail.com)
-- **Project:** [runepkg@gmail.com](mailto:runepkg@gmail.com)
+For feedback, bug reports, or "rune" discoveries, reach out at:
+[michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
 
 ---
 
