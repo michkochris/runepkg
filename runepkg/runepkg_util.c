@@ -1170,10 +1170,10 @@ void runepkg_util_print_columns(const char *items[], int count) {
 
 void runepkg_util_motd(void) {
     /* Built-in ASCII art: Cyan rune on Grey stone */
-    printf("  \033[90m[#######]\033[0m  \033[1;37mrunepkg\033[0m\n");
-    printf("  \033[90m[# \033[1;36m\\ / \033[90m#]\033[0m  \033[37mversion 1.0.4\033[0m\n");
-    printf("  \033[90m[#  \033[1;36mV  \033[90m#]\033[0m\n");
-    printf("  \033[90m[#######]\033[0m  \033[37mGPL-V3\033[0m\n\n");
+    printf("  \033[90m[#####]\033[0m  \033[1;37mrunepkg\033[0m\n");
+    printf("  \033[90m[#\033[1;36m\\ /\033[90m#]\033[0m  \033[37mversion 1.0.4\033[0m\n");
+    printf("  \033[90m[# \033[1;36mV \033[90m#]\033[0m\n");
+    printf("  \033[90m[#####]\033[0m  \033[37mGPL-V3\033[0m\n\n");
 }
 
 int runepkg_util_get_package_suggestions(const char *search_name, const char *db_dir, char suggestions[][PATH_MAX], int max_suggestions) {

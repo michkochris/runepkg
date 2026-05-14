@@ -1101,10 +1101,10 @@ int handle_md5_check(const char *package_name) {
 }
 
 void handle_version(void) {
-    printf("  \033[1;30m[#######]\033[0m  runepkg\n");
-    printf("  \033[1;30m[#\033[0m \033[1;36m\\ /\033[0m \033[1;30m#]\033[0m  version 1.0.4\n");
-    printf("  \033[1;30m[#\033[0m  \033[1;36mV\033[0m  \033[1;30m#]\033[0m  \n");
-    printf("  \033[1;30m[#######]\033[0m  GPL-V3\n\n");
+    printf("  \033[1;30m[#####]\033[0m  runepkg\n");
+    printf("  \033[1;30m[#\033[1;36m\\ /\033[1;30m#]\033[0m  version 1.0.4\n");
+    printf("  \033[1;30m[# \033[1;36mV \033[1;30m#]\033[0m  \n");
+    printf("  \033[1;30m[#####]\033[0m  GPL-V3\n\n");
     printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
     printf("Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.\n");
     printf("Contact: [michkochris@gmail.com] | [runepkg@gmail.com]\n");
