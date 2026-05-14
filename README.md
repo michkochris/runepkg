@@ -204,10 +204,10 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 ```
 
 ```diff
-+ [#######]  runepkg
-+ [# \ / #]  version 1.0.4
-+ [#  V  #]
-+ [#######]  GPL-V3
+# [#######]  runepkg
+@@ [# \ / #]  version 1.0.4 @@
+@@ [#  V  #]                @@
+# [#######]  GPL-V3
 ```
 
 ```
