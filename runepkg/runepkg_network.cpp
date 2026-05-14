@@ -777,7 +777,11 @@ extern "C" int runepkg_upgrade(void) {
 }
 
 extern "C" int runepkg_repo_source_download(const char *pkg_name) {
-    SourceMetadata meta = get_source_package_metadata(pkg_name); if (meta.base_url.empty()) return -1;
+    SourceMetadata meta = get_source_package_metadata(pkg_name);
+    if (meta.base_url.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not find source package metadata for '" << pkg_name << "'" << std::endl;
+        return -1;
+    }
     std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << meta.files.size() << " files in parallel)..." << std::endl;
     curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }

@@ -225,7 +225,19 @@ int main(int argc, char *argv[]) {
                                 ret = handle_install(downloaded_path);
                                 free(downloaded_path);
                             } else {
-                                fprintf(stderr, "Error: Cannot find local file '%s' and failed to download it from repositories.\n", next_arg);
+                                fprintf(stderr, "\033[1;31mError:\033[0m Cannot find local file '%s' and failed to download it from repositories.\n", next_arg);
+
+                                // Show suggestions from repository
+                                char suggestions[12][PATH_MAX];
+                                int count = runepkg_completion_get_repo_suggestions(next_arg, suggestions, 12);
+                                if (count > 0) {
+                                    printf("\033[1;33m - did you mean:\033[0m\n");
+                                    const char *items[12];
+                                    for (int k = 0; k < count; k++) items[k] = suggestions[k];
+                                    printf("    ");
+                                    runepkg_util_print_columns(items, count);
+                                }
+
                                 ret = -1;
                             }
 #else
@@ -457,7 +469,12 @@ int main(int argc, char *argv[]) {
                 g_force_mode = true; // Ignore installed status for download-only
                 char *path = runepkg_repo_download(argv[i+1], false);
                 g_force_mode = old_force;
-                if (path) free(path);
+                if (path) {
+                    free(path);
+                } else {
+                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' in repositories.\n", argv[i+1]);
+                    cli_failed = 1;
+                }
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -472,7 +489,9 @@ int main(int argc, char *argv[]) {
                 extern bool g_force_mode;
                 bool old_force = g_force_mode;
                 g_force_mode = true; // Ignore installed status for download-build-depends
-                runepkg_repo_build_depends_download(argv[i+1]);
+                if (runepkg_repo_build_depends_download(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
                 g_force_mode = old_force;
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
@@ -490,7 +509,12 @@ int main(int argc, char *argv[]) {
                 g_force_mode = true; // Ignore installed status for download-depends
                 char *path = runepkg_repo_download(argv[i+1], true);
                 g_force_mode = old_force;
-                if (path) free(path);
+                if (path) {
+                    free(path);
+                } else {
+                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' (or its dependencies) in repositories.\n", argv[i+1]);
+                    cli_failed = 1;
+                }
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -530,7 +554,9 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "source") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                runepkg_repo_source_download(argv[i+1]);
+                if (runepkg_repo_source_download(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
 #else
                 printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -542,7 +568,9 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "source-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                runepkg_repo_source_depends_download(argv[i+1]);
+                if (runepkg_repo_source_depends_download(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
 #else
                 printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -554,7 +582,13 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "source-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                runepkg_repo_source_build_depends_download(argv[i+1]);
+                extern bool g_force_mode;
+                bool old_force = g_force_mode;
+                g_force_mode = true; // Ignore installed status for source-build-depends
+                if (runepkg_repo_source_build_depends_download(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
+                g_force_mode = old_force;
 #else
                 printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");

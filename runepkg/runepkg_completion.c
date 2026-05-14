@@ -415,7 +415,7 @@ struct RepoIndexEntry {
     uint32_t offset;
 };
 
-static int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
+int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
     char index_path[PATH_MAX];
     if (!g_runepkg_db_dir) return 0;
     snprintf(index_path, sizeof(index_path), "%s/%s", g_runepkg_db_dir, index_filename);
@@ -464,6 +464,68 @@ static int repo_generic_prefix_search(const char *prefix, const char *index_file
     munmap(mapped, st.st_size);
     close(fd);
     return (first_match != -1) ? 1 : 0;
+}
+
+int runepkg_completion_get_repo_suggestions(const char *search_name, char suggestions[][PATH_MAX], int max_suggestions) {
+    if (!search_name || !suggestions || max_suggestions <= 0 || !g_runepkg_db_dir) return 0;
+
+    char index_path[PATH_MAX];
+    snprintf(index_path, sizeof(index_path), "%s/repo_index.bin", g_runepkg_db_dir);
+
+    int fd = open(index_path, O_RDONLY);
+    if (fd < 0) return 0;
+
+    struct stat st;
+    if (fstat(fd, &st) < 0) { close(fd); return 0; }
+    if (st.st_size < (off_t)sizeof(uint32_t)) { close(fd); return 0; }
+
+    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (mapped == MAP_FAILED) { close(fd); return 0; }
+
+    uint32_t count = *(uint32_t *)mapped;
+    struct RepoIndexEntry *entries = (struct RepoIndexEntry *)((char *)mapped + sizeof(uint32_t));
+
+    int found = 0;
+    char last_added[64] = {0};
+
+    /* Pass 1: Prefix matches (higher relevance) */
+    for (uint32_t i = 0; i < count && found < max_suggestions; i++) {
+        if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) {
+            if (strcmp(last_added, entries[i].name) != 0) {
+                strncpy(suggestions[found], entries[i].name, PATH_MAX - 1);
+                suggestions[found][PATH_MAX - 1] = '\0';
+                strncpy(last_added, entries[i].name, sizeof(last_added) - 1);
+                found++;
+            }
+        }
+    }
+
+    /* Pass 2: Substring matches (if we still have room) */
+    if (found < max_suggestions) {
+        for (uint32_t i = 0; i < count && found < max_suggestions; i++) {
+            /* Skip if it was already found as a prefix match */
+            if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) continue;
+
+            if (strstr(entries[i].name, search_name) != NULL) {
+                if (strcmp(last_added, entries[i].name) != 0) {
+                    /* Secondary check to avoid duplicates from previous pass if names are unsorted or similar */
+                    bool already = false;
+                    for (int k = 0; k < found; k++) {
+                        if (strcmp(suggestions[k], entries[i].name) == 0) { already = true; break; }
+                    }
+                    if (already) continue;
+
+                    strncpy(suggestions[found], entries[i].name, PATH_MAX - 1);
+                    suggestions[found][PATH_MAX - 1] = '\0';
+                    found++;
+                }
+            }
+        }
+    }
+
+    munmap(mapped, st.st_size);
+    close(fd);
+    return found;
 }
 
 int repo_prefix_search_and_print(const char *prefix) {

@@ -13,5 +13,6 @@ void complete_deb_files(const char *partial);
 void complete_file_paths(const char *partial);
 void handle_binary_completion(const char *partial, const char *prev);
 void handle_print_auto_pkgs(void);
+int runepkg_completion_get_repo_suggestions(const char *search_name, char suggestions[][PATH_MAX], int max_suggestions);
 
 #endif /* RUNEPKG_COMPLETION_H */
