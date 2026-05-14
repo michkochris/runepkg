@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Package Metadata
+PACKAGE_NAME="runepkg"
+VERSION="1.0.4"
+MAINTAINER="michkochris <michkochris@gmail.com>"
+DESCRIPTION="Lightning-fast, high-performance .deb package manager for power users and LFS."
+ARCHITECTURE="amd64"
+HOMEPAGE="https://github.com/michkochris/runepkg"
+
+# Runtime Dependencies (Core utilities + standard libraries)
+DEPENDS="binutils, tar, gzip, xz-utils, libcurl4, libssl3, zlib1g"
+
+# Build Environment
+STAGING_DIR="/tmp/runepkg_deb_staging"
+CONTROL_DIR="$STAGING_DIR/control"
+DATA_DIR="$STAGING_DIR/data"
+
+# Helper function to create the .deb structure
+setup_staging() {
+    echo "Creating staging area at $STAGING_DIR..."
+    rm -rf "$STAGING_DIR"
+    mkdir -p "$CONTROL_DIR" "$DATA_DIR/usr/bin" "$DATA_DIR/etc/runepkg"
+}
+
+# Helper function to generate the control file
+generate_control() {
+    echo "Generating control file..."
+    cat << EOF > "$CONTROL_DIR/control"
+Package: $PACKAGE_NAME
+Version: $VERSION
+Architecture: $ARCHITECTURE
+Maintainer: $MAINTAINER
+Homepage: $HOMEPAGE
+Depends: $DEPENDS
+Description: $DESCRIPTION
+EOF
+}

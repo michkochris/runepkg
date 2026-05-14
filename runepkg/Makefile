@@ -111,7 +111,7 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 clean:
 	@echo "Cleaning up build artifacts..."
-	rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
+	rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
 	@echo "🧹 Clean complete."
 
 test-binary: $(TARGET)

@@ -112,6 +112,17 @@ make all
 sudo make install
 ```
 
+### **📦 Build as a .deb (Self-Building)**
+**runepkg** is powerful enough to build its own .deb distribution package. If you want to create a `.deb` file of runepkg for install with traditional dpkg or busybox dpkg, run:
+
+```bash
+chmod +x make_runepkg_deb.sh
+./make_runepkg_deb.sh
+```
+This script will compile the project and use the resulting binary to assemble a professional `.deb` package.
+
+*Note: For a minimal embedded version, edit `make_runepkg_deb.sh` and change `make all` to `make runepkg`.*
+
 ### **⚡ Lightning Fast Autocomplete**
 **runepkg** features an advanced, binary-driven completion engine that is significantly faster than standard shell scripts. To enable it, you must register the binary with your shell.
 
