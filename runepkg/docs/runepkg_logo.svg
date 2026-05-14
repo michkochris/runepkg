@@ -3,14 +3,14 @@
 
   <g font-family="monospace" font-weight="bold" font-size="22" fill="#555555" xml:space="preserve">
     <text x="10" y="25">[#####]</text>
-    <text x="10" y="48">[#      #]</text>
-    <text x="10" y="71">[#      #]</text>
+    <text x="10" y="48">[#        #]</text>
+    <text x="10" y="71">[#        #]</text>
     <text x="10" y="94">[#####]</text>
   </g>
 
   <g font-family="monospace" font-weight="bold" font-size="22" fill="#00ffff" style="filter: drop-shadow(0 0 3px #00ffff);" xml:space="preserve">
-    <text x="27" y="50">  \ /  </text>
-    <text x="23" y="70">   V   </text>
+    <text x="27" y="50">\ /</text>
+    <text x="23" y="70">V</text>
   </g>
 
   <g font-family="monospace" fill="#888888">
