@@ -74,8 +74,9 @@ void usage(void) {
     printf("  upgrade                                 Download and install all available upgrades.\n");
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
-    printf("  source <pkg>                            Download source package files into download_dir.\n");
-    printf("  source-depends <pkg>                    Download source package and its build dependencies.\n");
+    printf("  source <pkg>                            Download source package files into build_dir.\n");
+    printf("  source-depends <pkg>                    Download source package and its runtime-dependencies.\n");
+    printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n");
     printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without installing.\n\n");
 
@@ -507,6 +508,18 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: source-depends command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "source-build-depends") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                runepkg_repo_source_build_depends_download(argv[i+1]);
+#else
+                printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: source-build-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "source-build") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {

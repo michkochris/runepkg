@@ -151,8 +151,9 @@ Advanced Repository Management (Network/FFI):
   upgrade                                 Download and install all available upgrades.
   search <pkg|pattern>                    Search repositories for packages or patterns.
                                           (Use "quotes" to search for multiple words).
-  source <pkg>                            Download source package files into download_dir.
-  source-depends <pkg>                    Download source package and its build dependencies.
+  source <pkg>                            Download source package files into build_dir.
+  source-depends <pkg>                    Download source package and its runtime-dependencies.
+  source-build-depends <pkg>              Download source package and its build-dependencies.
   source-build <package.dsc>              Build a Debian source package into runepkg_debs.
   download-only <pkg>                     Download a .deb to download_dir without installing.
 

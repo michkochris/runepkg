@@ -511,7 +511,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "build", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "-m") == 0 || strcmp(tok, "--md5check") == 0) {
                     strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "source") == 0 || strcmp(tok, "source-depends") == 0) {
+                } else if (strcmp(tok, "source") == 0 || strcmp(tok, "source-depends") == 0 || strcmp(tok, "source-build-depends") == 0) {
                     strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "download-only") == 0) {
                     strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
@@ -552,7 +552,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "-m") == 0 || strcmp(t2, "--md5check") == 0) {
                             strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
                             break;
-                        } else if (strcmp(t2, "source") == 0 || strcmp(t2, "source-depends") == 0) {
+                        } else if (strcmp(t2, "source") == 0 || strcmp(t2, "source-depends") == 0 || strcmp(t2, "source-build-depends") == 0) {
                             strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                             break;
                         } else if (strcmp(t2, "download-only") == 0) {
@@ -674,7 +674,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             const char *sub_cmds[] = {
                 "install", "remove", "list", "status", "list-files", "search",
-                "download-only", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build"
+                "download-only", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "source-build"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
             for (int i = 0; i < num_sub; i++) {
@@ -715,7 +715,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
     } else if (strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0) {
         prefix_search_and_print_ext(partial, ":pkg");
         repo_prefix_search_and_print(partial);
-    } else if (strcmp(prev, "source") == 0 || strcmp(prev, "source-depends") == 0) {
+    } else if (strcmp(prev, "source") == 0 || strcmp(prev, "source-depends") == 0 || strcmp(prev, "source-build-depends") == 0) {
         repo_src_prefix_search_and_print(partial);
     } else if (strcmp(prev, "download-only") == 0) {
         repo_prefix_search_and_print(partial);

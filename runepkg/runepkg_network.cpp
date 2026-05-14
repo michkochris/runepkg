@@ -674,6 +674,7 @@ struct PkgMetadata {
     std::string url;
     std::string depends;
     std::string filename;
+    std::string source_name;
     size_t size = 0;
 };
 
@@ -702,6 +703,12 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
             } else if (line.compare(0, 9, "Depends: ") == 0) {
                 meta_data.depends = line.substr(9);
                 if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
+            } else if (line.compare(0, 8, "Source: ") == 0) {
+                meta_data.source_name = line.substr(8);
+                // Strip version restriction if present in Source field, e.g. "gcc-12 (12.2.0-1)"
+                size_t space = meta_data.source_name.find(' ');
+                if (space != std::string::npos) meta_data.source_name = meta_data.source_name.substr(0, space);
+                if (!meta_data.source_name.empty() && meta_data.source_name.back() == '\r') meta_data.source_name.pop_back();
             } else if (line.compare(0, 6, "Size: ") == 0) {
                 try {
                     meta_data.size = std::stoull(line.substr(6));
@@ -711,6 +718,8 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
             }
         }
     }
+    // If Source field was missing, the source package name is usually the same as the binary package name
+    if (meta_data.source_name.empty()) meta_data.source_name = meta_data.name;
     return meta_data;
 }
 
@@ -1133,14 +1142,46 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
     return (downloaded > 0) ? 0 : -1;
 }
 
-extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
+void resolve_source_runtime_recursive(const std::string& pkg_name,
+                                     std::unordered_map<std::string, SourceMetadata>& resolved,
+                                     std::vector<std::string>& order,
+                                     std::unordered_set<std::string>& visiting) {
+    if (visiting.count(pkg_name)) return;
+    visiting.insert(pkg_name);
+
+    // 1. Get binary metadata to find dependencies and the associated source package name
+    PkgMetadata bin_meta = get_package_metadata(pkg_name);
+    if (bin_meta.source_name.empty()) {
+        visiting.erase(pkg_name);
+        return;
+    }
+
+    // 2. Fetch source metadata for this package if not already resolved
+    if (resolved.find(bin_meta.source_name) == resolved.end()) {
+        SourceMetadata src_meta = get_source_package_metadata(bin_meta.source_name);
+        if (!src_meta.base_url.empty()) {
+            resolved[bin_meta.source_name] = src_meta;
+            order.push_back(bin_meta.source_name);
+        }
+    }
+
+    // 3. Recurse into runtime dependencies
+    std::vector<std::string> deps = parse_depends_cpp(bin_meta.depends);
+    for (const auto& dep : deps) {
+        resolve_source_runtime_recursive(dep, resolved, order, visiting);
+    }
+
+    visiting.erase(pkg_name);
+}
+
+extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) {
     if (!pkg_name) return -1;
 
     std::unordered_map<std::string, SourceMetadata> resolved;
     std::vector<std::string> order;
     std::unordered_set<std::string> visiting;
 
-    std::cout << "\033[1;34m[runepkg]\033[0m Resolving source dependencies for " << pkg_name << "..." << std::endl;
+    std::cout << "\033[1;34m[runepkg]\033[0m Resolving source build-dependencies for " << pkg_name << "..." << std::endl;
     resolve_source_recursive(pkg_name, resolved, order, visiting);
 
     if (resolved.empty()) {
@@ -1149,7 +1190,7 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
     }
 
     if (order.size() > 1) {
-        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages are required:" << std::endl;
+        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages (build-deps) are required:" << std::endl;
         int width = runepkg_util_get_terminal_width();
         int current_line_len = 2;
         std::cout << "  ";
@@ -1169,6 +1210,104 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
     }
 
     if (order.size() > 1) {
+        std::cout << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::fflush(stdout);
+        char resp[16];
+        bool confirmed = false;
+        if (g_auto_confirm_deps) {
+            std::cout << "\033[1;33my (auto)\033[0m" << std::endl;
+            confirmed = true;
+        } else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+            confirmed = true;
+            g_auto_confirm_deps = true;
+        }
+
+        if (!confirmed) {
+            std::cout << "Source download cancelled." << std::endl;
+            return 0;
+        }
+    }
+
+    curl_global_init(CURL_GLOBAL_ALL);
+
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
+
+        std::vector<std::future<bool>> futures;
+        {
+            std::lock_guard<std::mutex> lock(g_progress_mutex);
+            g_finished_count = 0;
+            g_completed_names.clear();
+            g_active_downloads.clear();
+            g_total_to_download = meta.files.size();
+        }
+
+        for (const auto& sf : meta.files) {
+            std::string url = meta.base_url + "/" + sf.filename;
+            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
+            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
+                return download_file(url, dest, sf.size, sf.filename);
+            }));
+        }
+
+        for (size_t i = 0; i < futures.size(); i++) futures[i].get();
+        std::cout << std::endl;
+
+        // Auto-unpack each source package as it is downloaded
+        std::string dsc_path;
+        for (const auto& sf : meta.files) {
+            if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") {
+                dsc_path = std::string(g_build_dir) + "/" + sf.filename;
+                break;
+            }
+        }
+        if (!dsc_path.empty()) {
+            runepkg_source_unpack(dsc_path.c_str());
+        }
+    }
+
+    curl_global_cleanup();
+    runepkg_storage_build_autocomplete_index();
+    return 0;
+}
+
+extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
+    if (!pkg_name) return -1;
+
+    std::unordered_map<std::string, SourceMetadata> resolved;
+    std::vector<std::string> order;
+    std::unordered_set<std::string> visiting;
+
+    std::cout << "\033[1;34m[runepkg]\033[0m Resolving source runtime-dependencies for " << pkg_name << "..." << std::endl;
+    resolve_source_runtime_recursive(pkg_name, resolved, order, visiting);
+
+    if (resolved.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not find dependencies for " << pkg_name << std::endl;
+        return -1;
+    }
+
+    if (order.size() > 0) {
+        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages (runtime-deps) are required:" << std::endl;
+        int width = runepkg_util_get_terminal_width();
+        int current_line_len = 2;
+        std::cout << "  ";
+        for (size_t i = 0; i < order.size(); i++) {
+            if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) {
+                std::cout << "\n  ";
+                current_line_len = 2;
+            }
+            std::cout << order[i];
+            current_line_len += order[i].length();
+            if (i < order.size() - 1) {
+                std::cout << " ";
+                current_line_len += 1;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    if (order.size() > 0) {
         std::cout << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout);
         char resp[16];
