@@ -8,7 +8,7 @@
 
 ---
 
-**runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc**. 
+**runepkg's** core is written in standard C, allowing for minimal low level installs similar to `dpkg` can be used for memory constrained embedded systems with high portability across environments like **musl libc** and compatibility with compilers such as **gcc**, **clang**, or **tcc** and use with `busybox`. 
 
 **runepkg's** advanced C++ FFI features include high-speed parallel networking, repository synchronization, and a pure C++ Debian source package builder.
 
@@ -34,7 +34,7 @@ Unlike `apt-get source`, which often pulls in a massive tree of build-dependenci
 - **Build**: Use `runepkg source-build /path/to/<package.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools.
 
 ### **3. Manual Assembly & Custom Builders**
-For those creating custom distros or using automation scripts (like `some_linux_builder`), **runepkg** provides:
+For those creating custom Linux distros, bootable custom Linux iso's or using automatic build scripts (like [`some_linux_builder`](https://github.com/michkochris/some_linux_builder)), **runepkg** provides:
 - **Direct Build**: `runepkg -b <dir> [output.deb]` builds a `.deb` instantly from any standard .deb folder structure.
 - **FHS Initialization**: `runepkg_util_init_fhs` (available via C API) can bootstrap a full filesystem skeleton in seconds.
 - **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `c++`, are unavailable for example...
@@ -82,6 +82,12 @@ For package extraction and assembly, and debian source package building, **runep
   - **Full Advanced Dependencies (C++ FFI Features):** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
   - `sudo dnf install binutils tar gzip xz gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
 
+## **Configuration runepkgconfig**
+Edit before install for user preferences...
+The configuration file will be installed to `/etc/runepkg/runepkgconfig` like other standard Linux programs. This file contains various path variables, including the `install_dir`. Repository information Debian (sources.list) info is stored at the bottom of the file in a standard Debian format. You can use any Debian-based repositories (including Debian, Ubuntu, Kali, or legacy debian archives)...
+
+---
+
 ### **Customizing the Compiler**
 The `Makefile` supports overriding the default compilers. If you prefer to use `clang` or `tcc` instead of `gcc`, you can pass the variables directly to `make`:
 
@@ -89,12 +95,6 @@ The `Makefile` supports overriding the default compilers. If you prefer to use `
 CC=clang CXX=clang++ make all
 sudo make install
 ```
-
-## **Configuration runepkgconfig**
-Edit before install for user preferences...
-The configuration file will be installed to `/etc/runepkg/runepkgconfig` like other standard Linux programs. This file contains various path variables, including the `install_dir`. Repository information Debian (sources.list) info is stored at the bottom of the file in a standard Debian format. You can use any Debian-based repositories (including Ubuntu, Kali, or legacy debian archives)...
-
----
 
 ### **Embedded Installation (Minimal)**
 For embedded systems, you can build the core `runepkg` in pure C. This version excludes the C++ FFI and extended networking functionality similar to `apt` or `apt-get`
