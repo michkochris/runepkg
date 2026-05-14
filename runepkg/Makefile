@@ -142,6 +142,13 @@ install: runepkg
 			exit 1; \
 		fi; \
 	fi
+	@echo "-----------------------------------------------------------------------"
+	@echo "⚡ LIGHTNING FAST AUTOCOMPLETE ⚡"
+	@echo "To enable context-aware completion for the current session, run:"
+	@echo "  complete -C runepkg runepkg"
+	@echo ""
+	@echo "To enable it permanently, add that same line to your ~/.bashrc"
+	@echo "-----------------------------------------------------------------------"
 
 termux-install: all
 	@echo "Installing $(TARGET) for Termux to $(TERMUX_PREFIX)/bin..."
@@ -153,6 +160,13 @@ termux-install: all
 		cp runepkgconfig $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig; \
 		chmod 644 $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig; \
 	fi
+	@echo "-----------------------------------------------------------------------"
+	@echo "⚡ LIGHTNING FAST AUTOCOMPLETE ⚡"
+	@echo "To enable context-aware completion for the current session, run:"
+	@echo "  complete -C runepkg runepkg"
+	@echo ""
+	@echo "To enable it permanently, add that same line to your ~/.bashrc"
+	@echo "-----------------------------------------------------------------------"
 
 uninstall:
 	@echo "Attempting to uninstall $(TARGET)..."

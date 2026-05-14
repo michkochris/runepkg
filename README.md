@@ -112,6 +112,20 @@ make all
 sudo make install
 ```
 
+### **⚡ Lightning Fast Autocomplete**
+**runepkg** features an advanced, binary-driven completion engine that is significantly faster than standard shell scripts. To enable it, you must register the binary with your shell.
+
+**Temporary (Current Session):**
+```bash
+complete -C runepkg runepkg
+```
+
+**Permanent (Recommended):**
+Add the following line to the end of your `~/.bashrc`:
+```bash
+complete -C runepkg runepkg
+```
+
 ### **Uninstallation & Cleanup**
 To remove build artifacts or uninstall the program:
 
