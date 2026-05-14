@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="1e2a93c4-3386-448a-862b-33bcf8544ab1" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runepkg/runepkg_handle.c" beforeDir="false" afterPath="$PROJECT_DIR$/runepkg/runepkg_handle.c" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
