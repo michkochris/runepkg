@@ -636,7 +636,7 @@ void resolve_recursive(const std::string& pkg_name, std::unordered_map<std::stri
     PkgMetadata meta = get_package_metadata(pkg_name); if (meta.url.empty()) return;
     visiting.insert(pkg_name); resolved[pkg_name] = meta;
     std::vector<std::string> deps = parse_depends_cpp(meta.depends);
-    for (const auto& dep : deps) resolve_recursive(dep, resolved, order, visiting, false);
+    for (const auto& dep : deps) resolve_recursive(dep, resolved, order, visiting, ignore_installed);
     order.push_back(pkg_name); visiting.erase(pkg_name);
 }
 
@@ -684,7 +684,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
         std::cout << std::endl << "Would you like to attempt to download them? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
-        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; g_auto_confirm_deps = true; }
+        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Download cancelled." << std::endl; return NULL; }
     }
     std::vector<DownloadTask> tasks;
@@ -709,7 +709,7 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     std::unordered_map<std::string, PkgMetadata> resolved; std::vector<std::string> order; std::unordered_set<std::string> visiting;
     std::cout << "\033[1;34m[runepkg]\033[0m Resolving binary build-dependencies for " << pkg_name << "..." << std::endl;
     std::vector<std::string> build_deps = parse_depends_cpp(src_meta.build_depends);
-    for (const auto& dep : build_deps) resolve_recursive(dep, resolved, order, visiting, false);
+    for (const auto& dep : build_deps) resolve_recursive(dep, resolved, order, visiting, g_force_mode);
     if (resolved.empty()) { std::cout << "All build dependencies are already satisfied or not found." << std::endl; return 0; }
     std::cout << "\033[1;33m[dependencies]\033[0m The following binary packages (build-deps) are required:" << std::endl;
     int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
@@ -720,7 +720,7 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     std::cout << std::endl << "Would you like to attempt to download them? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
     std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
-    else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; g_auto_confirm_deps = true; }
+    else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
     if (!confirmed) { std::cout << "Download cancelled." << std::endl; return 0; }
     std::vector<DownloadTask> tasks;
     for (const auto& name : order) { const auto& meta = resolved[name]; std::string dest_path = std::string(g_download_dir) + "/" + meta.filename; tasks.push_back({meta.url, dest_path, name, meta.size, false}); }
@@ -751,8 +751,10 @@ extern "C" int runepkg_upgrade(void) {
         if (current_line_len + to_upgrade[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
         std::cout << to_upgrade[i]; current_line_len += to_upgrade[i].length(); if (i < to_upgrade.size() - 1) { std::cout << " "; current_line_len += 1; }
     }
-    std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16];
-    if (!fgets(resp, sizeof(resp), stdin) || (resp[0] != 'y' && resp[0] != 'Y')) { std::cout << "Upgrade cancelled." << std::endl; return 0; }
+    std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
+    if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
+    else if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
+    if (!confirmed) { std::cout << "Upgrade cancelled." << std::endl; return 0; }
     std::cout << "\033[1;34m[runepkg]\033[0m Pre-fetching " << to_upgrade.size() << " packages in parallel..." << std::endl;
     std::vector<DownloadTask> tasks;
     for (const auto& name : to_upgrade) { PkgMetadata meta = get_package_metadata(name); if (!meta.url.empty()) tasks.push_back({meta.url, std::string(g_download_dir) + "/" + meta.filename, name, meta.size, false}); }
@@ -765,8 +767,10 @@ extern "C" int runepkg_upgrade(void) {
         if (!t.success) { std::cerr << "Failed to download " << t.pkg_name << std::endl; fail_count++; continue; }
         std::cout << "\033[1;32m[upgrading]\033[0m " << t.pkg_name << std::endl;
         extern bool g_force_mode; bool old_force = g_force_mode; g_force_mode = true;
+        extern bool g_auto_confirm_siblings; bool old_sib = g_auto_confirm_siblings; g_auto_confirm_siblings = true;
         if (handle_install(t.dest_path.c_str()) == 0) success_count++; else fail_count++;
         g_force_mode = old_force;
+        g_auto_confirm_siblings = old_sib;
     }
     std::cout << "\033[1;32mUpgrade finished!\033[0m " << success_count << " upgraded, " << fail_count << " failed." << std::endl;
     curl_global_cleanup(); return fail_count == 0 ? 0 : -1;
@@ -804,7 +808,7 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
         }
         std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
-        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; g_auto_confirm_deps = true; }
+        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }
     }
     curl_global_init(CURL_GLOBAL_ALL);
@@ -840,7 +844,7 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
         }
         std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
-        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; g_auto_confirm_deps = true; }
+        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }
     }
     curl_global_init(CURL_GLOBAL_ALL);

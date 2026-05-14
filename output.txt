@@ -1,0 +1,55 @@
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  [runepkg] Fetching complete. (8/8)
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 4.7s
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg ]# runepkg -i nanoo
+Error: Cannot find local file 'nanoo' and failed to download it from repositories.
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg ]# runepkg -i nano
+[runepkg] Resolving recursive dependencies for nano...
+[dependencies] The following dependencies are required:
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libtinfo6 libncursesw6 nano
+Would you like to attempt to download them? [y/N] y (auto)
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncursesw6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nano                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖ·]  98.2% [7/7]
+[integrity] Verified 105 files for nano.
+[integrity] Verified 38 files for libc6.
+[warning] (non-root install) detected skipping preinst for libc6
+[integrity] Verified 2 files for libgcc-s1.
+[integrity] Verified 4 files for gcc-16-base.
+Selecting previously unselected package gcc-16-base.
+Unpacking gcc-16-base (16-20260322-1) ...
+Selecting previously unselected package libgcc-s1.
+Unpacking libgcc-s1 (16-20260322-1) ...
+[integrity] Verified 250 files for libc-gconv-modules-extra.
+Selecting previously unselected package libc-gconv-modules-extra.
+Unpacking libc-gconv-modules-extra (2.42-13) ...
+Selecting previously unselected package libc6.
+Unpacking libc6 (2.42-13) ...
+[warning] (non-root install) detected skipping postinst for libc6
+[integrity] Verified 4 files for libncursesw6.
+[integrity] Verified 6 files for libtinfo6.
+Selecting previously unselected package libtinfo6.
+Unpacking libtinfo6 (6.6+20251231-1+b1) ...
+Selecting previously unselected package libncursesw6.
+Unpacking libncursesw6 (6.6+20251231-1+b1) ...
+Selecting previously unselected package nano.
+Unpacking nano (9.0-1) ...
+[warning] (non-root install) detected skipping postinst for nano
+[ Zephyrus /mnt/c/Users/michk/Downloads/projects/runepkg ]#

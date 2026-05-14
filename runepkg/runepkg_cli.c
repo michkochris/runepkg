@@ -198,10 +198,6 @@ int main(int argc, char *argv[]) {
                         break; // Stop if it's a new command switch
                     }
 
-                    /* Enable automatic dependency confirmation for installs */
-                    g_auto_confirm_deps = true;
-                    g_auto_confirm_siblings = true;
-
                     int ret;
                     if (runepkg_util_file_exists(next_arg)) {
                         ret = handle_install(next_arg);
@@ -221,6 +217,7 @@ int main(int argc, char *argv[]) {
 #ifdef ENABLE_CPP_FFI
                             char *downloaded_path = runepkg_repo_download(next_arg, true);
                             if (downloaded_path) {
+                                g_auto_confirm_siblings = true;
                                 ret = handle_install(downloaded_path);
                                 free(downloaded_path);
                             } else {
@@ -451,7 +448,11 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
+                extern bool g_force_mode;
+                bool old_force = g_force_mode;
+                g_force_mode = true; // Ignore installed status for download-only
                 char *path = runepkg_repo_download(argv[i+1], false);
+                g_force_mode = old_force;
                 if (path) free(path);
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
@@ -464,7 +465,11 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
+                extern bool g_force_mode;
+                bool old_force = g_force_mode;
+                g_force_mode = true; // Ignore installed status for download-build-depends
                 runepkg_repo_build_depends_download(argv[i+1]);
+                g_force_mode = old_force;
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -476,7 +481,11 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
+                extern bool g_force_mode;
+                bool old_force = g_force_mode;
+                g_force_mode = true; // Ignore installed status for download-depends
                 char *path = runepkg_repo_download(argv[i+1], true);
+                g_force_mode = old_force;
                 if (path) free(path);
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
