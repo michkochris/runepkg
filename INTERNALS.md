@@ -172,6 +172,7 @@ To prevent a corrupted database if a command is interrupted (e.g., a power failu
 **runepkg** provides multiple "piping" styles for power users:
 - **Batch Processing**: Use `runepkg --install @file.list` to process a manifest.
 - **Standard Input**: Pipe lists directly into the binary with `ls *.deb | runepkg --install -`.
+- **Repository Integration**: Use `runepkg --install <package_name>` to automatically download and install from configured repositories (requires FFI).
 - **Interleaved Commands**: Mix installs and queries in a single line: `runepkg -i pkg1.deb -s pkg1 -i pkg2.deb`.
 
 This combination of parallelism, intelligent context awareness, and safety guarantees makes **runepkg** both a powerful developer tool and a reliable system component.

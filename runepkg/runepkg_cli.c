@@ -56,7 +56,7 @@ void usage(void) {
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
 
     printf("Core Package Management (Local/Low-Level):\n");
-    printf("  -i, --install <path-to-package.deb>...  Install one or more .deb files.\n");
+    printf("  -i, --install <deb|pkg>...              Install .deb files or repository packages.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
     printf("  -r, --remove <package-name>             Remove an installed package.\n");
@@ -197,6 +197,10 @@ int main(int argc, char *argv[]) {
                     if (next_arg[0] == '-') {
                         break; // Stop if it's a new command switch
                     }
+
+                    /* Enable automatic dependency confirmation for installs */
+                    g_auto_confirm_deps = true;
+                    g_auto_confirm_siblings = true;
 
                     int ret;
                     if (runepkg_util_file_exists(next_arg)) {

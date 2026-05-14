@@ -22,7 +22,7 @@ If you are interested in the technical and insightful architectural decisions be
 ---
 
 ## **The runepkg Difference: Beyond apt-get**
-While traditional tools like **apt-get** are built to maintain a strict, consistent system state, **runepkg** is built for the builder. It excels in performance through its **Parallel FFI Engine**, which handles metadata updates and package fetches significantly faster than sequential tools. Beyond speed, runepkg's dependency resolution is designed to be "context-aware"—it prioritizes local 'sibling' packages and allows for manual overrides that would typically trigger a deadlock in apt. This makes it not just a faster alternative, but a more flexible one for experimental and custom environments. While **runepkg** can manage repositories like `apt` with incredible speed and efficiency, matching and often exceeding its core performance, it is fundamentally designed for manual control and surgical precision, making it an ideal tool for **Custom Linux From Scratch (LFS)** and advanced system builders.
+While traditional tools like **apt-get** are built to maintain a strict, consistent system state, **runepkg** is built for the builder. It excels in performance through its **Parallel FFI Engine**, which handles metadata updates and package fetches significantly faster than sequential tools. Beyond speed, runepkg's dependency resolution is designed to be "context-aware"—it prioritizes local 'sibling' packages and allows for manual overrides that would typically trigger a deadlock in apt. This makes it not just a faster alternative, but a more flexible one for experimental and custom environments. When the C++ FFI layer is enabled, the standard `-i` / `--install` command becomes repository-aware; if a local file is not found, **runepkg** will automatically search and install the package from your configured repositories. While **runepkg** can manage repositories like `apt` with incredible speed and efficiency, matching and often exceeding its core performance, it is fundamentally designed for manual control and surgical precision, making it an ideal tool for **Custom Linux From Scratch (LFS)** and advanced system builders.
 
 ### **1. Surgical Precision**
 Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches) single Debian source package. This allows you to inspect and modify the `rules` Debian build script, or the `control` file for metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
@@ -158,7 +158,7 @@ Usage:
   runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
 Core Package Management (Local/Low-Level):
-  -i, --install <path-to-package.deb>...  Install one or more .deb files.
+  -i, --install <deb|pkg>...              Install .deb files or repository packages.
       --install -                         Read .deb paths from stdin.
       --install @file                     Read .deb paths from a list file.
   -r, --remove <package-name>             Remove an installed package.
