@@ -257,7 +257,9 @@ std::unordered_map<std::string, std::string> get_latest_versions() {
 
     std::vector<std::string> pkg_files;
     std::string line;
-    while (std::getline(flist, line)) { if (!line.empty()) pkg_files.push_back(line); }
+    while (std::getline(flist, line)) {
+        if (!line.empty()) pkg_files.push_back(line);
+    }
     flist.close();
 
     for (const auto& filename : pkg_files) {
@@ -271,7 +273,8 @@ std::unordered_map<std::string, std::string> get_latest_versions() {
                         runepkg_util_compare_versions(pkg_version.c_str(), latest_versions[pkg_name].c_str()) > 0) {
                         latest_versions[pkg_name] = pkg_version;
                     }
-                    pkg_name.clear(); pkg_version.clear();
+                    pkg_name.clear();
+                    pkg_version.clear();
                 }
                 continue;
             }
@@ -309,18 +312,24 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
             if (line.empty() || line == "\r") {
                 if (!pkg_name.empty()) {
                     IndexEntry entry;
-                    std::strncpy(entry.name, pkg_name.c_str(), 63); entry.name[63] = '\0';
-                    entry.file_id = current_file_id; entry.offset = stanza_offset;
+                    std::strncpy(entry.name, pkg_name.c_str(), 63);
+                    entry.name[63] = '\0';
+                    entry.file_id = current_file_id;
+                    entry.offset = stanza_offset;
                     index.push_back(entry);
                     if (!provides_list.empty()) {
-                        std::stringstream ss(provides_list); std::string virt_pkg;
+                        std::stringstream ss(provides_list);
+                        std::string virt_pkg;
                         while (std::getline(ss, virt_pkg, ',')) {
                             virt_pkg.erase(0, virt_pkg.find_first_not_of(" \t"));
                             virt_pkg.erase(virt_pkg.find_last_not_of(" \t") + 1);
                             if (!virt_pkg.empty()) {
-                                IndexEntry v_entry; std::strncpy(v_entry.name, virt_pkg.c_str(), 63);
-                                v_entry.name[63] = '\0'; v_entry.file_id = current_file_id;
-                                v_entry.offset = stanza_offset; index.push_back(v_entry);
+                                IndexEntry v_entry;
+                                std::strncpy(v_entry.name, virt_pkg.c_str(), 63);
+                                v_entry.name[63] = '\0';
+                                v_entry.file_id = current_file_id;
+                                v_entry.offset = stanza_offset;
+                                index.push_back(v_entry);
                             }
                         }
                     }
@@ -335,8 +344,12 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
             current_offset += len;
         }
         if (!pkg_name.empty()) {
-            IndexEntry entry; std::strncpy(entry.name, pkg_name.c_str(), 63); entry.name[63] = '\0';
-            entry.file_id = current_file_id; entry.offset = stanza_offset; index.push_back(entry);
+            IndexEntry entry;
+            std::strncpy(entry.name, pkg_name.c_str(), 63);
+            entry.name[63] = '\0';
+            entry.file_id = current_file_id;
+            entry.offset = stanza_offset;
+            index.push_back(entry);
         }
     }
     std::sort(index.begin(), index.end());
@@ -348,7 +361,10 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
         out_index.close();
     }
     std::ofstream out_files(file_list_path);
-    if (out_files.is_open()) { for (const auto& f : file_list) out_files << f << "\n"; out_files.close(); }
+    if (out_files.is_open()) {
+        for (const auto& f : file_list) out_files << f << "\n";
+        out_files.close();
+    }
 }
 
 extern "C" int runepkg_update(void) {
@@ -358,8 +374,11 @@ extern "C" int runepkg_update(void) {
     std::vector<DownloadTask> bin_tasks, src_tasks;
     std::vector<std::string> bin_pkg_files, src_pkg_files;
     for (int i = 0; i < g_sources_count; i++) {
-        std::string base_url = g_sources[i]->url; if (base_url.back() != '/') base_url += '/';
-        std::string suite = g_sources[i]->suite; std::stringstream ss(g_sources[i]->components); std::string component;
+        std::string base_url = g_sources[i]->url;
+        if (base_url.back() != '/') base_url += '/';
+        std::string suite = g_sources[i]->suite;
+        std::stringstream ss(g_sources[i]->components);
+        std::string component;
         while (ss >> component) {
             std::string url, dest_path;
             if (std::string(g_sources[i]->type) == "deb") {
@@ -392,11 +411,16 @@ extern "C" int runepkg_update(void) {
         all_tasks_ptrs[i]->success = futures[i].get();
         if (all_tasks_ptrs[i]->success) {
             std::string decompressed = all_tasks_ptrs[i]->dest_path;
-            if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
-            else decompressed += ".unpacked";
+            if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") {
+                decompressed = decompressed.substr(0, decompressed.size() - 3);
+            } else {
+                decompressed += ".unpacked";
+            }
             if (decompress_gz(all_tasks_ptrs[i]->dest_path, decompressed)) {
-                bool is_bin = false; for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
-                if(is_bin) bin_pkg_files.push_back(decompressed); else src_pkg_files.push_back(decompressed);
+                bool is_bin = false;
+                for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
+                if(is_bin) bin_pkg_files.push_back(decompressed);
+                else src_pkg_files.push_back(decompressed);
             }
         }
     }
@@ -424,7 +448,8 @@ extern "C" int runepkg_update(void) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     std::cout << "\033[1;32mUpdate complete!\033[0m Binary/Source indexes updated. " << upgradable_count << " upgradable. Time: " << duration.count() / 1000.0 << "s" << std::endl;
-    curl_global_cleanup(); return 0;
+    curl_global_cleanup();
+    return 0;
 }
 
 struct SearchResult { std::string name, version, arch, desc; bool installed = false; };
@@ -436,23 +461,31 @@ extern "C" int runepkg_repo_search(const char *query) {
     std::ifstream flist(file_list_path);
     if (!flist.is_open()) { std::cerr << "Error: Repository index not found. Run 'runepkg update' first." << std::endl; return -1; }
     std::vector<std::string> pkg_files; std::string line;
-    while (std::getline(flist, line)) { if (!line.empty()) pkg_files.push_back(line); }
+    while (std::getline(flist, line)) {
+        if (!line.empty()) pkg_files.push_back(line);
+    }
     flist.close();
     std::cout << "Searching repository metadata..." << std::endl;
     std::map<std::string, SearchResult> results;
     for (const auto& filename : pkg_files) {
-        std::ifstream infile(filename); if (!infile.is_open()) continue;
+        std::ifstream infile(filename);
+        if (!infile.is_open()) continue;
         std::string pkg_name, pkg_version, pkg_arch, pkg_desc, pkg_provides;
         while (std::getline(infile, line)) {
             if (line.empty() || line == "\r") {
                 if (!pkg_name.empty()) {
-                    std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides; std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
+                    std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides;
+                    std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
                     if (combined.find(q) != std::string::npos) {
                         SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
                         if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) res.installed = true;
                         if (results.find(pkg_name) == results.end() || runepkg_util_compare_versions(pkg_version.c_str(), results[pkg_name].version.c_str()) > 0) results[pkg_name] = res;
                     }
-                    pkg_name.clear(); pkg_version.clear(); pkg_arch.clear(); pkg_desc.clear(); pkg_provides.clear();
+                    pkg_name.clear();
+                    pkg_version.clear();
+                    pkg_arch.clear();
+                    pkg_desc.clear();
+                    pkg_provides.clear();
                 }
                 continue;
             }
@@ -477,12 +510,16 @@ extern "C" int runepkg_repo_search(const char *query) {
         }
     }
     for (const auto& pair : results) {
-        const auto& res = pair.second; std::cout << "\033[1;32m" << res.name << "\033[0m/" << "repo";
+        const auto& res = pair.second;
+        std::cout << "\033[1;32m" << res.name << "\033[0m/" << "repo";
         if (res.installed) std::cout << " [\033[1;33minstalled\033[0m]";
         std::cout << " \033[1;33m" << res.version << "\033[0m " << res.arch << std::endl << "  " << res.desc << std::endl << std::endl;
     }
-    if (results.empty()) std::cout << "No matches found for '" << query << "'." << std::endl;
-    else std::cout << "Found " << results.size() << " matches." << std::endl;
+    if (results.empty()) {
+        std::cout << "No matches found for '" << query << "'." << std::endl;
+    } else {
+        std::cout << "Found " << results.size() << " matches." << std::endl;
+    }
     return 0;
 }
 
@@ -490,7 +527,8 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     std::string index_name = is_source ? "repo_src_index.bin" : "repo_index.bin";
     std::string file_list_name = is_source ? "repo_src_files.txt" : "repo_files.txt";
     std::string index_path = std::string(g_runepkg_db_dir) + "/" + index_name;
-    std::ifstream idx(index_path, std::ios::binary); if (!idx.is_open()) return "";
+    std::ifstream idx(index_path, std::ios::binary);
+    if (!idx.is_open()) return "";
     uint32_t count; idx.read(reinterpret_cast<char*>(&count), sizeof(count));
     std::vector<IndexEntry> entries(count); idx.read(reinterpret_cast<char*>(entries.data()), count * sizeof(IndexEntry)); idx.close();
     IndexEntry search_target; std::strncpy(search_target.name, pkg_name, 63); search_target.name[63] = '\0';
@@ -501,8 +539,10 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     while (std::getline(flist, line)) pkg_files.push_back(line);
     flist.close();
     if (it->file_id >= pkg_files.size()) return "";
-    if (out_offset) *out_offset = it->offset; if (out_metafile) *out_metafile = pkg_files[it->file_id];
-    std::ifstream meta(pkg_files[it->file_id]); meta.seekg(it->offset);
+    if (out_offset) *out_offset = it->offset;
+    if (out_metafile) *out_metafile = pkg_files[it->file_id];
+    std::ifstream meta(pkg_files[it->file_id]);
+    meta.seekg(it->offset);
     std::string rel_path;
     while (std::getline(meta, line)) {
         if (line.empty() || line == "\r") break;
@@ -512,8 +552,13 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     if (!rel_path.empty() && rel_path.back() == '\r') rel_path.pop_back();
     std::string base_url;
     for (int i = 0; i < g_sources_count; i++) {
-        if (is_source && std::string(g_sources[i]->type) == "deb-src") { base_url = g_sources[i]->url; break; }
-        else if (!is_source && std::string(g_sources[i]->type) == "deb") { base_url = g_sources[i]->url; break; }
+        if (is_source && std::string(g_sources[i]->type) == "deb-src") {
+            base_url = g_sources[i]->url;
+            break;
+        } else if (!is_source && std::string(g_sources[i]->type) == "deb") {
+            base_url = g_sources[i]->url;
+            break;
+        }
     }
     if (base_url.empty()) return "";
     if (base_url.back() != '/') base_url += '/';
@@ -532,12 +577,15 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
         while (std::getline(meta, line)) {
             if (line.empty() || line == "\r") break;
             if (line.compare(0, 9, "Package: ") == 0) {
-                meta_data.name = line.substr(9); if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
+                meta_data.name = line.substr(9);
+                if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
             } else if (line.compare(0, 9, "Depends: ") == 0) {
-                meta_data.depends = line.substr(9); if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
+                meta_data.depends = line.substr(9);
+                if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
             } else if (line.compare(0, 8, "Source: ") == 0) {
                 meta_data.source_name = line.substr(8);
-                size_t space = meta_data.source_name.find(' '); if (space != std::string::npos) meta_data.source_name = meta_data.source_name.substr(0, space);
+                size_t space = meta_data.source_name.find(' ');
+                if (space != std::string::npos) meta_data.source_name = meta_data.source_name.substr(0, space);
                 if (!meta_data.source_name.empty() && meta_data.source_name.back() == '\r') meta_data.source_name.pop_back();
             } else if (line.compare(0, 6, "Size: ") == 0) {
                 try { meta_data.size = std::stoull(line.substr(6)); } catch (...) { meta_data.size = 0; }
@@ -560,9 +608,11 @@ SourceMetadata get_source_package_metadata(const std::string& pkg_name) {
         while (std::getline(meta, line)) {
             if (line.empty() || line == "\r") break;
             if (line.compare(0, 9, "Package: ") == 0) {
-                meta_data.name = line.substr(9); if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
+                meta_data.name = line.substr(9);
+                if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
             } else if (line.compare(0, 15, "Build-Depends: ") == 0) {
-                meta_data.build_depends = line.substr(15); if (!meta_data.build_depends.empty() && meta_data.build_depends.back() == '\r') meta_data.build_depends.pop_back();
+                meta_data.build_depends = line.substr(15);
+                if (!meta_data.build_depends.empty() && meta_data.build_depends.back() == '\r') meta_data.build_depends.pop_back();
             } else if (line.compare(0, 7, "Files: ") == 0) in_files = true;
             else if (in_files && line[0] == ' ') {
                 std::stringstream ss(line); std::string hash, size_str, filename; ss >> hash >> size_str >> filename;
@@ -651,7 +701,11 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
 
 extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     if (!pkg_name) return -1;
-    SourceMetadata src_meta = get_source_package_metadata(pkg_name); if (src_meta.base_url.empty()) { std::cerr << "\033[1;31m[error]\033[0m Could not find source metadata for " << pkg_name << std::endl; return -1; }
+    SourceMetadata src_meta = get_source_package_metadata(pkg_name);
+    if (src_meta.base_url.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not find source metadata for " << pkg_name << std::endl;
+        return -1;
+    }
     std::unordered_map<std::string, PkgMetadata> resolved; std::vector<std::string> order; std::unordered_set<std::string> visiting;
     std::cout << "\033[1;34m[runepkg]\033[0m Resolving binary build-dependencies for " << pkg_name << "..." << std::endl;
     std::vector<std::string> build_deps = parse_depends_cpp(src_meta.build_depends);
@@ -757,7 +811,13 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
     for (const auto& name : order) {
         const auto& meta = resolved[name]; std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
         std::vector<std::future<bool>> futures; { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
-        for (const auto& sf : meta.files) { std::string url = meta.base_url + "/" + sf.filename; std::string dest = std::string(g_build_dir) + "/" + sf.filename; futures.push_back(std::async(std::launch::async, [url, dest, sf]() { return download_file(url, dest, sf.size, sf.filename); })); }
+        for (const auto& sf : meta.files) {
+            std::string url = meta.base_url + "/" + sf.filename;
+            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
+            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
+                return download_file(url, dest, sf.size, sf.filename);
+            }));
+        }
         for (size_t i = 0; i < futures.size(); i++) futures[i].get();
         std::cout << std::endl; std::string dsc_path; for (const auto& sf : meta.files) { if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") { dsc_path = std::string(g_build_dir) + "/" + sf.filename; break; } }
         if (!dsc_path.empty()) runepkg_source_unpack(dsc_path.c_str());
@@ -787,7 +847,13 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
     for (const auto& name : order) {
         const auto& meta = resolved[name]; std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
         std::vector<std::future<bool>> futures; { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
-        for (const auto& sf : meta.files) { std::string url = meta.base_url + "/" + sf.filename; std::string dest = std::string(g_build_dir) + "/" + sf.filename; futures.push_back(std::async(std::launch::async, [url, dest, sf]() { return download_file(url, dest, sf.size, sf.filename); })); }
+        for (const auto& sf : meta.files) {
+            std::string url = meta.base_url + "/" + sf.filename;
+            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
+            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
+                return download_file(url, dest, sf.size, sf.filename);
+            }));
+        }
         for (size_t i = 0; i < futures.size(); i++) futures[i].get();
         std::cout << std::endl; std::string dsc_path; for (const auto& sf : meta.files) { if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") { dsc_path = std::string(g_build_dir) + "/" + sf.filename; break; } }
         if (!dsc_path.empty()) runepkg_source_unpack(dsc_path.c_str());
