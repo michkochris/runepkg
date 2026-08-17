@@ -305,11 +305,23 @@ private:
                         } catch (...) {}
                     }
                 } else if (&pkg == &packages[0]) {
-                    // Fallback for first package: if no .install, take EVERYTHING that hasn't been claimed?
-                    // Actually, for simplicity, if it's the only package OR if we are splitting but no .install,
-                    // just take everything for the main package.
-                    std::cout << "  -> No .install file for " << pkg.name << ", taking all installed files." << std::endl;
-                    fs::copy(temp_install_dir, pkg_data, fs::copy_options::recursive);
+                    // Fallback for first package: only take everything if no other package has an .install file.
+                    // This prevents duplication where packages[0] takes everything and packages[1] takes some.
+                    bool any_other_install = false;
+                    for (const auto& other : packages) {
+                        if (&other == &pkg) continue;
+                        if (fs::exists(source_tree_root_ / "debian" / (other.name + ".install"))) {
+                            any_other_install = true;
+                            break;
+                        }
+                    }
+
+                    if (!any_other_install) {
+                        std::cout << "  -> No other .install files found, taking all installed files for " << pkg.name << "." << std::endl;
+                        fs::copy(temp_install_dir, pkg_data, fs::copy_options::recursive);
+                    } else {
+                        std::cout << "  -> Skipping 'take-all' for " << pkg.name << " to prevent duplication with other split packages." << std::endl;
+                    }
                 }
 
                 if (!create_deb_from_pkg(pkg, pkg_staging)) success = false;
@@ -438,7 +450,11 @@ private:
             return false;
         }
 
-        working_dir_ = fs::path(g_build_dir) / (source_name_ + "-" + version_ + "-src");
+        // Sanitize version for filesystem paths (colons break Makefiles)
+        std::string safe_version = version_;
+        std::replace(safe_version.begin(), safe_version.end(), ':', '_');
+
+        working_dir_ = fs::path(g_build_dir) / (source_name_ + "-" + safe_version + "-src");
         try {
             if (!fs::exists(working_dir_)) {
                 fs::create_directories(working_dir_);
@@ -472,7 +488,7 @@ private:
             if (is_archive) {
                 std::cout << "  -> Extracting " << f << "..." << std::endl;
                 // Extract tarballs
-                char* argv[] = {(char*)"tar", (char*)"-xf", (char*)src.c_str(), (char*)"-C", (char*)working_dir_.c_str(), NULL};
+                char* argv[] = {(char*)"tar", (char*)"--force-local", (char*)"-xf", (char*)src.c_str(), (char*)"-C", (char*)working_dir_.c_str(), NULL};
                 if (runepkg_util_execute_command("tar", argv) != 0) {
                     std::cerr << "ERROR: Failed to extract " << f << std::endl;
                     return false;

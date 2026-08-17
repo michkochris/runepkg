@@ -933,7 +933,7 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
         free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar);
         return -1;
     }
-    char *argv_control[] = {"tar", "-czf", control_tar, ".", NULL};
+    char *argv_control[] = {"tar", "--force-local", "-czf", control_tar, ".", NULL};
     if (runepkg_util_execute_command("/usr/bin/tar", argv_control) != 0) {
         runepkg_util_error("Failed to create control.tar.gz\n");
         chdir(cwd);
@@ -949,7 +949,7 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
         free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar);
         return -1;
     }
-    char *argv_data[] = {"tar", "-cJf", data_tar, ".", NULL};
+    char *argv_data[] = {"tar", "--force-local", "-cJf", data_tar, ".", NULL};
     if (runepkg_util_execute_command("/usr/bin/tar", argv_data) != 0) {
         runepkg_util_error("Failed to create data.tar.xz\n");
         chdir(cwd);
