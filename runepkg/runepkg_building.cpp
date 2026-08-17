@@ -33,8 +33,40 @@ class SourceBuilder {
 public:
     SourceBuilder(const std::string& dsc_path) : dsc_path_(dsc_path) {}
 
-    int build() {
-        if (unpack() != 0) return -1;
+    int build(bool split = false) {
+        // If dsc_path_ is actually a directory, treat it as an already-extracted source tree.
+        if (fs::is_directory(dsc_path_)) {
+            source_tree_root_ = dsc_path_;
+            // Try to find a .dsc in the same parent dir just in case for metadata
+            fs::path parent = fs::path(dsc_path_).parent_path();
+            bool dsc_found = false;
+            for (const auto& entry : fs::directory_iterator(parent)) {
+                if (entry.path().extension() == ".dsc") {
+                    std::string old_dsc = dsc_path_;
+                    dsc_path_ = entry.path().string();
+                    if (parse_dsc()) {
+                        dsc_found = true;
+                        break;
+                    }
+                    dsc_path_ = old_dsc;
+                }
+            }
+
+            // If no .dsc found or parsed, try to get metadata from the tree itself
+            if (!dsc_found) {
+                if (!parse_metadata_from_tree()) {
+                    std::cerr << "ERROR: Could not determine package metadata from directory " << dsc_path_ << std::endl;
+                    return -1;
+                }
+            }
+
+            // For a directory build, the "working dir" is the parent of the source tree
+            working_dir_ = fs::path(dsc_path_).parent_path();
+
+            std::cout << "\033[1;34m[build]\033[0m Building from source tree: " << source_name_ << " (" << version_ << ")" << std::endl;
+        } else {
+            if (unpack() != 0) return -1;
+        }
 
         // Try standard debian/rules first
         if (execute_rules()) {
@@ -43,7 +75,7 @@ public:
 
         // Fallback to Native Rune Build if rules failed or dh is missing
         std::cout << "\033[1;33m[build]\033[0m debian/rules failed or requires missing tools. Attempting Native Build..." << std::endl;
-        if (build_native()) {
+        if (build_native(split)) {
             if (collect_results()) return 0;
         }
 
@@ -65,18 +97,20 @@ private:
     fs::path working_dir_;
     fs::path source_tree_root_;
 
-    bool build_native() {
+    struct BinaryPackage {
+        std::string name;
+        std::vector<std::string> control_lines;
+        bool version_found = false;
+    };
+
+    bool build_native(bool split) {
         std::cout << "\033[1;34m[build]\033[0m Starting Native C++ Build workflow..." << std::endl;
 
-        fs::path staging_dir = working_dir_ / "staging";
-        fs::path data_dir = staging_dir / "data";
-        fs::path control_dir = staging_dir / "control";
-
+        fs::path temp_install_dir = working_dir_ / "temp_install";
         try {
-            fs::create_directories(data_dir);
-            fs::create_directories(control_dir);
+            fs::create_directories(temp_install_dir);
         } catch (const std::exception& e) {
-            std::cerr << "ERROR: Failed to create staging area: " << e.what() << std::endl;
+            std::cerr << "ERROR: Failed to create temp install area: " << e.what() << std::endl;
             return false;
         }
 
@@ -104,105 +138,200 @@ private:
             return false;
         }
 
-        // 3. Install to staging
-        std::cout << "  -> Running make install DESTDIR=" << data_dir << " ..." << std::endl;
-        std::string dest_arg = "DESTDIR=" + data_dir.string();
+        // 3. Install to temp area
+        std::cout << "  -> Running make install DESTDIR=" << temp_install_dir << " ..." << std::endl;
+        std::string dest_arg = "DESTDIR=" + temp_install_dir.string();
         char* argv_install[] = {(char*)"make", (char*)"install", (char*)dest_arg.c_str(), NULL};
         if (runepkg_util_execute_command("make", argv_install) != 0) {
-            std::cerr << "ERROR: Install to staging failed" << std::endl;
+            std::cerr << "ERROR: Install to temp area failed" << std::endl;
             chdir(cwd);
             return false;
         }
 
         chdir(cwd);
 
-        // 4. Prepare Control file
+        // 4. Parse debian/control for binary packages
+        std::vector<BinaryPackage> packages;
         fs::path src_control = source_tree_root_ / "debian" / "control";
-        fs::path dest_control = control_dir / "control";
         if (fs::exists(src_control)) {
-            std::cout << "  -> Preparing control metadata..." << std::endl;
-            // For now, simple copy and basic adjustment if needed
-            // TODO: In a more advanced version, we should parse the first stanza of debian/control
-            // and write a proper binary control file.
-            try {
-                // Read debian/control and extract the first BINARY package's metadata
-                // (Skip the Source: stanza at the top)
-                std::ifstream in(src_control);
-                std::ofstream out(dest_control);
-                std::string line;
-                bool in_binary_stanza = false;
-                bool version_found = false;
+            std::ifstream in(src_control);
+            std::string line;
+            BinaryPackage* current_pkg = nullptr;
+            while (std::getline(in, line)) {
+                if (!line.empty() && line.back() == '\r') line.pop_back();
 
-                while (std::getline(in, line)) {
-                    if (!line.empty() && line.back() == '\r') line.pop_back();
-
-                    if (!in_binary_stanza && line.compare(0, 8, "Package:") == 0) {
-                        in_binary_stanza = true;
-                    }
-
-                    if (in_binary_stanza) {
-                        if (line.empty()) break; // End of first binary stanza
-
-                        if (line.compare(0, 8, "Version:") == 0) version_found = true;
-
-                        // Clean up unexpanded debhelper variables (e.g. ${shlibs:Depends})
-                        if (line.find("${") != std::string::npos) {
-                            size_t pos;
-                            while ((pos = line.find("${")) != std::string::npos) {
-                                size_t end_pos = line.find("}", pos);
-                                if (end_pos != std::string::npos) {
-                                    size_t len = end_pos - pos + 1;
-                                    // Remove leading comma and space if present
-                                    size_t start = pos;
-                                    while (start > 0 && (line[start-1] == ' ' || line[start-1] == ',')) {
-                                        start--;
-                                        len++;
-                                    }
-                                    // Remove trailing comma and space if present
-                                    while (pos + len < line.length() && (line[pos+len] == ' ' || line[pos+len] == ',')) {
-                                        len++;
-                                    }
-                                    line.erase(start, len);
-                                } else break;
-                            }
-                            // If line becomes just "Depends:" or ends in comma, clean it up
-                            size_t last_val = line.find_last_not_of(" ,");
-                            if (last_val != std::string::npos) {
-                                line = line.substr(0, last_val + 1);
-                            }
-                            if (line.length() <= 8 || line.back() == ':') continue;
-                        }
-
-                        // Replace 'Architecture: any' with actual architecture
-                        if (line.compare(0, 13, "Architecture:") == 0 && line.find("any") != std::string::npos) {
-                            out << "Architecture: amd64\n";
-                        } else {
-                            out << line << "\n";
-                        }
-                    }
+                if (line.compare(0, 8, "Package:") == 0) {
+                    packages.emplace_back();
+                    current_pkg = &packages.back();
+                    current_pkg->name = line.substr(8);
+                    current_pkg->name.erase(0, current_pkg->name.find_first_not_of(" \t"));
                 }
 
-                // Inject Version if missing from binary stanza (common in debian/control)
-                if (!version_found) {
-                    out << "Version: " << version_ << "\n";
+                if (current_pkg) {
+                    if (line.empty()) {
+                        current_pkg = nullptr;
+                        continue;
+                    }
+
+                    if (line.compare(0, 8, "Version:") == 0) current_pkg->version_found = true;
+
+                    // Clean up unexpanded debhelper variables
+                    if (line.find("${") != std::string::npos) {
+                        size_t pos;
+                        while ((pos = line.find("${")) != std::string::npos) {
+                            size_t end_pos = line.find("}", pos);
+                            if (end_pos != std::string::npos) {
+                                size_t len = end_pos - pos + 1;
+                                size_t start = pos;
+                                while (start > 0 && (line[start-1] == ' ' || line[start-1] == ',')) { start--; len++; }
+                                while (pos + len < line.length() && (line[pos+len] == ' ' || line[pos+len] == ',')) { len++; }
+                                line.erase(start, len);
+                            } else break;
+                        }
+                        size_t last_val = line.find_last_not_of(" ,");
+                        if (last_val != std::string::npos) line = line.substr(0, last_val + 1);
+                        if (line.length() <= 8 || line.back() == ':') continue;
+                    }
+
+                    if (line.compare(0, 13, "Architecture:") == 0 && line.find("any") != std::string::npos) {
+                        current_pkg->control_lines.push_back("Architecture: amd64");
+                    } else {
+                        current_pkg->control_lines.push_back(line);
+                    }
                 }
-            } catch (const std::exception& e) {
-                std::cerr << "ERROR: Failed to prepare control file: " << e.what() << std::endl;
-                return false;
             }
         }
 
-        // 5. Build .deb using core runepkg logic
-        std::cout << "  -> Assembling .deb package..." << std::endl;
-        std::string out_deb_name = source_name_ + "_" + version_ + "_amd64.deb";
-        fs::path out_deb_path = working_dir_ / out_deb_name;
-
-        if (runepkg_util_create_deb(staging_dir.c_str(), out_deb_path.c_str()) != 0) {
-            std::cerr << "ERROR: Assembly failed" << std::endl;
+        if (packages.empty()) {
+            std::cerr << "ERROR: No binary packages found in debian/control" << std::endl;
             return false;
         }
 
+        // 5. Create .deb(s)
+        if (!split) {
+            // Classic behavior: Put everything in the first package
+            return create_deb_from_pkg(packages[0], temp_install_dir);
+        } else {
+            // Split behavior: Create multiple debs
+            bool success = true;
+            for (auto& pkg : packages) {
+                // Determine which files belong to this package
+                fs::path pkg_staging = working_dir_ / ("staging_" + pkg.name);
+                fs::path pkg_data = pkg_staging / "data";
+                fs::path pkg_control = pkg_staging / "control";
+                fs::create_directories(pkg_data);
+                fs::create_directories(pkg_control);
+
+                // Look for debian/<package>.install
+                fs::path install_file = source_tree_root_ / "debian" / (pkg.name + ".install");
+                if (fs::exists(install_file)) {
+                    std::cout << "  -> Splitting files for " << pkg.name << " using .install file..." << std::endl;
+                    std::ifstream ins(install_file);
+                    std::string pattern;
+                    while (std::getline(ins, pattern)) {
+                        if (pattern.empty() || pattern[0] == '#') continue;
+                        // Simple glob-to-copy (very basic implementation)
+                        std::string src_pattern = pattern;
+                        std::string dest_subpath = ".";
+                        size_t space = pattern.find_last_of(" \t");
+                        if (space != std::string::npos) {
+                            src_pattern = pattern.substr(0, space);
+                            dest_subpath = pattern.substr(space + 1);
+                        }
+
+                        // For now, assume simple relative paths from temp_install_dir
+                        try {
+                            fs::path full_src = temp_install_dir / src_pattern;
+                            fs::path full_dest = pkg_data / dest_subpath;
+                            if (fs::exists(full_src)) {
+                                if (fs::is_directory(full_src)) fs::copy(full_src, full_dest, fs::copy_options::recursive);
+                                else {
+                                    fs::create_directories(full_dest.parent_path());
+                                    fs::copy(full_src, full_dest);
+                                }
+                            }
+                        } catch (...) {}
+                    }
+                } else if (&pkg == &packages[0]) {
+                    // Fallback for first package: if no .install, take EVERYTHING that hasn't been claimed?
+                    // Actually, for simplicity, if it's the only package OR if we are splitting but no .install,
+                    // just take everything for the main package.
+                    std::cout << "  -> No .install file for " << pkg.name << ", taking all installed files." << std::endl;
+                    fs::copy(temp_install_dir, pkg_data, fs::copy_options::recursive);
+                }
+
+                if (!create_deb_from_pkg(pkg, pkg_staging)) success = false;
+            }
+            return success;
+        }
+    }
+
+    bool create_deb_from_pkg(BinaryPackage& pkg, const fs::path& staging_dir) {
+        fs::path control_dir = staging_dir / "control";
+        fs::create_directories(control_dir);
+        fs::path dest_control = control_dir / "control";
+
+        std::ofstream out(dest_control);
+        for (const auto& l : pkg.control_lines) out << l << "\n";
+        if (!pkg.version_found) out << "Version: " << version_ << "\n";
+        out.close();
+
+        std::cout << "  -> Assembling " << pkg.name << "..." << std::endl;
+        std::string out_deb_name = pkg.name + "_" + version_ + "_amd64.deb";
+        fs::path out_deb_path = working_dir_ / out_deb_name;
+
+        if (runepkg_util_create_deb(staging_dir.c_str(), out_deb_path.c_str()) != 0) {
+            std::cerr << "ERROR: Assembly failed for " << pkg.name << std::endl;
+            return false;
+        }
         return true;
+    }
+
+    bool parse_metadata_from_tree() {
+        // Try the current directory first, then look one level deep for a 'debian' folder
+        fs::path search_roots[] = {source_tree_root_, ""};
+
+        // If we can't find debian here, look for a subdirectory that might contain it
+        if (!fs::exists(source_tree_root_ / "debian")) {
+            for (const auto& entry : fs::directory_iterator(source_tree_root_)) {
+                if (entry.is_directory() && fs::exists(entry.path() / "debian")) {
+                    source_tree_root_ = entry.path();
+                    break;
+                }
+            }
+        }
+
+        fs::path control_path = source_tree_root_ / "debian" / "control";
+        fs::path changelog_path = source_tree_root_ / "debian" / "changelog";
+
+        if (fs::exists(control_path)) {
+            char *pkg = runepkg_util_get_config_value(control_path.c_str(), "Source", ':');
+            if (!pkg) pkg = runepkg_util_get_config_value(control_path.c_str(), "Package", ':');
+
+            if (pkg) {
+                source_name_ = pkg;
+                free(pkg);
+            }
+        }
+
+        if (fs::exists(changelog_path)) {
+            std::ifstream in(changelog_path);
+            std::string line;
+            if (std::getline(in, line)) {
+                // Format: source (version) ...
+                size_t open_paren = line.find('(');
+                size_t close_paren = line.find(')', open_paren);
+                if (open_paren != std::string::npos && close_paren != std::string::npos) {
+                    version_ = line.substr(open_paren + 1, close_paren - open_paren - 1);
+                    if (source_name_.empty()) {
+                        source_name_ = line.substr(0, open_paren);
+                        source_name_.erase(source_name_.find_last_not_of(" \t") + 1);
+                    }
+                }
+            }
+        }
+
+        return !source_name_.empty() && !version_.empty();
     }
 
     bool parse_dsc() {
@@ -409,7 +538,14 @@ extern "C" int runepkg_source_build(const char *dsc_path) {
     if (!dsc_path) return -1;
 
     SourceBuilder builder(dsc_path);
-    return builder.build();
+    return builder.build(false);
+}
+
+extern "C" int runepkg_source_build_split(const char *dsc_path) {
+    if (!dsc_path) return -1;
+
+    SourceBuilder builder(dsc_path);
+    return builder.build(true);
 }
 
 extern "C" int runepkg_source_unpack(const char *dsc_path) {

@@ -24,8 +24,8 @@ sudo apt-get install -y binutils tar gzip xz-utils gcc make libc6-dev
 echo -e "${YELLOW}Invoking Extended Magic (C++ FFI & Networking)...${RESET}"
 sudo apt-get install -y g++ libcurl4-openssl-dev libssl-dev zlib1g-dev
 
-echo -e "${YELLOW}Acquiring supporting artifacts (Bison, Gawk, etc.)...${RESET}"
-sudo apt-get install -y bison gawk texinfo libtool-bin
+echo -e "${YELLOW}Acquiring supporting artifacts (Bison, Gawk, Debhelper, etc.)...${RESET}"
+sudo apt-get install -y bison gawk texinfo libtool-bin debhelper
 
 echo -e "${BOLD}${GREEN}--------------------------------------------------------${RESET}"
 echo -e "${BOLD}${GREEN}✅ The ritual is complete. All dependencies are unearthed.${RESET}"

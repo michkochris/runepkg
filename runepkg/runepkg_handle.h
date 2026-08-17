@@ -47,6 +47,7 @@ void handle_search(const char *query);
 int handle_unpack(const char *deb_path);
 int handle_build(const char *source_dir, const char *output_name);
 int handle_source_build(const char *dsc_path);
+int handle_source_build_split(const char *dsc_path);
 int handle_md5_check(const char *package_name);
 void handle_print_config(void);
 void handle_print_config_file(void);

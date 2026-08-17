@@ -163,9 +163,10 @@ $(TARGET): build-banner $(OBJS) .config_with_cpp
 	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	@echo "$(YELLOW)Cleaning up build artifacts...$(RESET)"
+	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
 	@rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
-	@echo "$(GREEN)🧹 Clean complete.$(RESET)"
+	@rm -rf debs sources temp_install staging*
+	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 test-binary: $(TARGET)
 	@echo "Testing basic functionality..."

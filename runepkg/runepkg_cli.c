@@ -83,6 +83,7 @@ void usage(void) {
     printf("  source-depends <pkg>                    Download source package and its runtime-dependencies.\n");
     printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n");
     printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
+    printf("  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without dependencies.\n");
     printf("  download-depends <pkg>                  Download a .deb and its binary dependencies.\n");
     printf("  download-build-depends <pkg>            Download binary .debs required to build a source package.\n\n");
@@ -459,7 +460,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
             }
-        } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0) {
+        } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0 || strcmp(argv[i], "build") == 0) {
             const char *src = NULL;
             const char *out = NULL;
             if (i + 1 < argc && argv[i+1][0] != '-') {
@@ -470,7 +471,103 @@ int main(int argc, char *argv[]) {
                     i++;
                 }
             }
-            handle_build(src, out);
+
+            // Smart build detection
+            if (src) {
+                extern int runepkg_util_is_directory(const char *path);
+                char discovery_path[PATH_MAX];
+                bool found = false;
+
+                // 1. Direct check
+                if (runepkg_util_file_exists(src)) {
+                    if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
+                        handle_source_build(src);
+                    } else if (runepkg_util_is_directory(src)) {
+                        char *debian_path = runepkg_util_concat_path(src, "debian");
+                        if (runepkg_util_is_directory(debian_path)) {
+                            handle_source_build(src);
+                        } else {
+                            handle_build(src, out);
+                        }
+                        free(debian_path);
+                    } else {
+                        handle_build(src, out);
+                    }
+                    found = true;
+                }
+
+                // 2. Discovery: check ./sources, ./debs, and build_dir
+                if (!found) {
+                    const char *search_dirs[] = {"sources", "debs", g_build_dir, "."};
+                    for (int j = 0; j < 4 && !found; j++) {
+                        if (!search_dirs[j]) continue;
+
+                        DIR *dir = opendir(search_dirs[j]);
+                        if (!dir) continue;
+
+                        struct dirent *entry;
+                        while ((entry = readdir(dir)) != NULL) {
+                            if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                                snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
+                                printf("\033[1;34m[discovery]\033[0m Found matching rune: %s\n", discovery_path);
+                                handle_source_build(discovery_path);
+                                found = true;
+                                break;
+                            }
+                        }
+                        closedir(dir);
+                    }
+                }
+
+                if (!found) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find any buildable runes matching '%s'.\n", src);
+                    cli_failed = 1;
+                }
+            } else {
+                handle_build(NULL, NULL);
+            }
+        } else if (strcmp(argv[i], "buildpkg-split") == 0 || strcmp(argv[i], "--buildpkg-split") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                char *src_arg = argv[i+1];
+                i++;
+
+                char discovery_path[PATH_MAX];
+                bool found = false;
+
+                // 1. Direct check
+                if (runepkg_util_file_exists(src_arg)) {
+                    handle_source_build_split(src_arg);
+                    found = true;
+                }
+
+                // 2. Discovery ritual
+                if (!found) {
+                    const char *search_dirs[] = {"sources", "debs", g_build_dir, "."};
+                    for (int j = 0; j < 4 && !found; j++) {
+                        if (!search_dirs[j]) continue;
+                        DIR *dir = opendir(search_dirs[j]);
+                        if (!dir) continue;
+                        struct dirent *entry;
+                        while ((entry = readdir(dir)) != NULL) {
+                            if (strstr(entry->d_name, src_arg) && strstr(entry->d_name, ".dsc")) {
+                                snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
+                                printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
+                                handle_source_build_split(discovery_path);
+                                found = true;
+                                break;
+                            }
+                        }
+                        closedir(dir);
+                    }
+                }
+
+                if (!found) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m buildpkg-split requires a .dsc file. None found matching '%s'.\n", src_arg);
+                    cli_failed = 1;
+                }
+            } else {
+                printf("Error: buildpkg-split command requires a .dsc file path.\n");
+            }
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI

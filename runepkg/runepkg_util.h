@@ -143,6 +143,13 @@ Dependency **parse_depends_with_constraints(const char *depends);
 int runepkg_util_file_exists(const char *filepath);
 
 /**
+ * @brief Checks if the given path is a directory.
+ * @param path The path to check.
+ * @return 1 if it is a directory, 0 otherwise.
+ */
+int runepkg_util_is_directory(const char *path);
+
+/**
  * @brief Creates a directory recursively with the specified permissions.
  * @param path The path to the directory to create.
  * @param mode The permissions for the created directories (e.g., 0755).

@@ -180,6 +180,8 @@ Advanced Repository Management (Network/FFI):
   source-depends <pkg>                    Download source package and its runtime-dependencies.
   source-build-depends <pkg>              Download source package and its build-dependencies.
   source-build <package.dsc>              Build a Debian source package into runepkg_debs.
+  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.
+                                          (Alias: --buildpkg-split)
   download-only <pkg>                     Download a .deb to download_dir without dependencies.
   download-depends <pkg>                  Download a .deb and its binary dependencies.
   download-build-depends <pkg>            Download binary .debs required to build a source package.

@@ -345,6 +345,14 @@ int runepkg_util_file_exists(const char *filepath) {
     return (access(filepath, F_OK) == 0);
 }
 
+int runepkg_util_is_directory(const char *path) {
+    struct stat st;
+    if (stat(path, &st) == 0) {
+        return S_ISDIR(st.st_mode);
+    }
+    return 0;
+}
+
 int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
     char *temp_path = NULL;
     char *p = NULL;

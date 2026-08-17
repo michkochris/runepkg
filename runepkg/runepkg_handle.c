@@ -994,6 +994,17 @@ int handle_source_build(const char *dsc_path) {
 #endif
 }
 
+int handle_source_build_split(const char *dsc_path) {
+#ifdef ENABLE_CPP_FFI
+    return runepkg_source_build_split(dsc_path);
+#else
+    (void)dsc_path;
+    printf("Notice: Split source building requires a C++ build with FFI enabled.\n");
+    printf("Rebuild with 'make all' to enable this feature.\n");
+    return -1;
+#endif
+}
+
 int handle_md5_check(const char *package_name) {
     if (!package_name) return -1;
 
