@@ -18,44 +18,83 @@ CXXFLAGS = -Wall -Wextra -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread
 LDFLAGS = -pthread
 LIBS =
 
-# Force core build when explicitly targeting runepkg or install
-# This ensures 'make install' doesn't try to upgrade a core build to C++
-# unless 'make all install' is used.
-ifneq (,$(filter runepkg install,$(MAKECMDGOALS)))
-ifeq (,$(filter all with-all with-cpp,$(MAKECMDGOALS)))
-WITH_CPP := 0
-endif
-endif
-
-# C++ FFI support detection and configuration
+# --- Build Configuration Logic ---
+# This MUST come before any variable definitions that use WITH_CPP
 WITH_CPP ?= auto
-CPP_CXXFLAGS = -std=c++17 -Wall -Wextra -O2
-CPP_LDFLAGS = -lcurl -lssl -lcrypto -lz -lpthread
-CXX_AVAILABLE := $(shell command -v g++ >/dev/null 2>&1 && echo 1 || echo 0)
-LIBCURL_AVAILABLE := $(shell pkg-config --exists libcurl 2>/dev/null && echo 1 || echo 0)
-CPP_DEPS_AVAILABLE := $(shell command -v g++ >/dev/null 2>&1 && pkg-config --exists libcurl 2>/dev/null && echo 1 || echo 0)
+
+# 1. If 'all' or 'with-all' is a goal, we definitely want C++
+ifneq (,$(filter all with-all with-cpp,$(MAKECMDGOALS)))
+  WITH_CPP := 1
+# 2. If 'install' is the goal, try to preserve the existing build's flavor
+else ifeq ($(MAKECMDGOALS),install)
+  ifneq ($(wildcard .config_with_cpp),)
+    WITH_CPP := $(shell cat .config_with_cpp)
+  endif
+# 3. If 'runepkg' is the goal or no goal is specified, default to Core
+else ifneq (,$(filter runepkg,$(MAKECMDGOALS))$(filter 0,$(words $(MAKECMDGOALS))))
+  WITH_CPP := 0
+endif
+
+# --- Color & Formatting ---
+BOLD := \033[1m
+RESET := \033[0m
+RED := \033[1;31m
+GREEN := \033[1;32m
+YELLOW := \033[1;33m
+BLUE := \033[1;34m
+CYAN := \033[1;36m
+PURPLE := \033[1;35m
+
+# --- Dependency detection ---
+CC_AVAILABLE := $(shell command -v $(CC) >/dev/null 2>&1 && echo 1 || echo 0)
+CXX_AVAILABLE := $(shell command -v $(CXX) >/dev/null 2>&1 && echo 1 || echo 0)
+LIBCURL_AVAILABLE := $(shell pkg-config --exists libcurl 2>/dev/null && echo 1 || (curl-config --version >/dev/null 2>&1 && echo 1 || echo 0))
+ZLIB_AVAILABLE := $(shell pkg-config --exists zlib 2>/dev/null && echo 1 || (echo "int main(){}" | $(CC) -x c - -lz -o /dev/null >/dev/null 2>&1 && echo 1 || echo 0))
 CPP_WRAPPER_EXISTS := $(if $(wildcard runepkg_network.cpp),1,0)
-CPP_FFI_AVAILABLE := $(if $(and $(filter 1,$(CPP_DEPS_AVAILABLE)),$(filter 1,$(CPP_WRAPPER_EXISTS))),1,0)
 
-# Check if C++ FFI should be enabled
+# 4. Resolve 'auto' if still needed
 ifeq ($(WITH_CPP),auto)
-ifeq ($(CXX_AVAILABLE),1)
-ifeq ($(LIBCURL_AVAILABLE),1)
-WITH_CPP = 1
-else
-WITH_CPP = 0
-endif
-else
-WITH_CPP = 0
-endif
+  ifeq ($(and $(filter 1,$(CXX_AVAILABLE)),$(filter 1,$(LIBCURL_AVAILABLE)),$(filter 1,$(ZLIB_AVAILABLE)),$(filter 1,$(CPP_WRAPPER_EXISTS))),1)
+    WITH_CPP = 1
+  else
+    WITH_CPP = 0
+  endif
 endif
 
-# Configure C++ FFI if enabled
+# --- Force failure if core dependencies are missing ---
+ifeq ($(CC_AVAILABLE),0)
+	$(info $(RED)!! [forge] Compiling runepkg: some build dependency not met.$(RESET))
+	$(info $(RED)!!-----------------------------------------------------------------------!!$(RESET))
+	$(info $(RED)   CRITICAL ERROR: The Forge is Cold! ($(CC) not found)$(RESET))
+	$(info $(YELLOW)   You cannot forge runepkg without a C compiler.$(RESET))
+	$(info $(CYAN)   Seek the ancient tools: sudo apt install gcc$(RESET))
+	$(info $(RED)!!-----------------------------------------------------------------------!!$(RESET))
+	$(error )
+endif
+
+# --- Force failure if WITH_CPP=1 but dependencies are missing ---
 ifeq ($(WITH_CPP),1)
-ifeq ($(CPP_WRAPPER_EXISTS),0)
-WITH_CPP = 0
+  ifneq ($(and $(filter 1,$(CXX_AVAILABLE)),$(filter 1,$(LIBCURL_AVAILABLE)),$(filter 1,$(ZLIB_AVAILABLE))),1)
+	$(info $(PURPLE)!! [ritual] Compiling runepkg: extended build dependency not met.$(RESET))
+	$(info $(PURPLE)!!-----------------------------------------------------------------------!!$(RESET))
+	$(info $(PURPLE)   ERROR: The Ritual of the Full Build has Failed!$(RESET))
+	$(info $(YELLOW)   Extended dependencies are missing for the complete runepkg experience:$(RESET))
+	$(info   $(BLUE)- g++:$(RESET)      $(if $(filter 1,$(CXX_AVAILABLE)),$(GREEN)READY$(RESET),$(RED)MISSING$(RESET)))
+	$(info   $(BLUE)- libcurl:$(RESET)  $(if $(filter 1,$(LIBCURL_AVAILABLE)),$(GREEN)READY$(RESET),$(RED)MISSING$(RESET)))
+	$(info   $(BLUE)- zlib:$(RESET)     $(if $(filter 1,$(ZLIB_AVAILABLE)),$(GREEN)READY$(RESET),$(RED)MISSING$(RESET)))
+	$(info )
+	$(info $(CYAN)   Restore the runes by running: ./debian-depends.sh$(RESET))
+	$(info $(PURPLE)!!-----------------------------------------------------------------------!!$(RESET))
+	$(error )
+  endif
+  ifeq ($(CPP_WRAPPER_EXISTS),0)
+    $(error $(RED)!! [error] Compiling runepkg: runepkg_network.cpp is missing!$(RESET))
+  endif
 endif
-endif
+
+# --- Apply Configuration ---
+CPP_CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+CPP_LDFLAGS = $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl") -lz
 
 ifeq ($(WITH_CPP),1)
 CFLAGS += -DENABLE_CPP_FFI
@@ -79,15 +118,17 @@ OBJS = $(C_SOURCES:.c=.o) $(CPP_SOURCES:.cpp=.o)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h $(CPP_HEADERS)
 
 # Track configuration changes to force rebuilds when WITH_CPP changes
-.config_with_cpp:
+.config_with_cpp: FORCE
 	@echo $(WITH_CPP) > $@.tmp
-	@if [ ! -f $@ ] || ! diff $@ $@.tmp >/dev/null; then mv $@.tmp $@; else rm $@.tmp; fi
+	@if [ ! -f $@ ] || ! diff $@ $@.tmp >/dev/null; then \
+		mv $@.tmp $@; \
+	else \
+		rm $@.tmp; \
+	fi
 
-.PHONY: all clean clean-all install debug run termux-install uninstall test test-binary test-help info with-cpp clean-cpp with-all
+.PHONY: all clean clean-all install debug run termux-install uninstall test test-binary test-help info with-cpp clean-cpp with-all build-banner FORCE
 
 .DEFAULT_GOAL := runepkg
-
-runepkg: WITH_CPP=0
 
 -include $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
 
@@ -97,22 +138,34 @@ PREFIX ?= /usr
 ETCDIR ?= /etc
 TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 
+build-banner:
+	@echo "$(BOLD)$(CYAN)--------------------------------------------------------$(RESET)"
+	@echo "$(BOLD)$(CYAN)  Unearthing Runes: Compiling runepkg v1.0.4$(RESET)"
+	@echo "$(BOLD)$(CYAN)--------------------------------------------------------$(RESET)"
+	@echo "  Build Mode: $(if $(filter 1,$(WITH_CPP)),$(PURPLE)Extended (C++ FFI)$(RESET),$(BLUE)Core (C Minimal)$(RESET))"
+	@echo ""
+
 all: with-all
 
-$(TARGET): $(OBJS) .config_with_cpp
-	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
-	@echo "⚡ Build complete: $(TARGET)"
+$(TARGET): build-banner $(OBJS) .config_with_cpp
+	@printf "  $(BLUE)%-10s$(RESET) %s\n" "[ LD ]" "$@"
+	@$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	@echo "--------------------------------------------------------"
+	@echo "$(GREEN)⚡ runepkg build complete: $@$(RESET)"
+	@echo "--------------------------------------------------------"
 
 %.o: %.c $(HEADERS) .config_with_cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	@printf "  $(CYAN)%-10s$(RESET) %s\n" "[ CC ]" "$<"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp $(HEADERS) .config_with_cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@printf "  $(PURPLE)%-10s$(RESET) %s\n" "[ CXX ]" "$<"
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	@echo "Cleaning up build artifacts..."
-	rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
-	@echo "🧹 Clean complete."
+	@echo "$(YELLOW)Cleaning up build artifacts...$(RESET)"
+	@rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
+	@echo "$(GREEN)🧹 Clean complete.$(RESET)"
 
 test-binary: $(TARGET)
 	@echo "Testing basic functionality..."
@@ -124,30 +177,30 @@ test-binary: $(TARGET)
 		exit 1; \
 	fi
 
-install: runepkg
-	@echo "Installing $(TARGET) for Linux system to $(DESTDIR)$(PREFIX)/bin..."
-	mkdir -p $(DESTDIR)$(PREFIX)/bin
-	cp $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
-	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(TARGET)
-	@echo "Determining configuration installation location..."
+install: $(TARGET)
+	@echo "$(CYAN)Installing $(TARGET) to $(DESTDIR)$(PREFIX)/bin...$(RESET)"
+	@mkdir -p $(DESTDIR)$(PREFIX)/bin
+	@cp $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	@chmod 755 $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	@echo "$(CYAN)Detecting configuration destiny...$(RESET)"
 	@if [ -f runepkgconfig ]; then \
 		if [ "$(shell id -u)" = "0" ] || [ -w "$(DESTDIR)$(ETCDIR)" ] 2>/dev/null; then \
-			echo "Installing system-wide configuration to $(DESTDIR)$(ETCDIR)/runepkg..."; \
+			echo "$(CYAN)Installing runes of configuration to $(DESTDIR)$(ETCDIR)/runepkg...$(RESET)"; \
 			mkdir -p $(DESTDIR)$(ETCDIR)/runepkg; \
 			cp runepkgconfig $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
 			chmod 644 $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig; \
-			echo "Configuration file installed to $(ETCDIR)/runepkg/runepkgconfig"; \
+			echo "$(GREEN)Configuration file installed to $(ETCDIR)/runepkg/runepkgconfig$(RESET)"; \
 		else \
-			echo "ERROR: No elevated privileges detected. Configuration requires system install."; \
+			echo "$(RED)ERROR: No elevated privileges detected. Configuration requires system install.$(RESET)"; \
 			exit 1; \
 		fi; \
 	fi
 	@echo "-----------------------------------------------------------------------"
-	@echo "⚡ LIGHTNING FAST AUTOCOMPLETE ⚡"
+	@echo "$(BOLD)$(YELLOW)⚡ LIGHTNING FAST AUTOCOMPLETE ⚡$(RESET)"
 	@echo "To enable context-aware completion for the current session, run:"
-	@echo "  complete -C runepkg runepkg"
+	@echo "  $(CYAN)complete -C runepkg runepkg$(RESET)"
 	@echo ""
-	@echo "To enable it permanently, add that same line to your ~/.bashrc"
+	@echo "To enable it permanently, add that same line to your $(BOLD)~/.bashrc$(RESET)"
 	@echo "-----------------------------------------------------------------------"
 
 termux-install: all
@@ -215,6 +268,6 @@ clean-all: clean clean-cpp
 with-cpp: $(TARGET)
 
 with-all:
-	@$(MAKE) -B WITH_CPP=$(CPP_FFI_AVAILABLE) $(TARGET)
+	@$(MAKE) -B WITH_CPP=1 $(TARGET)
 
 test: test-binary

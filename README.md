@@ -90,7 +90,9 @@ sudo make install
 ```
 
 ### **Embedded Installation (Minimal)**
-For embedded systems, you can build the core `runepkg` in pure C. This version excludes the Extended C++ FFI features...
+For embedded systems, you can build the core `runepkg` in pure C. This version excludes the Extended C++ FFI features. 
+
+> **Note for Embedded/Manual Users:** The `debian-depends.sh` script is tailored for standard Debian/Ubuntu environments. If you are targeting a minimal embedded system, LFS, or a non-Debian environment, you must manually ensure that core runtime utilities (`ar`, `tar`, `gzip`/`xz`) and build tools (`gcc`, `make`, `libc-dev`) are available in your PATH.
 
 ```bash
 make runepkg
@@ -98,12 +100,14 @@ sudo make install
 ```
 
 ### **Standard Installation (Full)**
-For a full installation including advanced C++ FFI networking features and debian source package building (similar to `apt` or `apt-get`), use:
+For a full installation including advanced C++ FFI networking features and debian source package building, use:
 
 ```bash
 make all
 sudo make install
 ```
+
+*Note: The Makefile will automatically check for your dependencies and guide you with personality if any runes are missing.*
 
 ### **📦 Build as a .deb (Self-Building)**
 **runepkg** is powerful enough to build its own .deb distribution package. If you want to create a `.deb` file of runepkg for install with traditional dpkg or busybox dpkg, run:

@@ -987,6 +987,7 @@ int handle_source_build(const char *dsc_path) {
 #ifdef ENABLE_CPP_FFI
     return runepkg_source_build(dsc_path);
 #else
+    (void)dsc_path;
     printf("Notice: Source building requires a C++ build with FFI enabled.\n");
     printf("Rebuild with 'make all' to enable this feature.\n");
     return -1;

@@ -1,0 +1,3 @@
+runepkg is perfect, lightning fast low level + c++ FFI high level pkg manager. it even has a debian source pkg builder.
+the very last thing to top everything of is a debian source pkg split function or option.
+i want this 
