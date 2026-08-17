@@ -84,6 +84,9 @@ void usage(void) {
     printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n");
     printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
     printf("  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.\n");
+    printf("                                          (Will auto-fetch from repo if name provided).\n");
+    printf("  fetch <pkg>                             Download .debs (with depends) to local debs/ or download_dir.\n");
+    printf("  fetch-source <pkg>                      Download source files to local sources/ or build_dir.\n");
     printf("  download-only <pkg>                     Download a .deb to download_dir without dependencies.\n");
     printf("  download-depends <pkg>                  Download a .deb and its binary dependencies.\n");
     printf("  download-build-depends <pkg>            Download binary .debs required to build a source package.\n\n");
@@ -172,7 +175,7 @@ int main(int argc, char *argv[]) {
 
     // Step 2: Execute commands based on the interleaved arguments.
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
+        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0 || strcmp(argv[i], "i") == 0) {
             if (i + 1 < argc) {
                 // Loop to handle multiple .deb files
                 while (i + 1 < argc) {
@@ -218,7 +221,7 @@ int main(int argc, char *argv[]) {
                                 goto try_repo;
                             }
                         } else {
-                        try_repo:
+                        try_repo:;
 #ifdef ENABLE_CPP_FFI
                             char *downloaded_path = runepkg_repo_download(next_arg, true);
                             if (downloaded_path) {
@@ -277,7 +280,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: --md5check requires a package name.\n");
             }
-        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0) {
+        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0 || strcmp(argv[i], "r") == 0) {
             char *removed_packages[100];
             int removed_count = 0;
             char *failed_packages[100];
@@ -350,14 +353,14 @@ int main(int argc, char *argv[]) {
                     free(failed_packages[j]);
                 }
             }
-        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0) {
+        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0 || strcmp(argv[i], "l") == 0) {
             const char *pattern = NULL;
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 pattern = argv[i+1];
                 i++;
             }
             handle_list(pattern);
-        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0 || strcmp(argv[i], "status") == 0) {
+        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0 || strcmp(argv[i], "status") == 0 || strcmp(argv[i], "s") == 0) {
             if (i + 1 < argc) {
                 char *next_arg = argv[i+1];
                 /* Support interleaved forms:
@@ -460,6 +463,36 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
             }
+        } else if (strcmp(argv[i], "fetch") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                char *old_dl = g_download_dir;
+                if (runepkg_util_is_directory("debs")) g_download_dir = (char*)"debs";
+                char *path = runepkg_repo_download(argv[i+1], true);
+                g_download_dir = old_dl;
+                if (path) free(path);
+                else cli_failed = 1;
+#else
+                printf("Notice: fetch requires a C++ build with networking enabled.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: fetch command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "fetch-source") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                char *old_build = g_build_dir;
+                if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
+                if (runepkg_repo_source_download(argv[i+1]) != 0) cli_failed = 1;
+                g_build_dir = old_build;
+#else
+                printf("Notice: fetch-source requires a C++ build with networking enabled.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: fetch-source command requires a package name.\n");
+            }
         } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0 || strcmp(argv[i], "build") == 0) {
             const char *src = NULL;
             const char *out = NULL;
@@ -474,7 +507,6 @@ int main(int argc, char *argv[]) {
 
             // Smart build detection
             if (src) {
-                extern int runepkg_util_is_directory(const char *path);
                 char discovery_path[PATH_MAX];
                 bool found = false;
 
@@ -491,7 +523,8 @@ int main(int argc, char *argv[]) {
                         }
                         free(debian_path);
                     } else {
-                        handle_build(src, out);
+                        fprintf(stderr, "\033[1;31mError:\033[0m '%s' is a file but not a buildable .dsc rune.\n", src);
+                        cli_failed = 1;
                     }
                     found = true;
                 }
@@ -519,8 +552,35 @@ int main(int argc, char *argv[]) {
                     }
                 }
 
+                // 3. Auto-Fetch Ritual
                 if (!found) {
-                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find any buildable runes matching '%s'.\n", src);
+#ifdef ENABLE_CPP_FFI
+                    printf("\033[1;33m[ritual]\033[0m Rune '%s' not found locally. Initiating repo unearthing...\n", src);
+                    char *old_build = g_build_dir;
+                    if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
+                    if (runepkg_repo_source_download(src) == 0) {
+                        // Re-run discovery in the location we just downloaded to
+                        const char *target = g_build_dir ? g_build_dir : ".";
+                        DIR *dir = opendir(target);
+                        if (dir) {
+                            struct dirent *entry;
+                            while ((entry = readdir(dir)) != NULL) {
+                                if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
+                                    handle_source_build(discovery_path);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            closedir(dir);
+                        }
+                    }
+                    g_build_dir = old_build;
+#endif
+                }
+
+                if (!found) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find or unearth any buildable runes matching '%s'.\n", src);
                     cli_failed = 1;
                 }
             } else {
@@ -528,19 +588,33 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "buildpkg-split") == 0 || strcmp(argv[i], "--buildpkg-split") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
-                char *src_arg = argv[i+1];
+                char *src = argv[i+1];
                 i++;
 
                 char discovery_path[PATH_MAX];
                 bool found = false;
 
                 // 1. Direct check
-                if (runepkg_util_file_exists(src_arg)) {
-                    handle_source_build_split(src_arg);
+                if (runepkg_util_file_exists(src)) {
+                    if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
+                        handle_source_build_split(src);
+                    } else if (runepkg_util_is_directory(src)) {
+                        char *debian_path = runepkg_util_concat_path(src, "debian");
+                        if (runepkg_util_is_directory(debian_path)) {
+                            handle_source_build_split(src);
+                        } else {
+                            fprintf(stderr, "\033[1;31mError:\033[0m directory '%s' is not a Debian source tree (no 'debian/' found).\n", src);
+                            cli_failed = 1;
+                        }
+                        free(debian_path);
+                    } else {
+                        fprintf(stderr, "\033[1;31mError:\033[0m '%s' is a file but not a buildable .dsc rune.\n", src);
+                        cli_failed = 1;
+                    }
                     found = true;
                 }
 
-                // 2. Discovery ritual
+                // 2. Discovery: check ./sources, ./debs, and build_dir
                 if (!found) {
                     const char *search_dirs[] = {"sources", "debs", g_build_dir, "."};
                     for (int j = 0; j < 4 && !found; j++) {
@@ -549,7 +623,7 @@ int main(int argc, char *argv[]) {
                         if (!dir) continue;
                         struct dirent *entry;
                         while ((entry = readdir(dir)) != NULL) {
-                            if (strstr(entry->d_name, src_arg) && strstr(entry->d_name, ".dsc")) {
+                            if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
                                 snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
                                 printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
                                 handle_source_build_split(discovery_path);
@@ -561,12 +635,38 @@ int main(int argc, char *argv[]) {
                     }
                 }
 
+                // 3. Auto-Fetch Ritual
                 if (!found) {
-                    fprintf(stderr, "\033[1;31mError:\033[0m buildpkg-split requires a .dsc file. None found matching '%s'.\n", src_arg);
+#ifdef ENABLE_CPP_FFI
+                    printf("\033[1;33m[ritual]\033[0m Split-rune '%s' not found locally. Initiating repo unearthing...\n", src);
+                    char *old_build = g_build_dir;
+                    if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
+                    if (runepkg_repo_source_download(src) == 0) {
+                        const char *target = g_build_dir ? g_build_dir : ".";
+                        DIR *dir = opendir(target);
+                        if (dir) {
+                            struct dirent *entry;
+                            while ((entry = readdir(dir)) != NULL) {
+                                if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
+                                    handle_source_build_split(discovery_path);
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            closedir(dir);
+                        }
+                    }
+                    g_build_dir = old_build;
+#endif
+                }
+
+                if (!found) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m buildpkg-split requires a .dsc file or source tree. None found matching '%s'.\n", src);
                     cli_failed = 1;
                 }
             } else {
-                printf("Error: buildpkg-split command requires a .dsc file path.\n");
+                printf("Error: buildpkg-split command requires a .dsc file path or package name.\n");
             }
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
@@ -644,14 +744,14 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: verify command requires a package name.\n");
             }
-        } else if (strcmp(argv[i], "update") == 0) {
+        } else if (strcmp(argv[i], "update") == 0 || strcmp(argv[i], "up") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_update();
 #else
             printf("Notice: Repository synchronization requires a C++ build with networking enabled.\n");
             printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
-        } else if (strcmp(argv[i], "upgrade") == 0) {
+        } else if (strcmp(argv[i], "upgrade") == 0 || strcmp(argv[i], "ug") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();
 #else

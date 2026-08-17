@@ -68,6 +68,29 @@ public:
             if (unpack() != 0) return -1;
         }
 
+        // --- NEW: Dependency Alchemy Check ---
+        if (!build_depends_.empty()) {
+            std::cout << "\033[1;34m[ritual]\033[0m Inspecting alchemical ingredients (build dependencies)..." << std::endl;
+            char **deps = parse_depends(build_depends_.c_str());
+            if (deps) {
+                std::vector<std::string> missing;
+                for (int i = 0; deps[i]; i++) {
+                    // Check both system and runepkg database
+                    if (runepkg_main_hash_table && !runepkg_hash_search(runepkg_main_hash_table, deps[i])) {
+                        missing.push_back(deps[i]);
+                    }
+                    free(deps[i]);
+                }
+                free(deps);
+
+                if (!missing.empty()) {
+                    std::cout << "\033[1;33m[warning]\033[0m The following ingredients might be missing from your forge:" << std::endl;
+                    for (const auto& m : missing) std::cout << "  - " << m << std::endl;
+                    std::cout << "\033[1;33m[warning]\033[0m If the build fails, use 'runepkg download-build-depends " << source_name_ << "' to gather them." << std::endl;
+                }
+            }
+        }
+
         // Try standard debian/rules first
         if (execute_rules()) {
             if (collect_results()) return 0;
@@ -85,6 +108,15 @@ public:
     int unpack() {
         if (!parse_dsc()) return -1;
         if (!setup_workspace()) return -1;
+
+        // Efficiency: Skip extraction if source tree already exists
+        fs::path debian_dir = working_dir_ / "debian";
+        if (fs::exists(debian_dir)) {
+            std::cout << "\033[1;32m[build]\033[0m Source already extracted at " << working_dir_ << ". Skipping extraction." << std::endl;
+            find_source_root();
+            return 0;
+        }
+
         if (!extract_source()) return -1;
         return 0;
     }
@@ -93,9 +125,29 @@ private:
     std::string dsc_path_;
     std::string source_name_;
     std::string version_;
+    std::string build_depends_;
     std::vector<std::string> source_files_;
     fs::path working_dir_;
     fs::path source_tree_root_;
+
+    void find_source_root() {
+        if (!fs::exists(working_dir_)) return;
+
+        for (const auto& entry : fs::directory_iterator(working_dir_)) {
+            if (entry.is_directory()) {
+                std::string name = entry.path().filename().string();
+                if (name == "debian") {
+                    source_tree_root_ = working_dir_;
+                    return;
+                }
+                if (name.find(source_name_) != std::string::npos && fs::exists(entry.path() / "debian")) {
+                    source_tree_root_ = entry.path();
+                    return;
+                }
+            }
+        }
+        source_tree_root_ = working_dir_;
+    }
 
     struct BinaryPackage {
         std::string name;
@@ -353,6 +405,9 @@ private:
             } else if (line.compare(0, 9, "Version: ") == 0) {
                 version_ = line.substr(9);
                 version_.erase(version_.find_last_not_of(" \n\r\t") + 1);
+            } else if (line.compare(0, 15, "Build-Depends: ") == 0) {
+                build_depends_ = line.substr(15);
+                build_depends_.erase(build_depends_.find_last_not_of(" \n\r\t") + 1);
             } else if (line.compare(0, 6, "Files:") == 0) {
                 in_files = true;
             } else if (in_files && !line.empty() && line[0] == ' ') {
@@ -385,8 +440,9 @@ private:
 
         working_dir_ = fs::path(g_build_dir) / (source_name_ + "-" + version_ + "-src");
         try {
-            if (fs::exists(working_dir_)) fs::remove_all(working_dir_);
-            fs::create_directories(working_dir_);
+            if (!fs::exists(working_dir_)) {
+                fs::create_directories(working_dir_);
+            }
         } catch (const std::exception& e) {
             std::cerr << "ERROR: Failed to create workspace: " << e.what() << std::endl;
             return false;

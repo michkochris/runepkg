@@ -10,6 +10,7 @@ RESET='\033[0m'
 GREEN='\033[1;32m'
 CYAN='\033[1;36m'
 BLUE='\033[1;34m'
+YELLOW='\033[1;33m'
 
 if [ $# -eq 0 ]; then
     echo -e "${BOLD}${CYAN}Usage:${RESET} $0 <package_name>"
@@ -20,20 +21,16 @@ echo -e "${BOLD}${BLUE}--------------------------------------------------------$
 echo -e "${BOLD}${BLUE}   runepkg: Gathering Binary Runes (fetchdeb)           ${RESET}"
 echo -e "${BOLD}${BLUE}--------------------------------------------------------${RESET}"
 
-# Use the fast C++ engine to download
+# Use the system-installed runepkg
+RUNEPKG_BIN=$(command -v runepkg || echo "./runepkg")
+
 echo -e "${CYAN}--> Invoking the internal download engine for: ${BOLD}$1${RESET}"
 
-# Configure runepkg to download into our local debs dir
-# We use the built-in 'download-depends' command
-./runepkg --print-config-file > /dev/null || { echo "Error: runepkg not found in current dir. Build it first!"; exit 1; }
+# Run the command
+$RUNEPKG_BIN download-depends "$1"
 
-# Temporarily override download_dir by passing it through environment or just moving files
-# But easiest is to use the dedicated command:
-./runepkg download-depends "$1"
-
-# Move the resulting debs into our local folder if they went elsewhere
-# (Assuming runepkg puts them in download_dir defined in runepkgconfig)
-DOWNLOAD_DIR=$(./runepkg --print-config | grep "download_dir" | cut -d'=' -f2 | xargs)
+# Move the resulting debs into our local folder
+DOWNLOAD_DIR=$($RUNEPKG_BIN --print-config | grep "download_dir" | cut -d'=' -f2 | xargs)
 
 if [ -d "$DOWNLOAD_DIR" ]; then
     echo -e "${YELLOW}Gathering fragments from $DOWNLOAD_DIR...${RESET}"

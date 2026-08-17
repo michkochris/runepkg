@@ -21,21 +21,20 @@ echo -e "${BOLD}${PURPLE}-------------------------------------------------------
 echo -e "${BOLD}${PURPLE}   runepkg: Unearthing Source Runes (fetchsource)       ${RESET}"
 echo -e "${BOLD}${PURPLE}--------------------------------------------------------${RESET}"
 
+# Use the system-installed runepkg
+RUNEPKG_BIN=$(command -v runepkg || echo "./runepkg")
+
 echo -e "${CYAN}--> Invoking the internal source unearthing engine for: ${BOLD}$1${RESET}"
 
-./runepkg --print-config-file > /dev/null || { echo "Error: runepkg not found in current dir. Build it first!"; exit 1; }
-
 # Use the built-in 'source' command
-./runepkg source "$1"
+$RUNEPKG_BIN source "$1"
 
 # Move the resulting source files into our local folder
-BUILD_DIR=$(./runepkg --print-config | grep "build_dir" | cut -d'=' -f2 | xargs)
+BUILD_DIR=$($RUNEPKG_BIN --print-config | grep "build_dir" | cut -d'=' -f2 | xargs)
 
 if [ -d "$BUILD_DIR" ]; then
     echo -e "${YELLOW}Gathering source runes from $BUILD_DIR...${RESET}"
-    # Use sudo for move if needed, but try normal first
-    mv "$BUILD_DIR"/"$1"* "$TARGET_DIR/" 2>/dev/null || sudo mv "$BUILD_DIR"/"$1"* "$TARGET_DIR/" 2>/dev/null || true
-    if [ -n "${SUDO_USER-}" ]; then sudo chown -R "$SUDO_USER":"$SUDO_USER" "$TARGET_DIR"; fi
+    mv "$BUILD_DIR"/"$1"* "$TARGET_DIR/" 2>/dev/null || true
 fi
 
 echo -e "${BOLD}${GREEN}--------------------------------------------------------${RESET}"

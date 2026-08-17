@@ -12,8 +12,9 @@
 
 CC ?= gcc
 CXX ?= g++
-CFLAGS = -Wall -Wextra -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread
-CXXFLAGS = -Wall -Wextra -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread
+# Added -fdiagnostics-color=always and -Wpedantic for clean development transparency
+CFLAGS = -Wall -Wextra -Wpedantic -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
+CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
 
 LDFLAGS = -pthread
 LIBS =
@@ -148,19 +149,16 @@ build-banner:
 all: with-all
 
 $(TARGET): build-banner $(OBJS) .config_with_cpp
-	@printf "  $(BLUE)%-10s$(RESET) %s\n" "[ LD ]" "$@"
-	@$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	$(CXX) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	@echo "--------------------------------------------------------"
 	@echo "$(GREEN)⚡ runepkg build complete: $@$(RESET)"
 	@echo "--------------------------------------------------------"
 
 %.o: %.c $(HEADERS) .config_with_cpp
-	@printf "  $(CYAN)%-10s$(RESET) %s\n" "[ CC ]" "$<"
-	@$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp $(HEADERS) .config_with_cpp
-	@printf "  $(PURPLE)%-10s$(RESET) %s\n" "[ CXX ]" "$<"
-	@$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
