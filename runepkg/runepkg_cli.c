@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
 
     // Step 2: Execute commands based on the interleaved arguments.
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0) {
+        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
             if (i + 1 < argc) {
                 // Loop to handle multiple .deb files
                 while (i + 1 < argc) {
@@ -255,7 +255,12 @@ int main(int argc, char *argv[]) {
                     i++;
                 }
             } else {
-                handle_install_stdin();
+                if (isatty(STDIN_FILENO)) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m install command requires a package name or '-' for stdin.\n");
+                    cli_failed = 1;
+                } else {
+                    handle_install_stdin();
+                }
             }
         } else if (strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--unpack") == 0) {
             if (i + 1 < argc) {
@@ -271,7 +276,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: --md5check requires a package name.\n");
             }
-        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0) {
+        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0) {
             char *removed_packages[100];
             int removed_count = 0;
             char *failed_packages[100];
@@ -305,7 +310,12 @@ int main(int argc, char *argv[]) {
                     i++;
                 }
             } else {
-                handle_remove_stdin();
+                if (isatty(STDIN_FILENO)) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m remove command requires a package name or '-' for stdin.\n");
+                    cli_failed = 1;
+                } else {
+                    handle_remove_stdin();
+                }
             }
             if (removed_count > 0) {
                 printf("Successfully removed packages:\n");
@@ -339,14 +349,14 @@ int main(int argc, char *argv[]) {
                     free(failed_packages[j]);
                 }
             }
-        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0) {
+        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0) {
             const char *pattern = NULL;
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 pattern = argv[i+1];
                 i++;
             }
             handle_list(pattern);
-        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0) {
+        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0 || strcmp(argv[i], "status") == 0) {
             if (i + 1 < argc) {
                 char *next_arg = argv[i+1];
                 /* Support interleaved forms:
@@ -409,7 +419,7 @@ int main(int argc, char *argv[]) {
                 cli_failed = 1;
                 runepkg_log_verbose("Error: -s/--status requires a package name.");
             }
-        } else if (strcmp(argv[i], "-L") == 0 || strcmp(argv[i], "--list-files") == 0) {
+        } else if (strcmp(argv[i], "-L") == 0 || strcmp(argv[i], "--list-files") == 0 || strcmp(argv[i], "list-files") == 0) {
             if (i + 1 < argc) {
                 handle_list_files(argv[i+1]);
                 i++;

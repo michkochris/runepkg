@@ -563,7 +563,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0) {
                     strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0) {
+                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0 || strcmp(tok, "list-files") == 0) {
                     strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
                     strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
@@ -579,6 +579,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "source-build") == 0) {
                     strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "search") == 0) {
+                    strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "-S") == 0 || strcmp(tok, "--search") == 0) {
+                    strncpy(inferred_cmd, "search-file", sizeof(inferred_cmd)-1);
                 }
                 last_token = tok;
                 tok = strtok_r(NULL, " \t", &saveptr);
@@ -599,7 +603,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "remove") == 0 || strcmp(t2, "-r") == 0 || strcmp(t2, "--remove") == 0) {
                             strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
                             break;
-                        } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "-L") == 0 || strcmp(t2, "--list") == 0) {
+                        } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "-L") == 0 || strcmp(t2, "--list") == 0 || strcmp(t2, "list-files") == 0) {
                             strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
                             break;
                         } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
@@ -622,6 +626,12 @@ void handle_binary_completion(const char *partial, const char *prev) {
                             break;
                         } else if (strcmp(t2, "source-build") == 0) {
                             strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "search") == 0) {
+                            strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
+                            break;
+                        } else if (strcmp(t2, "-S") == 0 || strcmp(t2, "--search") == 0) {
+                            strncpy(inferred_cmd, "search-file", sizeof(inferred_cmd)-1);
                             break;
                         }
                         t2 = strtok_r(NULL, " \t", &save2);
@@ -709,6 +719,15 @@ void handle_binary_completion(const char *partial, const char *prev) {
             prefix_search_and_print_ext(partial, ".dsc");
             complete_file_paths_ext(partial, g_build_dir, ".dsc");
             repo_src_prefix_search_and_print(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "search") == 0) {
+            repo_prefix_search_and_print(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "search-file") == 0) {
+            /* -S searches for file paths, so just complete normal files/dirs */
+            complete_file_paths(partial);
             return;
         }
     }
