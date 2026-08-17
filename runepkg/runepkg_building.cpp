@@ -261,8 +261,20 @@ private:
 
         // 5. Create .deb(s)
         if (!split) {
-            // Classic behavior: Put everything in the first package
-            return create_deb_from_pkg(packages[0], temp_install_dir);
+            // Classic behavior: Create a staging area and put everything in the first package
+            fs::path classic_staging = working_dir_ / "staging_classic";
+            fs::path classic_data = classic_staging / "data";
+            fs::create_directories(classic_data);
+
+            std::cout << "  -> Preparing classic build staging area..." << std::endl;
+            for (const auto& entry : fs::directory_iterator(temp_install_dir)) {
+                try {
+                    fs::rename(entry.path(), classic_data / entry.path().filename());
+                } catch (...) {
+                    fs::copy(entry.path(), classic_data / entry.path().filename(), fs::copy_options::recursive);
+                }
+            }
+            return create_deb_from_pkg(packages[0], classic_staging);
         } else {
             // Split behavior: Create multiple debs
             bool success = true;

@@ -138,15 +138,18 @@ Usage:
   runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
 Core Package Management (Local/Low-Level):
-  -i, --install, i <deb|pkg>...           Install .deb files or repository packages.
-  -r, --remove, r <package-name>          Remove an installed package.
-  -l, --list, l [pattern]                 List installed packages.
-  -s, --status, s <package-name>          Show detailed info about an installed package.
+  -i, --install <deb|pkg>...              Install .deb files or repository packages.
+      --install -                         Read .deb paths from stdin.
+      --install @file                     Read .deb paths from a list file.
+  -r, --remove <package-name>             Remove an installed package.
+      --remove -                          Read package names from stdin.
+  -l, --list [pattern]                    List installed packages (optionally matching pattern).
+  -s, --status <package-name>             Show detailed info about an installed package.
   -L, --list-files <package-name>         List all files owned by an installed package.
   -S, --search <file-path>                Search installed packages for a specific file.
   -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.
   -m, --md5check <package-name>           Verify MD5 checksums of an installed package.
-  -b, --build, build [dir] [output.deb]   Build a .deb (Source or Binary folder).
+  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.
   -v, --verbose                           Enable verbose output (detailed logging).
   -d, --debug                             Enable debug output (developer traces).
   -f, --force                             Force install/upgrade despite missing dependencies.
@@ -154,19 +157,21 @@ Core Package Management (Local/Low-Level):
   -h, --help                              Display this help message.
 
 Advanced Repository Management (Network/FFI):
-  update, up                              Sync metadata and check for upgradable packages.
-  upgrade, ug                             Download and install all available upgrades.
-  fetch <pkg>                             Download .debs (with depends) to local debs/.
-  fetch-source <pkg>                      Download source files to local sources/.
+  update                                  Sync metadata and check for upgradable packages.
+  upgrade                                 Download and install all available upgrades.
   search <pkg|pattern>                    Search repositories for packages or patterns.
+                                          (Use "quotes" to search for multiple words).
   source <pkg>                            Download source package files into build_dir.
-  source-depends <pkg>                    Download source package + runtime-dependencies.
-  source-build-depends <pkg>              Download source package + build-dependencies.
-  source-build, build <pkg|dir|.dsc>      Build a Debian source package.
-  buildpkg-split <pkg|dir|.dsc>           Build and split a source package into multiple .debs.
-  download-only <pkg>                     Download a .deb without dependencies.
+  source-depends <pkg>                    Download source package and its runtime-dependencies.
+  source-build-depends <pkg>              Download source package and its build-dependencies.
+  source-build <package.dsc>              Build a Debian source package into runepkg_debs.
+  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.
+                                          (Will auto-fetch from repo if name provided).
+  fetch <pkg>                             Download .debs (with depends) to local debs/ or download_dir.
+  fetch-source <pkg>                      Download source files to local sources/ or build_dir.
+  download-only <pkg>                     Download a .deb to download_dir without dependencies.
   download-depends <pkg>                  Download a .deb and its binary dependencies.
-  download-build-depends <pkg>            Download binary .debs required for building.
+  download-build-depends <pkg>            Download binary .debs required to build a source package.
 
 Maintenance & Diagnostics:
       --print-config                      Print all active path and repository settings.
@@ -179,12 +184,11 @@ Experimental/Future:
   depends <pkg>                           Placeholder: Graphical dependency visualizer.
   verify <pkg>                            Placeholder: Cryptographic package verification.
 
-Note: Commands can be interleaved, e.g., 'runepkg -v -i nano -s nano'
-Note: runepkg intelligently auto-discovers runes in ./sources/ and ./debs/.
+Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
+Note: FFI features (C++) are enabled based on your build target (`make all`).
 ```
 
 ![runepkg Logo](./runepkg/docs/runepkg_logo.svg)
-
 **Built with ❤️ for the old school GNU/Linux community...**<br>
 Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 
