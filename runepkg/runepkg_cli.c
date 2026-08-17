@@ -540,7 +540,10 @@ int main(int argc, char *argv[]) {
 
                         struct dirent *entry;
                         while ((entry = readdir(dir)) != NULL) {
-                            if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                            // Check for exact package match in filename (e.g. nano_9.1-1.dsc matching 'nano')
+                            char pattern[128];
+                            snprintf(pattern, sizeof(pattern), "%s_", src);
+                            if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
                                 snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
                                 printf("\033[1;34m[discovery]\033[0m Found matching rune: %s\n", discovery_path);
                                 handle_source_build(discovery_path);
@@ -565,7 +568,9 @@ int main(int argc, char *argv[]) {
                         if (dir) {
                             struct dirent *entry;
                             while ((entry = readdir(dir)) != NULL) {
-                                if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                                char pattern[128];
+                                snprintf(pattern, sizeof(pattern), "%s_", src);
+                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
                                     snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
                                     handle_source_build(discovery_path);
                                     found = true;
@@ -623,7 +628,9 @@ int main(int argc, char *argv[]) {
                         if (!dir) continue;
                         struct dirent *entry;
                         while ((entry = readdir(dir)) != NULL) {
-                            if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                            char pattern[128];
+                            snprintf(pattern, sizeof(pattern), "%s_", src);
+                            if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
                                 snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
                                 printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
                                 handle_source_build_split(discovery_path);
@@ -647,7 +654,9 @@ int main(int argc, char *argv[]) {
                         if (dir) {
                             struct dirent *entry;
                             while ((entry = readdir(dir)) != NULL) {
-                                if (strstr(entry->d_name, src) && strstr(entry->d_name, ".dsc")) {
+                                char pattern[128];
+                                snprintf(pattern, sizeof(pattern), "%s_", src);
+                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
                                     snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
                                     handle_source_build_split(discovery_path);
                                     found = true;

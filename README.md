@@ -22,19 +22,19 @@ If you are interested in the technical and insightful architectural decisions be
 
 
 ### **1. Surgical Precision**
-Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches) single Debian source package. This allows you to inspect and modify the `rules` Debian build script, or the `control` file for metadata (package name, version, and dependencies) without being forced into a specific build environment or strict system policies...
+Unlike `apt-get source`, which often pulls in a massive tree of build-dependencies, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches) single Debian source package. This allows you to inspect and modify the `rules` Debian build script, or the `control` file for metadata (package name, version, and dependencies). **runepkg** now features a **Native Build Fallback** that can forge runes even if standard tools like `debhelper` are missing.
 
 ### **2. The "Hacker" Build Loop**
 **runepkg** provides high-speed package management that matches the convenience of `apt-get` while enabling a power user for a "fetch-edit-build" workflow:
-- **Fetch**: Use `runepkg source` to downlaod a debian source package into your `build_dir`.
-- **Edit**: Manually modify `debian/rules`, `control`, or the source code itself to strip dependencies or apply custom cross-compilation flags.
-- **Build**: Use `runepkg source-build /path/to/<package.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools.
+- **Fetch**: Use `runepkg fetch-source` to unearth a debian source package into your `build_dir`.
+- **Edit**: Manually modify `debian/rules`, `control`, or the source code itself.
+- **Build**: Use `runepkg build <pkg|dir|.dsc>` to trigger a build. **runepkg** will attempt to build your modified source without the strict dependency gatekeeping found in mainstream tools. It automatically detects if you've provided a package name (auto-fetching it), an extracted directory, or a `.dsc` rune.
 
 ### **3. Manual Assembly & Custom Builders**
-For those creating custom Linux distros, bootable custom Linux iso's or using automatic build scripts (like [`some_linux_builder`](https://github.com/michkochris/some_linux_builder)), **runepkg** provides:
-- **Direct Build**: `runepkg -b <dir> [output.deb]` builds a `.deb` instantly from any standard .deb folder structure.
+For those creating custom Linux distros, bootable custom Linux iso's or using automatic build scripts, **runepkg** provides:
+- **Direct Build**: `runepkg build <dir> [output.deb]` builds a `.deb` instantly from any standard folder structure. It intelligently detects if the folder is a Debian source tree (with `debian/`) or a binary structure (with `control/`).
+- **Multi-Package Ritual**: `runepkg buildpkg-split <pkg|dir|.dsc>` builds a source package and intelligently splits it into multiple `.deb` fragments (e.g. `bin`, `dev`, `doc`) based on the ancient `debian/control` stanzas.
 - **FHS Initialization**: `runepkg_util_init_fhs` (available via C API) can bootstrap a full filesystem skeleton in seconds.
-- **Standalone Mode**: The core is pure C and can run on minimal systems (musl) similar to `dpkg` when high level tools such as `c++`, are unavailable for example...
 
 ## **Installation**
 
@@ -60,22 +60,8 @@ For package extraction and assembly, and debian source package building, **runep
   - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz-utils`
   - **Build Dependencies (C Core):** `gcc`, `make`, `libc6-dev`
   - `sudo apt update && sudo apt install binutils tar gzip xz-utils gcc make libc6-dev`
-  - **Full Advanced Dependencies (C++ FFI Features):** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`
-  - `sudo apt update && sudo apt install binutils tar gzip xz-utils gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev`
-- 
-- **Arch Linux:**
-  - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz`
-  - **Build Dependencies (C Core):** `base-devel`
-  - `sudo pacman -S --needed binutils tar gzip xz base-devel`
-  - **Full Advanced Dependencies (C++ FFI Features):** `curl`, `openssl`, `zlib`
-  - `sudo pacman -S --needed binutils tar gzip xz base-devel curl openssl zlib`
-- 
-- **Fedora/RHEL:**
-  - **Core Dependencies (All Runtime):** `binutils`, `tar`, `gzip`, `xz`
-  - **Build Dependencies (C Core):** `gcc`, `make`, `glibc-devel`
-  - `sudo dnf install binutils tar gzip xz gcc make glibc-devel`
-  - **Full Advanced Dependencies (C++ FFI Features):** `gcc-c++`, `libcurl-devel`, `openssl-devel`, `zlib-devel`
-  - `sudo dnf install binutils tar gzip xz gcc gcc-c++ make glibc-devel libcurl-devel openssl-devel zlib-devel`
+  - **Full Advanced Dependencies (C++ FFI Features):** `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`, `debhelper`, `libncurses-dev`
+  - `sudo apt update && sudo apt install binutils tar gzip xz-utils gcc g++ make libc6-dev libcurl4-openssl-dev libssl-dev zlib1g-dev debhelper libncurses-dev`
 
 ## **Configuration**
 Edit `runepkgconfig` before install for user specific preferences...
@@ -118,8 +104,6 @@ chmod +x make_runepkg_deb.sh
 ```
 This script will compile the project and use the resulting binary to assemble a professional grade `.deb` package.
 
-*Note: For a minimal embedded version, edit `make_runepkg_deb.sh` and change `make all` to `make runepkg`.*
-
 ### **⚡ Lightning Fast Autocomplete**
 **runepkg** features an advanced, binary-driven completion engine that is significantly faster than standard shell scripts. To enable it, you must register the binary with your shell.
 
@@ -145,7 +129,8 @@ sudo make uninstall
 *Note: You may receive a notification if certain system directories require manual removal...*
 
 ## **Usage**
-For basic commands, see the help output below. For comprehensive examples, advanced workflows, and repository management details, please refer to [USAGELONG.md](./USAGELONG.md).
+For basic commands, see the help output below. **runepkg** supports many shorthand aliases (e.g., `up`, `i`, `s`) for the modern "hacker" workflow.
+
 ```bash
 runepkg (fast efficient old-school .deb package manager)
 
@@ -153,18 +138,15 @@ Usage:
   runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
 Core Package Management (Local/Low-Level):
-  -i, --install <deb|pkg>...              Install .deb files or repository packages.
-      --install -                         Read .deb paths from stdin.
-      --install @file                     Read .deb paths from a list file.
-  -r, --remove <package-name>             Remove an installed package.
-      --remove -                          Read package names from stdin.
-  -l, --list [pattern]                    List installed packages (optionally matching pattern).
-  -s, --status <package-name>             Show detailed info about an installed package.
+  -i, --install, i <deb|pkg>...           Install .deb files or repository packages.
+  -r, --remove, r <package-name>          Remove an installed package.
+  -l, --list, l [pattern]                 List installed packages.
+  -s, --status, s <package-name>          Show detailed info about an installed package.
   -L, --list-files <package-name>         List all files owned by an installed package.
   -S, --search <file-path>                Search installed packages for a specific file.
   -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.
   -m, --md5check <package-name>           Verify MD5 checksums of an installed package.
-  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.
+  -b, --build, build [dir] [output.deb]   Build a .deb (Source or Binary folder).
   -v, --verbose                           Enable verbose output (detailed logging).
   -d, --debug                             Enable debug output (developer traces).
   -f, --force                             Force install/upgrade despite missing dependencies.
@@ -172,32 +154,33 @@ Core Package Management (Local/Low-Level):
   -h, --help                              Display this help message.
 
 Advanced Repository Management (Network/FFI):
-  update                                  Sync metadata and check for upgradable packages.
-  upgrade                                 Download and install all available upgrades.
+  update, up                              Sync metadata and check for upgradable packages.
+  upgrade, ug                             Download and install all available upgrades.
+  fetch <pkg>                             Download .debs (with depends) to local debs/.
+  fetch-source <pkg>                      Download source files to local sources/.
   search <pkg|pattern>                    Search repositories for packages or patterns.
-                                          (Use "quotes" to search for multiple words).
   source <pkg>                            Download source package files into build_dir.
-  source-depends <pkg>                    Download source package and its runtime-dependencies.
-  source-build-depends <pkg>              Download source package and its build-dependencies.
-  source-build <package.dsc>              Build a Debian source package into runepkg_debs.
-  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.
-                                          (Alias: --buildpkg-split)
-  download-only <pkg>                     Download a .deb to download_dir without dependencies.
+  source-depends <pkg>                    Download source package + runtime-dependencies.
+  source-build-depends <pkg>              Download source package + build-dependencies.
+  source-build, build <pkg|dir|.dsc>      Build a Debian source package.
+  buildpkg-split <pkg|dir|.dsc>           Build and split a source package into multiple .debs.
+  download-only <pkg>                     Download a .deb without dependencies.
   download-depends <pkg>                  Download a .deb and its binary dependencies.
-  download-build-depends <pkg>            Download binary .debs required to build a source package.
+  download-build-depends <pkg>            Download binary .debs required for building.
 
 Maintenance & Diagnostics:
       --print-config                      Print all active path and repository settings.
       --print-config-file                 Show the path to the runepkgconfig file in use.
       --print-pkglist-file                Show paths to the autocomplete index files.
+      --print-autopool                    Print the contents of the consolidated autocomplete pool.
       --rebuild-autocomplete              Rebuild the local package name index.
 
 Experimental/Future:
   depends <pkg>                           Placeholder: Graphical dependency visualizer.
   verify <pkg>                            Placeholder: Cryptographic package verification.
 
-Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
-Note: FFI features (C++) are enabled based on your build target (`make all`).
+Note: Commands can be interleaved, e.g., 'runepkg -v -i nano -s nano'
+Note: runepkg intelligently auto-discovers runes in ./sources/ and ./debs/.
 ```
 
 ![runepkg Logo](./runepkg/docs/runepkg_logo.svg)
@@ -208,6 +191,3 @@ Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
 ## **Contact**
 For feedback, bug reports, or "rune" discoveries, reach out at:
 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
-
-
-
