@@ -60,8 +60,8 @@ For extraction and building, **runepkg** is fully compatible with **BusyBox** an
 - **BusyBox:** Provides all necessary applets in resource-constrained environments.
 
 **Required Packages (Debian/Ubuntu):**
-- **Core:** `binutils`, `tar`, `gzip`, `xz-utils`, `gcc`, `make`, `libc6-dev`
-- **Full:** Add `g++`, `libcurl4-openssl-dev`, `libssl-dev`, `zlib1g-dev`, `libncurses-dev`
+- **Core:** `binutils tar gzip xz-utils gcc make libc6-dev`
+- **Full:** Add `g++ libcurl4-openssl-dev libssl-dev zlib1g-dev libncurses-dev`
 
 ## **Configuration**
 Configuration is handled via `runepkgconfig`, typically installed to `/etc/runepkg/runepkgconfig`. You can define paths like `install_dir` and manage repository information in standard Debian format at the bottom of the file.
