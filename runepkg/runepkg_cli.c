@@ -81,12 +81,12 @@ void usage(void) {
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
     printf("  source <pkg>                            Download source package files into build_dir.\n");
     printf("  source-depends <pkg>                    Download source package and its runtime-dependencies.\n");
-    printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n");
-    printf("  source-build <package.dsc>              Build a Debian source package into runepkg_debs.\n");
+    printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n\n");
+
+    printf("  build <pkg|path>                        Build a source package by name or path to .dsc.\n");
     printf("  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.\n");
-    printf("                                          (Will auto-fetch from repo if name provided).\n");
-    printf("  fetch <pkg>                             Download .debs (with depends) to local debs/ or download_dir.\n");
-    printf("  fetch-source <pkg>                      Download source files to local sources/ or build_dir.\n");
+    printf("                                          (Will auto-fetch from repo if name provided).\n\n");
+
     printf("  download-only <pkg>                     Download a .deb to download_dir without dependencies.\n");
     printf("  download-depends <pkg>                  Download a .deb and its binary dependencies.\n");
     printf("  download-build-depends <pkg>            Download binary .debs required to build a source package.\n\n");
@@ -463,36 +463,6 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
             }
-        } else if (strcmp(argv[i], "fetch") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
-                char *old_dl = g_download_dir;
-                if (runepkg_util_is_directory("debs")) g_download_dir = (char*)"debs";
-                char *path = runepkg_repo_download(argv[i+1], true);
-                g_download_dir = old_dl;
-                if (path) free(path);
-                else cli_failed = 1;
-#else
-                printf("Notice: fetch requires a C++ build with networking enabled.\n");
-#endif
-                i++;
-            } else {
-                printf("Error: fetch command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "fetch-source") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
-                char *old_build = g_build_dir;
-                if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
-                if (runepkg_repo_source_download(argv[i+1]) != 0) cli_failed = 1;
-                g_build_dir = old_build;
-#else
-                printf("Notice: fetch-source requires a C++ build with networking enabled.\n");
-#endif
-                i++;
-            } else {
-                printf("Error: fetch-source command requires a package name.\n");
-            }
         } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0 || strcmp(argv[i], "build") == 0) {
             const char *src = NULL;
             const char *out = NULL;
@@ -812,13 +782,6 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: source-build-depends command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "source-build") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                handle_source_build(argv[i+1]);
-                i++;
-            } else {
-                printf("Error: source-build command requires a .dsc file path.\n");
             }
         } else {
             cli_failed = 1;

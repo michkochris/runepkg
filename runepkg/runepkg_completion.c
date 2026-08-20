@@ -608,7 +608,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "download-only") == 0 || strcmp(tok, "download-depends") == 0 || strcmp(tok, "download-build-depends") == 0) {
                     strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "source-build") == 0 || strcmp(tok, "buildpkg-split") == 0 || strcmp(tok, "--buildpkg-split") == 0) {
+                } else if (strcmp(tok, "buildpkg-split") == 0 || strcmp(tok, "--buildpkg-split") == 0) {
                     strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "update") == 0) {
                     strncpy(inferred_cmd, "update", sizeof(inferred_cmd)-1);
@@ -659,7 +659,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                         } else if (strcmp(t2, "download-only") == 0 || strcmp(t2, "download-depends") == 0 || strcmp(t2, "download-build-depends") == 0) {
                             strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
                             break;
-                        } else if (strcmp(t2, "source-build") == 0 || strcmp(t2, "buildpkg-split") == 0 || strcmp(t2, "--buildpkg-split") == 0) {
+                        } else if (strcmp(t2, "buildpkg-split") == 0 || strcmp(t2, "--buildpkg-split") == 0) {
                             strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
                             break;
                         } else if (strcmp(t2, "search") == 0) {
@@ -766,14 +766,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
             return;
         }
-        if (strcmp(inferred_cmd, "fetch") == 0) {
-            repo_prefix_search_and_print(partial);
-            return;
-        }
-        if (strcmp(inferred_cmd, "fetch-source") == 0) {
-            repo_src_prefix_search_and_print(partial);
-            return;
-        }
         if (strcmp(inferred_cmd, "search") == 0) {
             repo_prefix_search_and_print(partial);
             return;
@@ -806,8 +798,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
         } else {
             const char *sub_cmds[] = {
-                "install", "remove", "list", "status", "list-files", "search", "fetch", "fetch-source",
-                "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "source-build", "buildpkg-split", "build"
+                "install", "remove", "list", "status", "list-files", "search",
+                "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "buildpkg-split", "build"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
             for (int i = 0; i < num_sub; i++) {
@@ -862,7 +854,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
     } else if (strcmp(prev, "download-only") == 0 || strcmp(prev, "download-depends") == 0 || strcmp(prev, "download-build-depends") == 0) {
         if (is_path) complete_file_paths(partial);
         else repo_prefix_search_and_print(partial);
-    } else if (strcmp(prev, "source-build") == 0 || strcmp(prev, "buildpkg-split") == 0 || strcmp(prev, "--buildpkg-split") == 0) {
+    } else if (strcmp(prev, "buildpkg-split") == 0 || strcmp(prev, "--buildpkg-split") == 0) {
         if (is_path) {
             complete_file_paths_ext(partial, g_build_dir, ".dsc");
         } else {

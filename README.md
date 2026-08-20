@@ -37,7 +37,7 @@ Unlike `apt-get source`, which may pull in massive build-dependency trees, `rune
 
 ### **2. The "Hacker" Build Loop**
 **runepkg** enables a streamlined "fetch-edit-build" workflow:
-- **Fetch**: Use `runepkg fetch-source` to unearth a source package into your build directory.
+- **Fetch**: Use `runepkg source` to unearth a source package into your build directory.
 - **Edit**: Modify `debian/rules`, `control`, or the source code itself.
 - **Build**: Use `runepkg build <pkg|dir|.dsc>` to trigger a build. **runepkg** attempts the build without the strict dependency gatekeeping of mainstream tools. It automatically handles package names (auto-fetching), extracted directories, or `.dsc` files.
 
@@ -135,11 +135,11 @@ Advanced Repository Management (Network/FFI):
   source <pkg>                            Download source package files into build_dir.
   source-depends <pkg>                    Download source package and its runtime-dependencies.
   source-build-depends <pkg>              Download source package and its build-dependencies.
-  source-build <package.dsc>              Build a Debian source package into runepkg_debs.
+
+  build <pkg|path>                        Build a source package by name or path to .dsc.
   buildpkg-split <package.dsc>            Build and split a source package into separate .debs.
                                           (Will auto-fetch from repo if name provided).
-  fetch <pkg>                             Download .debs (with depends) to local debs/ or download_dir.
-  fetch-source <pkg>                      Download source files to local sources/ or build_dir.
+
   download-only <pkg>                     Download a .deb to download_dir without dependencies.
   download-depends <pkg>                  Download a .deb and its binary dependencies.
   download-build-depends <pkg>            Download binary .debs required to build a source package.
@@ -157,15 +157,6 @@ Experimental/Future:
 
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
 Note: FFI features (C++) are enabled based on your build target (`make all`).
-
-  [#####]  runepkg
-  [#\ /#]  version 1.0.4
-  [# V #]  
-  [#####]  GPL-V3
-
-*Built with ❤️ for the old school GNU/Linux community...*
-Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
-Contact: [michkochris@gmail.com] | [runepkg@gmail.com]
 ```
 
 ![runepkg Logo](./runepkg/docs/runepkg_logo.svg)
