@@ -159,9 +159,12 @@ Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3
 Note: FFI features (C++) are enabled based on your build target (`make all`).
 ```
 
-![runepkg Logo](./runepkg/docs/runepkg_logo.svg)
-**Built with ❤️ for the old school GNU/Linux community...**<br>
-Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
+<p align="center">
+  <img src="./runepkg/docs/runepkg_logo.svg" width="400" alt="runepkg Logo">
+  <br>
+  <b>Built with ❤️ for the old school GNU/Linux community...</b><br>
+  Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
+</p>
 
 ## **Contact**
 For feedback, bug reports, or "rune" discoveries, reach out at:
