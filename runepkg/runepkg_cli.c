@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
 
     // Step 2: Execute commands based on the interleaved arguments.
     for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0 || strcmp(argv[i], "i") == 0) {
+        if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
             if (i + 1 < argc) {
                 // Loop to handle multiple .deb files
                 while (i + 1 < argc) {
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: --md5check requires a package name.\n");
             }
-        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0 || strcmp(argv[i], "r") == 0) {
+        } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0) {
             char *removed_packages[100];
             int removed_count = 0;
             char *failed_packages[100];
@@ -353,14 +353,14 @@ int main(int argc, char *argv[]) {
                     free(failed_packages[j]);
                 }
             }
-        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0 || strcmp(argv[i], "l") == 0) {
+        } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0) {
             const char *pattern = NULL;
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 pattern = argv[i+1];
                 i++;
             }
             handle_list(pattern);
-        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0 || strcmp(argv[i], "status") == 0 || strcmp(argv[i], "s") == 0) {
+        } else if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--status") == 0 || strcmp(argv[i], "status") == 0) {
             if (i + 1 < argc) {
                 char *next_arg = argv[i+1];
                 /* Support interleaved forms:
@@ -753,14 +753,14 @@ int main(int argc, char *argv[]) {
             } else {
                 printf("Error: verify command requires a package name.\n");
             }
-        } else if (strcmp(argv[i], "update") == 0 || strcmp(argv[i], "up") == 0) {
+        } else if (strcmp(argv[i], "update") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_update();
 #else
             printf("Notice: Repository synchronization requires a C++ build with networking enabled.\n");
             printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
-        } else if (strcmp(argv[i], "upgrade") == 0 || strcmp(argv[i], "ug") == 0) {
+        } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();
 #else

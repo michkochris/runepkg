@@ -297,7 +297,8 @@ int handle_remove(const char *package_name) {
             size_t input_len = strlen(trimmed);
             if (strncmp(entry->d_name, trimmed, input_len) == 0 && entry->d_name[input_len] == '-') {
                 const char *ver = entry->d_name + input_len + 1;
-                if (*ver != '\0') {
+                // Only count as a match if it looks like a version (starts with digit)
+                if (*ver != '\0' && isdigit(*ver)) {
                     match_count++;
                     strncpy(match_name, trimmed, sizeof(match_name) - 1);
                     strncpy(match_version, ver, sizeof(match_version) - 1);
@@ -322,11 +323,11 @@ int handle_remove(const char *package_name) {
             // Re-scan directory to collect matches
             DIR *list_dir = opendir(g_runepkg_db_dir);
             if (list_dir) {
-                struct dirent *entry;
-                while ((entry = readdir(list_dir)) != NULL && match_idx < 100) {
-                    if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
-                        if (strstr(entry->d_name, trimmed) != NULL) {
-                            strncpy(matches[match_idx], entry->d_name, PATH_MAX - 1);
+                struct dirent *sub_entry;
+                while ((sub_entry = readdir(list_dir)) != NULL && match_idx < 100) {
+                    if (sub_entry->d_type == DT_DIR && strcmp(sub_entry->d_name, ".") != 0 && strcmp(sub_entry->d_name, "..") != 0 && strcmp(sub_entry->d_name, "lists") != 0) {
+                        if (strstr(sub_entry->d_name, trimmed) != NULL) {
+                            strncpy(matches[match_idx], sub_entry->d_name, PATH_MAX - 1);
                             matches[match_idx][PATH_MAX - 1] = '\0';
                             match_idx++;
                         }
@@ -485,10 +486,12 @@ int handle_status(const char *package_name) {
         }
 
         // Check for prefix matches (for partial names like "binutils")
+        // Stricter check: match 'package_name' followed by '-' and then a DIGIT (version start)
         size_t name_len = strlen(package_name);
         if (strncmp(entry->d_name, package_name, name_len) == 0 && entry->d_name[name_len] == '-') {
             const char *ver = entry->d_name + name_len + 1;
-            if (*ver != '\0') {
+            // Only count as a match if it looks like a version (starts with digit)
+            if (*ver != '\0' && isdigit(*ver)) {
                 exact_match_count++;
                 if (exact_match_count == 1) {
                     // Store the first match

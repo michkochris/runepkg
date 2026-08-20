@@ -135,17 +135,17 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
             snprintf(full_path, sizeof(full_path), "%.*s%s%s", (int)(sizeof(full_path)-258), search_dir, (search_dir[strlen(search_dir)-1] == '/') ? "" : "/", e->d_name);
 
             if (stat(full_path, &st) == 0) {
-                bool is_dir = S_ISDIR(st.st_mode);
-                bool is_reg = S_ISREG(st.st_mode);
+                bool st_is_dir = S_ISDIR(st.st_mode);
+                bool st_is_reg = S_ISREG(st.st_mode);
 
                 // Apply suffix filter to files
-                if (suffix_filter && is_reg) {
+                if (suffix_filter && st_is_reg) {
                     size_t nlen = strlen(e->d_name);
                     size_t slen = strlen(suffix_filter);
                     if (nlen < slen || strcmp(e->d_name + nlen - slen, suffix_filter) != 0) continue;
                 }
 
-                if (is_dir) {
+                if (st_is_dir) {
                     /* Anti-Jumping Logic: suggest the directory AND a hidden dot entry
                      * to force Bash to see multiple options and stop at the slash. */
                     if (last_slash) {
@@ -590,13 +590,13 @@ void handle_binary_completion(const char *partial, const char *prev) {
             if (tok) tok = strtok_r(NULL, " \t", &saveptr);
             const char *last_token = NULL;
             while (tok) {
-                if (strcmp(tok, "install") == 0 || strcmp(tok, "-i") == 0 || strcmp(tok, "--install") == 0 || strcmp(tok, "i") == 0) {
+                if (strcmp(tok, "install") == 0 || strcmp(tok, "-i") == 0 || strcmp(tok, "--install") == 0) {
                     strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0 || strcmp(tok, "r") == 0) {
+                } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0) {
                     strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0 || strcmp(tok, "list-files") == 0 || strcmp(tok, "l") == 0) {
+                } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0 || strcmp(tok, "list-files") == 0) {
                     strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0 || strcmp(tok, "s") == 0) {
+                } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
                     strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "-u") == 0 || strcmp(tok, "--unpack") == 0) {
                     strncpy(inferred_cmd, "unpack", sizeof(inferred_cmd)-1);
@@ -610,9 +610,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "source-build") == 0 || strcmp(tok, "buildpkg-split") == 0 || strcmp(tok, "--buildpkg-split") == 0) {
                     strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "update") == 0 || strcmp(tok, "up") == 0) {
+                } else if (strcmp(tok, "update") == 0) {
                     strncpy(inferred_cmd, "update", sizeof(inferred_cmd)-1);
-                } else if (strcmp(tok, "upgrade") == 0 || strcmp(tok, "ug") == 0) {
+                } else if (strcmp(tok, "upgrade") == 0) {
                     strncpy(inferred_cmd, "upgrade", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "search") == 0) {
                     strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
@@ -807,8 +807,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             const char *sub_cmds[] = {
                 "install", "remove", "list", "status", "list-files", "search", "fetch", "fetch-source",
-                "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "source-build", "buildpkg-split", "build",
-                "up", "ug", "i", "r", "l", "s"
+                "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "source-build", "buildpkg-split", "build"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
             for (int i = 0; i < num_sub; i++) {

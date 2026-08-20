@@ -751,7 +751,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                     clandestine_spider_recursive(deb_file_path, &coll, deb_file_path);
 
                     if (coll.count > 0) {
-                        printf("\033[1;33m[dependencies]\033[0m Found %d required dependencies in this directory:\n", coll.count);
+                        printf("\033[1;33m[clandestine]\033[0m Found %d required dependencies in this directory.\n", coll.count);
+                        printf("\033[1;34m[ritual]\033[0m runepkg prefers using these local files over network downloads.\n\n");
                         for (int s = 0; s < coll.count; s++) {
                             const char *base = strrchr(coll.paths[s], '/');
                             printf("  -> %s\n", base ? base + 1 : coll.paths[s]);
@@ -761,7 +762,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                         free(coll.paths);
                         free(coll.names);
 
-                        printf("Would you like to install these local files to satisfy dependencies? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
+                        printf("\nWould you like to proceed with the local install to satisfy dependencies? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ");
                         fflush(stdout);
                         char resp[16];
                         if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {

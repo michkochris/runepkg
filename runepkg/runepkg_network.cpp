@@ -59,35 +59,13 @@ void render_runic_bar(int width, double fraction) {
 }
 
 void print_multi_progress() {
-    std::string featured_name;
-    double featured_fraction = -1.0;
-    for (auto const& [name, fraction] : g_active_downloads) {
-        if (fraction > featured_fraction && fraction < 1.0) {
-            featured_fraction = fraction;
-            featured_name = name;
-        }
-    }
-
-    if (featured_name.empty()) {
+    // This is now a lightweight "pulse" for background tasks,
+    // but the main rendering happens in update_progress for individual lines.
+    if (g_active_downloads.empty()) {
         if (g_finished_count >= g_total_to_download && g_total_to_download > 0) {
             std::cout << "\r  \033[1;32m[runepkg]\033[0m Fetching complete. (" << g_finished_count << "/" << g_total_to_download << ")\033[K" << std::flush;
-        } else {
-            std::cout << "\r  \033[1;34m[runepkg]\033[0m Synchronizing queue... (" << g_finished_count << "/" << g_total_to_download << ")\033[K" << std::flush;
         }
-        return;
     }
-
-    std::string display_name = featured_name;
-    if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
-
-    std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
-    render_runic_bar(20, featured_fraction);
-    std::cout << " " << std::fixed << std::setprecision(1) << std::right << std::setw(5) << (featured_fraction * 100.0) << "%";
-
-    if (g_active_downloads.size() > 1) {
-        std::cout << " (+" << (g_active_downloads.size() - 1) << " others)";
-    }
-    std::cout << " [" << g_finished_count << "/" << g_total_to_download << "]\033[K" << std::flush;
 }
 
 void update_progress(const std::string& name, double fraction) {
@@ -102,12 +80,39 @@ void update_progress(const std::string& name, double fraction) {
             std::string display_name = name;
             if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
 
-            std::cout << "\r  \033[1;32m->\033[0m " << std::left << std::setw(25) << display_name << " ";
+            // Print the final 100% line for this specific task
+            std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
             render_runic_bar(20, 1.0);
             std::cout << " 100.0%\033[K" << std::endl;
         }
     } else {
         g_active_downloads[name] = fraction;
+
+        // Find the "most active" download to show as a temporary status line if needed,
+        // but the user wants individual lines. In parallel downloads, we'll see
+        // lines pop up as they finish or start. To match the user's specific request
+        // where multiple bars are visible at once, we need to handle the cursor.
+        // However, for simplicity and compatibility with standard terminals,
+        // we'll print a line when a download starts/updates significantly.
+
+        static std::map<std::string, int> last_percent;
+        int current_percent = (int)(fraction * 100);
+
+        if (last_percent[name] != current_percent) {
+            last_percent[name] = current_percent;
+
+            std::string display_name = name;
+            if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
+
+            // If it's a new download, we print it. If it's an update, we only
+            // repaint if it's the "featured" one to avoid flooding the terminal
+            // with 40,000 lines.
+
+            // For the 'update' command specifically, we want to see the progress.
+            std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
+            render_runic_bar(20, fraction);
+            std::cout << " " << std::fixed << std::setprecision(1) << std::right << std::setw(5) << (fraction * 100.0) << "%\033[K" << std::flush;
+        }
     }
 
     print_multi_progress();
@@ -135,8 +140,8 @@ int curl_progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_o
     return 0;
 }
 
-bool download_file(const std::string& url, const std::string& dest_path, size_t expected_size = 0, std::string pkg_name = "") {
-    if (runepkg_util_file_exists(dest_path.c_str())) {
+bool download_file(const std::string& url, const std::string& dest_path, size_t expected_size = 0, std::string pkg_name = "", bool force_refresh = false) {
+    if (!force_refresh && runepkg_util_file_exists(dest_path.c_str())) {
         {
             std::lock_guard<std::mutex> lock(g_progress_mutex);
             if (g_completed_names.find(pkg_name) == g_completed_names.end()) {
@@ -405,7 +410,15 @@ extern "C" int runepkg_update(void) {
         std::string display_name; size_t dists_pos = task->url.find("/dists/");
         if (dists_pos != std::string::npos) { display_name = task->url.substr(dists_pos + 7); size_t last_slash = display_name.find_last_of('/'); if (last_slash != std::string::npos) display_name = display_name.substr(0, last_slash); }
         else display_name = task->url;
-        futures.push_back(std::async(std::launch::async, [task, display_name]() { return download_file(task->url, task->dest_path, task->size, display_name); }));
+
+        // Force refresh: unlink if exists
+        if (runepkg_util_file_exists(task->dest_path.c_str())) {
+            unlink(task->dest_path.c_str());
+        }
+
+        futures.push_back(std::async(std::launch::async, [task, display_name]() {
+            return download_file(task->url, task->dest_path, task->size, display_name, true);
+        }));
     }
     for (size_t i = 0; i < all_tasks_ptrs.size(); i++) {
         all_tasks_ptrs[i]->success = futures[i].get();
@@ -674,14 +687,13 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     else { PkgMetadata meta = get_package_metadata(clean_pkg); if (!meta.url.empty()) { resolved[clean_pkg] = meta; order.push_back(clean_pkg); } }
     if (resolved.empty()) return NULL;
     if (recursive && resolved.size() > 1) {
-        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << clean_pkg << "..." << std::endl;
-        std::cout << "\033[1;33m[dependencies]\033[0m The following dependencies are required:" << std::endl;
+        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << clean_pkg << "..." << std::endl << std::endl;
         int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
         for (size_t i = 0; i < order.size(); i++) {
             if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
             std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
         }
-        std::cout << std::endl << "Would you like to attempt to download them? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::cout << std::endl << std::endl << "Would you like to attempt to download them to " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -707,17 +719,16 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
         return -1;
     }
     std::unordered_map<std::string, PkgMetadata> resolved; std::vector<std::string> order; std::unordered_set<std::string> visiting;
-    std::cout << "\033[1;34m[runepkg]\033[0m Resolving binary build-dependencies for " << pkg_name << "..." << std::endl;
+    std::cout << "\033[1;34m[runepkg]\033[0m Resolving binary build-dependencies for " << pkg_name << "..." << std::endl << std::endl;
     std::vector<std::string> build_deps = parse_depends_cpp(src_meta.build_depends);
     for (const auto& dep : build_deps) resolve_recursive(dep, resolved, order, visiting, g_force_mode);
     if (resolved.empty()) { std::cout << "All build dependencies are already satisfied or not found." << std::endl; return 0; }
-    std::cout << "\033[1;33m[dependencies]\033[0m The following binary packages (build-deps) are required:" << std::endl;
     int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
     for (size_t i = 0; i < order.size(); i++) {
         if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
         std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
     }
-    std::cout << std::endl << "Would you like to attempt to download them? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+    std::cout << std::endl << std::endl << "Would you like to attempt to download them to " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
     std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -745,13 +756,14 @@ extern "C" int runepkg_upgrade(void) {
         }
     }
     if (to_upgrade.empty()) { std::cout << "All packages are already up to date." << std::endl; return 0; }
-    std::cout << "The following packages will be upgraded:" << std::endl;
+    std::cout << "\033[1;34m[runepkg]\033[0m The following packages will be upgraded:" << std::endl << std::endl;
     int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
     for (size_t i = 0; i < to_upgrade.size(); i++) {
         if (current_line_len + to_upgrade[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
         std::cout << to_upgrade[i]; current_line_len += to_upgrade[i].length(); if (i < to_upgrade.size() - 1) { std::cout << " "; current_line_len += 1; }
     }
-    std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
+    std::cout << std::endl << std::endl << "Do you want to continue with the download to " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+ std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
     if (!confirmed) { std::cout << "Upgrade cancelled." << std::endl; return 0; }
@@ -804,13 +816,12 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
     resolve_source_recursive(pkg_name, resolved, order, visiting);
     if (resolved.empty()) { std::cerr << "\033[1;31m[error]\033[0m Could not find source package " << pkg_name << std::endl; return -1; }
     if (order.size() > 1) {
-        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages (build-deps) are required:" << std::endl;
         int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
         for (size_t i = 0; i < order.size(); i++) {
             if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
             std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
         }
-        std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
+        std::cout << std::endl << std::endl << "Do you want to continue with the download to " << (g_build_dir ? g_build_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }
@@ -840,13 +851,12 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
     resolve_source_runtime_recursive(pkg_name, resolved, order, visiting);
     if (resolved.empty()) { std::cerr << "\033[1;31m[error]\033[0m Could not find dependencies for " << pkg_name << std::endl; return -1; }
     if (order.size() > 0) {
-        std::cout << "\033[1;33m[dependencies]\033[0m The following source packages (runtime-deps) are required:" << std::endl;
         int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
         for (size_t i = 0; i < order.size(); i++) {
             if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
             std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
         }
-        std::cout << std::endl << "Do you want to continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
+        std::cout << std::endl << std::endl << "Do you want to continue with the download to " << (g_build_dir ? g_build_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }

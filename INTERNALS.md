@@ -1,98 +1,88 @@
 # runepkg Internals
 
-This document describes the technical architecture and "science" behind **runepkg**. It is designed for developers and enthusiasts who want to understand how a lightweight, repository-aware package manager is built from the ground up in C.
+This document details the technical architecture and logic behind **runepkg**. It is intended for developers and enthusiasts who want to understand how a lightweight, repository-aware package manager is constructed from the ground up in C and C++.
 
 ---
 
-## 1. Unified Configuration & PKGINFO Metadata Parsing
+## 1. Bootstrapping: Unified Configuration Parsing
 
-The most primitive yet essential part of **runepkg** is how it handles configuration and package metadata. Instead of using complex libraries or separate parsers for different tasks, **runepkg** utilizes a **"smart" multi-use function** that handles key-value pairs across the entire system.
+The foundation of **runepkg** is its approach to configuration and metadata. Rather than relying on heavy external libraries, **runepkg** uses a versatile, internal parser.
 
-### The Smart Multi-use Parser: `runepkg_util_get_config_value`
+### The Multi-use Parser: `runepkg_util_get_config_value`
+Located in `runepkg_util.c`, this function is the backbone of data retrieval. It is designed to be agnostic to the file type by accepting a dynamic `separator` argument, allowing it to handle different formats seamlessly:
 
-Located in `runepkg_util.c`, this function is the backbone of all data retrieval in **runepkg**. It is designed to be highly versatile by accepting a dynamic `separator` argument.
+-   **System Configuration (`=`):** Parses the `runepkgconfig` file for global settings and paths (e.g., `install_dir=...`).
+-   **Package Metadata (`:`):** Parses Debian `.deb` control files and repository indices (e.g., `Package: ...`).
 
-#### Versatility through Separators
-The parser is agnostic to the file type; it only cares about the key it's looking for and how the value is delimited. This allows a single function to handle two primary use cases:
+This unified logic ensures that system-wide improvements, such as tilde expansion or whitespace trimming, are applied consistently across both configuration and package management.
+w
+---
 
-- **System Configuration (`=`):** It parses the main `runepkgconfig` file where paths and global settings are defined.
-  - *Example:* `install_dir=~/runepkg_dir/install_dir`
-- **Package Metadata (`:`):** It parses standard Debian `.deb` control files and repository metadata.
-  - *Example:* `Package: runepkg` or `Version: 1.0.4`
+## 2. Interaction: The "Self-Completing" Binary
 
-This unified approach ensures that any improvements made to the core parsing logic (like tilde expansion or whitespace trimming) immediately benefit both system configuration and package management.
+To provide a modern user experience without the lag of complex shell scripts, **runepkg** implements a high-performance completion engine directly in the C binary.
+
+### Context-Aware Autocomplete
+The completion engine scans the command line (`COMP_LINE`) to infer context. It supports:
+-   **Command Aliases**: Seamlessly handles shorthand like `up`, `i`, and `s`.
+-   **Interleaved Commands**: Correctly suggests completions even when flags and commands are mixed (e.g., `runepkg -v -i [TAB]`).
+
+### Path Navigation & Context Isolation
+To maintain speed when navigating large repositories (40,000+ entries), the engine employs two key techniques:
+1.  **Context Isolation**: When it detects a path (`/` or `./`), it switches strictly to filesystem mode, ignoring the repository index to prevent delays.
+2.  **The Anti-Jumping Ritual**: To prevent Bash from incorrectly adding a space after a directory name, the engine suggests both the directory name and a hidden "deep" version (e.g., `dir/` and `dir/.`). This forces the shell to wait for further user input, allowing for one-slash-at-a-time navigation.
 
 ---
 
-## 2. Hybrid Persistent Storage & The "Rune" Hash
+## 3. Acquisition: The C++ FFI Networking Layer
 
-**runepkg** implements a unique storage architecture that combines the simplicity of Arch Linux's subdirectory structure with the high-speed lookup performance found in binary formats like RPM.
+**runepkg** uses a **Foreign Function Interface (FFI)** to bridge the performance of C with the modern networking capabilities of C++.
 
-### A. The Directory Layout (Arch-Style Simplicity)
-Each installed package resides in its own directory within the `runepkg_db` path. 
-Inside each directory, **runepkg** stores a specialized binary file: `pkginfo.bin`.
+### Parallel Repository Synchronization
+The `runepkg update` routine fetches multiple `Packages.gz` and `Sources.gz` files in parallel using `std::future`. Decompression and indexing occur on-the-fly via `zlib`, significantly reducing the time required to sync with remote repositories.
 
-### B. The `pkginfo.bin` (RPM-Style Performance)
-Instead of reparsing text files every time you query a package, **runepkg** serializes the `PkgInfo` structure into a custom binary format. All strings and the full file list are packed into a single binary blob for near-instant loading.
-
-### C. The "Rune" Hash Table: Memory-Resident Speed
-To handle thousands of packages instantly, **runepkg** utilizes an advanced, custom-built hash table using the **FNV-1a** algorithm. It features **prime-sized buckets** and **dynamic resizing** to maintain $O(1)$ lookup performance regardless of database size.
+### Tiered Discovery
+Acquisition is prioritized to keep the workspace tidy:
+-   **Tier 1: Local Priority**: Commands like `build` and `fetch` automatically check local `./sources/` and `./debs/` folders before attempting a network download.
+-   **Tier 2: Remote Fetching**: If not found locally, the C++ layer handles secure downloads via `libcurl`.
 
 ---
 
-## 3. Defensive Programming & Memory Safety
+## 4. Processing: Parsing & "Clandestine" Resolution
 
-As a project written in C, **runepkg** prioritizes memory safety.
--   **Zero-Wiping**: sensitive data is zeroed out before being released.
--   **Pointer Nulling**: pointers are set to `NULL` immediately after freeing.
--   **Secure Wrappers**: `runepkg_secure_malloc` includes strict allocation limits (256MB) and integer overflow protection.
--   **Bounds Checking**: Every string and path operation is validated to prevent overflows and traversal attacks.
+Once metadata is acquired, the engine must resolve how to proceed with installation or building.
 
----
+### "Clandestine" Dependency Resolution
+When a `.deb` is targeted for installation, the engine performs a local search for sibling packages in the same directory. This "clandestine" resolution allows users to satisfy dependencies with local files before the tool attempts to reach out to the network.
 
-## 4. The "Self-Completing" Binary & Disciplined Autocomplete
-
-**runepkg** implements a high-performance **"Self-Completing Binary"** architecture, moving logic from sluggish shell scripts into the optimized C engine.
-
-### A. Interleaved Command & Alias Awareness
-The completion engine scans the entire `COMP_LINE` to infer context. It supports shorthand aliases (`up`, `ug`, `i`, `r`, `s`, `l`) and interleaved commands (e.g., `runepkg -v -i [TAB]`).
-
-### B. Disciplined Path Navigation
-To provide a smooth segment-by-segment navigation experience in the terminal, the engine employs two key techniques:
-1.  **Strict Context Isolation**: When typing an absolute path (`/`) or relative path (`./`), the engine strictly switches to filesystem mode, completely ignoring the 40,000+ repository entries to prevent lags.
-2.  **The Anti-Jumping Ritual**: When suggesting a directory, the engine provides both the directory name and a hidden "deep" version (e.g., `dir/` and `dir/.`). This forces Bash to see multiple possibilities, preventing it from incorrectly "jumping" to the end and adding a space, allowing the user to navigate one slash at a time.
+### Intelligent Build Orchestration
+The `buildpkg-split` command leverages the C++ layer to orchestrate complex tasks:
+1.  **Metadata Discovery**: It probes `debian/control` and `debian/changelog` to identify package requirements.
+2.  **Dependency Alchemy**: It parses `Build-Depends` to warn the user of missing headers or libraries before the build begins.
+3.  **Native Build Fallback**: If standard tools like `debhelper` are absent, **runepkg** uses its internal C++ logic to bridge the gap. It automatically handles typical helper tasks such as splitting binary fragments, cleaning up metadata variables, and ensuring proper FHS directory structures—all without requiring `dpkg` or external scripts.
 
 ---
 
-## 5. Autonomous Installation & The Build Rituals
+## 5. Persistence: Hybrid Storage & The "Rune" Hash
 
-**runepkg** has evolved into a fully autonomous engine that handles the entire package lifecycle.
+For long-term storage and fast retrieval, **runepkg** combines filesystem simplicity with binary performance.
 
-### A. Intelligent "Clandestine" Dependencies
-When installing a `.deb`, the engine performs a "clandestine" search in local directories (`./debs/`, etc.) to satisfy dependencies before reaching for the network.
+### The Directory Layout
+Each installed package occupies its own directory within the `runepkg_db`. This Arch-style approach makes manual inspection and repair straightforward.
 
-### B. Multi-Package Split Build Ritual
-The new `buildpkg-split` command leverages a C++ orchestration layer to:
-1.  **Auto-Unearth**: If the source isn't local, it automatically fetches it from the repository.
-2.  **Metadata Discovery**: If pointed at a directory, it digs into `debian/control` and `debian/changelog` to identify the package.
-3.  **Dependency Alchemy**: It parses `Build-Depends` and performs a pre-build ritual to warn the user of missing headers/libraries before starting the forge.
-4.  **Surgical Splitting**: It parses `.install` files to split a single source build into multiple binary fragments (`bin`, `dev`, `doc`) based on official Debian standards.
+### Binary Serialization (`pkginfo.bin`)
+To avoid the overhead of reparsing text files, **runepkg** serializes package data into `pkginfo.bin`. This binary blob includes all strings and the full file list, allowing for near-instant loading into memory.
 
-### C. Native Build Fallback
-If standard tools like `debhelper` are missing, **runepkg** attempts a **Native Rune Build** using its internal C++ logic, allowing for compilation in minimal environments.
+### The "Rune" Hash Table
+For in-memory lookups, **runepkg** uses a custom hash table based on the **FNV-1a** algorithm. It features prime-sized buckets and dynamic resizing, ensuring $O(1)$ lookup performance regardless of how many thousands of packages are indexed.
 
 ---
 
-## 6. Advanced Networking & The C++/C FFI Layer
+## 6. Security: Defensive Architecture
 
-The **Foreign Function Interface (FFI)** allows **runepkg** to bridge pure C performance with C++ networking power.
+As a C-based project, **runepkg** implements several layers of defense:
 
-### A. High-Speed Repository Updates
-The `runepkg update` routine fetches multiple `Packages.gz` and `Sources.gz` files in parallel using `std::future`. Decompression and indexing happen on-the-fly using `zlib`.
-
-### B. Search & Discovery Tiering
-- **Tier 1 (Binary search)**: $O(\log n)$ search over sorted binary indices.
-- **Tier 2 (Mmap retrieval)**: Memory-mapped access to flat-file caches for instant metadata retrieval.
-- **Tier 3 (Local Priority)**: Commands like `build` and `fetch` automatically prioritize local `./sources/` and `./debs/` folders, keeping the user's workspace tidy without external scripts.
-
-By combining hardened C plumbing with an intelligent C++ FFI layer, **runepkg** provides a high-level user experience with "old-school" surgical control.
+-   **Memory Safety**: Includes `runepkg_secure_malloc` with strict allocation limits (256MB) and integer overflow protection.
+-   **Zero-Wiping**: Sensitive data is zeroed out in memory before being freed.
+-   **Pointer Discipline**: Pointers are immediately nulled after freeing to prevent use-after-free bugs.
+-   **Bounds Validation**: Every string and path operation is strictly validated to prevent buffer overflows and path traversal attacks.

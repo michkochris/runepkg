@@ -96,8 +96,8 @@ public:
             if (collect_results()) return 0;
         }
 
-        // Fallback to Native Rune Build if rules failed or dh is missing
-        std::cout << "\033[1;33m[build]\033[0m debian/rules failed or requires missing tools. Attempting Native Build..." << std::endl;
+        // Fallback to Native Rune Build if rules failed or tools are missing
+        std::cout << "\033[1;33m[build]\033[0m Standard build failed or rules missing. Shifting to Native Build..." << std::endl;
         if (build_native(split)) {
             if (collect_results()) return 0;
         }
@@ -155,8 +155,23 @@ private:
         bool version_found = false;
     };
 
+    bool check_build_tools() {
+        // Basic check for required tools
+        const char* tools[] = {"make", "gcc", "g++", "ar", "tar"};
+        for (const auto& t : tools) {
+            std::string cmd = "which " + std::string(t) + " > /dev/null 2>&1";
+            if (system(cmd.c_str()) != 0) {
+                std::cerr << "ERROR: Required build tool '" << t << "' not found in PATH." << std::endl;
+                return false;
+            }
+        }
+        return true;
+    }
+
     bool build_native(bool split) {
-        std::cout << "\033[1;34m[build]\033[0m Starting Native C++ Build workflow..." << std::endl;
+        std::cout << "\033[1;34m[build]\033[0m Starting Native Build (Independent of debhelper)..." << std::endl;
+
+        if (!check_build_tools()) return false;
 
         fs::path temp_install_dir = working_dir_ / "temp_install";
         try {
@@ -175,9 +190,13 @@ private:
             std::cout << "  -> Running ./configure --prefix=/usr ..." << std::endl;
             char* argv[] = {(char*)"./configure", (char*)"--prefix=/usr", NULL};
             if (runepkg_util_execute_command("./configure", argv) != 0) {
-                std::cerr << "ERROR: Configure failed" << std::endl;
-                chdir(cwd);
-                return false;
+                // Try with executable bit if direct exec fails
+                chmod("./configure", 0755);
+                if (runepkg_util_execute_command("./configure", argv) != 0) {
+                    std::cerr << "ERROR: Configure failed" << std::endl;
+                    chdir(cwd);
+                    return false;
+                }
             }
         }
 
@@ -560,7 +579,10 @@ private:
     }
 
     bool execute_rules() {
-        std::cout << "\033[1;34m[build]\033[0m Starting compilation..." << std::endl;
+        // Only try debian/rules if it exists
+        if (!fs::exists(source_tree_root_ / "debian" / "rules")) return false;
+
+        std::cout << "\033[1;34m[build]\033[0m Attempting standard debian/rules build..." << std::endl;
 
         char cwd[PATH_MAX];
         if (!getcwd(cwd, sizeof(cwd))) return false;

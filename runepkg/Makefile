@@ -12,9 +12,9 @@
 
 CC ?= gcc
 CXX ?= g++
-# Added -fdiagnostics-color=always and -Wpedantic for clean development transparency
-CFLAGS = -Wall -Wextra -Wpedantic -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
-CXXFLAGS = -Wall -Wextra -Wpedantic -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
+# Added strict flags and -Werror for surgical perfection
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef -std=c99 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
+CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef -std=c++17 -D_GNU_SOURCE -g -MMD -MP -pthread -fdiagnostics-color=always
 
 LDFLAGS = -pthread
 LIBS =
@@ -155,10 +155,12 @@ $(TARGET): build-banner $(OBJS) .config_with_cpp
 	@echo "--------------------------------------------------------"
 
 %.o: %.c $(HEADERS) .config_with_cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "  $(BLUE)[forge]$(RESET) Compiling C Rune: $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.cpp $(HEADERS) .config_with_cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	@echo "  $(PURPLE)[ritual]$(RESET) Compiling C++ Rune: $<"
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
@@ -221,25 +223,31 @@ termux-install: all
 	@echo "-----------------------------------------------------------------------"
 
 uninstall:
-	@echo "Attempting to uninstall $(TARGET)..."
+	@echo "$(BOLD)$(YELLOW)Attempting to uninstall $(TARGET)...$(RESET)"
+	@echo "$(CYAN)-----------------------------------------------------------------------$(RESET)"
+	@if [ -f $(DESTDIR)$(PREFIX)/bin/$(TARGET) ]; then \
+		echo "  $(RED)[removing]$(RESET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)"; \
+		rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET); \
+	fi
+	@if [ -f $(TERMUX_PREFIX)/bin/$(TARGET) ]; then \
+		echo "  $(RED)[removing]$(RESET) $(TERMUX_PREFIX)/bin/$(TARGET)"; \
+		rm -f $(TERMUX_PREFIX)/bin/$(TARGET); \
+	fi
 	@if [ -f $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig ]; then \
 		CONF="$(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig"; \
 	elif [ -f $(TERMUX_PREFIX)/etc/runepkg/runepkgconfig ]; then \
 		CONF="$(TERMUX_PREFIX)/etc/runepkg/runepkgconfig"; \
 	fi; \
+	echo "$(CYAN)-----------------------------------------------------------------------$(RESET)"; \
 	if [ -n "$$CONF" ]; then \
-		echo "-----------------------------------------------------------------------"; \
-		echo "NOTICE: Configuration found at $$CONF"; \
-		echo "The following data directories may still exist and were NOT removed:"; \
-		grep -E "^(runepkg_dir|control_dir|install_dir|runepkg_db|download_dir)=" $$CONF | cut -d= -f2 | sed 's/^/  - /'; \
-		echo "You may want to remove these manually to fully purge runepkg data."; \
-		echo "-----------------------------------------------------------------------"; \
+		echo "$(BOLD)$(YELLOW)NOTICE:$(RESET) The following were $(BOLD)NOT$(RESET) removed and may require manual cleanup:"; \
+		grep -E "^(runepkg_dir|control_dir|install_dir|runepkg_db|download_dir)=" $$CONF | cut -d= -f2 | while read -r line; do \
+			printf "  $(BLUE)[data]  $(RESET) %s\n" "$$line"; \
+		done; \
+		printf "  $(BLUE)[config]$(RESET) %s\n" "$$CONF"; \
+		echo "$(CYAN)-----------------------------------------------------------------------$(RESET)"; \
 	fi
-	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
-	rm -f $(TERMUX_PREFIX)/bin/$(TARGET)
-	rm -rf $(DESTDIR)$(ETCDIR)/runepkg
-	rm -rf $(TERMUX_PREFIX)/etc/runepkg
-	@echo "Uninstallation complete."
+	@echo "$(GREEN)Uninstallation process complete.$(RESET)"
 
 debug: CFLAGS += -DDEBUG -O0
 debug: CXXFLAGS += -DDEBUG -O0

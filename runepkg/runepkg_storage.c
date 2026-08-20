@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <sys/ioctl.h>
 #include <fnmatch.h>
+#include <ctype.h>
 
 #include "runepkg_storage.h"
 #include "runepkg_config.h"
@@ -533,19 +534,56 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                 } else free(to_add);
             }
 
-            // Also add the basename for flexible matching
+            // Also add the basename for flexible matching (e.g. binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
-                if (to_add) sprintf(to_add, "%s/", entry->d_name);
+                if (to_add) sprintf(to_add, "%s", entry->d_name);
             } else {
                 to_add = strdup(entry->d_name);
             }
+
+            // Note: We don't return here, we fall through to the duplicate check below
+            // and add the basename as well.
         } else {
+            // Not absolute mode (usually for db_dir), add full name (binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
-                if (to_add) sprintf(to_add, "%s/", entry->d_name);
+                if (to_add) sprintf(to_add, "%s", entry->d_name);
             } else {
                 to_add = strdup(entry->d_name);
+            }
+
+            // SPECIAL: For database directories, also add the package name WITHOUT the version
+            // so 'runepkg -s bin[TAB]' suggests 'binutils' even if only 'binutils-2.4.7' is on disk.
+            if (to_add && is_dir && !add_absolute) {
+                char *last_dash = NULL;
+                for (char *p = entry->d_name; *p; p++) {
+                    if (*p == '-' && *(p + 1) && isdigit(*(p + 1))) {
+                        last_dash = p;
+                        break;
+                    }
+                }
+                if (last_dash) {
+                    size_t name_only_len = last_dash - entry->d_name;
+                    char *name_only = malloc(name_only_len + 1);
+                    if (name_only) {
+                        strncpy(name_only, entry->d_name, name_only_len);
+                        name_only[name_only_len] = '\0';
+
+                        // Check for duplicates for the short name
+                        bool exists = false;
+                        for (int i = 0; i < *count; i++) {
+                            if (strcmp((*entries)[i], name_only) == 0) { exists = true; break; }
+                        }
+                        if (!exists) {
+                            char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
+                            if (temp) {
+                                *entries = temp;
+                                (*entries)[(*count)++] = name_only;
+                            } else free(name_only);
+                        } else free(name_only);
+                    }
+                }
             }
         }
 
