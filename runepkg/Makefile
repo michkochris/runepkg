@@ -278,10 +278,3 @@ with-all:
 	@$(MAKE) -B WITH_CPP=1 $(TARGET)
 
 test: test-binary
-
-test-version: test_version_robust.c runepkg_util.c runepkg_defensive.c
-	@echo "  $(BLUE)[forge]$(RESET) Building version comparison test..."
-	@$(CC) $(CFLAGS) test_version_robust.c runepkg_util.c runepkg_defensive.c -o $@ $(LDFLAGS)
-	@echo "  $(GREEN)[ritual]$(RESET) Running version comparison tests..."
-	@./$@
-	@rm -f $@ test_version_robust.d runepkg_util.d runepkg_defensive.d

@@ -81,42 +81,39 @@ runepkg_hash_table_t *installing_packages = NULL;
 
 // Helper function to print package data header (used by handle_list and handle_remove)
 int print_package_data_header(void) {
-    if (!g_runepkg_db_dir) {
+    if (!runepkg_main_hash_table) {
         return 0;
     }
 
-    // Count packages
-    DIR *dir = opendir(g_runepkg_db_dir);
-    if (!dir) {
-        return 0;
-    }
+    size_t pkg_count = runepkg_main_hash_table->count;
+    off_t total_installed_size = 0;
 
-    int pkg_count = 0;
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
-            pkg_count++;
+    for (size_t i = 0; i < runepkg_main_hash_table->size; i++) {
+        runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
+        while (node) {
+            if (node->data.installed_size) {
+                total_installed_size += (off_t)atoll(node->data.installed_size) * 1024;
+            }
+            node = node->next;
         }
     }
-    closedir(dir);
-
-    // Calculate used space
-    off_t used_space = runepkg_util_get_dir_size(g_runepkg_db_dir);
 
     // Get available space
     struct statvfs vfs;
     off_t avail_space = 0;
-    if (statvfs(g_runepkg_db_dir, &vfs) == 0) {
+    if (g_runepkg_db_dir && statvfs(g_runepkg_db_dir, &vfs) == 0) {
         avail_space = (off_t)vfs.f_bavail * vfs.f_frsize;
     }
 
     // Format sizes
     char used_str[32], avail_str[32];
-    runepkg_util_format_size(used_space, used_str, sizeof(used_str));
+    runepkg_util_format_size(total_installed_size, used_str, sizeof(used_str));
     runepkg_util_format_size(avail_space, avail_str, sizeof(avail_str));
 
-    printf("Reading package data: %d packages, %s used, %s available\n", pkg_count, used_str, avail_str);
-    return pkg_count;
+    printf("Reading package data: %zu packages, %s used, %s available\n",
+           pkg_count, used_str, avail_str);
+
+    return (int)pkg_count;
 }
 
 // Helper function to calculate directory size recursively

@@ -395,11 +395,12 @@ int runepkg_storage_list_packages(const char *pattern) {
     }
 
     struct dirent *entry;
-    char *packages[1024];
+    char **packages = NULL;
     int count = 0;
+    int capacity = 0;
     size_t max_len = 0;
     
-    while ((entry = readdir(dir)) != NULL && count < 1024) {
+    while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         bool is_dir = (entry->d_type == DT_DIR);
@@ -414,6 +415,15 @@ int runepkg_storage_list_packages(const char *pattern) {
 
         if (is_dir) {
             if (!pattern || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) {
+                if (count >= capacity) {
+                    capacity = (capacity == 0) ? 1024 : capacity * 2;
+                    char **new_packages = realloc(packages, capacity * sizeof(char *));
+                    if (!new_packages) {
+                        perror("realloc failed in list_packages");
+                        break;
+                    }
+                    packages = new_packages;
+                }
                 packages[count] = strdup(entry->d_name);
                 if (packages[count]) {
                     size_t len = strlen(packages[count]);
@@ -461,6 +471,7 @@ int runepkg_storage_list_packages(const char *pattern) {
     for (int i = 0; i < count; i++) {
         free(packages[i]);
     }
+    free(packages);
 
     return count;
 }
