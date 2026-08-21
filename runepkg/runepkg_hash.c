@@ -105,6 +105,7 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->postrm);
     runepkg_util_free_and_null(&pkg_info->control_dir_path);
     runepkg_util_free_and_null(&pkg_info->data_dir_path);
+    runepkg_util_free_and_null(&pkg_info->extraction_workspace_path);
 
     if (pkg_info->file_list) {
         for (int i = 0; i < pkg_info->file_count; i++) {
@@ -262,7 +263,8 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         existing->md5_verified = pkg_info->md5_verified;
         existing->control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
         existing->data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
-        
+        existing->extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
+
         if (pkg_info->file_list && pkg_info->file_count > 0) {
             runepkg_error_t err = runepkg_validate_file_count(pkg_info->file_count);
             if (err != RUNEPKG_SUCCESS) {
@@ -322,6 +324,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.md5_verified = pkg_info->md5_verified;
     new_node->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
     new_node->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
+    new_node->data.extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
 
     if (pkg_info->file_list && pkg_info->file_count > 0) {
         runepkg_error_t err = runepkg_validate_file_count(pkg_info->file_count);

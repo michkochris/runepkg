@@ -1,7 +1,7 @@
 # ******************************************************************************
 # * Filename:    runepkgconfig
 # * Author:      <michkochris@gmail.com>
-# * Date:        2025-05-12
+# * Date:        2025-05-12 (Updated 2026-08-21)
 # * Description: Professional configuration for runepkg package manager
 # ******************************************************************************/
 
@@ -10,55 +10,49 @@
 # - Use absolute Linux path names.
 # - The system-wide location for this file is: /etc/runepkg/runepkgconfig
 
+# --- Environment Variables ---
+# RUNEPKG_CONFIG_PATH:
+#   Points to a custom location for this configuration file.
+#   Example: export RUNEPKG_CONFIG_PATH=$HOME/.runepkg/config
+
 # --- Core Paths (FHS Compliant) ---
 
 # [runepkg_dir]
 # The primary base directory for runepkg tool data.
-# Recommended: /var/cache/runepkg
 runepkg_dir=/var/lib/runepkg_dir
 
 # [control_dir]
 # Temporary workspace where .deb control archives are extracted for processing.
-# This is a cache directory that can be safely cleared between runs.
 control_dir=/var/lib/runepkg_dir/control_dir
 
 # [install_dir]
-# The target root for package installation.
-# Set to '/' for system-wide installation.
-# For LFS/ISO creation or development, set to your custom mount point or directory.
+# The target root for package installation (set to '/' for system-wide).
 install_dir=/var/lib/runepkg_dir/install_dir
 
 # [runepkg_db]
 # Persistent storage for the package manager's state.
-# Contains metadata for all installed packages and the binary autocompletion index.
-# Recommended: /var/lib/runepkg (standard for Linux package managers)
 runepkg_db=/var/lib/runepkg_dir/runepkg_db
 
 # [download_dir]
-# Cache directory where downloaded .deb files are stored before installation.
+# Cache directory where downloaded .deb files are stored.
 download_dir=/var/lib/runepkg_dir/download_dir
 
 # [build_dir]
 # Standard workspace for building and unpacking packages locally.
-# runepkg -u (--unpack) will extract .debs into 'pkgname-version' subdirectories here.
-# runepkg -b (--build) will look here by default for package sources.
 build_dir=/var/lib/runepkg_dir/build_dir
 
 # [runepkg_debs]
 # Dedicated output directory for built .deb files.
-# When running runepkg -b, the resulting package will be placed here by default.
 runepkg_debs=/var/lib/runepkg_dir/runepkg_debs
 
 # --- Behavior Settings ---
 
 # [cleanup]
-# Automatically delete per-package extraction trees under 'control_dir' after
-# installation or removal (yes/no, default yes).
+# Automatically delete extraction workspace after installation (yes/no).
 cleanup=yes
 
 # [md5_checks]
-# Enable low-level MD5 integrity verification during installation (yes/no).
-# When enabled, runepkg will verify every file against the 'md5sums' control file.
+# Enable MD5 integrity verification during installation (yes/no).
 md5_checks=yes
 
 # --- Repository Sources ---

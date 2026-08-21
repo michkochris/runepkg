@@ -340,7 +340,7 @@ int handle_remove(const char *package_name) {
                 for (int i = 0; i < match_idx; i++) {
                     items[i] = matches[i];
                 }
-                runepkg_util_print_columns(items, match_idx);
+                runepkg_util_print_columns(items, match_idx, "    ");
             }
             
             return -2; // Special code: showed suggestions, no removal performed
@@ -358,7 +358,7 @@ int handle_remove(const char *package_name) {
                 for (int i = 0; i < suggestion_count; i++) {
                     items[i] = suggestions[i];
                 }
-                runepkg_util_print_columns(items, suggestion_count);
+                runepkg_util_print_columns(items, suggestion_count, "    ");
                 return -2; // Suggestions shown, no removal performed
             } else {
                 printf("Error: package not installed: %s\n", trimmed);
@@ -540,7 +540,7 @@ int handle_status(const char *package_name) {
             for (int i = 0; i < match_count; i++) {
                 items[i] = suggestions[i];
             }
-            runepkg_util_print_columns(items, match_count);
+            runepkg_util_print_columns(items, match_count, "    ");
         }
         return -2; // Special code: showed suggestions, no status shown
     }
@@ -708,7 +708,7 @@ void handle_list_files(const char *package_name) {
     if (suggestion_count > 0) {
         const char *items[100];
         for (int i = 0; i < suggestion_count; i++) items[i] = suggestions[i];
-        runepkg_util_print_columns(items, suggestion_count);
+        runepkg_util_print_columns(items, suggestion_count, "    ");
     }
 }
 

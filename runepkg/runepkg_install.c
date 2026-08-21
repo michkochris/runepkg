@@ -996,6 +996,19 @@ else {
                     if (runepkg_main_hash_table) {
                         runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
                     }
+
+                    // Persist md5sums file if it exists in the control directory
+                    char *src_md5 = runepkg_util_concat_path(pkg_info.control_dir_path, "md5sums");
+                    if (runepkg_util_file_exists(src_md5)) {
+                        char pkg_db_path[PATH_MAX];
+                        runepkg_storage_get_package_path(pkg_info.package_name, pkg_info.version, pkg_db_path);
+                        char *dst_md5 = runepkg_util_concat_path(pkg_db_path, "md5sums");
+                        if (runepkg_util_copy_file(src_md5, dst_md5) == 0) {
+                            runepkg_log_verbose("MD5 sums persisted to %s\n", dst_md5);
+                        }
+                        free(dst_md5);
+                    }
+                    free(src_md5);
                 } else {
                     printf("Warning: Failed to write package info to persistent storage.\n");
                 }

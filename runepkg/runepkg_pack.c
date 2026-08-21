@@ -62,6 +62,7 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->md5_verified = false;
     pkg_info->control_dir_path = NULL;
     pkg_info->data_dir_path = NULL;
+    pkg_info->extraction_workspace_path = NULL;
     pkg_info->file_list = NULL;
     pkg_info->file_count = 0;
 }
@@ -91,7 +92,8 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->postrm);
     runepkg_util_free_and_null(&pkg_info->control_dir_path);
     runepkg_util_free_and_null(&pkg_info->data_dir_path);
-    
+    runepkg_util_free_and_null(&pkg_info->extraction_workspace_path);
+
     if (pkg_info->file_list) {
         for (int i = 0; i < pkg_info->file_count; i++) {
             runepkg_util_free_and_null(&pkg_info->file_list[i]);
@@ -265,8 +267,9 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
     
     pkg_info->control_dir_path = runepkg_util_concat_path(package_extract_dir, "control");
     pkg_info->data_dir_path = runepkg_util_concat_path(package_extract_dir, "data");
-    
-    if (!pkg_info->control_dir_path || !pkg_info->data_dir_path) {
+    pkg_info->extraction_workspace_path = strdup(package_extract_dir);
+
+    if (!pkg_info->control_dir_path || !pkg_info->data_dir_path || !pkg_info->extraction_workspace_path) {
         runepkg_util_error("Failed to create control/data directory paths.\n");
         runepkg_util_free_and_null(&package_extract_dir);
         runepkg_pack_free_package_info(pkg_info);
@@ -495,13 +498,19 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
 void runepkg_pack_cleanup_extraction_workspace(const PkgInfo *pkg_info) {
     if (!g_cleanup_extract_dirs || !pkg_info) return;
 
-    if (pkg_info->control_dir_path) {
-        runepkg_util_log_verbose("cleanup: removing control dir: %s\n", pkg_info->control_dir_path);
-        runepkg_storage_remove_directory_tree(pkg_info->control_dir_path);
-    }
-    if (pkg_info->data_dir_path) {
-        runepkg_util_log_verbose("cleanup: removing data dir: %s\n", pkg_info->data_dir_path);
-        runepkg_storage_remove_directory_tree(pkg_info->data_dir_path);
+    if (pkg_info->extraction_workspace_path) {
+        runepkg_util_log_verbose("cleanup: removing extraction workspace: %s\n", pkg_info->extraction_workspace_path);
+        runepkg_storage_remove_directory_tree(pkg_info->extraction_workspace_path);
+    } else {
+        // Fallback for older structs/partial info
+        if (pkg_info->control_dir_path) {
+            runepkg_util_log_verbose("cleanup: removing control dir: %s\n", pkg_info->control_dir_path);
+            runepkg_storage_remove_directory_tree(pkg_info->control_dir_path);
+        }
+        if (pkg_info->data_dir_path) {
+            runepkg_util_log_verbose("cleanup: removing data dir: %s\n", pkg_info->data_dir_path);
+            runepkg_storage_remove_directory_tree(pkg_info->data_dir_path);
+        }
     }
 }
 

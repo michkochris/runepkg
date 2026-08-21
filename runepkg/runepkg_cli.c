@@ -238,8 +238,7 @@ int main(int argc, char *argv[]) {
                                     printf("\033[1;33m - did you mean:\033[0m\n");
                                     const char *items[12];
                                     for (int k = 0; k < count; k++) items[k] = suggestions[k];
-                                    printf("    ");
-                                    runepkg_util_print_columns(items, count);
+                                    runepkg_util_print_columns(items, count, "    ");
                                 }
 
                                 ret = -1;
@@ -344,8 +343,7 @@ int main(int argc, char *argv[]) {
                         for (int k = 0; k < suggestion_count; k++) {
                             items[k] = suggestions[k];
                         }
-                        printf("    ");
-                        runepkg_util_print_columns(items, suggestion_count);
+                        runepkg_util_print_columns(items, suggestion_count, "    ");
                     } else {
                         printf(" - not found\n");
                     }

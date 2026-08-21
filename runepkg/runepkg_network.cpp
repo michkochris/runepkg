@@ -693,7 +693,10 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
             if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
             std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
         }
-        std::cout << std::endl << std::endl << "Download pkgs into " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        size_t total_size = 0;
+        for (const auto& p : resolved) total_size += p.second.size;
+        char size_buf[64];
+        std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -705,7 +708,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
     for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
     for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
-    std::cout << std::endl << "\033[1;32m[success]\033[0m pkgs downloaded into " << (g_download_dir ? g_download_dir : "current directory") << std::endl;
+    std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
     curl_global_cleanup();
     std::string top_filename = resolved[clean_pkg].url.substr(resolved[clean_pkg].url.find_last_of('/') + 1);
     std::string top_dest = std::string(g_download_dir) + "/" + top_filename;
@@ -729,7 +732,10 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
         if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
         std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
     }
-    std::cout << std::endl << std::endl << "Download pkgs into " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+    size_t total_size = 0;
+    for (const auto& p : resolved) total_size += p.second.size;
+    char size_buf[64];
+    std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
     std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -740,7 +746,7 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
     for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
     for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
-    std::cout << std::endl << "\033[1;32m[success]\033[0m pkgs downloaded into " << (g_download_dir ? g_download_dir : "current directory") << std::endl;
+    std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
     curl_global_cleanup(); return 0;
 }
 
@@ -764,14 +770,20 @@ extern "C" int runepkg_upgrade(void) {
         if (current_line_len + to_upgrade[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
         std::cout << to_upgrade[i]; current_line_len += to_upgrade[i].length(); if (i < to_upgrade.size() - 1) { std::cout << " "; current_line_len += 1; }
     }
-    std::cout << std::endl << std::endl << "Download upgrades into " << (g_download_dir ? g_download_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
- std::fflush(stdout); char resp[16]; bool confirmed = false;
+    size_t total_size = 0;
+    std::vector<PkgMetadata> upgrade_meta;
+    for (const auto& name : to_upgrade) { PkgMetadata m = get_package_metadata(name); if (!m.url.empty()) { total_size += m.size; upgrade_meta.push_back(m); } }
+    char size_buf[64];
+    std::cout << std::endl << std::endl << "Need to get " << upgrade_meta.size() << " upgrades (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+    std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
     if (!confirmed) { std::cout << "Upgrade cancelled." << std::endl; return 0; }
-    std::cout << "\033[1;34m[runepkg]\033[0m Pre-fetching " << to_upgrade.size() << " packages in parallel..." << std::endl;
+    std::cout << "\033[1;34m[runepkg]\033[0m Pre-fetching " << upgrade_meta.size() << " packages in parallel..." << std::endl;
     std::vector<DownloadTask> tasks;
-    for (const auto& name : to_upgrade) { PkgMetadata meta = get_package_metadata(name); if (!meta.url.empty()) tasks.push_back({meta.url, std::string(g_download_dir) + "/" + meta.filename, name, meta.size, false}); }
+    for (const auto& meta : upgrade_meta) {
+        tasks.push_back({meta.url, std::string(g_download_dir) + "/" + meta.filename, meta.name, meta.size, false});
+    }
     curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
     for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
@@ -796,7 +808,10 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
         std::cerr << "\033[1;31m[error]\033[0m Could not find source package metadata for '" << pkg_name << "'" << std::endl;
         return -1;
     }
-    std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << meta.files.size() << " files in parallel)..." << std::endl;
+    size_t total_size = 0;
+    for (const auto& sf : meta.files) total_size += sf.size;
+    char size_buf[64];
+    std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << " total, " << meta.files.size() << " files)..." << std::endl;
     curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
     for (const auto& sf : meta.files) { std::string url = meta.base_url + "/" + sf.filename; std::string dest = std::string(g_build_dir) + "/" + sf.filename; futures.push_back(std::async(std::launch::async, [url, dest, sf]() { return download_file(url, dest, sf.size, sf.filename); })); }
@@ -823,7 +838,11 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
             if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
             std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
         }
-        std::cout << std::endl << std::endl << "Download into " << (g_build_dir ? g_build_dir : "current directory") << "? [\033[1;33my\033[0m/\033[1;33mN\033[0m] "; std::fflush(stdout); char resp[16]; bool confirmed = false;
+        size_t total_size = 0;
+        for (const auto& p : resolved) for (const auto& f : p.second.files) total_size += f.size;
+        char size_buf[64];
+        std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " source packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Proceed? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }

@@ -58,6 +58,7 @@ typedef struct PkgInfo {
     int file_count;
     char *control_dir_path; // Re-added: Path to the extracted 'control' directory.
     char *data_dir_path;    // Re-added: Path to the extracted 'data' directory.
+    char *extraction_workspace_path; // NEW: The top-level extraction directory.
 } PkgInfo;
 
 // --- Hash Table Node Structure ---

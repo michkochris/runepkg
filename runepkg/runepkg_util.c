@@ -1145,7 +1145,7 @@ int runepkg_util_get_terminal_width(void) {
 
 // --- Output Formatting Utilities ---
 
-void runepkg_util_print_columns(const char *items[], int count) {
+void runepkg_util_print_columns(const char *items[], int count, const char *prefix) {
     if (!items || count <= 0) return;
 
     // Find maximum length
@@ -1159,11 +1159,20 @@ void runepkg_util_print_columns(const char *items[], int count) {
 
     int col_width = max_len + 2;
     int width = runepkg_util_get_terminal_width();
+
+    // Adjust width for prefix
+    if (prefix) {
+        int prefix_len = (int)strlen(prefix);
+        if (prefix_len < width) width -= prefix_len;
+        else width = 1; // Fallback
+    }
+
     int cols = width / col_width;
     if (cols < 1) cols = 1;
     int rows = (count + cols - 1) / cols;
 
     for (int r = 0; r < rows; r++) {
+        if (prefix) printf("%s", prefix);
         for (int c = 0; c < cols; c++) {
             int idx = r * cols + c;
             if (idx < count && items[idx]) {

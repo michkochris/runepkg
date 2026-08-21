@@ -258,8 +258,9 @@ int runepkg_util_get_terminal_width(void);
  * @brief Prints an array of strings in columnar format to fit the terminal width.
  * @param items Array of strings to print.
  * @param count Number of items in the array.
+ * @param prefix Optional string to print at the start of each line (e.g., indentation).
  */
-void runepkg_util_print_columns(const char *items[], int count);
+void runepkg_util_print_columns(const char *items[], int count, const char *prefix);
 
 /**
  * @brief Generates package name suggestions based on a search string.
