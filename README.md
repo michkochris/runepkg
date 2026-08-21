@@ -160,7 +160,7 @@ Note: FFI features (C++) are enabled based on your build target (`make all`).
 ```
 
 <p align="left">
-  <img src="./runepkg/docs/runepkg_logo.svg" width="400" alt="runepkg Logo">
+  <img src="./runepkg/old_but_gold/runepkg_logo.svg" width="400" alt="runepkg Logo">
   <br>
   <b>Built with ❤️ for the old school GNU/Linux community...</b><br>
   Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
