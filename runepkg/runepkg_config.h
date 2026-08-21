@@ -1,4 +1,4 @@
-#/******************************************************************************
+/******************************************************************************
  * Filename:    runepkg_config.h
  * Author:      <michkochris@gmail.com>
  * Date:        2025-01-04
@@ -53,6 +53,12 @@ extern bool g_asked_siblings;
 
 /* When true, we are providing autocompletion results (avoid heavy I/O). */
 extern bool g_completion_mode;
+
+/* When true, we are in the middle of a multi-package batch operation (repo install/upgrade). */
+extern bool g_batch_mode;
+
+/* Hash table holding all packages planned for the current batch transaction. */
+extern struct runepkg_hash_table *g_batch_planned_packages;
 
 // --- Source Configuration ---
 

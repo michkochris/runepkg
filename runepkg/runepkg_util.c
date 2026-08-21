@@ -123,42 +123,42 @@ char *runepkg_util_concat_path(const char *dir, const char *file) {
 
 // --- Version Comparison ---
 
+// Debian character weights: ~ < (nothing) < letters < non-letters
+static int vercmp_weight(int c) {
+    if (c == '~') return -1;
+    if (c == 0) return 0;
+    if (!isdigit(c) && !isalpha(c)) return c + 256;
+    return c;
+}
+
 // Helper: Compare two version parts using Debian collation rules
 static int compare_collation(const char *a, const char *b) {
     const char *pa = a, *pb = b;
     while (*pa || *pb) {
-        // Extract next sequence from a
-        int is_digit_a = isdigit(*pa);
-        const char *start_a = pa;
-        while (*pa && isdigit(*pa) == is_digit_a) pa++;
-        size_t len_a = pa - start_a;
+        // Lexical part (up to first digit)
+        while ((*pa && !isdigit(*pa)) || (*pb && !isdigit(*pb))) {
+            int wa = vercmp_weight((*pa && !isdigit(*pa)) ? *pa : 0);
+            int wb = vercmp_weight((*pb && !isdigit(*pb)) ? *pb : 0);
+            if (wa != wb) return (wa < wb) ? -1 : 1;
+            if (*pa && !isdigit(*pa)) pa++;
+            if (*pb && !isdigit(*pb)) pb++;
+        }
 
-        // Extract next sequence from b
-        int is_digit_b = isdigit(*pb);
-        const char *start_b = pb;
-        while (*pb && isdigit(*pb) == is_digit_b) pb++;
-        size_t len_b = pb - start_b;
+        // Numerical part
+        if (isdigit(*pa) || isdigit(*pb)) {
+            while (*pa == '0') pa++;
+            while (*pb == '0') pb++;
+            const char *start_a = pa;
+            while (isdigit(*pa)) pa++;
+            const char *start_b = pb;
+            while (isdigit(*pb)) pb++;
 
-        if (is_digit_a && is_digit_b) {
-            // Both digit sequences: compare numerically
-            char buf_a[64], buf_b[64];
-            if (len_a >= sizeof(buf_a) || len_b >= sizeof(buf_b)) return strcmp(a, b); // Fallback
-            memcpy(buf_a, start_a, len_a); buf_a[len_a] = '\0';
-            memcpy(buf_b, start_b, len_b); buf_b[len_b] = '\0';
-            long num_a = strtol(buf_a, NULL, 10);
-            long num_b = strtol(buf_b, NULL, 10);
-            if (num_a < num_b) return -1;
-            if (num_a > num_b) return 1;
-        } else if (!is_digit_a && !is_digit_b) {
-            // Both non-digit: compare lexicographically
-            int cmp = strncmp(start_a, start_b, len_a < len_b ? len_a : len_b);
-            if (cmp != 0) return cmp;
+            size_t len_a = pa - start_a;
+            size_t len_b = pb - start_b;
             if (len_a < len_b) return -1;
             if (len_a > len_b) return 1;
-        } else {
-            // One digit, one non-digit: the digit sequence is larger
-            if (is_digit_a) return 1;
-            else return -1;
+            int cmp = strncmp(start_a, start_b, len_a);
+            if (cmp != 0) return cmp;
         }
     }
     return 0;
@@ -170,7 +170,7 @@ static void parse_version(const char *version, long *epoch, char *upstream, char
     strcpy(upstream, version);
     revision[0] = '\0';
 
-    char *colon = strrchr(upstream, ':');
+    char *colon = strchr(upstream, ':');
     if (colon) {
         *colon = '\0';
         *epoch = strtol(upstream, NULL, 10);

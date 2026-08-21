@@ -96,14 +96,56 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
     int total = 0;
     while (fgets(line, sizeof(line), f)) {
         char expected_md5[33];
-        char rel_path[PATH_MAX];
-        if (sscanf(line, "%32s  %s", expected_md5, rel_path) != 2) continue;
+        char *rel_path;
+
+        // Remove trailing newline
+        line[strcspn(line, "\r\n")] = 0;
+
+        if (strlen(line) < 35) continue;
+
+        strncpy(expected_md5, line, 32);
+        expected_md5[32] = '\0';
+
+        // Path starts after hash and two spaces (usually)
+        rel_path = line + 32;
+        while (*rel_path == ' ' || *rel_path == '\t' || *rel_path == '*') rel_path++;
+
+        if (*rel_path == '\0') continue;
+
+        // Trim trailing whitespace and potential slashes from the path
+        char *end = rel_path + strlen(rel_path) - 1;
+        while (end >= rel_path && (*end == ' ' || *end == '\t' || *end == '\r' || *end == '\n' || *end == '/')) {
+            *end = '\0';
+            end--;
+        }
+
+        if (*rel_path == '\0') continue;
+
+        // Skip leading ./ if present
+        if (rel_path[0] == '.' && rel_path[1] == '/') rel_path += 2;
+
+        if (*rel_path == '\0') continue;
         total++;
 
         char *full_path = runepkg_util_concat_path(pkg_info->data_dir_path, rel_path);
 
+        // Skip non-regular files: MD5 checksums in Debian packages only apply to regular files.
+        // Directories and symbolic links are handled by their presence/metadata, not content hashing.
+        struct stat st;
+        if (lstat(full_path, &st) == 0 && !S_ISREG(st.st_mode)) {
+            free(full_path);
+            continue;
+        }
+
         char actual_md5[33];
         if (runepkg_md5_file(full_path, actual_md5) != 0) {
+            // Check if file exists; if it doesn't, it's a real integrity error.
+            // If it's just a directory that somehow evaded the lstat check, skip it.
+            if (lstat(full_path, &st) == 0 && !S_ISREG(st.st_mode)) {
+                free(full_path);
+                continue;
+            }
+            perror("MD5 computation error");
             runepkg_util_error("Failed to compute MD5 for %s\n", full_path);
             free(full_path);
             errors++;
@@ -225,6 +267,10 @@ int handle_install(const char *deb_file_path) {
     g_auto_confirm_siblings = false;
     g_asked_siblings = false;
     return ret;
+}
+
+int runepkg_install_batch_item(const char *deb_file_path) {
+    return handle_install_internal(deb_file_path, 0);
 }
 
 int calculate_optimal_threads(void) {
@@ -465,7 +511,7 @@ int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path
     return 0;
 }
 /* Helper to check if a virtual package is provided by any installed package */
-static int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
+int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
     if (!table) return 0;
     for (size_t i = 0; i < table->size; i++) {
         runepkg_hash_node_t *node = table->buckets[i];
@@ -475,7 +521,11 @@ static int is_package_provided_by_table(runepkg_hash_table_t *table, const char 
                 char *token = strtok(provides_copy, ",");
                 while (token) {
                     char *trimmed = runepkg_util_trim_whitespace(token);
-                    if (strcmp(trimmed, pkg_name) == 0) {
+
+                    // Debian 'Provides' can include versions, e.g. "pkg (= 1.0)" or just "pkg"
+                    // We only want the name for satisfying dependencies by name.
+                    size_t name_len = strcspn(trimmed, " (");
+                    if (name_len > 0 && strncmp(trimmed, pkg_name, name_len) == 0 && pkg_name[name_len] == '\0') {
                         free(provides_copy);
                         return 1;
                     }
@@ -746,7 +796,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 int attempted_count = 0;
 
                 // Pre-scan for local siblings to provide a more informative prompt (Recursive "Spider")
-                if (is_top_level && !g_force_mode && !g_auto_confirm_siblings && !g_asked_siblings) {
+                if (is_top_level && !g_force_mode && !g_auto_confirm_siblings && !g_asked_siblings && !g_batch_mode) {
                     SiblingCollection coll = {NULL, NULL, 0, 0};
                     clandestine_spider_recursive(deb_file_path, &coll, deb_file_path);
 
@@ -774,6 +824,13 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
 
                 for (int j = 0; deps[j]; j++) {
                 PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, deps[j]->package);
+
+                /* Batch Awareness: also check if the package is planned for
+                 * installation in this transaction. */
+                if (!installed && g_batch_planned_packages) {
+                    installed = runepkg_hash_search(g_batch_planned_packages, deps[j]->package);
+                }
+
                 /* Diagnostic: show what the installer finds for this dependency */
                 if (!installed) {
                     /* Check if any installed package PROVIDES this virtual dependency */
@@ -783,6 +840,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                     }
                     if (installing_packages && is_package_provided_by_table(installing_packages, deps[j]->package)) {
                         runepkg_log_verbose("Dependency '%s' is being satisfied by an in-flight virtual provider\n", deps[j]->package);
+                        continue;
+                    }
+                    if (g_batch_planned_packages && is_package_provided_by_table(g_batch_planned_packages, deps[j]->package)) {
+                        runepkg_log_verbose("Dependency '%s' will be satisfied by a planned virtual provider\n", deps[j]->package);
                         continue;
                     }
                     runepkg_util_log_debug("dependency '%s' not found in installed hash table\n", deps[j]->package);
@@ -837,10 +898,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 if (!satisfied) {
                     /* Try the clandestine helper to find and install a sibling .deb
                      * but ONLY if we are not in force mode OR the user has explicitly
-                     * allowed/confirmed siblings.
+                     * allowed/confirmed siblings. Skip entirely in batch mode.
                      */
                     int cfound = 0;
-                    if (!g_force_mode || g_auto_confirm_siblings) {
+                    if (!g_batch_mode && (!g_force_mode || g_auto_confirm_siblings)) {
                         cfound = clandestine_handle_install(deps[j]->package, deb_file_path, &attempted_deps, &attempted_count);
                     }
 
@@ -861,7 +922,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 if (num_unsatisfied > 0) {
                     int try_repo = 0;
 #ifdef ENABLE_CPP_FFI
-                    if (is_top_level) {
+                    if (is_top_level && !g_batch_mode) {
                         printf("\033[1;33m[dependencies]\033[0m The following dependencies are missing for %s:\n", pkg_info.package_name);
                         for(int k=0; k<num_unsatisfied; k++){
                             printf("  - %s%s%s\n", unsatisfied[k]->package, unsatisfied[k]->constraint ? " " : "", unsatisfied[k]->constraint ? unsatisfied[k]->constraint : "");
@@ -896,6 +957,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                             if (is_package_provided_by_table(runepkg_main_hash_table, unsatisfied[k]->package)) continue;
                             if (installing_packages && runepkg_hash_search(installing_packages, unsatisfied[k]->package)) continue;
                             if (installing_packages && is_package_provided_by_table(installing_packages, unsatisfied[k]->package)) continue;
+                            if (g_batch_planned_packages && runepkg_hash_search(g_batch_planned_packages, unsatisfied[k]->package)) continue;
+                            if (g_batch_planned_packages && is_package_provided_by_table(g_batch_planned_packages, unsatisfied[k]->package)) continue;
 
                             char *path = runepkg_repo_download(unsatisfied[k]->package, true);
                             if (path) {

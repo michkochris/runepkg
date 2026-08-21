@@ -401,6 +401,14 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
 void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
     if (!table) return;
 
+    runepkg_hash_clear_table(table);
+    free(table->buckets);
+    free(table);
+}
+
+void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
+    if (!table) return;
+
     for (size_t i = 0; i < table->size; i++) {
         runepkg_hash_node_t *current = table->buckets[i];
         while (current) {
@@ -409,11 +417,9 @@ void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
             runepkg_hash_free_package_info(&temp->data);
             free(temp);
         }
+        table->buckets[i] = NULL;
     }
-
-    free(table->buckets);
-    free(table);
-    /* suppressed per-table destroy message to avoid duplicate verbose output; caller should summarize */
+    table->count = 0;
 }
 
 // --- Display Functions ---

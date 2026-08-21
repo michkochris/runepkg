@@ -149,9 +149,16 @@ int runepkg_init(void) {
 
     /* Initialize installing packages hash table for cycle detection */
     if (!installing_packages) {
-        installing_packages = runepkg_hash_create_table(INITIAL_HASH_TABLE_SIZE);
+        installing_packages = runepkg_hash_create_table(32);
         if (!installing_packages) {
             fprintf(stderr, "Error: Failed to create installing hash table.\n");
+            return -1;
+        }
+    }
+    if (!g_batch_planned_packages) {
+        g_batch_planned_packages = runepkg_hash_create_table(128);
+        if (!g_batch_planned_packages) {
+            fprintf(stderr, "Error: Failed to create batch planning hash table.\n");
             return -1;
         }
     }
@@ -218,6 +225,11 @@ void runepkg_cleanup(void) {
     if (installing_packages) {
         runepkg_hash_destroy_table(installing_packages);
         installing_packages = NULL;
+    }
+
+    if (g_batch_planned_packages) {
+        runepkg_hash_destroy_table(g_batch_planned_packages);
+        g_batch_planned_packages = NULL;
     }
     /* One concise message for destroyed hash tables */
     runepkg_log_verbose("Hash tables destroyed and memory freed.\n");

@@ -1,4 +1,4 @@
-#/******************************************************************************
+/******************************************************************************
  * Filename:    runepkg_config.c
  * Author:      <michkochris@gmail.com>
  * Date:        2025-01-04
@@ -52,6 +52,8 @@ RuneSource **g_sources = NULL;
 int g_sources_count = 0;
 
 bool g_cleanup_extract_dirs = true;
+bool g_batch_mode = false;
+struct runepkg_hash_table *g_batch_planned_packages = NULL;
 
 // --- External Global Variables ---
 extern bool g_verbose_mode; // Defined in main.c

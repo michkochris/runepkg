@@ -223,26 +223,7 @@ int main(int argc, char *argv[]) {
                         } else {
                         try_repo:;
 #ifdef ENABLE_CPP_FFI
-                            char *downloaded_path = runepkg_repo_download(next_arg, true);
-                            if (downloaded_path) {
-                                g_auto_confirm_siblings = true;
-                                ret = handle_install(downloaded_path);
-                                free(downloaded_path);
-                            } else {
-                                fprintf(stderr, "\033[1;31mError:\033[0m Cannot find local file '%s' and failed to download it from repositories.\n", next_arg);
-
-                                // Show suggestions from repository
-                                char suggestions[12][PATH_MAX];
-                                int count = runepkg_completion_get_repo_suggestions(next_arg, suggestions, 12);
-                                if (count > 0) {
-                                    printf("\033[1;33m - did you mean:\033[0m\n");
-                                    const char *items[12];
-                                    for (int k = 0; k < count; k++) items[k] = suggestions[k];
-                                    runepkg_util_print_columns(items, count, "    ");
-                                }
-
-                                ret = -1;
-                            }
+                            ret = runepkg_repo_install(next_arg);
 #else
                             fprintf(stderr, "Error: File '%s' not found and repository downloads are disabled.\n", next_arg);
                             ret = -1;

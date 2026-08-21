@@ -254,7 +254,18 @@ char* runepkg_secure_path_concat(const char* dir, const char* file) {
     }
     
     // Check for directory traversal attempts
-    if (strstr(file, "..") || strstr(file, "//") || file[0] == '/') {
+    // Only block ".." if it's a full path component to allow filenames like "pkg..version.json"
+    bool is_traversal = false;
+    if (strcmp(file, "..") == 0 || strncmp(file, "../", 3) == 0 ||
+        strstr(file, "/../") != NULL) {
+        is_traversal = true;
+    } else {
+        // Check if it ends with "/.."
+        size_t flen = strlen(file);
+        if (flen >= 3 && strcmp(file + flen - 3, "/..") == 0) is_traversal = true;
+    }
+
+    if (is_traversal || strstr(file, "//") || file[0] == '/') {
         runepkg_util_error("Suspicious file path: %s\n", file);
         return NULL;
     }

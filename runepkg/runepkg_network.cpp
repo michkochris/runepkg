@@ -19,6 +19,10 @@
 #include <chrono>
 #include <mutex>
 
+#include <queue>
+#include <condition_variable>
+#include <functional>
+
 extern "C" {
     #include "runepkg_util.h"
     #include "runepkg_hash.h"
@@ -29,6 +33,57 @@ extern "C" {
 
 // Architecture - default to amd64 for now
 const char* G_ARCH = "amd64";
+
+// Parallel Execution Engine
+class ParallelExecutor {
+public:
+    ParallelExecutor(size_t max_threads) : stop(false) {
+        for (size_t i = 0; i < max_threads; ++i)
+            workers.emplace_back([this] {
+                for (;;) {
+                    std::function<void()> task;
+                    {
+                        std::unique_lock<std::mutex> lock(this->queue_mutex);
+                        this->condition.wait(lock, [this] { return this->stop || !this->tasks.empty(); });
+                        if (this->stop && this->tasks.empty()) return;
+                        task = std::move(this->tasks.front());
+                        this->tasks.pop();
+                    }
+                    task();
+                }
+            });
+    }
+
+    template<class F, class... Args>
+    auto enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type> {
+        using return_type = typename std::result_of<F(Args...)>::type;
+        auto task = std::make_shared<std::packaged_task<return_type()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+        std::future<return_type> res = task->get_future();
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            if (stop) throw std::runtime_error("enqueue on stopped ParallelExecutor");
+            tasks.emplace([task] { (*task)(); });
+        }
+        condition.notify_one();
+        return res;
+    }
+
+    ~ParallelExecutor() {
+        {
+            std::unique_lock<std::mutex> lock(queue_mutex);
+            stop = true;
+        }
+        condition.notify_all();
+        for (std::thread &worker : workers) worker.join();
+    }
+
+private:
+    std::vector<std::thread> workers;
+    std::queue<std::function<void()>> tasks;
+    std::mutex queue_mutex;
+    std::condition_variable condition;
+    bool stop;
+};
 
 // Global state for parallel progress tracking
 std::mutex g_progress_mutex;
@@ -231,8 +286,10 @@ struct IndexEntry {
 
 struct PkgMetadata {
     std::string name;
+    std::string version;
     std::string url;
     std::string depends;
+    std::string provides;
     std::string filename;
     std::string source_name;
     size_t size = 0;
@@ -415,8 +472,15 @@ extern "C" int runepkg_update(void) {
         if (runepkg_util_file_exists(task->dest_path.c_str())) {
             unlink(task->dest_path.c_str());
         }
+    }
 
-        futures.push_back(std::async(std::launch::async, [task, display_name]() {
+    ParallelExecutor pool(8);
+    for (auto* task : all_tasks_ptrs) {
+        std::string display_name; size_t dists_pos = task->url.find("/dists/");
+        if (dists_pos != std::string::npos) { display_name = task->url.substr(dists_pos + 7); size_t last_slash = display_name.find_last_of('/'); if (last_slash != std::string::npos) display_name = display_name.substr(0, last_slash); }
+        else display_name = task->url;
+
+        futures.push_back(pool.enqueue([task, display_name]() {
             return download_file(task->url, task->dest_path, task->size, display_name, true);
         }));
     }
@@ -440,6 +504,34 @@ extern "C" int runepkg_update(void) {
     std::cout << std::endl << "Building Hybrid Binary and Source Indexes..." << std::endl;
     build_index(bin_pkg_files, std::string(g_runepkg_db_dir) + "/repo_index.bin", std::string(g_runepkg_db_dir) + "/repo_files.txt");
     build_index(src_pkg_files, std::string(g_runepkg_db_dir) + "/repo_src_index.bin", std::string(g_runepkg_db_dir) + "/repo_src_files.txt");
+
+    // Persist the base URL mapping for each file in repo_files.txt
+    std::ofstream out_mapping(std::string(g_runepkg_db_dir) + "/repo_url_mapping.txt");
+    if (out_mapping.is_open()) {
+        for (int i = 0; i < g_sources_count; i++) {
+            std::string base_url = g_sources[i]->url;
+            if (base_url.back() != '/') base_url += '/';
+            std::stringstream ss(g_sources[i]->components);
+            std::string component;
+            while (ss >> component) {
+                if (std::string(g_sources[i]->type) == "deb") {
+                    std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
+                    std::string safe_url = url; std::replace(safe_url.begin(), safe_url.end(), '/', '_'); std::replace(safe_url.begin(), safe_url.end(), ':', '_');
+                    std::string decompressed = std::string(g_runepkg_lists_dir) + "/" + safe_url;
+                    if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
+                    out_mapping << "deb\t" << base_url << "\t" << decompressed << "\n";
+                } else if (std::string(g_sources[i]->type) == "deb-src") {
+                    std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/source/Sources.gz";
+                    std::string safe_url = url; std::replace(safe_url.begin(), safe_url.end(), '/', '_'); std::replace(safe_url.begin(), safe_url.end(), ':', '_');
+                    std::string decompressed = std::string(g_runepkg_lists_dir) + "/" + safe_url;
+                    if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
+                    out_mapping << "deb-src\t" << base_url << "\t" << decompressed << "\n";
+                }
+            }
+        }
+        out_mapping.close();
+    }
+
     auto latest_versions = get_latest_versions();
     std::cout << "Checking for upgradable packages..." << std::endl;
     int upgradable_count = 0;
@@ -545,8 +637,35 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     uint32_t count; idx.read(reinterpret_cast<char*>(&count), sizeof(count));
     std::vector<IndexEntry> entries(count); idx.read(reinterpret_cast<char*>(entries.data()), count * sizeof(IndexEntry)); idx.close();
     IndexEntry search_target; std::strncpy(search_target.name, pkg_name, 63); search_target.name[63] = '\0';
-    auto it = std::lower_bound(entries.begin(), entries.end(), search_target);
-    if (it == entries.end() || std::strcmp(it->name, pkg_name) != 0) return "";
+    auto range = std::equal_range(entries.begin(), entries.end(), search_target);
+    if (range.first == range.second) return "";
+
+    // If multiple versions exist in the index, pick the latest one
+    auto best_it = range.first;
+    if (std::next(range.first) != range.second) {
+        std::string best_version;
+        std::ifstream flist_tmp(std::string(g_runepkg_db_dir) + "/" + file_list_name);
+        std::vector<std::string> pkg_files_tmp; std::string line_tmp;
+        while (std::getline(flist_tmp, line_tmp)) pkg_files_tmp.push_back(line_tmp);
+        flist_tmp.close();
+
+        for (auto it = range.first; it != range.second; ++it) {
+            if (it->file_id >= pkg_files_tmp.size()) continue;
+            std::ifstream meta(pkg_files_tmp[it->file_id]);
+            meta.seekg(it->offset);
+            std::string ver;
+            while (std::getline(meta, line_tmp)) {
+                if (line_tmp.empty() || line_tmp == "\r") break;
+                if (line_tmp.compare(0, 9, "Version: ") == 0) { ver = line_tmp.substr(9); if (!ver.empty() && ver.back() == '\r') ver.pop_back(); break; }
+            }
+            if (best_version.empty() || runepkg_util_compare_versions(ver.c_str(), best_version.c_str()) > 0) {
+                best_version = ver;
+                best_it = it;
+            }
+        }
+    }
+
+    auto it = best_it;
     std::ifstream flist(std::string(g_runepkg_db_dir) + "/" + file_list_name);
     std::vector<std::string> pkg_files; std::string line;
     while (std::getline(flist, line)) pkg_files.push_back(line);
@@ -554,6 +673,25 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     if (it->file_id >= pkg_files.size()) return "";
     if (out_offset) *out_offset = it->offset;
     if (out_metafile) *out_metafile = pkg_files[it->file_id];
+
+    std::string base_url;
+    std::ifstream mapping(std::string(g_runepkg_db_dir) + "/repo_url_mapping.txt");
+    if (mapping.is_open()) {
+        std::string m_type, m_url, m_file;
+        while (mapping >> m_type >> m_url >> m_file) {
+            if (m_file == pkg_files[it->file_id]) { base_url = m_url; break; }
+        }
+        mapping.close();
+    }
+
+    // Fallback if mapping missing
+    if (base_url.empty()) {
+        for (int i = 0; i < g_sources_count; i++) {
+            if (is_source && std::string(g_sources[i]->type) == "deb-src") { base_url = g_sources[i]->url; break; }
+            else if (!is_source && std::string(g_sources[i]->type) == "deb") { base_url = g_sources[i]->url; break; }
+        }
+    }
+
     std::ifstream meta(pkg_files[it->file_id]);
     meta.seekg(it->offset);
     std::string rel_path;
@@ -563,16 +701,7 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
         else if (is_source && line.compare(0, 11, "Directory: ") == 0) { rel_path = line.substr(11); break; }
     }
     if (!rel_path.empty() && rel_path.back() == '\r') rel_path.pop_back();
-    std::string base_url;
-    for (int i = 0; i < g_sources_count; i++) {
-        if (is_source && std::string(g_sources[i]->type) == "deb-src") {
-            base_url = g_sources[i]->url;
-            break;
-        } else if (!is_source && std::string(g_sources[i]->type) == "deb") {
-            base_url = g_sources[i]->url;
-            break;
-        }
-    }
+
     if (base_url.empty()) return "";
     if (base_url.back() != '/') base_url += '/';
     return base_url + rel_path;
@@ -592,9 +721,17 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
             if (line.compare(0, 9, "Package: ") == 0) {
                 meta_data.name = line.substr(9);
                 if (!meta_data.name.empty() && meta_data.name.back() == '\r') meta_data.name.pop_back();
+            } else if (line.compare(0, 9, "Version: ") == 0) {
+                meta_data.version = line.substr(9);
+                if (!meta_data.version.empty() && meta_data.version.back() == '\r') meta_data.version.pop_back();
             } else if (line.compare(0, 9, "Depends: ") == 0) {
                 meta_data.depends = line.substr(9);
                 if (!meta_data.depends.empty() && meta_data.depends.back() == '\r') meta_data.depends.pop_back();
+            } else if (line.compare(0, 10, "Provides: ") == 0) {
+                std::string prov = line.substr(10);
+                if (!prov.empty() && prov.back() == '\r') prov.pop_back();
+                if (meta_data.provides.empty()) meta_data.provides = prov;
+                else meta_data.provides += ", " + prov;
             } else if (line.compare(0, 8, "Source: ") == 0) {
                 meta_data.source_name = line.substr(8);
                 size_t space = meta_data.source_name.find(' ');
@@ -645,7 +782,10 @@ std::vector<std::string> parse_depends_cpp(const std::string& depends) {
 
 void resolve_recursive(const std::string& pkg_name, std::unordered_map<std::string, PkgMetadata>& resolved, std::vector<std::string>& order, std::unordered_set<std::string>& visiting, bool ignore_installed) {
     if (resolved.count(pkg_name) || visiting.count(pkg_name)) return;
-    if (!ignore_installed && runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) return;
+    if (!ignore_installed && runepkg_main_hash_table) {
+        if (runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) return;
+        if (is_package_provided_by_table(runepkg_main_hash_table, pkg_name.c_str())) return;
+    }
     PkgMetadata meta = get_package_metadata(pkg_name); if (meta.url.empty()) return;
     visiting.insert(pkg_name); resolved[pkg_name] = meta;
     std::vector<std::string> deps = parse_depends_cpp(meta.depends);
@@ -675,6 +815,125 @@ void resolve_source_runtime_recursive(const std::string& pkg_name, std::unordere
     visiting.erase(pkg_name);
 }
 
+extern "C" int runepkg_repo_install(const char *pkg_name) {
+    if (!pkg_name) return -1;
+    std::string clean_pkg = pkg_name; size_t extra_pos = clean_pkg.find_first_of(":[<");
+    if (extra_pos != std::string::npos) clean_pkg = clean_pkg.substr(0, extra_pos);
+    clean_pkg.erase(0, clean_pkg.find_first_not_of(" \t")); clean_pkg.erase(clean_pkg.find_last_not_of(" \t") + 1);
+    std::string index_path = std::string(g_runepkg_db_dir) + "/repo_index.bin";
+    if (!runepkg_util_file_exists(index_path.c_str())) { std::cerr << "\033[1;31m[error]\033[0m Repository index not found. Please run 'runepkg update' first." << std::endl; return -1; }
+
+    std::unordered_map<std::string, PkgMetadata> resolved; std::vector<std::string> order; std::unordered_set<std::string> visiting;
+    resolve_recursive(clean_pkg, resolved, order, visiting, g_force_mode);
+
+    if (resolved.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not find package '" << clean_pkg << "' in repositories." << std::endl;
+
+        // Show suggestions from repository
+        char suggestions[12][PATH_MAX];
+        int count = runepkg_completion_get_repo_suggestions(clean_pkg.c_str(), suggestions, 12);
+        if (count > 0) {
+            printf("\033[1;33m - did you mean:\033[0m\n");
+            const char *items[12];
+            for (int k = 0; k < count; k++) items[k] = suggestions[k];
+            runepkg_util_print_columns(items, count, "    ");
+        }
+        return -1;
+    }
+
+    if (resolved.size() > 1 || !runepkg_hash_search(runepkg_main_hash_table, clean_pkg.c_str()) || g_force_mode) {
+        std::cout << "\033[1;34m[runepkg]\033[0m Resolving recursive dependencies for " << clean_pkg << "..." << std::endl << std::endl;
+        int width = runepkg_util_get_terminal_width(); int current_line_len = 2; std::cout << "  ";
+        for (size_t i = 0; i < order.size(); i++) {
+            if (current_line_len + order[i].length() + 1 > (size_t)width && i > 0) { std::cout << "\n  "; current_line_len = 2; }
+            std::cout << order[i]; current_line_len += order[i].length(); if (i < order.size() - 1) { std::cout << " "; current_line_len += 1; }
+        }
+        size_t total_size = 0;
+        for (const auto& p : resolved) total_size += p.second.size;
+        char size_buf[64];
+        std::cout << std::endl << std::endl << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << ") will be installed. Continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::fflush(stdout); char resp[16]; bool confirmed = false;
+        if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
+        else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
+        if (!confirmed) { std::cout << "Installation cancelled." << std::endl; return -1; }
+    }
+
+    std::vector<DownloadTask> tasks;
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::string dest_path = std::string(g_download_dir) + "/" + meta.filename;
+        tasks.push_back({meta.url, dest_path, name, meta.size, false});
+    }
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    std::vector<std::future<bool>> futures;
+    { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
+
+    // Limit concurrency to 8 threads to avoid overwhelming mirrors
+    ParallelExecutor pool(8);
+    for (size_t i = 0; i < tasks.size(); i++) {
+        futures.push_back(pool.enqueue([&tasks, i]() {
+            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+        }));
+    }
+
+    int fail_count = 0;
+    for (size_t i = 0; i < tasks.size(); i++) {
+        tasks[i].success = futures[i].get();
+        if (!tasks[i].success) fail_count++;
+    }
+
+    if (fail_count == 0) {
+        std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
+    } else {
+        std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
+    }
+    curl_global_cleanup();
+
+    extern bool g_batch_mode;
+    g_batch_mode = true;
+
+    /* Batch Awareness: Pre-populate the g_batch_planned_packages table with all
+     * packages in this transaction. This ensures that dependency checks
+     * for circular or parallel packages pass correctly. */
+    if (g_batch_planned_packages) {
+        runepkg_hash_clear_table(g_batch_planned_packages);
+        for (const auto& t : tasks) {
+            PkgMetadata meta = resolved[t.pkg_name];
+            PkgInfo dummy;
+            runepkg_pack_init_package_info(&dummy);
+            dummy.package_name = strdup(t.pkg_name.c_str());
+            if (!meta.version.empty()) {
+                dummy.version = strdup(meta.version.c_str());
+            } else if (!meta.filename.empty()) {
+                // Try to extract version from filename if not in meta
+                size_t u1 = meta.filename.find('_');
+                size_t u2 = meta.filename.find('_', u1 + 1);
+                if (u1 != std::string::npos && u2 != std::string::npos) {
+                    dummy.version = strdup(meta.filename.substr(u1 + 1, u2 - u1 - 1).c_str());
+                }
+            }
+            if (!meta.provides.empty()) {
+                dummy.provides = strdup(meta.provides.c_str());
+            }
+            runepkg_hash_add_package(g_batch_planned_packages, &dummy);
+            runepkg_pack_free_package_info(&dummy);
+        }
+    }
+
+    for (const auto& t : tasks) {
+        if (!t.success) { std::cerr << "\033[1;31m[error]\033[0m Failed to download " << t.pkg_name << std::endl; fail_count++; continue; }
+
+        if (runepkg_install_batch_item(t.dest_path.c_str()) != 0) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed to install " << t.pkg_name << std::endl;
+            fail_count++;
+        }
+    }
+
+    g_batch_mode = false;
+    return (fail_count == 0) ? 0 : -1;
+}
+
 extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     if (!pkg_name) return NULL;
     std::string clean_pkg = pkg_name; size_t extra_pos = clean_pkg.find_first_of(":[<");
@@ -696,7 +955,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
         size_t total_size = 0;
         for (const auto& p : resolved) total_size += p.second.size;
         char size_buf[64];
-        std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::cout << std::endl << std::endl << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << ") will be installed. Continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -704,11 +963,29 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     }
     std::vector<DownloadTask> tasks;
     for (const auto& name : order) { const auto& meta = resolved[name]; std::string dest_path = std::string(g_download_dir) + "/" + meta.filename; tasks.push_back({meta.url, dest_path, name, meta.size, false}); }
-    curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
+    curl_global_init(CURL_GLOBAL_ALL);
+    std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
-    for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
-    for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
-    std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
+
+    // Limit concurrency to 8 threads to avoid overwhelming mirrors
+    ParallelExecutor pool(8);
+    for (size_t i = 0; i < tasks.size(); i++) {
+        futures.push_back(pool.enqueue([&tasks, i]() {
+            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+        }));
+    }
+
+    int fail_count = 0;
+    for (size_t i = 0; i < tasks.size(); i++) {
+        tasks[i].success = futures[i].get();
+        if (!tasks[i].success) fail_count++;
+    }
+
+    if (fail_count == 0) {
+        std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
+    } else {
+        std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
+    }
     curl_global_cleanup();
     std::string top_filename = resolved[clean_pkg].url.substr(resolved[clean_pkg].url.find_last_of('/') + 1);
     std::string top_dest = std::string(g_download_dir) + "/" + top_filename;
@@ -735,19 +1012,76 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     size_t total_size = 0;
     for (const auto& p : resolved) total_size += p.second.size;
     char size_buf[64];
-    std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+    std::cout << std::endl << std::endl << resolved.size() << " binary packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << ") will be installed. Continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
     std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
     if (!confirmed) { std::cout << "Download cancelled." << std::endl; return 0; }
+
     std::vector<DownloadTask> tasks;
-    for (const auto& name : order) { const auto& meta = resolved[name]; std::string dest_path = std::string(g_download_dir) + "/" + meta.filename; tasks.push_back({meta.url, dest_path, name, meta.size, false}); }
-    curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
+    for (const auto& name : order) {
+        const auto& meta = resolved[name];
+        std::string dest_path = std::string(g_download_dir) + "/" + meta.filename;
+        tasks.push_back({meta.url, dest_path, name, meta.size, false});
+    }
+
+    curl_global_init(CURL_GLOBAL_ALL);
+    std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
-    for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
-    for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
-    std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
-    curl_global_cleanup(); return 0;
+
+    // Limit concurrency to 8 threads to avoid overwhelming mirrors
+    ParallelExecutor pool(8);
+    for (size_t i = 0; i < tasks.size(); i++) {
+        futures.push_back(pool.enqueue([&tasks, i]() {
+            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+        }));
+    }
+
+    int fail_count = 0;
+    for (size_t i = 0; i < tasks.size(); i++) {
+        tasks[i].success = futures[i].get();
+        if (!tasks[i].success) fail_count++;
+    }
+
+    if (fail_count == 0) {
+        std::cout << std::endl << "\033[1;32m[success]\033[0m All archives fetched successfully." << std::endl;
+    } else {
+        std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
+    }
+    curl_global_cleanup();
+
+    extern bool g_batch_mode;
+    g_batch_mode = true;
+
+    /* Batch Awareness: Pre-populate the installing_packages table */
+    if (installing_packages) {
+        for (const auto& t : tasks) {
+            PkgMetadata meta = resolved[t.pkg_name];
+            PkgInfo dummy;
+            runepkg_pack_init_package_info(&dummy);
+            dummy.package_name = strdup(t.pkg_name.c_str());
+            if (!meta.version.empty()) {
+                dummy.version = strdup(meta.version.c_str());
+            }
+            if (!meta.provides.empty()) {
+                dummy.provides = strdup(meta.provides.c_str());
+            }
+            runepkg_hash_add_package(installing_packages, &dummy);
+            runepkg_pack_free_package_info(&dummy);
+        }
+    }
+
+    for (const auto& t : tasks) {
+        if (!t.success) { std::cerr << "\033[1;31m[error]\033[0m Failed to download " << t.pkg_name << std::endl; fail_count++; continue; }
+
+        if (runepkg_install_batch_item(t.dest_path.c_str()) != 0) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed to install " << t.pkg_name << std::endl;
+            fail_count++;
+        }
+    }
+
+    g_batch_mode = false;
+    return (fail_count == 0) ? 0 : -1;
 }
 
 extern "C" int runepkg_upgrade(void) {
@@ -774,7 +1108,7 @@ extern "C" int runepkg_upgrade(void) {
     std::vector<PkgMetadata> upgrade_meta;
     for (const auto& name : to_upgrade) { PkgMetadata m = get_package_metadata(name); if (!m.url.empty()) { total_size += m.size; upgrade_meta.push_back(m); } }
     char size_buf[64];
-    std::cout << std::endl << std::endl << "Need to get " << upgrade_meta.size() << " upgrades (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Install? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+    std::cout << std::endl << std::endl << upgrade_meta.size() << " packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << ") will be upgraded. Continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
     std::fflush(stdout); char resp[16]; bool confirmed = false;
     if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
     else if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
@@ -784,20 +1118,51 @@ extern "C" int runepkg_upgrade(void) {
     for (const auto& meta : upgrade_meta) {
         tasks.push_back({meta.url, std::string(g_download_dir) + "/" + meta.filename, meta.name, meta.size, false});
     }
-    curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
+    curl_global_init(CURL_GLOBAL_ALL);
+    std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = tasks.size(); }
-    for (auto& t : tasks) futures.push_back(std::async(std::launch::async, [&t]() { return download_file(t.url, t.dest_path, t.size, t.pkg_name); }));
+
+    ParallelExecutor pool(8);
+    for (size_t i = 0; i < tasks.size(); i++) {
+        futures.push_back(pool.enqueue([&tasks, i]() {
+            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+        }));
+    }
+
     for (size_t i = 0; i < tasks.size(); i++) tasks[i].success = futures[i].get();
-    std::cout << std::endl; int success_count = 0, fail_count = 0;
+    std::cout << std::endl;
+
+    int success_count = 0, fail_count = 0;
+    extern bool g_batch_mode;
+    g_batch_mode = true;
+
+    /* Batch Awareness: Pre-populate the g_batch_planned_packages table */
+    if (g_batch_planned_packages) {
+        runepkg_hash_clear_table(g_batch_planned_packages);
+        for (const auto& meta : upgrade_meta) {
+            PkgInfo dummy;
+            runepkg_pack_init_package_info(&dummy);
+            dummy.package_name = strdup(meta.name.c_str());
+            if (!meta.version.empty()) {
+                dummy.version = strdup(meta.version.c_str());
+            }
+            if (!meta.provides.empty()) {
+                dummy.provides = strdup(meta.provides.c_str());
+            }
+            runepkg_hash_add_package(g_batch_planned_packages, &dummy);
+            runepkg_pack_free_package_info(&dummy);
+        }
+    }
+
     for (const auto& t : tasks) {
         if (!t.success) { std::cerr << "Failed to download " << t.pkg_name << std::endl; fail_count++; continue; }
         std::cout << "\033[1;32m[upgrading]\033[0m " << t.pkg_name << std::endl;
-        extern bool g_force_mode; bool old_force = g_force_mode; g_force_mode = true;
-        extern bool g_auto_confirm_siblings; bool old_sib = g_auto_confirm_siblings; g_auto_confirm_siblings = true;
-        if (handle_install(t.dest_path.c_str()) == 0) success_count++; else fail_count++;
-        g_force_mode = old_force;
-        g_auto_confirm_siblings = old_sib;
+
+        if (runepkg_install_batch_item(t.dest_path.c_str()) == 0) success_count++;
+        else fail_count++;
     }
+
+    g_batch_mode = false;
     std::cout << "\033[1;32mUpgrade finished!\033[0m " << success_count << " upgraded, " << fail_count << " failed." << std::endl;
     curl_global_cleanup(); return fail_count == 0 ? 0 : -1;
 }
@@ -812,10 +1177,23 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
     for (const auto& sf : meta.files) total_size += sf.size;
     char size_buf[64];
     std::cout << "\033[1;34m[source]\033[0m Downloading source package " << pkg_name << " (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << " total, " << meta.files.size() << " files)..." << std::endl;
-    curl_global_init(CURL_GLOBAL_ALL); std::vector<std::future<bool>> futures;
+    curl_global_init(CURL_GLOBAL_ALL);
+    std::vector<std::future<bool>> futures;
     { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
-    for (const auto& sf : meta.files) { std::string url = meta.base_url + "/" + sf.filename; std::string dest = std::string(g_build_dir) + "/" + sf.filename; futures.push_back(std::async(std::launch::async, [url, dest, sf]() { return download_file(url, dest, sf.size, sf.filename); })); }
-    int downloaded = 0; for (size_t i = 0; i < futures.size(); i++) if (futures[i].get()) downloaded++;
+
+    ParallelExecutor pool(8);
+    for (size_t i = 0; i < meta.files.size(); i++) {
+        std::string url = meta.base_url + "/" + meta.files[i].filename;
+        std::string dest = std::string(g_build_dir) + "/" + meta.files[i].filename;
+        size_t size = meta.files[i].size;
+        std::string filename = meta.files[i].filename;
+        futures.push_back(pool.enqueue([url, dest, size, filename]() {
+            return download_file(url, dest, size, filename);
+        }));
+    }
+
+    int downloaded = 0;
+    for (size_t i = 0; i < futures.size(); i++) if (futures[i].get()) downloaded++;
     std::cout << std::endl; curl_global_cleanup();
     if (downloaded > 0) {
         std::cout << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_build_dir << std::endl;
@@ -841,21 +1219,24 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
         size_t total_size = 0;
         for (const auto& p : resolved) for (const auto& f : p.second.files) total_size += f.size;
         char size_buf[64];
-        std::cout << std::endl << std::endl << "Need to get " << resolved.size() << " source packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << "). Proceed? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
+        std::cout << std::endl << std::endl << resolved.size() << " source packages (" << runepkg_util_format_size(total_size, size_buf, sizeof(size_buf)) << ") will be downloaded. Continue? [\033[1;33my\033[0m/\033[1;33mN\033[0m] ";
         std::fflush(stdout); char resp[16]; bool confirmed = false;
         if (g_auto_confirm_deps) { std::cout << "\033[1;33my (auto)\033[0m" << std::endl; confirmed = true; }
         else if (std::fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) { confirmed = true; }
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }
     }
     curl_global_init(CURL_GLOBAL_ALL);
+    ParallelExecutor pool(8);
     for (const auto& name : order) {
         const auto& meta = resolved[name]; std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
         std::vector<std::future<bool>> futures; { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
-        for (const auto& sf : meta.files) {
-            std::string url = meta.base_url + "/" + sf.filename;
-            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
-            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
-                return download_file(url, dest, sf.size, sf.filename);
+        for (size_t i = 0; i < meta.files.size(); i++) {
+            std::string url = meta.base_url + "/" + meta.files[i].filename;
+            std::string dest = std::string(g_build_dir) + "/" + meta.files[i].filename;
+            size_t size = meta.files[i].size;
+            std::string filename = meta.files[i].filename;
+            futures.push_back(pool.enqueue([url, dest, size, filename]() {
+                return download_file(url, dest, size, filename);
             }));
         }
         for (size_t i = 0; i < futures.size(); i++) futures[i].get();
@@ -884,14 +1265,17 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
         if (!confirmed) { std::cout << "Source download cancelled." << std::endl; return 0; }
     }
     curl_global_init(CURL_GLOBAL_ALL);
+    ParallelExecutor pool(8);
     for (const auto& name : order) {
         const auto& meta = resolved[name]; std::cout << "\033[1;34m[source]\033[0m Downloading " << name << " (" << meta.files.size() << " files)..." << std::endl;
         std::vector<std::future<bool>> futures; { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = meta.files.size(); }
-        for (const auto& sf : meta.files) {
-            std::string url = meta.base_url + "/" + sf.filename;
-            std::string dest = std::string(g_build_dir) + "/" + sf.filename;
-            futures.push_back(std::async(std::launch::async, [url, dest, sf]() {
-                return download_file(url, dest, sf.size, sf.filename);
+        for (size_t i = 0; i < meta.files.size(); i++) {
+            std::string url = meta.base_url + "/" + meta.files[i].filename;
+            std::string dest = std::string(g_build_dir) + "/" + meta.files[i].filename;
+            size_t size = meta.files[i].size;
+            std::string filename = meta.files[i].filename;
+            futures.push_back(pool.enqueue([url, dest, size, filename]() {
+                return download_file(url, dest, size, filename);
             }));
         }
         for (size_t i = 0; i < futures.size(); i++) futures[i].get();

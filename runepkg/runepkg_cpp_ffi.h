@@ -16,6 +16,7 @@ extern "C" {
 int runepkg_cpp_ffi_available(void);
 int runepkg_update(void);
 int runepkg_repo_search(const char *query);
+int runepkg_repo_install(const char *pkg_name);
 char* runepkg_repo_download(const char *pkg_name, bool recursive);
 int runepkg_repo_build_depends_download(const char *pkg_name);
 int runepkg_upgrade(void);

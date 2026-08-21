@@ -117,6 +117,12 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name);
 void runepkg_hash_destroy_table(runepkg_hash_table_t *table);
 
 /**
+ * @brief Clears all entries from the hash table without destroying the table itself.
+ * @param table A pointer to the hash table to clear.
+ */
+void runepkg_hash_clear_table(runepkg_hash_table_t *table);
+
+/**
  * @brief Prints package information from the hash table.
  * @param pkg_info A pointer to the package info to print.
  */
