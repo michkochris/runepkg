@@ -57,6 +57,10 @@
 /* Auto-package listing moved to runepkg_completion.c */
 void handle_print_autopool(void);
 
+static int compare_pkgs(const void *a, const void *b) {
+    return strcmp(*(const char **)a, *(const char **)b);
+}
+
 
 #ifdef __ANDROID__
 int getloadavg(double loadavg[], int nelem) {
@@ -163,31 +167,24 @@ int runepkg_init(void) {
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
+                if ((entry->d_type == DT_DIR || entry->d_type == DT_UNKNOWN) && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0 && strcmp(entry->d_name, "lists") != 0) {
                     /* Parse package name and version from directory name.
                      * Prefer the last '-' that is followed by a digit (version start),
                      * since Debian versions often contain dashes. */
                     char pkg_name[PATH_MAX];
                     char pkg_version[PATH_MAX];
                     const char *ver_dash = NULL;
-                    const char *p;
 
                     memset(pkg_name, 0, sizeof(pkg_name));
                     memset(pkg_version, 0, sizeof(pkg_version));
 
-                    for (p = entry->d_name; *p; p++) {
-                        if (*p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
-                            ver_dash = p;
-                            break; /* first dash before version */
-                        }
-                    }
+                    ver_dash = runepkg_util_find_version_separator(entry->d_name);
                     if (ver_dash && ver_dash != entry->d_name) {
                         size_t name_len = (size_t)(ver_dash - entry->d_name);
                         if (name_len < sizeof(pkg_name)) {
                             memcpy(pkg_name, entry->d_name, name_len);
                             pkg_name[name_len] = '\0';
                             runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), ver_dash + 1);
-                            pkg_version[sizeof(pkg_version) - 1] = '\0';
                         }
                     }
                     
@@ -275,8 +272,8 @@ int handle_remove(const char *package_name) {
     memset(pkg_name, 0, sizeof(pkg_name));
     memset(pkg_version, 0, sizeof(pkg_version));
 
-    last_dash = strrchr(trimmed, '-');
-    if (last_dash && last_dash != trimmed && *(last_dash + 1) != '\0') {
+    last_dash = runepkg_util_find_version_separator(trimmed);
+    if (last_dash && last_dash != trimmed) {
         size_t name_len = (size_t)(last_dash - trimmed);
         if (name_len < sizeof(pkg_name)) {
             memcpy(pkg_name, trimmed, name_len);
@@ -291,6 +288,7 @@ int handle_remove(const char *package_name) {
         int match_count = 0;
         char match_name[PATH_MAX];
         char match_version[PATH_MAX];
+        size_t input_len;
 
         if (!dir) {
             printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
@@ -299,21 +297,18 @@ int handle_remove(const char *package_name) {
 
         memset(match_name, 0, sizeof(match_name));
         memset(match_version, 0, sizeof(match_version));
+        input_len = strlen(trimmed);
 
         while ((entry = readdir(dir)) != NULL) {
-            size_t input_len;
-            if (entry->d_type != DT_DIR) continue;
+            const char *ver_ptr;
+            if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
             if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-            input_len = strlen(trimmed);
-            if (strncmp(entry->d_name, trimmed, input_len) == 0 && entry->d_name[input_len] == '-') {
-                const char *ver = entry->d_name + input_len + 1;
-                /* Only count as a match if it looks like a version (starts with digit) */
-                if (*ver != '\0' && isdigit((unsigned char)*ver)) {
-                    match_count++;
-                    runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
-                    runepkg_secure_strcpy(match_version, sizeof(match_version), ver);
-                }
+            ver_ptr = runepkg_util_find_version_separator(entry->d_name);
+            if (ver_ptr && (size_t)(ver_ptr - entry->d_name) == input_len && strncmp(entry->d_name, trimmed, input_len) == 0) {
+                match_count++;
+                runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
+                runepkg_secure_strcpy(match_version, sizeof(match_version), ver_ptr + 1);
             }
         }
 
@@ -335,7 +330,7 @@ int handle_remove(const char *package_name) {
                 int match_idx = 0;
                 struct dirent *sub_entry;
                 while ((sub_entry = readdir(list_dir)) != NULL && match_idx < 100) {
-                    if (sub_entry->d_type == DT_DIR && strcmp(sub_entry->d_name, ".") != 0 && strcmp(sub_entry->d_name, "..") != 0 && strcmp(sub_entry->d_name, "lists") != 0) {
+                    if ((sub_entry->d_type == DT_DIR || sub_entry->d_type == DT_UNKNOWN) && strcmp(sub_entry->d_name, ".") != 0 && strcmp(sub_entry->d_name, "..") != 0 && strcmp(sub_entry->d_name, "lists") != 0) {
                         if (strstr(sub_entry->d_name, trimmed) != NULL) {
                             runepkg_secure_strcpy(matches[match_idx], sizeof(matches[match_idx]), sub_entry->d_name);
                             match_idx++;
@@ -456,6 +451,7 @@ int handle_status(const char *package_name) {
     int exact_match_count = 0;
     char exact_match_name[PATH_MAX];
     char exact_match_version[PATH_MAX];
+    size_t name_len;
 
     if (!package_name || !g_runepkg_db_dir) {
         printf("Error: Invalid package name or config.\n");
@@ -475,23 +471,18 @@ int handle_status(const char *package_name) {
     memset(exact_match_version, 0, sizeof(exact_match_version));
 
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_DIR) continue;
+        if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         /* Check for exact match first */
         if (strcmp(entry->d_name, package_name) == 0) {
-            char *last_dash = NULL;
-            char *p;
+            const char *last_dash = NULL;
             exact_match_count = 1;
             /* For exact match, parse name and version from the directory name
              * Find the last '-' followed by a digit (version separator) */
-            for (p = entry->d_name; *p; p++) {
-                if (*p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
-                    last_dash = p;
-                }
-            }
+            last_dash = runepkg_util_find_version_separator(entry->d_name);
             if (last_dash) {
-                size_t name_len = (size_t)(last_dash - entry->d_name);
+                name_len = (size_t)(last_dash - entry->d_name);
                 runepkg_util_safe_strncpy(exact_match_name, entry->d_name, name_len + 1);
                 exact_match_name[name_len] = '\0';
                 runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), last_dash + 1);
@@ -506,7 +497,7 @@ int handle_status(const char *package_name) {
         /* Check for prefix matches (for partial names like "binutils")
          * Stricter check: match 'package_name' followed by '-' and then a DIGIT (version start) */
         {
-            size_t name_len = strlen(package_name);
+            name_len = strlen(package_name);
             if (strncmp(entry->d_name, package_name, name_len) == 0 && entry->d_name[name_len] == '-') {
                 const char *ver = entry->d_name + name_len + 1;
                 /* Only count as a match if it looks like a version (starts with digit) */
@@ -602,20 +593,14 @@ void handle_search(const char *file_pattern) {
     while ((entry = readdir(dir)) != NULL) {
         char *pkg_name = NULL;
         char *pkg_version = NULL;
-        char *ver_dash = NULL;
-        char *p;
+        const char *ver_dash = NULL;
 
-        if (entry->d_type != DT_DIR) continue;
+        if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         /* Parse package name and version from directory name
          * Use the smarter logic: find the first dash followed by a digit */
-        for (p = entry->d_name; *p; p++) {
-            if (*p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
-                ver_dash = p;
-                break;
-            }
-        }
+        ver_dash = runepkg_util_find_version_separator(entry->d_name);
 
         if (ver_dash) {
             size_t name_len = (size_t)(ver_dash - entry->d_name);
@@ -666,6 +651,7 @@ void handle_list_files(const char *package_name) {
     int match_count = 0;
     char match_name[PATH_MAX];
     char match_version[PATH_MAX];
+    size_t input_len;
 
     if (!package_name || !g_runepkg_db_dir) {
         printf("Error: Invalid package name or config.\n");
@@ -685,20 +671,14 @@ void handle_list_files(const char *package_name) {
     memset(match_version, 0, sizeof(match_version));
 
     while ((entry = readdir(dir)) != NULL) {
-        size_t input_len;
-        if (entry->d_type != DT_DIR) continue;
+        if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         /* Exact match of full dir name */
         if (strcmp(entry->d_name, package_name) == 0) {
-            char *last_dash = NULL;
-            char *p;
+            const char *last_dash = NULL;
             /* parse version after last '-' */
-            for (p = entry->d_name; *p; p++) {
-                if (!last_dash && *p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
-                    last_dash = p;
-                }
-            }
+            last_dash = runepkg_util_find_version_separator(entry->d_name);
             if (last_dash) {
                 size_t name_len = (size_t)(last_dash - entry->d_name);
                 runepkg_util_safe_strncpy(match_name, entry->d_name, name_len + 1);
@@ -855,7 +835,7 @@ void handle_update_pkglist(void) {
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type != DT_DIR) continue;
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
                 if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
                 packages = realloc(packages, (count + 1) * sizeof(char *));
@@ -873,34 +853,34 @@ void handle_update_pkglist(void) {
         if (dir) {
             struct dirent *entry;
             while ((entry = readdir(dir)) != NULL) {
-                if (entry->d_type != DT_DIR) continue;
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
                 if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-                {
-                    /* Check for duplicates */
-                    bool exists = false;
-                    int i;
-                    for (i = 0; i < count; i++) {
-                        if (strcmp(packages[i], entry->d_name) == 0) {
-                            exists = true;
-                            break;
-                        }
-                    }
-                    if (exists) continue;
-
-                    packages = realloc(packages, (count + 1) * sizeof(char *));
-                    if (packages) {
-                        packages[count++] = strdup(entry->d_name);
-                    }
+                packages = realloc(packages, (count + 1) * sizeof(char *));
+                if (packages) {
+                    packages[count++] = strdup(entry->d_name);
                 }
             }
             closedir(dir);
         }
     }
 
-    /* Write sorted unique list to text file */
+    /* O(n log n) Sort and Dedup unique list to text file */
     if (count > 0) {
         int i;
+        int unique_count = 0;
+
+        qsort(packages, count, sizeof(char *), compare_pkgs);
+
+        for (i = 0; i < count; i++) {
+            if (i == 0 || strcmp(packages[i], packages[i-1]) != 0) {
+                packages[unique_count++] = packages[i];
+            } else {
+                free(packages[i]);
+            }
+        }
+        count = unique_count;
+
         for (i = 0; i < count; i++) {
             /* If it's in build_dir, write the absolute path */
             if (g_build_dir) {
@@ -1102,7 +1082,7 @@ int handle_md5_check(const char *package_name) {
 
     memset(found_pkg, 0, sizeof(found_pkg));
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_DIR) continue;
+        if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         if (strcmp(entry->d_name, package_name) == 0) {

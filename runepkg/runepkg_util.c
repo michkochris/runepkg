@@ -1366,3 +1366,12 @@ int runepkg_util_get_package_suggestions(const char *search_name, const char *db
     closedir(dir);
     return suggestion_count;
 }
+
+const char* runepkg_util_find_version_separator(const char *s) {
+    const char *p;
+    if (!s) return NULL;
+    for (p = s; *p; p++) {
+        if (*p == '-' && isdigit((unsigned char)p[1])) return p;
+    }
+    return NULL;
+}

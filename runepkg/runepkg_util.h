@@ -289,4 +289,9 @@ int runepkg_util_get_package_suggestions(const char *search_name, const char *db
  */
 void runepkg_util_motd(void);
 
+/**
+ * @brief Finds the first '-' followed by a digit in a string (Debian version boundary).
+ */
+const char* runepkg_util_find_version_separator(const char *s);
+
 #endif /* RUNEPKG_UTIL_H */
