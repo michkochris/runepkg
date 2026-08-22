@@ -8,10 +8,9 @@
  * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
  * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
  * ANY LATER VERSION.
- * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
- * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ***************************************************************************/
 
+#include "runepkg_portable.h"
 #include "runepkg_pack.h"
 #include "runepkg_util.h"
 #include "runepkg_config.h"
@@ -19,22 +18,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <limits.h>
 #include <libgen.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-// External global variable for verbose logging
+/* External global variable for verbose logging */
 extern bool g_verbose_mode;
 
-// --- Package Information Management ---
+/* --- Package Information Management --- */
 
 /**
  * @brief Initializes a unified PkgInfo structure with NULL values.
@@ -49,7 +47,7 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->maintainer = NULL;
     pkg_info->description = NULL;
     pkg_info->depends = NULL;
-    pkg_info->provides = NULL; // Added support for Virtual Packages
+    pkg_info->provides = NULL;
     pkg_info->installed_size = NULL;
     pkg_info->section = NULL;
     pkg_info->priority = NULL;
@@ -95,7 +93,8 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->extraction_workspace_path);
 
     if (pkg_info->file_list) {
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        int i;
+        for (i = 0; i < pkg_info->file_count; i++) {
             runepkg_util_free_and_null(&pkg_info->file_list[i]);
         }
         free(pkg_info->file_list);
@@ -111,31 +110,36 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
  * @return A dynamically allocated string with the full extraction path, or NULL on error.
  */
 char *runepkg_pack_create_extraction_path(const char *base_dir, const char *deb_filename) {
+    char *deb_copy;
+    char *base_name;
+    char *dot;
+    char *extraction_path;
+
     if (!base_dir || !deb_filename) {
         runepkg_util_error("create_extraction_path: NULL base_dir or deb_filename.\n");
         return NULL;
     }
     
-    char *deb_copy = strdup(deb_filename);
+    deb_copy = strdup(deb_filename);
     if (!deb_copy) {
         runepkg_util_error("Memory allocation failed for deb filename copy.\n");
         return NULL;
     }
     
-    char *base_name = basename(deb_copy);
+    base_name = basename(deb_copy);
     
-    char *dot = strrchr(base_name, '.');
+    dot = strrchr(base_name, '.');
     if (dot && strcmp(dot, ".deb") == 0) {
         *dot = '\0';
     }
     
-    char *extraction_path = runepkg_util_concat_path(base_dir, base_name);
+    extraction_path = runepkg_util_concat_path(base_dir, base_name);
     
     runepkg_util_free_and_null(&deb_copy);
     return extraction_path;
 }
 
-// --- Control File Parsing ---
+/* --- Control File Parsing --- */
 
 /**
  * @brief Parses a control file and extracts package information.
@@ -144,6 +148,10 @@ char *runepkg_pack_create_extraction_path(const char *base_dir, const char *deb_
  * @return 0 on success, -1 on failure.
  */
 int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_info) {
+    char *control_dir_copy;
+    char *dir_name;
+    char *p;
+
     if (!control_file_path || !pkg_info) {
         runepkg_util_error("parse_control_file: NULL control_file_path or pkg_info.\n");
         return -1;
@@ -168,11 +176,10 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->priority = runepkg_util_get_config_value(control_file_path, "Priority", ':');
     pkg_info->homepage = runepkg_util_get_config_value(control_file_path, "Homepage", ':');
 
-    // Check for maintainer scripts in control directory
-    char *control_dir_copy = strdup(control_file_path);
-    char *dir_name = dirname(control_dir_copy);
+    /* Check for maintainer scripts in control directory */
+    control_dir_copy = strdup(control_file_path);
+    dir_name = dirname(control_dir_copy);
 
-    char *p;
     p = runepkg_util_concat_path(dir_name, "preinst");
     if (runepkg_util_file_exists(p)) pkg_info->preinst = strdup(p);
     free(p);
@@ -212,7 +219,7 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     return 0;
 }
 
-// --- Main Package Processing Function ---
+/* --- Main Package Processing Function --- */
 
 /**
  * @brief Extracts a .deb package and collects package information.
@@ -222,6 +229,10 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
  * @return 0 on success, -1 on failure.
  */
 int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *control_dir, PkgInfo *pkg_info) {
+    char *deb_copy_for_basename;
+    char *package_extract_dir;
+    char *control_file_path;
+
     if (!deb_path || !control_dir || !pkg_info) {
         runepkg_util_error("extract_and_collect_info: NULL parameter provided.\n");
         return -1;
@@ -236,7 +247,7 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
         return -1;
     }
     
-    char *deb_copy_for_basename = strdup(deb_path);
+    deb_copy_for_basename = strdup(deb_path);
     if (!deb_copy_for_basename) {
         runepkg_util_error("Memory allocation failed for deb path copy.\n");
         return -1;
@@ -249,7 +260,7 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
         return -1;
     }
     
-    char *package_extract_dir = runepkg_pack_create_extraction_path(control_dir, deb_path);
+    package_extract_dir = runepkg_pack_create_extraction_path(control_dir, deb_path);
     if (!package_extract_dir) {
         runepkg_util_error("Failed to create extraction directory path.\n");
         runepkg_pack_free_package_info(pkg_info);
@@ -276,7 +287,7 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
         return -1;
     }
     
-    char *control_file_path = runepkg_util_concat_path(pkg_info->control_dir_path, "control");
+    control_file_path = runepkg_util_concat_path(pkg_info->control_dir_path, "control");
     if (!control_file_path) {
         runepkg_util_error("Failed to create control file path.\n");
         runepkg_util_free_and_null(&package_extract_dir);
@@ -307,37 +318,34 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
     return 0;
 }
 
-// --- File List Collection ---
+/* --- File List Collection --- */
 
 /**
  * @brief Recursively collects all files in a directory.
- * @param dir_path The directory path to scan.
- * @param base_path The base path to remove from file paths (for relative paths).
- * @param file_list Pointer to array of file paths.
- * @param file_count Pointer to current file count.
- * @param capacity Pointer to current array capacity.
- * @return 0 on success, -1 on failure.
  */
 static int collect_files_recursive(const char *dir_path, const char *base_path, char ***file_list, int *file_count, int *capacity) {
     DIR *dp = opendir(dir_path);
+    struct dirent *entry;
+
     if (!dp) {
         runepkg_util_log_verbose("Could not open directory: %s\n", dir_path);
         return 0;
     }
     
-    struct dirent *entry;
     while ((entry = readdir(dp)) != NULL) {
+        char *full_path;
+        struct stat st;
+
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
         
-        char *full_path = runepkg_util_concat_path(dir_path, entry->d_name);
+        full_path = runepkg_util_concat_path(dir_path, entry->d_name);
         if (!full_path) {
             closedir(dp);
             return -1;
         }
         
-        struct stat st;
         if (lstat(full_path, &st) != 0) {
             runepkg_util_free_and_null(&full_path);
             continue;
@@ -359,8 +367,9 @@ static int collect_files_recursive(const char *dir_path, const char *base_path, 
             }
             
             if (*file_count >= *capacity) {
+                char **new_list;
                 *capacity = (*capacity == 0) ? 32 : (*capacity * 2);
-                char **new_list = realloc(*file_list, sizeof(char*) * (*capacity));
+                new_list = realloc(*file_list, sizeof(char*) * (*capacity));
                 if (!new_list) {
                     runepkg_util_error("Failed to reallocate memory for file list.\n");
                     runepkg_util_free_and_null(&full_path);
@@ -396,6 +405,8 @@ static int collect_files_recursive(const char *dir_path, const char *base_path, 
  * @return 0 on success, -1 on failure.
  */
 int runepkg_pack_collect_file_list(const char *data_dir_path, PkgInfo *pkg_info) {
+    int capacity = 0;
+
     if (!data_dir_path || !pkg_info) {
         runepkg_util_error("collect_file_list: NULL data_dir_path or pkg_info.\n");
         return -1;
@@ -410,7 +421,6 @@ int runepkg_pack_collect_file_list(const char *data_dir_path, PkgInfo *pkg_info)
         return 0;
     }
     
-    int capacity = 0;
     pkg_info->file_count = 0;
     pkg_info->file_list = NULL;
     
@@ -423,7 +433,7 @@ int runepkg_pack_collect_file_list(const char *data_dir_path, PkgInfo *pkg_info)
     return 0;
 }
 
-// --- Display Functions ---
+/* --- Display Functions --- */
 
 /**
  * @brief Prints package information in a readable format.
@@ -485,8 +495,9 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
     
     printf("\nPackage Contents (%d files):\n", pkg_info->file_count);
     if (pkg_info->file_count > 0 && pkg_info->file_list) {
+        int i;
         printf("========================\n");
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        for (i = 0; i < pkg_info->file_count; i++) {
             printf("  %s\n", pkg_info->file_list[i]);
         }
     } else {
@@ -502,7 +513,7 @@ void runepkg_pack_cleanup_extraction_workspace(const PkgInfo *pkg_info) {
         runepkg_util_log_verbose("cleanup: removing extraction workspace: %s\n", pkg_info->extraction_workspace_path);
         runepkg_storage_remove_directory_tree(pkg_info->extraction_workspace_path);
     } else {
-        // Fallback for older structs/partial info
+        /* Fallback for older structs/partial info */
         if (pkg_info->control_dir_path) {
             runepkg_util_log_verbose("cleanup: removing control dir: %s\n", pkg_info->control_dir_path);
             runepkg_storage_remove_directory_tree(pkg_info->control_dir_path);
@@ -513,4 +524,3 @@ void runepkg_pack_cleanup_extraction_workspace(const PkgInfo *pkg_info) {
         }
     }
 }
-

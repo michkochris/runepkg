@@ -6,14 +6,17 @@
 
 **runepkg** is a lightning-fast, high-performance .deb package manager. It is designed to be versatile: serving as both a high-level tool like `apt` or `apt-get` for managing repositories and dependencies, and a low-level tool for minimal embedded systems. It offers the surgical precision required for custom builds and installs, providing the freedom to bypass the rigid policies of mainstream distributions.
 
+### **Milestone: C89 Standards Achievement**
+Recently, **runepkg** underwent a massive architectural transformation to achieve full **ISO C90 (C89)** standards compliance. This "Great Refactoring" ensures ultra-portability across historical toolchains and minimal environments like **musl libc**, while simultaneously hardening the codebase against modern memory and structural vulnerabilities.
+
 ### **Milestone: Proven at Scale**
-Recently, **runepkg** successfully passed massive stress tests, installing comprehensive environments like **GNOME** (`task-gnome-desktop`) and **XFCE** (`task-xfce-desktop`). These tests involved resolving and downloading thousands of dependencies simultaneously, proving the stability of our reworked multithreaded networking and robust dependency engine.
+**runepkg** has successfully passed massive stress tests, installing comprehensive environments like **GNOME** (`task-gnome-desktop`) and **XFCE** (`task-xfce-desktop`). These tests involved resolving and downloading thousands of dependencies simultaneously, proving the stability of our reworked multithreaded networking and robust dependency engine.
 
 ## **Architecture & Portability**
 
 **runepkg** is built with a dual-tier architecture to suit different environments:
 
-- **Core Engine (Pure C):** The heart of the tool is written in standard C. This allows for minimal, low-level installations (similar to `dpkg`) on memory-constrained embedded systems. It is highly portable, supporting **musl libc**, `gcc`, `clang`, `tcc`, and integration with `busybox`.
+- **Core Engine (Pure C89):** The heart of the tool is strictly compliant with the ANSI C standard. This allows for minimal, low-level installations on memory-constrained embedded systems and guaranteed compatibility with **musl libc**, `gcc`, `clang`, `tcc`, and `busybox`.
 - **Advanced Features (C++ FFI):** An optional C++ FFI layer provides high-speed parallel networking, repository synchronization, and a native Debian source package builder.
 
 ### **Philosophy & Background**
@@ -30,9 +33,10 @@ Developed from years of experience with Custom Cross Linux From Scratch (LFS), *
 - **Parallel Execution:** Features **parallel file extraction** and a **reworked, thread-safe networking pool** for high-stability multi-gigabyte downloads.
 - **"Clandestine" Dependency Resolution:** A robust logic layer that intelligently detects local sibling `.deb` files, resolving complex dependency chains before reaching for the network.
 - **Informative Interaction:** A refined output style that provides clear, interactive feedback on package status, installation progress, and unearthing source runes.
-- **Hardened Plumbing:** The core C engine features `secure_malloc` with zero-wiping for enhanced security and reliability.
+- **Hardened Plumbing:** The core C engine features `secure_malloc` with zero-wiping, path traversal protection, and strict C89 structural enforcement.
+- **Cryptographic Trust:** Integrated **GPG signature verification** for `.deb` packages, ensuring that your "runes" haven't been tampered with before installation.
 
-Technical details on these architectural decisions can be found in [INTERNALS.md](./INTERNALS.md).
+Technical details on these architectural decisions can be found in [DESIGN.md](./DESIGN.md).
 
 ## **Key Features**
 

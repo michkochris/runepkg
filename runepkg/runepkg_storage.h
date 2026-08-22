@@ -27,29 +27,29 @@
 extern "C" {
 #endif
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
-#include <stdint.h>
 
-// Binary index header used by the self-completing binary (mmap'd index)
+/* Binary index header used by the self-completing binary (mmap'd index) */
 typedef struct {
-    uint32_t magic;      // 0x52554E45 ("RUNE")
-    uint32_t version;    // Index format version
+    uint32_t magic;      /* 0x52554E45 ("RUNE") */
+    uint32_t version;    /* Index format version */
     uint32_t entry_count;
-    uint32_t strings_size; // Size of string blob
+    uint32_t strings_size; /* Size of string blob */
 } AutocompleteHeader;
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-// --- Storage Constants ---
+/* --- Storage Constants --- */
 #define RUNEPKG_STORAGE_BINARY_FILE "pkginfo.bin"
 
-// --- Storage Functions ---
+/* --- Storage Functions --- */
 
 /**
  * @brief Creates a package directory in the persistent storage
@@ -135,4 +135,4 @@ int runepkg_storage_build_autocomplete_index(void);
 }
 #endif
 
-#endif // RUNEPKG_STORAGE_H
+#endif /* RUNEPKG_STORAGE_H */

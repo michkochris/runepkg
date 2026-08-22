@@ -12,6 +12,7 @@
  * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ******************************************************************************/
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,23 +22,20 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include <libgen.h>
 
 #include "runepkg_util.h"
+#include "runepkg_config.h"
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-#include "runepkg_config.h"
-#include "runepkg_util.h"
-
-// --- Global Path Variables Definitions ---
+/* --- Global Path Variables Definitions --- */
 char *g_runepkg_base_dir = NULL;
 char *g_control_dir = NULL;
-char *g_runepkg_db_dir = NULL; // Database directory for persistent storage
+char *g_runepkg_db_dir = NULL; /* Database directory for persistent storage */
 char *g_install_dir_internal = NULL;
 char *g_system_install_root = NULL;
 char *g_pkglist_txt_path = NULL;
@@ -56,24 +54,23 @@ bool g_cleanup_extract_dirs = true;
 bool g_batch_mode = false;
 struct runepkg_hash_table *g_batch_planned_packages = NULL;
 
-// --- External Global Variables ---
-extern bool g_verbose_mode; // Defined in main.c
+/* --- External Global Variables --- */
+extern bool g_verbose_mode; /* Defined in main.c */
 
-// --- External Function Declarations ---
-/* `runepkg_log_verbose` is available as a macro mapping to `runepkg_util_log_verbose` */
-
-// --- Internal Function Declarations ---
+/* --- Internal Function Declarations --- */
 void runepkg_config_cleanup(void);
 void runepkg_config_load_sources(const char *filepath);
 
-// --- Internal Configuration System Functions ---
+/* --- Internal Configuration System Functions --- */
 
-// --- Helper function to find the correct configuration file path ---
-char *runepkg_get_config_file_path() {
+/* --- Helper function to find the correct configuration file path --- */
+char *runepkg_get_config_file_path(void) {
     char *config_file_path = NULL;
+    char *env_config_path;
+    const char *system_config_path;
 
     /* 1. Check for environment variable override */
-    char *env_config_path = getenv("RUNEPKG_CONFIG_PATH");
+    env_config_path = getenv("RUNEPKG_CONFIG_PATH");
     if (env_config_path && runepkg_util_file_exists(env_config_path)) {
         config_file_path = strdup(env_config_path);
         if (!config_file_path) {
@@ -84,11 +81,8 @@ char *runepkg_get_config_file_path() {
     }
 
     /* Simplified behavior: Always prefer a configured system-wide file
-     * when present. Per-user configuration is intentionally
-     * deprecated and not consulted anymore. This avoids per-user/system
-     * mixing and keeps behavior consistent for both root and non-root users.
-     */
-    const char *system_config_path = "/etc/runepkg/runepkgconfig";
+     * when present. */
+    system_config_path = "/etc/runepkg/runepkgconfig";
 
     if (runepkg_util_file_exists(system_config_path)) {
         config_file_path = strdup(system_config_path);
@@ -99,14 +93,13 @@ char *runepkg_get_config_file_path() {
         return config_file_path;
     }
 
-    /* No config file found; caller will fall back to built-in defaults. */
     return NULL;
 }
 
-int runepkg_config_load() {
+int runepkg_config_load(void) {
     char *config_file_path = runepkg_get_config_file_path();
     if (!config_file_path) {
-        // Use defaults
+        /* Use defaults */
         char *home = getenv("HOME");
         if (!home) {
             fprintf(stderr, "Error: HOME environment variable not set. Cannot load default configuration.\n");
@@ -142,7 +135,6 @@ int runepkg_config_load() {
             runepkg_config_cleanup();
             return -1;
         }
-        // Set pkglist paths to inside the runepkg_db directory (cleaner layout)
         g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
             fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
@@ -181,33 +173,29 @@ int runepkg_config_load() {
         }
         g_md5_checks = true;
         g_cleanup_extract_dirs = true;
-        /* Directories will be created by runepkg_init_paths() later.
-         * Avoid creating them here to prevent duplicate verbose/debug logs. */
     } else {
-        // Free any existing global path variables to prevent leaks on re-entry (if applicable)
         runepkg_config_cleanup();
 
-        // Retrieve the directory paths from the determined config file.
         runepkg_log_verbose("Loading configuration values from '%s'...\n", config_file_path);
         g_runepkg_base_dir = runepkg_util_get_config_value(config_file_path, "runepkg_dir", '=');
         if (!g_runepkg_base_dir) {
-            fprintf(stderr, "Error: Failed to read 'runepkg_dir' from config file. This is critical.\n");
-            runepkg_util_free_and_null(&config_file_path);
-            runepkg_config_cleanup(); // Clean up anything partially allocated
-            return -1;
-        }
-
-        g_control_dir = runepkg_util_get_config_value(config_file_path, "control_dir", '=');
-        if (!g_control_dir) {
-            fprintf(stderr, "Error: Failed to read 'control_dir' from config file. This is critical.\n");
+            fprintf(stderr, "Error: Failed to read 'runepkg_dir' from config file.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
 
-        g_runepkg_db_dir = runepkg_util_get_config_value(config_file_path, "runepkg_db", '='); // New value
+        g_control_dir = runepkg_util_get_config_value(config_file_path, "control_dir", '=');
+        if (!g_control_dir) {
+            fprintf(stderr, "Error: Failed to read 'control_dir' from config file.\n");
+            runepkg_util_free_and_null(&config_file_path);
+            runepkg_config_cleanup();
+            return -1;
+        }
+
+        g_runepkg_db_dir = runepkg_util_get_config_value(config_file_path, "runepkg_db", '=');
         if (!g_runepkg_db_dir) {
-            fprintf(stderr, "Error: Failed to read 'runepkg_db' from config file. This is critical.\n");
+            fprintf(stderr, "Error: Failed to read 'runepkg_db' from config file.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
@@ -215,22 +203,20 @@ int runepkg_config_load() {
 
         g_install_dir_internal = runepkg_util_get_config_value(config_file_path, "install_dir", '=');
         if (!g_install_dir_internal) {
-            fprintf(stderr, "Error: Failed to read 'install_dir' from config file. This is critical.\n");
+            fprintf(stderr, "Error: Failed to read 'install_dir' from config file.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
 
-        // Assign g_system_install_root from install_dir config value.
         g_system_install_root = strdup(g_install_dir_internal);
         if (!g_system_install_root) {
-            fprintf(stderr, "Error: Failed to duplicate 'install_dir' for g_system_install_root.\n");
+            fprintf(stderr, "Error: Failed to duplicate 'install_dir'.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
 
-        // Set pkglist paths based on runepkg_db (keep autocomplete files with the DB)
         g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
         if (!g_pkglist_txt_path) {
             fprintf(stderr, "Error: Failed to create runepkg_autocomplete.txt path.\n");
@@ -240,7 +226,7 @@ int runepkg_config_load() {
         }
         g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.bin");
         if (!g_pkglist_bin_path) {
-            fprintf(stderr, "Error: Failed to create runepkg_autocomplete.bin path.\n");
+            fprintf(stderr, "Error: Failed to create pkglist.bin path.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
@@ -255,7 +241,6 @@ int runepkg_config_load() {
 
         g_download_dir = runepkg_util_get_config_value(config_file_path, "download_dir", '=');
         if (!g_download_dir) {
-             // Fallback to default if not in config
              g_download_dir = runepkg_util_concat_path(g_runepkg_base_dir, "download_dir");
         }
         if (!g_download_dir) {
@@ -274,46 +259,31 @@ int runepkg_config_load() {
         if (!g_debs_dir) {
              g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
         }
-        if (!g_build_dir) {
-            fprintf(stderr, "Error: Failed to determine build_dir.\n");
-            runepkg_util_free_and_null(&config_file_path);
-            runepkg_config_cleanup();
-            return -1;
-        }
 
-        // Now, create the directories based on the loaded config paths
-        // Check for NULL pointers before calling create_dir_recursive
         if (!g_runepkg_base_dir || !g_control_dir || !g_runepkg_db_dir || !g_install_dir_internal) {
-            fprintf(stderr, "Error: One or more critical path variables are NULL after config load. Cannot create directories. Exiting.\n");
+            fprintf(stderr, "Error: Critical path variables are NULL.\n");
             runepkg_util_free_and_null(&config_file_path);
             runepkg_config_cleanup();
             return -1;
         }
-
-        /* Directories will be created by runepkg_init_paths() later.
-         * Avoid creating them here to prevent duplicate verbose/debug logs. */
-        /* keep config_file_path until after verbose summary so we can report source */
 
         runepkg_config_load_sources(config_file_path);
     }
 
     if (config_file_path) {
         char *cleanup_val = runepkg_util_get_config_value(config_file_path, "cleanup", '=');
-        g_cleanup_extract_dirs = runepkg_util_parse_yes_no(cleanup_val, true);
-        free(cleanup_val);
-
         char *md5_checks_val = runepkg_util_get_config_value(config_file_path, "md5_checks", '=');
-        g_md5_checks = runepkg_util_parse_yes_no(md5_checks_val, true);
-        free(md5_checks_val);
-
         char *verify_sigs_val = runepkg_util_get_config_value(config_file_path, "gpg_check", '=');
+
+        g_cleanup_extract_dirs = runepkg_util_parse_yes_no(cleanup_val, true);
+        g_md5_checks = runepkg_util_parse_yes_no(md5_checks_val, true);
         g_verify_signatures = runepkg_util_parse_yes_no(verify_sigs_val, true);
+
+        free(cleanup_val);
+        free(md5_checks_val);
         free(verify_sigs_val);
     }
 
-    /* Concise summary for verbose mode: one-line summary instead of
-     * multiple repeated lines. If detailed inspection is needed, -v
-     * still enables internal verbose logs elsewhere. */
     if (g_verbose_mode) {
         if (config_file_path) {
             runepkg_log_verbose("Configuration loaded from %s; base=%s, db=%s, install=%s cleanup=%s md5_checks=%s gpg_check=%s\n",
@@ -338,16 +308,14 @@ int runepkg_config_load() {
                            g_pkglist_bin_path ? g_pkglist_bin_path : "(null)");
     }
 
-    /* free config file path now that we've reported it */
     runepkg_util_free_and_null(&config_file_path);
-
     return 0;
 }
 
-void runepkg_config_cleanup() {
+void runepkg_config_cleanup(void) {
     runepkg_util_free_and_null(&g_runepkg_base_dir);
     runepkg_util_free_and_null(&g_control_dir);
-    runepkg_util_free_and_null(&g_runepkg_db_dir); // New cleanup call
+    runepkg_util_free_and_null(&g_runepkg_db_dir);
     runepkg_util_free_and_null(&g_install_dir_internal);
     runepkg_util_free_and_null(&g_system_install_root);
     runepkg_util_free_and_null(&g_pkglist_txt_path);
@@ -358,7 +326,8 @@ void runepkg_config_cleanup() {
     runepkg_util_free_and_null(&g_debs_dir);
 
     if (g_sources) {
-        for (int i = 0; i < g_sources_count; i++) {
+        int i;
+        for (i = 0; i < g_sources_count; i++) {
             if (g_sources[i]) {
                 free(g_sources[i]->type);
                 free(g_sources[i]->url);
@@ -375,9 +344,9 @@ void runepkg_config_cleanup() {
 
 void runepkg_config_load_sources(const char *filepath) {
     FILE *file = fopen(filepath, "r");
+    char line[PATH_MAX * 2];
     if (!file) return;
 
-    char line[PATH_MAX * 2];
     while (fgets(line, sizeof(line), file)) {
         char *trimmed = runepkg_util_trim_whitespace(line);
         if (trimmed[0] == '#' || trimmed[0] == '\0') continue;
@@ -393,9 +362,10 @@ void runepkg_config_load_sources(const char *filepath) {
             token = strtok(NULL, " \t");
             if (token) suite = strdup(token);
 
-            // Rest of the line is components
-            char *rest = strtok(NULL, "");
-            if (rest) components = strdup(runepkg_util_trim_whitespace(rest));
+            {
+                char *rest = strtok(NULL, "");
+                if (rest) components = strdup(runepkg_util_trim_whitespace(rest));
+            }
 
             if (type && url && suite) {
                 g_sources = realloc(g_sources, sizeof(RuneSource *) * (g_sources_count + 1));
@@ -413,26 +383,20 @@ void runepkg_config_load_sources(const char *filepath) {
     fclose(file);
 }
 
-void runepkg_init_paths() {
-    // NEW LOGIC: Load paths from runepkgconfig
-    /* Initialization summary (concise) */
+void runepkg_init_paths(void) {
+    bool created_base = false, created_control = false, created_db = false, created_install = false;
+
     runepkg_log_verbose("Initializing runepkg paths from config...\n");
     if (runepkg_config_load() != 0) {
         fprintf(stderr, "Error: Failed to load runepkg configuration. Exiting.\n");
         exit(EXIT_FAILURE);
     }
 
-    // Now, create the directories based on the loaded config paths
-    // Check for NULL pointers before calling create_dir_recursive
     if (!g_runepkg_base_dir || !g_control_dir || !g_runepkg_db_dir || !g_install_dir_internal) {
-        fprintf(stderr, "Error: One or more critical path variables are NULL after config load. Cannot create directories. Exiting.\n");
-        runepkg_config_cleanup(); // Clean up anything that might have been allocated
+        fprintf(stderr, "Error: Critical path variables are NULL. Exiting.\n");
+        runepkg_config_cleanup();
         exit(EXIT_FAILURE);
     }
-
-    /* Create configured runepkg directories once and report concise results.
-     * For each configured directory, print a single debug line if it was created. */
-    bool created_base = false, created_control = false, created_db = false, created_install = false;
 
     if (!runepkg_util_file_exists(g_runepkg_base_dir)) {
         if (runepkg_util_create_dir_recursive(g_runepkg_base_dir, 0755) == 0) created_base = true;
@@ -503,8 +467,6 @@ void runepkg_init_paths() {
                            g_system_install_root ? g_system_install_root : "(null)");
     }
 
-    // Auto-init FHS skeleton if we are bootstrapping a custom root
-    // Only perform this if NOT in completion mode to avoid noisy errors and unnecessary I/O
     if (!g_completion_mode && g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
         runepkg_util_init_fhs(g_system_install_root);
     }

@@ -1,3 +1,12 @@
+/*****************************************************************************
+ * Filename:    runepkg_completion.c
+ * Author:      <michkochris@gmail.com>
+ * Date:        2025-01-04
+ * Description: Bash completion logic for runepkg
+ * LICENSE:     GPL v3
+ ******************************************************************************/
+
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,7 +16,6 @@
 #include <limits.h>
 #include <libgen.h>
 #include <glob.h>
-#include <stdint.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -28,20 +36,20 @@ int is_completion_trigger(char *argv[]) {
 }
 
 /* Recursively scan directories starting at `base` and print any .deb
- * files whose relative path matches the `partial` prefix. This replaces
- * the previous hard-coded search of "." and "debs".
- */
+ * files whose relative path matches the `partial` prefix. */
 static void scan_deb_recursive(const char *base, const char *partial, int depth) {
-    if (depth > 64) return;
-    DIR *dir = opendir(base);
-    if (!dir) return;
-
+    DIR *dir;
     struct dirent *entry;
     char path[PATH_MAX];
+
+    if (depth > 64) return;
+    dir = opendir(base);
+    if (!dir) return;
+
     while ((entry = readdir(dir)) != NULL) {
+        struct stat st;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
         snprintf(path, sizeof(path), "%.*s/%s", (int)(sizeof(path)-258), base, entry->d_name);
-        struct stat st;
         if (lstat(path, &st) != 0) continue;
         if (S_ISDIR(st.st_mode)) {
             scan_deb_recursive(path, partial, depth + 1);
@@ -67,23 +75,26 @@ void complete_deb_files(const char *partial) {
     scan_deb_recursive(".", partial, 0);
 }
 
-/* Complete generic file paths. Only complete actual filesystem names;
- * callers should decide whether to call this (i.e., don't call when the
- * user has started typing '-' and expects option completions).
- */
 void complete_file_paths_ext(const char *partial, const char *extra_dir, const char *suffix_filter) {
-    const char *prefix = partial ? partial : "";
-    bool is_absolute = (prefix[0] == '/');
-
-    /* If a directory component exists, change search dir */
+    const char *prefix;
+    bool is_absolute;
     char dirbuf[PATH_MAX];
-    char namebuf[PATH_MAX + 512];
-    const char *last_slash = strrchr(prefix, '/');
+    const char *last_slash;
     const char *search_dir = ".";
-    const char *match_prefix = prefix;
+    const char *match_prefix;
+    DIR *d;
+    const char* virtual_dirs[8];
+    int num_v;
+    size_t plen;
+    int i;
+
+    prefix = partial ? partial : "";
+    is_absolute = (prefix[0] == '/');
+    last_slash = strrchr(prefix, '/');
+    match_prefix = prefix;
 
     if (last_slash) {
-        size_t dirlen = last_slash - prefix;
+        size_t dirlen = (size_t)(last_slash - prefix);
         if (dirlen >= sizeof(dirbuf)) dirlen = sizeof(dirbuf)-1;
         memcpy(dirbuf, prefix, dirlen);
         dirbuf[dirlen] = '\0';
@@ -100,46 +111,48 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
     }
 
     /* FS Scan */
-    DIR *d = opendir(search_dir);
+    d = opendir(search_dir);
     if (d) {
         struct dirent *e;
         while ((e = readdir(d)) != NULL) {
+            bool is_dir_entry;
+            bool is_reg_entry;
+            char full_path[PATH_MAX + 1024];
+            struct stat st_entry;
+
             if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
 
-            // Skip hidden files unless specifically requested
+            /* Skip hidden files unless specifically requested */
             if (e->d_name[0] == '.' && match_prefix[0] != '.') continue;
 
             if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
 
-            bool is_dir = (e->d_type == DT_DIR);
-            bool is_reg = (e->d_type == DT_REG);
+            is_dir_entry = (e->d_type == DT_DIR);
+            is_reg_entry = (e->d_type == DT_REG);
             if (e->d_type == DT_UNKNOWN) {
                 char full[PATH_MAX + 512];
+                struct stat st2;
                 snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), search_dir, e->d_name);
-                struct stat st;
-                if (stat(full, &st) == 0) {
-                    is_dir = S_ISDIR(st.st_mode);
-                    is_reg = S_ISREG(st.st_mode);
+                if (stat(full, &st2) == 0) {
+                    is_dir_entry = S_ISDIR(st2.st_mode);
+                    is_reg_entry = S_ISREG(st2.st_mode);
                 }
             }
 
-            if (suffix_filter && is_reg) {
+            if (suffix_filter && is_reg_entry) {
                 size_t nlen = strlen(e->d_name);
                 size_t slen = strlen(suffix_filter);
                 if (nlen < slen || strcmp(e->d_name + nlen - slen, suffix_filter) != 0) continue;
-            } else if (suffix_filter && !is_dir) {
+            } else if (suffix_filter && !is_dir_entry) {
                 continue;
             }
 
-            struct stat st;
-            char full_path[PATH_MAX + 1024];
             snprintf(full_path, sizeof(full_path), "%.*s%s%s", (int)(sizeof(full_path)-258), search_dir, (search_dir[strlen(search_dir)-1] == '/') ? "" : "/", e->d_name);
 
-            if (stat(full_path, &st) == 0) {
-                bool st_is_dir = S_ISDIR(st.st_mode);
-                bool st_is_reg = S_ISREG(st.st_mode);
+            if (stat(full_path, &st_entry) == 0) {
+                bool st_is_dir = S_ISDIR(st_entry.st_mode);
+                bool st_is_reg = S_ISREG(st_entry.st_mode);
 
-                // Apply suffix filter to files
                 if (suffix_filter && st_is_reg) {
                     size_t nlen = strlen(e->d_name);
                     size_t slen = strlen(suffix_filter);
@@ -147,8 +160,6 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                 }
 
                 if (st_is_dir) {
-                    /* Anti-Jumping Logic: suggest the directory AND a hidden dot entry
-                     * to force Bash to see multiple options and stop at the slash. */
                     if (last_slash) {
                         size_t sd_len = strlen(search_dir);
                         const char *sep = (sd_len > 0 && search_dir[sd_len-1] == '/') ? "" : "/";
@@ -177,83 +188,82 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
         closedir(d);
     }
 
-    /* Check for specific known virtual paths (user-facing only) */
-    const char* virtual_dirs[] = {g_runepkg_base_dir, g_download_dir, g_build_dir, g_debs_dir,
-                                  "/var/lib/runepkg_dir/", "/var/lib/runepkg_dir/download_dir/",
-                                  "/var/lib/runepkg_dir/build_dir/", "/var/lib/runepkg_dir/debs/"};
-    int num_v = sizeof(virtual_dirs)/sizeof(virtual_dirs[0]);
-    size_t plen = strlen(prefix);
+    virtual_dirs[0] = g_runepkg_base_dir; virtual_dirs[1] = g_download_dir;
+    virtual_dirs[2] = g_build_dir; virtual_dirs[3] = g_debs_dir;
+    virtual_dirs[4] = "/var/lib/runepkg_dir/"; virtual_dirs[5] = "/var/lib/runepkg_dir/download_dir/";
+    virtual_dirs[6] = "/var/lib/runepkg_dir/build_dir/"; virtual_dirs[7] = "/var/lib/runepkg_dir/debs/";
+    num_v = 8;
+    plen = strlen(prefix);
 
-    for (int i=0; i<num_v; i++) {
+    for (i=0; i<num_v; i++) {
         if (!virtual_dirs[i]) continue;
 
-        // If the path we are typing matches the start of a virtual dir
         if (strncmp(virtual_dirs[i], prefix, plen) == 0) {
             const char* remainder = virtual_dirs[i] + plen;
 
-            // If prefix was exactly a virtual dir, don't suggest it again if it already has a slash
             if (*remainder == '\0') continue;
 
-            // Find the next segment of this virtual dir
-            char segment[PATH_MAX];
-            const char* remainder_start = (*remainder == '/') ? remainder + 1 : remainder;
-            const char* next_slash = strchr(remainder_start, '/');
+            {
+                char segment[PATH_MAX];
+                const char* remainder_start = (*remainder == '/') ? remainder + 1 : remainder;
+                const char* next_slash = strchr(remainder_start, '/');
 
-            if (next_slash) {
-                size_t seg_len = (next_slash - virtual_dirs[i]) + 1;
-    runepkg_secure_strcpy(segment, sizeof(segment), virtual_dirs[i]);
-                segment[seg_len] = '\0';
-
-                // Anti-jumping for virtual segments
-                printf("%s\n", segment);
-                printf("%s.\n", segment);
-            } else {
-                printf("%s/\n", virtual_dirs[i]);
+                if (next_slash) {
+                    size_t seg_len = (size_t)(next_slash - virtual_dirs[i]) + 1;
+                    runepkg_util_safe_strncpy(segment, virtual_dirs[i], seg_len + 1);
+                    segment[seg_len] = '\0';
+                    printf("%s\n", segment);
+                    printf("%s.\n", segment);
+                } else {
+                    printf("%s/\n", virtual_dirs[i]);
+                }
             }
         }
     }
 
-    /* Only scan extra_dir if provided and we are NOT doing an absolute path completion
-     * and NOT already in a deep relative path. Also only if not matching an empty prefix
-     * to avoid massive dumps. */
     if (extra_dir && !is_absolute && !last_slash && prefix[0] != '\0') {
         DIR *ed = opendir(extra_dir);
         if (ed) {
             struct dirent *e;
             while ((e = readdir(ed)) != NULL) {
+                char namebuf[PATH_MAX + 512];
+                bool is_dir_e;
+                bool is_reg_e;
                 if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
                 if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
 
-                bool is_dir = (e->d_type == DT_DIR);
-                bool is_reg = (e->d_type == DT_REG);
+                is_dir_e = (e->d_type == DT_DIR);
+                is_reg_e = (e->d_type == DT_REG);
                 if (e->d_type == DT_UNKNOWN) {
                     char full[PATH_MAX + 512];
+                    struct stat st2;
                     snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), extra_dir, e->d_name);
-                    struct stat st;
-                    if (stat(full, &st) == 0) {
-                        is_dir = S_ISDIR(st.st_mode);
-                        is_reg = S_ISREG(st.st_mode);
+                    if (stat(full, &st2) == 0) {
+                        is_dir_e = S_ISDIR(st2.st_mode);
+                        is_reg_e = S_ISREG(st2.st_mode);
                     }
                 }
 
-                if (suffix_filter && is_reg) {
+                if (suffix_filter && is_reg_e) {
                     size_t nlen = strlen(e->d_name);
                     size_t slen = strlen(suffix_filter);
                     if (nlen < slen || strcmp(e->d_name + nlen - slen, suffix_filter) != 0) continue;
-                } else if (suffix_filter && !is_dir) {
+                } else if (suffix_filter && !is_dir_e) {
                     continue;
                 }
 
                 snprintf(namebuf, sizeof(namebuf), "%.*s/%s", (int)(sizeof(namebuf)-258), extra_dir, e->d_name);
-                struct stat st;
-                if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
-                    if (namebuf[strlen(namebuf)-1] != '/') {
-                        printf("%s/\n", namebuf);
+                {
+                    struct stat st;
+                    if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
+                        if (namebuf[strlen(namebuf)-1] != '/') {
+                            printf("%s/\n", namebuf);
+                        } else {
+                            printf("%s\n", namebuf);
+                        }
                     } else {
                         printf("%s\n", namebuf);
                     }
-                } else {
-                    printf("%s\n", namebuf);
                 }
             }
             closedir(ed);
@@ -267,17 +277,23 @@ void complete_file_paths(const char *partial) {
 
 static void check_rebuild_autocomplete_index(void) {
     char index_path[PATH_MAX];
+    struct stat index_st, db_dir_st, build_dir_st, debs_dir_st, download_dir_st;
+    int index_exists;
+    int db_dir_stat;
+    int build_dir_stat;
+    int debs_dir_stat;
+    int download_dir_stat;
+    bool needs_rebuild = false;
+
     if (!g_runepkg_db_dir) return;
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
-    struct stat index_st, db_dir_st, build_dir_st, debs_dir_st, download_dir_st;
-    int index_exists = (stat(index_path, &index_st) == 0);
-    int db_dir_stat = stat(g_runepkg_db_dir, &db_dir_st);
-    int build_dir_stat = g_build_dir ? stat(g_build_dir, &build_dir_st) : -1;
-    int debs_dir_stat = g_debs_dir ? stat(g_debs_dir, &debs_dir_st) : -1;
-    int download_dir_stat = g_download_dir ? stat(g_download_dir, &download_dir_st) : -1;
+    index_exists = (stat(index_path, &index_st) == 0);
+    db_dir_stat = stat(g_runepkg_db_dir, &db_dir_st);
+    build_dir_stat = g_build_dir ? stat(g_build_dir, &build_dir_st) : -1;
+    debs_dir_stat = g_debs_dir ? stat(g_debs_dir, &debs_dir_st) : -1;
+    download_dir_stat = g_download_dir ? stat(g_download_dir, &download_dir_st) : -1;
 
-    bool needs_rebuild = false;
     if (!index_exists) {
         needs_rebuild = true;
     } else {
@@ -300,33 +316,40 @@ static void check_rebuild_autocomplete_index(void) {
     }
 }
 
-/* Search the binary autocomplete index for prefix matches and print them. */
 int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
-    if (!prefix || prefix[0] == '\0') return 0;
-
     char index_path[PATH_MAX];
+    int fd;
+    struct stat st;
+    void *mapped;
+    AutocompleteHeader *hdr;
+    uint32_t *offsets;
+    char *names;
+    int low, high;
+    int first_match = -1;
+    int found = 0;
+    char last_printed[PATH_MAX];
+
+    if (!prefix || prefix[0] == '\0') return 0;
     if (!g_runepkg_db_dir) return 0;
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
     check_rebuild_autocomplete_index();
 
-    int fd = open(index_path, O_RDONLY);
+    fd = open(index_path, O_RDONLY);
     if (fd < 0) return 0;
 
-    struct stat st;
     if (fstat(fd, &st) < 0) { close(fd); return 0; }
 
-    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped == MAP_FAILED) { close(fd); return 0; }
 
-    AutocompleteHeader *hdr = (AutocompleteHeader *)mapped;
+    hdr = (AutocompleteHeader *)mapped;
     if (hdr->magic != 0x52554E45) { munmap(mapped, st.st_size); close(fd); return 0; }
 
-    uint32_t *offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
-    char *names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
+    offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
+    names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
 
-    int low = 0, high = hdr->entry_count - 1;
-    int first_match = -1;
+    low = 0; high = hdr->entry_count - 1;
     while (low <= high) {
         int mid = low + (high - low) / 2;
         char *current_name = names + offsets[mid];
@@ -345,53 +368,40 @@ int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
         if (strncmp(prefix, name, strlen(prefix)) == 0) first_match = low;
     }
 
-    int found = 0;
-    char last_printed[PATH_MAX] = {0};
+    memset(last_printed, 0, sizeof(last_printed));
     if (first_match != -1) {
-        for (int i = first_match; i < (int)hdr->entry_count; i++) {
+        int i;
+        for (i = first_match; i < (int)hdr->entry_count; i++) {
             char *name = names + offsets[i];
+            size_t plen;
+            bool prefix_has_slash;
+            bool name_has_slash;
+
             if (strncmp(prefix, name, strlen(prefix)) != 0) break;
 
-            size_t plen = strlen(prefix);
-            bool prefix_has_slash = (prefix && strchr(prefix, '/') != NULL);
-            bool name_has_slash = (strchr(name, '/') != NULL);
+            plen = strlen(prefix);
+            prefix_has_slash = (strchr(prefix, '/') != NULL);
+            name_has_slash = (strchr(name, '/') != NULL);
 
             if (plen > 0) {
-                /* If prefix is not empty, ensure strict path/basename matching */
                 if (prefix_has_slash != name_has_slash) continue;
             }
 
             if (name_has_slash && prefix_has_slash) {
-                /* Path navigation: suggest the next directory segment AND the full name.
-                 *
-                 * SOLUTION FOR "SKIPPING PAST" DIRECTORIES:
-                 * When Bash sees only one possible completion, it "jumps" to the end and
-                 * adds a space, which is frustrating when navigating deep paths.
-                 * By providing BOTH the next segment (e.g., /var/lib/) AND the full
-                 * deep path (e.g., /var/lib/runepkg_dir/...), we force Bash to see
-                 * multiple possibilities. Bash will then complete only up to the
-                 * common prefix (the next slash) and wait for the user to hit Tab
-                 * again, enabling clean, segment-by-segment navigation.
-                 */
-
-                /* If we are at a directory boundary (prefix ends in slash),
-                 * find the NEXT slash. If not, find the current level's slash. */
                 const char *search_start = name + plen;
                 const char *next_slash = strchr(search_start, '/');
 
-                /* If we found a slash, suggest only up to that slash */
                 if (next_slash) {
                     char segment[PATH_MAX];
                     size_t seg_len = (next_slash - name) + 1;
                     if (seg_len < sizeof(segment)) {
-                        runepkg_secure_strcpy(segment, sizeof(segment), name);
+                        runepkg_util_safe_strncpy(segment, name, seg_len + 1);
                         segment[seg_len] = '\0';
                         if (strcmp(segment, last_printed) != 0) {
                             printf("%s\n", segment);
-                            runepkg_secure_strcpy(last_printed, sizeof(last_printed), segment);
+                            runepkg_util_safe_strncpy(last_printed, segment, sizeof(last_printed));
                             found = 1;
                         }
-                        /* Also print the full name as a "secondary" option to keep completion open and prevent jumping */
                         printf("%s\n", name);
                         continue;
                     }
@@ -400,7 +410,6 @@ int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
 
             if (suffix_filter) {
                 if (strcmp(suffix_filter, ":pkg") == 0) {
-                    /* Only show entries that are NOT .deb, .dsc or -src files/dirs */
                     size_t nlen = strlen(name);
                     size_t clen = nlen;
                     if (clen > 0 && name[clen-1] == '/') clen--;
@@ -415,11 +424,13 @@ int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
                     found = 1;
                     continue;
                 }
-                size_t nlen = strlen(name);
-                size_t slen = strlen(suffix_filter);
-                if (nlen >= slen && strcmp(name + nlen - slen, suffix_filter) == 0) {
-                    printf("%s\n", name);
-                    found = 1;
+                {
+                    size_t nlen = strlen(name);
+                    size_t slen = strlen(suffix_filter);
+                    if (nlen >= slen && strcmp(name + nlen - slen, suffix_filter) == 0) {
+                        printf("%s\n", name);
+                        found = 1;
+                    }
                 }
             } else {
                 printf("%s\n", name);
@@ -444,28 +455,34 @@ struct RepoIndexEntry {
 };
 
 int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
-    if (!prefix || prefix[0] == '\0') return 0; // Don't match everything if nothing typed
-
     char index_path[PATH_MAX];
+    int fd;
+    struct stat st;
+    void *mapped;
+    uint32_t count;
+    struct RepoIndexEntry *entries;
+    int low, high;
+    int first_match = -1;
+    size_t prefix_len;
+
+    if (!prefix || prefix[0] == '\0') return 0;
     if (!g_runepkg_db_dir) return 0;
     snprintf(index_path, sizeof(index_path), "%s/%s", g_runepkg_db_dir, index_filename);
 
-    int fd = open(index_path, O_RDONLY);
+    fd = open(index_path, O_RDONLY);
     if (fd < 0) return 0;
 
-    struct stat st;
     if (fstat(fd, &st) < 0) { close(fd); return 0; }
     if (st.st_size < (off_t)sizeof(uint32_t)) { close(fd); return 0; }
 
-    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped == MAP_FAILED) { close(fd); return 0; }
 
-    uint32_t count = *(uint32_t *)mapped;
-    struct RepoIndexEntry *entries = (struct RepoIndexEntry *)((char *)mapped + sizeof(uint32_t));
+    count = *(uint32_t *)mapped;
+    entries = (struct RepoIndexEntry *)((char *)mapped + sizeof(uint32_t));
 
-    int low = 0, high = (int)count - 1;
-    int first_match = -1;
-    size_t prefix_len = strlen(prefix);
+    low = 0; high = (int)count - 1;
+    prefix_len = strlen(prefix);
 
     while (low <= high) {
         int mid = low + (high - low) / 2;
@@ -481,12 +498,14 @@ int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
     }
 
     if (first_match != -1) {
-        char last_printed[64] = {0};
-        for (int i = first_match; i < (int)count; i++) {
+        char last_printed[64];
+        int i;
+        memset(last_printed, 0, sizeof(last_printed));
+        for (i = first_match; i < (int)count; i++) {
             if (strncmp(prefix, entries[i].name, prefix_len) != 0) break;
             if (strcmp(last_printed, entries[i].name) != 0) {
                 printf("%s\n", entries[i].name);
-                runepkg_secure_strcpy(last_printed, sizeof(last_printed), entries[i].name);
+                runepkg_util_safe_strncpy(last_printed, entries[i].name, sizeof(last_printed));
             }
         }
     }
@@ -497,56 +516,60 @@ int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
 }
 
 int runepkg_completion_get_repo_suggestions(const char *search_name, char suggestions[][PATH_MAX], int max_suggestions) {
+    char index_path[PATH_MAX];
+    int fd;
+    struct stat st;
+    void *mapped;
+    uint32_t count;
+    struct RepoIndexEntry *entries;
+    int found = 0;
+    char last_added[64];
+    uint32_t i;
+
     if (!search_name || !suggestions || max_suggestions <= 0 || !g_runepkg_db_dir) return 0;
 
-    char index_path[PATH_MAX];
     snprintf(index_path, sizeof(index_path), "%s/repo_index.bin", g_runepkg_db_dir);
 
-    int fd = open(index_path, O_RDONLY);
+    fd = open(index_path, O_RDONLY);
     if (fd < 0) return 0;
 
-    struct stat st;
     if (fstat(fd, &st) < 0) { close(fd); return 0; }
     if (st.st_size < (off_t)sizeof(uint32_t)) { close(fd); return 0; }
 
-    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped == MAP_FAILED) { close(fd); return 0; }
 
-    uint32_t count = *(uint32_t *)mapped;
-    struct RepoIndexEntry *entries = (struct RepoIndexEntry *)((char *)mapped + sizeof(uint32_t));
+    count = *(uint32_t *)mapped;
+    entries = (struct RepoIndexEntry *)((char *)mapped + sizeof(uint32_t));
 
-    int found = 0;
-    char last_added[64] = {0};
+    memset(last_added, 0, sizeof(last_added));
 
-    /* Pass 1: Prefix matches (higher relevance) */
-    for (uint32_t i = 0; i < count && found < max_suggestions; i++) {
+    /* Pass 1: Prefix matches */
+    for (i = 0; i < count && found < max_suggestions; i++) {
         if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) {
             if (strcmp(last_added, entries[i].name) != 0) {
-                runepkg_secure_strcpy(suggestions[found], PATH_MAX, entries[i].name);
-                suggestions[found][PATH_MAX - 1] = '\0';
-                runepkg_secure_strcpy(last_added, sizeof(last_added), entries[i].name);
+                runepkg_util_safe_strncpy(suggestions[found], entries[i].name, PATH_MAX);
+                runepkg_util_safe_strncpy(last_added, entries[i].name, sizeof(last_added));
                 found++;
             }
         }
     }
 
-    /* Pass 2: Substring matches (if we still have room) */
+    /* Pass 2: Substring matches */
     if (found < max_suggestions) {
-        for (uint32_t i = 0; i < count && found < max_suggestions; i++) {
-            /* Skip if it was already found as a prefix match */
+        for (i = 0; i < count && found < max_suggestions; i++) {
             if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) continue;
 
             if (strstr(entries[i].name, search_name) != NULL) {
                 if (strcmp(last_added, entries[i].name) != 0) {
-                    /* Secondary check to avoid duplicates from previous pass if names are unsorted or similar */
                     bool already = false;
-                    for (int k = 0; k < found; k++) {
+                    int k;
+                    for (k = 0; k < found; k++) {
                         if (strcmp(suggestions[k], entries[i].name) == 0) { already = true; break; }
                     }
                     if (already) continue;
 
-                    runepkg_secure_strcpy(suggestions[found], PATH_MAX, entries[i].name);
-                    suggestions[found][PATH_MAX - 1] = '\0';
+                    runepkg_util_safe_strncpy(suggestions[found], entries[i].name, PATH_MAX);
                     found++;
                 }
             }
@@ -570,26 +593,37 @@ void handle_binary_completion(const char *partial, const char *prev) {
     const char *comp_line = getenv("COMP_LINE");
     const char *comp_point_s = getenv("COMP_POINT");
     int comp_point = 0;
+    bool is_path;
+    char inferred_cmd[64];
+    int i;
+    const char *short_opts2[2];
+    const char *long_opts6[6];
+    const char *all_long_opts4[4];
+    const char *long_opts18[18];
+    const char *short_opts12[12];
+    const char *sub_cmds19[19];
+    char *buf;
+    char *full_line_copy;
+
     if (comp_point_s) comp_point = atoi(comp_point_s);
 
-    bool is_path = (partial && (partial[0] == '/' || partial[0] == '.' || strchr(partial, '/') != NULL));
+    is_path = (partial && (partial[0] == '/' || partial[0] == '.' || strchr(partial, '/') != NULL));
 
-    char inferred_cmd[64] = {0};
+    memset(inferred_cmd, 0, sizeof(inferred_cmd));
     if (comp_line) {
         size_t len = strlen(comp_line);
         size_t use_len = len;
         if (comp_point > 0 && (size_t)comp_point < len) use_len = (size_t)comp_point;
 
-        char *buf = malloc(use_len + 1);
+        buf = malloc(use_len + 1);
         if (buf) {
+            char *tok;
+            const char *last_token = NULL;
             memcpy(buf, comp_line, use_len);
             buf[use_len] = '\0';
 
-            char *saveptr = NULL;
-            char *tok = strtok_r(buf, " \t", &saveptr);
-            /* skip program name */
-            if (tok) tok = strtok_r(NULL, " \t", &saveptr);
-            const char *last_token = NULL;
+            tok = strtok(buf, " \t");
+            if (tok) tok = strtok(NULL, " \t");
             while (tok) {
                 if (strcmp(tok, "install") == 0 || strcmp(tok, "-i") == 0 || strcmp(tok, "--install") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "install");
@@ -619,20 +653,17 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
                 } else if (strcmp(tok, "info") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "info");
-                } else if (strcmp(tok, "-S") == 0 || strcmp(tok, "--search") == 0) {
                 }
                 last_token = tok;
-                tok = strtok_r(NULL, " \t", &saveptr);
+                tok = strtok(NULL, " \t");
             }
             free(buf);
 
-            /* If nothing inferred and last token is a flag, scan full line for hints */
             if (inferred_cmd[0] == '\0' && last_token && last_token[0] == '-') {
-                char *full = strdup(comp_line);
-                if (full) {
-                    char *save2 = NULL;
-                    char *t2 = strtok_r(full, " \t", &save2);
-                    if (t2) t2 = strtok_r(NULL, " \t", &save2);
+                full_line_copy = strdup(comp_line);
+                if (full_line_copy) {
+                    char *t2 = strtok(full_line_copy, " \t");
+                    if (t2) t2 = strtok(NULL, " \t");
                     while (t2) {
                         if (strcmp(t2, "install") == 0 || strcmp(t2, "-i") == 0 || strcmp(t2, "--install") == 0) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "install");
@@ -671,25 +702,23 @@ void handle_binary_completion(const char *partial, const char *prev) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search-file");
                             break;
                         }
-                        t2 = strtok_r(NULL, " \t", &save2);
+                        t2 = strtok(NULL, " \t");
                     }
-                    free(full);
+                    free(full_line_copy);
                 }
             }
         }
     }
 
-    /* If we have an inferred command prefer it */
     if (inferred_cmd[0] != '\0') {
         if (strcmp(inferred_cmd, "install") == 0) {
             if (partial[0] == '-') {
-                const char *short_opts[] = {"-f", "-v"};
-                int n = sizeof(short_opts)/sizeof(short_opts[0]);
-                for (int i = 0; i < n; i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                short_opts2[0] = "-f"; short_opts2[1] = "-v";
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial))==0) printf("%s\n", short_opts2[i]);
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"};
-                    int m = sizeof(long_opts)/sizeof(long_opts[0]);
-                    for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                    long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
+                    long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial))==0) printf("%s\n", long_opts6[i]);
                 }
             } else if (is_path) {
                 complete_file_paths_ext(partial, g_download_dir, ".deb");
@@ -705,9 +734,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
         }
         if (strcmp(inferred_cmd, "remove") == 0) {
             if (partial[0] == '-') {
-                const char *all_long_opts[] = {"--remove","--verbose","--force","--help"};
-                int n = sizeof(all_long_opts)/sizeof(all_long_opts[0]);
-                for (int i=0;i<n;i++) if (strncmp(all_long_opts[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts[i]);
+                all_long_opts4[0] = "--remove"; all_long_opts4[1] = "--verbose"; all_long_opts4[2] = "--force"; all_long_opts4[3] = "--help";
+                for (i=0;i<4;i++) if (strncmp(all_long_opts4[i], partial, strlen(partial))==0) printf("%s\n", all_long_opts4[i]);
             } else {
                 prefix_search_and_print_ext(partial, ":pkg");
             }
@@ -785,43 +813,39 @@ void handle_binary_completion(const char *partial, const char *prev) {
     if (strcmp(prev, "runepkg") == 0) {
         if (partial[0] == '-') {
             if (strncmp(partial, "--", 2) == 0) {
-                const char *long_opts[] = {
-                    "--install", "--remove", "--list", "--status", "--list-files", "--search",
-                    "--unpack", "--build", "--md5check", "--buildpkg-split",
-                    "--verbose", "--force", "--version", "--help",
-                    "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"
-                };
-                int num_long = sizeof(long_opts) / sizeof(long_opts[0]);
-                for (int i = 0; i < num_long; i++) {
-                    if (strncmp(long_opts[i], partial, strlen(partial)) == 0) printf("%s\n", long_opts[i]);
-                }
+                long_opts18[0] = "--install"; long_opts18[1] = "--remove"; long_opts18[2] = "--list";
+                long_opts18[3] = "--status"; long_opts18[4] = "--list-files"; long_opts18[5] = "--search";
+                long_opts18[6] = "--unpack"; long_opts18[7] = "--build"; long_opts18[8] = "--md5check";
+                long_opts18[9] = "--buildpkg-split"; long_opts18[10] = "--verbose"; long_opts18[11] = "--force";
+                long_opts18[12] = "--version"; long_opts18[13] = "--help"; long_opts18[14] = "--print-config";
+                long_opts18[15] = "--print-config-file"; long_opts18[16] = "--print-pkglist-file"; long_opts18[17] = "--print-autopool";
+                for (i = 0; i < 18; i++) if (strncmp(long_opts18[i], partial, strlen(partial)) == 0) printf("%s\n", long_opts18[i]);
             } else {
-                const char *short_opts[] = {"-i", "-r", "-l", "-s", "-L", "-S", "-u", "-b", "-m", "-v", "-f", "-h"};
-                int num_short = sizeof(short_opts) / sizeof(short_opts[0]);
-                for (int i = 0; i < num_short; i++) {
-                    if (strncmp(short_opts[i], partial, strlen(partial)) == 0) printf("%s\n", short_opts[i]);
-                }
+                short_opts12[0] = "-i"; short_opts12[1] = "-r"; short_opts12[2] = "-l";
+                short_opts12[3] = "-s"; short_opts12[4] = "-L"; short_opts12[5] = "-S";
+                short_opts12[6] = "-u"; short_opts12[7] = "-b"; short_opts12[8] = "-m";
+                short_opts12[9] = "-v"; short_opts12[10] = "-f"; short_opts12[11] = "-h";
+                for (i = 0; i < 12; i++) if (strncmp(short_opts12[i], partial, strlen(partial)) == 0) printf("%s\n", short_opts12[i]);
             }
         } else {
-            const char *sub_cmds[] = {
-                "install", "remove", "list", "status", "list-files", "search", "info",
-                "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "buildpkg-split", "build"
-            };
-            int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);
-            for (int i = 0; i < num_sub; i++) {
-                if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) printf("%s\n", sub_cmds[i]);
-            }
+            sub_cmds19[0] = "install"; sub_cmds19[1] = "remove"; sub_cmds19[2] = "list";
+            sub_cmds19[3] = "status"; sub_cmds19[4] = "list-files"; sub_cmds19[5] = "search";
+            sub_cmds19[6] = "info"; sub_cmds19[7] = "download-only"; sub_cmds19[8] = "download-depends";
+            sub_cmds19[9] = "download-build-depends"; sub_cmds19[10] = "depends"; sub_cmds19[11] = "verify";
+            sub_cmds19[12] = "update"; sub_cmds19[13] = "upgrade"; sub_cmds19[14] = "source";
+            sub_cmds19[15] = "source-depends"; sub_cmds19[16] = "source-build-depends"; sub_cmds19[17] = "buildpkg-split";
+            sub_cmds19[18] = "build";
+            for (i = 0; i < 19; i++) if (strncmp(sub_cmds19[i], partial, strlen(partial)) == 0) printf("%s\n", sub_cmds19[i]);
         }
     } else if (partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {
             if (strcmp(inferred_cmd, "install") == 0) {
-                const char *short_opts[] = {"-f", "-v"};
-                int n = sizeof(short_opts)/sizeof(short_opts[0]);
-                for (int i = 0; i < n; i++) if (strncmp(short_opts[i], partial, strlen(partial))==0) printf("%s\n", short_opts[i]);
+                short_opts2[0] = "-f"; short_opts2[1] = "-v";
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial))==0) printf("%s\n", short_opts2[i]);
                 if (strncmp(partial, "--", 2) == 0) {
-                    const char *long_opts[] = {"--force", "--verbose", "--print-config", "--print-config-file", "--print-pkglist-file", "--print-autopool"};
-                    int m = sizeof(long_opts)/sizeof(long_opts[0]);
-                    for (int i = 0; i < m; i++) if (strncmp(long_opts[i], partial, strlen(partial))==0) printf("%s\n", long_opts[i]);
+                    long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
+                    long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial))==0) printf("%s\n", long_opts6[i]);
                 }
             } else {
                 printf("--help\n--version\n--verbose\n--force\n");
@@ -882,38 +906,47 @@ void handle_binary_completion(const char *partial, const char *prev) {
 }
 
 void handle_print_autopool(void) {
+    char index_path[PATH_MAX];
+    int fd;
+    struct stat st;
+    void *mapped;
+    AutocompleteHeader *hdr;
+    uint32_t *offsets;
+    char *names;
+    uint32_t count;
+    size_t max_len = 0;
+    uint32_t i_val;
+
     check_rebuild_autocomplete_index();
     print_package_data_header();
     printf("Listing consolidated autocomplete pool entries...\n");
 
-    char index_path[PATH_MAX];
     if (!g_runepkg_db_dir) {
         printf("Error: runepkg database directory not configured.\n");
         return;
     }
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
-    int fd = open(index_path, O_RDONLY);
+    fd = open(index_path, O_RDONLY);
     if (fd < 0) {
         printf("Error: Autocomplete index not found: %s\n", index_path);
         return;
     }
 
-    struct stat st;
     if (fstat(fd, &st) < 0) {
         printf("Error: Cannot stat index file.\n");
         close(fd);
         return;
     }
 
-    void *mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    mapped = mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped == MAP_FAILED) {
         printf("Error: Cannot mmap index file.\n");
         close(fd);
         return;
     }
 
-    AutocompleteHeader *hdr = (AutocompleteHeader *)mapped;
+    hdr = (AutocompleteHeader *)mapped;
     if (hdr->magic != 0x52554E45) {
         printf("Error: Invalid index file magic.\n");
         munmap(mapped, st.st_size);
@@ -921,41 +954,42 @@ void handle_print_autopool(void) {
         return;
     }
 
-    uint32_t *offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
-    char *names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
+    offsets = (uint32_t *)((char *)mapped + sizeof(AutocompleteHeader));
+    names = (char *)mapped + sizeof(AutocompleteHeader) + hdr->entry_count * sizeof(uint32_t);
 
-    uint32_t count = hdr->entry_count;
-    size_t max_len = 0;
-    for (uint32_t i = 0; i < count; i++) {
-        size_t len = strlen(names + offsets[i]);
+    count = hdr->entry_count;
+    for (i_val = 0; i_val < count; i_val++) {
+        size_t len = strlen(names + offsets[i_val]);
         if (len > max_len) max_len = len;
     }
 
-    if (count == 0) {
-        munmap(mapped, st.st_size);
-        close(fd);
-        return;
-    }
+    if (count > 0) {
+        struct winsize w;
+        int width = 80;
+        int col_width;
+        int cols;
+        int rows;
+        int r;
 
-    struct winsize w;
-    int width = 80;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
-        width = w.ws_col;
-    }
-
-    int col_width = max_len + 2;
-    int cols = width / col_width;
-    if (cols < 1) cols = 1;
-
-    int rows = (count + cols - 1) / cols;
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
-            int idx = r * cols + c;
-            if ((uint32_t)idx < count) {
-                printf("%-*s", (int)col_width, names + offsets[idx]);
-            }
+        if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
+            width = w.ws_col;
         }
-        printf("\n");
+
+        col_width = (int)max_len + 2;
+        cols = width / col_width;
+        if (cols < 1) cols = 1;
+
+        rows = (count + cols - 1) / cols;
+        for (r = 0; r < rows; r++) {
+            int c;
+            for (c = 0; c < cols; c++) {
+                int idx = r * cols + c;
+                if ((uint32_t)idx < count) {
+                    printf("%-*s", (int)col_width, names + offsets[idx]);
+                }
+            }
+            printf("\n");
+        }
     }
 
     munmap(mapped, st.st_size);

@@ -9,6 +9,8 @@
 #ifndef RUNEPKG_CPP_FFI_H
 #define RUNEPKG_CPP_FFI_H
 
+#include "runepkg_portable.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

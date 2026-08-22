@@ -16,7 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <limits.h>
 #include <sys/mman.h>
@@ -24,8 +23,8 @@
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <dirent.h>
-#include <sys/syscall.h>
 
+#include "runepkg_portable.h"
 #include "runepkg_config.h"
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
@@ -37,7 +36,7 @@
 #include "runepkg_cpp_ffi.h"
 #endif
 
-// Global variables
+/* Global variables */
 bool g_verbose_mode = false;
 bool g_force_mode = false;
 bool g_completion_mode = false;
@@ -49,7 +48,9 @@ bool g_asked_siblings = false;
 
 /* Completion and autocomplete implementations moved to runepkg_handle.c */
 
-// * @brief Prints the program's usage information.
+/**
+ * @brief Prints the program's usage information.
+ */
 void usage(void) {
     printf("runepkg (fast efficient old-school .deb package manager)\n\n");
     printf("Usage:\n");
@@ -108,11 +109,14 @@ void usage(void) {
     handle_version();
 }
 
-// --- Main Function ---
+/* --- Main Function --- */
 int main(int argc, char *argv[]) {
-    // Completion mode check - only enter when Bash's completion environment
-    // variables are present to avoid confusing real invocations that happen
-    // to have three user arguments (argc == 4).
+    int i;
+    int cli_failed = 0;
+
+    /* Completion mode check - only enter when Bash's completion environment
+     * variables are present to avoid confusing real invocations that happen
+     * to have three user arguments (argc == 4). */
     if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
         g_completion_mode = true;
         if (runepkg_init() != 0) return 0;
@@ -120,8 +124,8 @@ int main(int argc, char *argv[]) {
         return 0;
     }
 
-    // Check for verbose and force modes first, as they affect all subsequent output.
-    for (int i = 1; i < argc; ++i) {
+    /* Check for verbose and force modes first, as they affect all subsequent output. */
+    for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
             g_verbose_mode = true;
             continue;
@@ -140,14 +144,14 @@ int main(int argc, char *argv[]) {
     runepkg_log_verbose("=== RUNEPKG STARTUP ANALYSIS ===\n");
     runepkg_log_verbose("Command line arguments: %d\n", argc);
     if (g_verbose_mode) {
-        for (int i = 0; i < argc; i++) {
+        for (i = 0; i < argc; i++) {
             printf("[DEBUG-VV] argv[%d] = '%s'\n", i, argv[i]);
         }
     }
     runepkg_log_verbose("Verbose mode: %s\n", g_verbose_mode ? "ENABLED" : "disabled");
 
-    // Handle help or version before initialization
-    for (int i = 1; i < argc; ++i) {
+    /* Handle help or version before initialization */
+    for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             usage();
             return EXIT_SUCCESS;
@@ -163,8 +167,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
     
-    // --- Core Program Flow ---
-    // Step 1: Initialize the environment and load the database
+    /* --- Core Program Flow --- */
+    /* Step 1: Initialize the environment and load the database */
     runepkg_log_verbose("Starting runepkg with %d arguments\n", argc);
     if (runepkg_init() != 0) {
         runepkg_log_verbose("Critical error during program initialization. Exiting.\n");
@@ -172,13 +176,11 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    int cli_failed = 0;
-
-    // Step 2: Execute commands based on the interleaved arguments.
-    for (int i = 1; i < argc; ++i) {
+    /* Step 2: Execute commands based on the interleaved arguments. */
+    for (i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
             if (i + 1 < argc) {
-                // Loop to handle multiple .deb files
+                /* Loop to handle multiple .deb files */
                 while (i + 1 < argc) {
                     char *next_arg = argv[i+1];
                     if (strcmp(next_arg, "-") == 0) {
@@ -204,38 +206,40 @@ int main(int argc, char *argv[]) {
                         continue;
                     }
                     if (next_arg[0] == '-') {
-                        break; // Stop if it's a new command switch
+                        break; /* Stop if it's a new command switch */
                     }
 
-                    int ret;
-                    if (runepkg_util_file_exists(next_arg)) {
-                        ret = handle_install(next_arg);
-                    } else {
-                        // Check if it's an already installed package name
-                        if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, next_arg)) {
-                            if (!g_force_mode) {
-                                PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, next_arg);
-                                printf("Package %s is already installed (%s). Use -f/--force to reinstall.\n", next_arg, info->version ? info->version : "unknown");
-                                ret = 0;
-                            } else {
-                                // Force mode: proceed to repo download/reinstall
-                                goto try_repo;
-                            }
+                    {
+                        int ret;
+                        if (runepkg_util_file_exists(next_arg)) {
+                            ret = handle_install(next_arg);
                         } else {
-                        try_repo:;
+                            /* Check if it's an already installed package name */
+                            if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, next_arg)) {
+                                if (!g_force_mode) {
+                                    PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, next_arg);
+                                    printf("Package %s is already installed (%s). Use -f/--force to reinstall.\n", next_arg, info->version ? info->version : "unknown");
+                                    ret = 0;
+                                } else {
+                                    /* Force mode: proceed to repo download/reinstall */
+                                    goto try_repo;
+                                }
+                            } else {
+                            try_repo:;
 #ifdef ENABLE_CPP_FFI
-                            ret = runepkg_repo_install(next_arg);
+                                ret = runepkg_repo_install(next_arg);
 #else
-                            fprintf(stderr, "Error: File '%s' not found and repository downloads are disabled.\n", next_arg);
-                            ret = -1;
+                                fprintf(stderr, "Error: File '%s' not found and repository downloads are disabled.\n", next_arg);
+                                ret = -1;
 #endif
+                            }
                         }
-                    }
 
-                    if (ret == 0) {
-                        g_did_install = true;
-                    } else {
-                        cli_failed = 1;
+                        if (ret == 0) {
+                            g_did_install = true;
+                        } else {
+                            cli_failed = 1;
+                        }
                     }
                     i++;
                 }
@@ -266,6 +270,8 @@ int main(int argc, char *argv[]) {
             int removed_count = 0;
             char *failed_packages[100];
             int failed_count = 0;
+            int j;
+
             if (i + 1 < argc) {
                 while (i + 1 < argc) {
                     char *next_arg = argv[i+1];
@@ -277,19 +283,20 @@ int main(int argc, char *argv[]) {
                     if (next_arg[0] == '-') {
                         break;
                     }
-                    int ret = handle_remove(next_arg);
-                    if (ret == 0) {
-                        // Successful removal
-                        if (removed_count < 100) {
-                            removed_packages[removed_count++] = strdup(next_arg);
-                        }
-                    } else if (ret == -2) {
-                        // Suggestions shown, no removal attempted - do nothing
-                        // The suggestions were already displayed by handle_remove
-                    } else if (ret != 0) {
-                        cli_failed = 1;
-                        if (failed_count < 100) {
-                            failed_packages[failed_count++] = strdup(next_arg);
+                    {
+                        int ret = handle_remove(next_arg);
+                        if (ret == 0) {
+                            /* Successful removal */
+                            if (removed_count < 100) {
+                                removed_packages[removed_count++] = strdup(next_arg);
+                            }
+                        } else if (ret == -2) {
+                            /* Suggestions shown, no removal attempted - do nothing */
+                        } else if (ret != 0) {
+                            cli_failed = 1;
+                            if (failed_count < 100) {
+                                failed_packages[failed_count++] = strdup(next_arg);
+                            }
                         }
                     }
                     i++;
@@ -304,7 +311,7 @@ int main(int argc, char *argv[]) {
             }
             if (removed_count > 0) {
                 printf("Successfully removed packages:\n");
-                for(int j = 0; j < removed_count; j++) {
+                for(j = 0; j < removed_count; j++) {
                     if(j > 0) printf(" ");
                     printf("%s", removed_packages[j]);
                     free(removed_packages[j]);
@@ -313,15 +320,18 @@ int main(int argc, char *argv[]) {
             }
             if (failed_count > 0) {
                 printf("Failed to find packages:\n");
-                for(int j = 0; j < failed_count; j++) {
+                for(j = 0; j < failed_count; j++) {
+                    char suggestions[10][PATH_MAX];
+                    int suggestion_count;
+
                     printf("'%s' not installed... did you mean?\n\n", failed_packages[j]);
                     
-                    // Show suggestions for this failed package
-                    char suggestions[10][PATH_MAX];
-                    int suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
+                    /* Show suggestions for this failed package */
+                    suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
                     if (suggestion_count > 0) {
                         const char *items[10];
-                        for (int k = 0; k < suggestion_count; k++) {
+                        int k;
+                        for (k = 0; k < suggestion_count; k++) {
                             items[k] = suggestions[k];
                         }
                         runepkg_util_print_columns(items, suggestion_count, "    ");
@@ -347,9 +357,7 @@ int main(int argc, char *argv[]) {
                 if (next_arg[0] == '-' && (strcmp(next_arg, "-L") == 0 || strcmp(next_arg, "--list-files") == 0)) {
                     if (i + 2 < argc && argv[i+2][0] != '-') {
                         int ret = handle_status(argv[i+2]);
-                        if (ret == -2) {
-                            /* suggestions shown */
-                        } else if (ret != 0) {
+                        if (ret != -2 && ret != 0) {
                             cli_failed = 1;
                             runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+2]);
                         }
@@ -362,9 +370,8 @@ int main(int argc, char *argv[]) {
                 } else if (next_arg[0] == '-' && (strcmp(next_arg, "-r") == 0 || strcmp(next_arg, "--remove") == 0)) {
                     if (i + 2 < argc && argv[i+2][0] != '-') {
                         int ret = handle_status(argv[i+2]);
-                        if (ret == -2) {
-                            /* suggestions shown */
-                        } else if (ret != 0) {
+                        int rem_ret;
+                        if (ret != -2 && ret != 0) {
                             cli_failed = 1;
                             runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+2]);
                         }
@@ -372,12 +379,10 @@ int main(int argc, char *argv[]) {
                          * like the non-interleaved path so the user sees immediate
                          * confirmation when commands are interleaved.
                          */
-                        int rem_ret = handle_remove(argv[i+2]);
+                        rem_ret = handle_remove(argv[i+2]);
                         if (rem_ret == 0) {
                             printf("Successfully removed packages:\n%s\n", argv[i+2]);
-                        } else if (rem_ret == -2) {
-                            /* suggestions shown by handle_remove */
-                        } else {
+                        } else if (rem_ret != -2) {
                             cli_failed = 1;
                             printf("Failed to remove package: %s\n", argv[i+2]);
                         }
@@ -388,9 +393,7 @@ int main(int argc, char *argv[]) {
                     }
                 } else {
                     int ret = handle_status(argv[i+1]);
-                    if (ret == -2) {
-                        // Suggestions shown, no status displayed - do nothing
-                    } else if (ret != 0) {
+                    if (ret != -2 && ret != 0) {
                         cli_failed = 1;
                         runepkg_log_verbose("Error: Failed to get status for package '%s'.", argv[i+1]);
                     }
@@ -417,7 +420,7 @@ int main(int argc, char *argv[]) {
                 runepkg_log_verbose("Error: -S/--search requires a file path pattern.");
             }
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
-            // Already handled at the start of main
+            /* Already handled at the start of main */
         } else if (strcmp(argv[i], "--print-config") == 0) {
             handle_print_config();
         } else if (strcmp(argv[i], "--print-autopool") == 0) {
@@ -452,12 +455,12 @@ int main(int argc, char *argv[]) {
                 }
             }
 
-            // Smart build detection
+            /* Smart build detection */
             if (src) {
                 char discovery_path[PATH_MAX];
                 bool found = false;
 
-                // 1. Direct check
+                /* 1. Direct check */
                 if (runepkg_util_file_exists(src)) {
                     if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
                         handle_source_build(src);
@@ -476,58 +479,70 @@ int main(int argc, char *argv[]) {
                     found = true;
                 }
 
-                // 2. Discovery: check ./sources, ./debs, and build_dir
+                /* 2. Discovery: check ./sources, ./debs, and build_dir */
                 if (!found) {
-                    const char *search_dirs[] = {"sources", "debs", g_build_dir, "."};
-                    for (int j = 0; j < 4 && !found; j++) {
+                    const char *search_dirs[4];
+                    int j;
+
+                    search_dirs[0] = "sources";
+                    search_dirs[1] = "debs";
+                    search_dirs[2] = g_build_dir;
+                    search_dirs[3] = ".";
+
+                    for (j = 0; j < 4 && !found; j++) {
+                        DIR *dir;
                         if (!search_dirs[j]) continue;
 
-                        DIR *dir = opendir(search_dirs[j]);
+                        dir = opendir(search_dirs[j]);
                         if (!dir) continue;
 
-                        struct dirent *entry;
-                        while ((entry = readdir(dir)) != NULL) {
-                            // Check for exact package match in filename (e.g. nano_9.1-1.dsc matching 'nano')
-                            char pattern[128];
-                            snprintf(pattern, sizeof(pattern), "%s_", src);
-                            if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
-                                printf("\033[1;34m[discovery]\033[0m Found matching rune: %s\n", discovery_path);
-                                handle_source_build(discovery_path);
-                                found = true;
-                                break;
+                        {
+                            struct dirent *entry;
+                            while ((entry = readdir(dir)) != NULL) {
+                                /* Check for exact package match in filename (e.g. nano_9.1-1.dsc matching 'nano') */
+                                char pattern[128];
+                                snprintf(pattern, sizeof(pattern), "%s_", src);
+                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
+                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
+                                    printf("\033[1;34m[discovery]\033[0m Found matching rune: %s\n", discovery_path);
+                                    handle_source_build(discovery_path);
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
                         closedir(dir);
                     }
                 }
 
-                // 3. Auto-Fetch Ritual
+                /* 3. Auto-Fetch Ritual */
                 if (!found) {
 #ifdef ENABLE_CPP_FFI
                     printf("\033[1;33m[ritual]\033[0m Rune '%s' not found locally. Initiating repo unearthing...\n", src);
-                    char *old_build = g_build_dir;
-                    if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
-                    if (runepkg_repo_source_download(src) == 0) {
-                        // Re-run discovery in the location we just downloaded to
-                        const char *target = g_build_dir ? g_build_dir : ".";
-                        DIR *dir = opendir(target);
-                        if (dir) {
-                            struct dirent *entry;
-                            while ((entry = readdir(dir)) != NULL) {
-                                char pattern[128];
-                                snprintf(pattern, sizeof(pattern), "%s_", src);
-                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
-                                    handle_source_build(discovery_path);
-                                    found = true;
-                                    break;
+                    {
+                        char *old_build = g_build_dir;
+                        if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
+                        if (runepkg_repo_source_download(src) == 0) {
+                            /* Re-run discovery in the location we just downloaded to */
+                            const char *target = g_build_dir ? g_build_dir : ".";
+                            DIR *dir = opendir(target);
+                            if (dir) {
+                                struct dirent *entry;
+                                while ((entry = readdir(dir)) != NULL) {
+                                    char pattern[128];
+                                    snprintf(pattern, sizeof(pattern), "%s_", src);
+                                    if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
+                                        snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
+                                        handle_source_build(discovery_path);
+                                        found = true;
+                                        break;
+                                    }
                                 }
+                                closedir(dir);
                             }
-                            closedir(dir);
                         }
+                        g_build_dir = old_build;
                     }
-                    g_build_dir = old_build;
 #endif
                 }
 
@@ -541,12 +556,12 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "buildpkg-split") == 0 || strcmp(argv[i], "--buildpkg-split") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 char *src = argv[i+1];
-                i++;
-
                 char discovery_path[PATH_MAX];
                 bool found = false;
 
-                // 1. Direct check
+                i++;
+
+                /* 1. Direct check */
                 if (runepkg_util_file_exists(src)) {
                     if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
                         handle_source_build_split(src);
@@ -566,54 +581,66 @@ int main(int argc, char *argv[]) {
                     found = true;
                 }
 
-                // 2. Discovery: check ./sources, ./debs, and build_dir
+                /* 2. Discovery: check ./sources, ./debs, and build_dir */
                 if (!found) {
-                    const char *search_dirs[] = {"sources", "debs", g_build_dir, "."};
-                    for (int j = 0; j < 4 && !found; j++) {
+                    const char *search_dirs[4];
+                    int j;
+
+                    search_dirs[0] = "sources";
+                    search_dirs[1] = "debs";
+                    search_dirs[2] = g_build_dir;
+                    search_dirs[3] = ".";
+
+                    for (j = 0; j < 4 && !found; j++) {
+                        DIR *dir;
                         if (!search_dirs[j]) continue;
-                        DIR *dir = opendir(search_dirs[j]);
+                        dir = opendir(search_dirs[j]);
                         if (!dir) continue;
-                        struct dirent *entry;
-                        while ((entry = readdir(dir)) != NULL) {
-                            char pattern[128];
-                            snprintf(pattern, sizeof(pattern), "%s_", src);
-                            if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
-                                printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
-                                handle_source_build_split(discovery_path);
-                                found = true;
-                                break;
+                        {
+                            struct dirent *entry;
+                            while ((entry = readdir(dir)) != NULL) {
+                                char pattern[128];
+                                snprintf(pattern, sizeof(pattern), "%s_", src);
+                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
+                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
+                                    printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
+                                    handle_source_build_split(discovery_path);
+                                    found = true;
+                                    break;
+                                }
                             }
                         }
                         closedir(dir);
                     }
                 }
 
-                // 3. Auto-Fetch Ritual
+                /* 3. Auto-Fetch Ritual */
                 if (!found) {
 #ifdef ENABLE_CPP_FFI
                     printf("\033[1;33m[ritual]\033[0m Split-rune '%s' not found locally. Initiating repo unearthing...\n", src);
-                    char *old_build = g_build_dir;
-                    if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
-                    if (runepkg_repo_source_download(src) == 0) {
-                        const char *target = g_build_dir ? g_build_dir : ".";
-                        DIR *dir = opendir(target);
-                        if (dir) {
-                            struct dirent *entry;
-                            while ((entry = readdir(dir)) != NULL) {
-                                char pattern[128];
-                                snprintf(pattern, sizeof(pattern), "%s_", src);
-                                if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
-                                    handle_source_build_split(discovery_path);
-                                    found = true;
-                                    break;
+                    {
+                        char *old_build = g_build_dir;
+                        if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
+                        if (runepkg_repo_source_download(src) == 0) {
+                            const char *target = g_build_dir ? g_build_dir : ".";
+                            DIR *dir = opendir(target);
+                            if (dir) {
+                                struct dirent *entry;
+                                while ((entry = readdir(dir)) != NULL) {
+                                    char pattern[128];
+                                    snprintf(pattern, sizeof(pattern), "%s_", src);
+                                    if ((strcmp(entry->d_name, src) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
+                                        snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
+                                        handle_source_build_split(discovery_path);
+                                        found = true;
+                                        break;
+                                    }
                                 }
+                                closedir(dir);
                             }
-                            closedir(dir);
                         }
+                        g_build_dir = old_build;
                     }
-                    g_build_dir = old_build;
 #endif
                 }
 
@@ -627,16 +654,18 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                extern bool g_force_mode;
-                bool old_force = g_force_mode;
-                g_force_mode = true; // Ignore installed status for download-only
-                char *path = runepkg_repo_download(argv[i+1], false);
-                g_force_mode = old_force;
-                if (path) {
-                    free(path);
-                } else {
-                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' in repositories.\n", argv[i+1]);
-                    cli_failed = 1;
+                {
+                    bool old_force = g_force_mode;
+                    char *path;
+                    g_force_mode = true; /* Ignore installed status for download-only */
+                    path = runepkg_repo_download(argv[i+1], false);
+                    g_force_mode = old_force;
+                    if (path) {
+                        free(path);
+                    } else {
+                        fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' in repositories.\n", argv[i+1]);
+                        cli_failed = 1;
+                    }
                 }
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
@@ -649,13 +678,14 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                extern bool g_force_mode;
-                bool old_force = g_force_mode;
-                g_force_mode = true; // Ignore installed status for download-build-depends
-                if (runepkg_repo_build_depends_download(argv[i+1]) != 0) {
-                    cli_failed = 1;
+                {
+                    bool old_force = g_force_mode;
+                    g_force_mode = true; /* Ignore installed status for download-build-depends */
+                    if (runepkg_repo_build_depends_download(argv[i+1]) != 0) {
+                        cli_failed = 1;
+                    }
+                    g_force_mode = old_force;
                 }
-                g_force_mode = old_force;
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -667,16 +697,18 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                extern bool g_force_mode;
-                bool old_force = g_force_mode;
-                g_force_mode = true; // Ignore installed status for download-depends
-                char *path = runepkg_repo_download(argv[i+1], true);
-                g_force_mode = old_force;
-                if (path) {
-                    free(path);
-                } else {
-                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' (or its dependencies) in repositories.\n", argv[i+1]);
-                    cli_failed = 1;
+                {
+                    bool old_force = g_force_mode;
+                    char *path;
+                    g_force_mode = true; /* Ignore installed status for download-depends */
+                    path = runepkg_repo_download(argv[i+1], true);
+                    g_force_mode = old_force;
+                    if (path) {
+                        free(path);
+                    } else {
+                        fprintf(stderr, "\033[1;31mError:\033[0m Could not find package '%s' (or its dependencies) in repositories.\n", argv[i+1]);
+                        cli_failed = 1;
+                    }
                 }
 #else
                 printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
@@ -745,13 +777,14 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "source-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                extern bool g_force_mode;
-                bool old_force = g_force_mode;
-                g_force_mode = true; // Ignore installed status for source-build-depends
-                if (runepkg_repo_source_build_depends_download(argv[i+1]) != 0) {
-                    cli_failed = 1;
+                {
+                    bool old_force = g_force_mode;
+                    g_force_mode = true; /* Ignore installed status for source-build-depends */
+                    if (runepkg_repo_source_build_depends_download(argv[i+1]) != 0) {
+                        cli_failed = 1;
+                    }
+                    g_force_mode = old_force;
                 }
-                g_force_mode = old_force;
 #else
                 printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
                 printf("Rebuild with 'make all' to enable this feature.\n");
@@ -781,15 +814,11 @@ int main(int argc, char *argv[]) {
         }
         /* Ensure any output produced by the handler is flushed before
          * moving on to the next argument to keep console output ordered
-         * as the user expects when commands are interleaved.
-         */
+         * as the user expects when commands are interleaved. */
         fflush(stdout);
         fflush(stderr);
     }
 
-    // handle_update_pkglist();  // Removed to avoid excessive updates
     runepkg_cleanup();
     return cli_failed ? EXIT_FAILURE : EXIT_SUCCESS;
 }
-
-/* `handle_print_auto_pkgs` moved to runepkg_handle.c */

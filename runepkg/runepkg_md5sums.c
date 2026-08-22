@@ -6,6 +6,7 @@
  * LICENSE:     GPL v3
  ******************************************************************************/
 
+#include "runepkg_portable.h"
 #include "runepkg_md5sums.h"
 #include <stdio.h>
 #include <string.h>
@@ -66,47 +67,50 @@ static uint8_t PADDING[64] = {
 }
 
 void runepkg_md5_init(runepkg_md5_ctx *ctx) {
-    ctx->size = 0;
-    ctx->buffer[0] = 0x67452301;
-    ctx->buffer[1] = 0xefcdab89;
-    ctx->buffer[2] = 0x98badcfe;
-    ctx->buffer[3] = 0x10325476;
+    ctx->count[0] = ctx->count[1] = 0;
+    ctx->state[0] = 0x67452301;
+    ctx->state[1] = 0xefcdab89;
+    ctx->state[2] = 0x98badcfe;
+    ctx->state[3] = 0x10325476;
 }
 
 void runepkg_md5_update(runepkg_md5_ctx *ctx, const uint8_t *input, size_t input_len) {
     size_t i, index, part_len;
 
-    index = (size_t)((ctx->size >> 3) & 0x3F);
-    ctx->size += (uint64_t)input_len << 3;
+    index = (size_t)((ctx->count[0] >> 3) & 0x3F);
+    if ((ctx->count[0] += ((uint32_t)input_len << 3)) < ((uint32_t)input_len << 3))
+        ctx->count[1]++;
+    ctx->count[1] += ((uint32_t)input_len >> 29);
+
     part_len = 64 - index;
 
     if (input_len >= part_len) {
-        memcpy(&ctx->input[index], input, part_len);
-        md5_transform(ctx->buffer, ctx->input);
+        memcpy(&ctx->buffer[index], input, part_len);
+        md5_transform(ctx->state, ctx->buffer);
 
         for (i = part_len; i + 63 < input_len; i += 64)
-            md5_transform(ctx->buffer, &input[i]);
+            md5_transform(ctx->state, &input[i]);
 
         index = 0;
     } else {
         i = 0;
     }
 
-    memcpy(&ctx->input[index], &input[i], input_len - i);
+    memcpy(&ctx->buffer[index], &input[i], input_len - i);
 }
 
 void runepkg_md5_final(runepkg_md5_ctx *ctx, uint8_t result[16]) {
     uint8_t bits[8];
     size_t index, pad_len;
 
-    encode(bits, (uint32_t *)&ctx->size, 8); // Encode 64-bit size into 8 bytes
+    encode(bits, ctx->count, 8);
 
-    index = (size_t)((ctx->size >> 3) & 0x3f);
+    index = (size_t)((ctx->count[0] >> 3) & 0x3f);
     pad_len = (index < 56) ? (56 - index) : (120 - index);
     runepkg_md5_update(ctx, PADDING, pad_len);
     runepkg_md5_update(ctx, bits, 8);
 
-    encode(result, ctx->buffer, 16); // Encode 4 words of the hash into 16 bytes
+    encode(result, ctx->state, 16);
 
     memset(ctx, 0, sizeof(*ctx));
 }
@@ -214,22 +218,25 @@ static void decode(uint32_t *output, const uint8_t *input, size_t len) {
 }
 
 int runepkg_md5_file(const char *path, char output[33]) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return -1;
-
+    FILE *f;
     runepkg_md5_ctx ctx;
-    runepkg_md5_init(&ctx);
-
     uint8_t buffer[8192];
     size_t bytes;
+    uint8_t hash[16];
+    int i;
+
+    f = fopen(path, "rb");
+    if (!f) return -1;
+
+    runepkg_md5_init(&ctx);
+
     while ((bytes = fread(buffer, 1, sizeof(buffer), f)) != 0)
         runepkg_md5_update(&ctx, buffer, bytes);
 
-    uint8_t hash[16];
     runepkg_md5_final(&ctx, hash);
     fclose(f);
 
-    for (int i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++)
         snprintf(&output[i*2], 3, "%02x", hash[i]);
     output[32] = '\0';
 

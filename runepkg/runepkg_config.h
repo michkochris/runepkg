@@ -15,20 +15,20 @@
 #ifndef RUNEPKG_CONFIG_H
 #define RUNEPKG_CONFIG_H
 
-#include <stdbool.h>
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h> // For PATH_MAX
+#include <limits.h>
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-// --- Global Path Variables Declarations ---
+/* --- Global Path Variables Declarations --- */
 extern char *g_runepkg_base_dir;
 extern char *g_control_dir;
-extern char *g_runepkg_db_dir; // Database directory for persistent storage
+extern char *g_runepkg_db_dir; /* Database directory for persistent storage */
 extern char *g_install_dir_internal;
 extern char *g_system_install_root;
 extern char *g_pkglist_txt_path;
@@ -61,19 +61,19 @@ extern bool g_batch_mode;
 /* Hash table holding all packages planned for the current batch transaction. */
 extern struct runepkg_hash_table *g_batch_planned_packages;
 
-// --- Source Configuration ---
+/* --- Source Configuration --- */
 
 typedef struct {
-    char *type;       // "deb" or "deb-src"
+    char *type;       /* "deb" or "deb-src" */
     char *url;
     char *suite;
-    char *components; // Space-separated list
+    char *components; /* Space-separated list */
 } RuneSource;
 
 extern RuneSource **g_sources;
 extern int g_sources_count;
 
-// --- Function Prototypes for Configuration Management ---
+/* --- Function Prototypes for Configuration Management --- */
 
 /**
  * @brief Initializes runepkg by loading configuration and creating necessary directories.
@@ -82,7 +82,7 @@ extern int g_sources_count;
  * cascading configuration file and then creating all the directories specified
  * by the paths in that configuration.
  */
-void runepkg_init_paths();
+void runepkg_init_paths(void);
 
 /**
  * @brief Loads essential runepkg path configurations from a cascading configuration file.
@@ -95,14 +95,14 @@ void runepkg_init_paths();
  *
  * @return 0 on successful loading of all critical paths, -1 on failure.
  */
-int runepkg_config_load();
+int runepkg_config_load(void);
 
 /**
  * @brief Cleans up and frees all memory allocated for the global path variables.
  *
  * This function should be called during program exit to prevent memory leaks.
  */
-void runepkg_config_cleanup();
+void runepkg_config_cleanup(void);
 
 /**
  * @brief Gets the path to the configuration file currently in use.
@@ -114,6 +114,6 @@ void runepkg_config_cleanup();
  * @return A dynamically allocated string containing the config file path,
  *         or NULL if no config file is found. The caller is responsible for freeing the returned string.
  */
-char *runepkg_get_config_file_path();
+char *runepkg_get_config_file_path(void);
 
-#endif // RUNEPKG_CONFIG_H
+#endif /* RUNEPKG_CONFIG_H */

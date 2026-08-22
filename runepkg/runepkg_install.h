@@ -1,9 +1,14 @@
-/* Install-related helpers (implemented in runepkg_install.c). */
+/*****************************************************************************
+ * Filename:    runepkg_install.h
+ * Author:      <michkochris@gmail.com>
+ * Date:        2025-01-04
+ * Description: Install-related helpers
+ ******************************************************************************/
+
 #ifndef RUNEPKG_INSTALL_H
 #define RUNEPKG_INSTALL_H
 
 #include <stddef.h>
-
 #include "runepkg_hash.h"
 
 int handle_install(const char *deb_file_path);
@@ -17,10 +22,6 @@ int runepkg_install_batch_item(const char *deb_file_path);
 
 /**
  * @brief Executes a maintainer script (preinst, postinst, etc.)
- * @param script_path Absolute path to the script file.
- * @param pkg_info Pointer to the package info structure.
- * @param action The action being performed (e.g., "install", "configure").
- * @return 0 on success, or non-zero script exit code.
  */
 int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action);
 

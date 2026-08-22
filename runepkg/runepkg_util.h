@@ -23,21 +23,20 @@
 #ifndef RUNEPKG_UTIL_H
 #define RUNEPKG_UTIL_H
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-#include <stdbool.h>
-
 /** Interpret yes/no style strings (case-insensitive). Empty/missing uses default_val. */
 bool runepkg_util_parse_yes_no(const char *s, bool default_val);
 
-// --- Logging Functions ---
+/* --- Logging Functions --- */
 
 /**
  * @brief Logging function for verbose output
@@ -62,7 +61,7 @@ void runepkg_util_error(const char *format, ...);
  */
 void runepkg_util_security_blocked(const char *format, ...);
 
-// --- Memory Management ---
+/* --- Memory Management --- */
 
 /**
  * @brief Frees allocated memory pointed to by a char pointer and sets the pointer to NULL.
@@ -70,7 +69,7 @@ void runepkg_util_security_blocked(const char *format, ...);
  */
 void runepkg_util_free_and_null(char **ptr);
 
-// --- String Manipulation ---
+/* --- String Manipulation --- */
 
 /**
  * @brief Trims leading and trailing whitespace from a string in-place.
@@ -97,7 +96,7 @@ char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n);
  */
 char *runepkg_util_concat_path(const char *dir, const char *file);
 
-// --- Version Comparison ---
+/* --- Version Comparison --- */
 
 /**
  * @brief Compares two version strings (e.g., "1.2.3" vs "1.2.4").
@@ -107,7 +106,7 @@ char *runepkg_util_concat_path(const char *dir, const char *file);
  */
 int runepkg_util_compare_versions(const char *v1, const char *v2);
 
-// --- Dependency Parsing ---
+/* --- Dependency Parsing --- */
 
 /**
  * @brief Checks if an installed version satisfies a dependency constraint.
@@ -117,14 +116,14 @@ int runepkg_util_compare_versions(const char *v1, const char *v2);
  */
 int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint);
 
-// --- Dependency Struct ---
+/* --- Dependency Struct --- */
 
 typedef struct {
     char *package;
-    char *constraint;  // e.g., ">= 2.15" or NULL if no constraint
+    char *constraint;  /* e.g., ">= 2.15" or NULL if no constraint */
 } Dependency;
 
-// --- Dependency Parsing ---
+/* --- Dependency Parsing --- */
 
 /**
  * @brief Parses a depends string into an array of Dependency structs.
@@ -141,7 +140,7 @@ Dependency **parse_depends_with_constraints(const char *depends);
  */
 int runepkg_util_is_path_under_dir(const char *path, const char *dir);
 
-// --- File System Operations ---
+/* --- File System Operations --- */
 
 /**
  * @brief Checks if a file or directory exists at the given filepath.
@@ -182,7 +181,7 @@ char *runepkg_util_read_file_content(const char *filepath, size_t *len);
  */
 int runepkg_util_copy_file(const char *source_path, const char *destination_path);
 
-// --- Configuration File Operations ---
+/* --- Configuration File Operations --- */
 
 /**
  * @brief Reads a specific key-value pair from a configuration file and expands '~' to the home directory.
@@ -194,7 +193,7 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
  */
 char *runepkg_util_get_config_value(const char *filepath, const char *key, char separator);
 
-// --- .deb Package Operations ---
+/* --- .deb Package Operations --- */
 
 /**
  * @brief Extracts a .deb package completely into the specified directory.
@@ -290,4 +289,4 @@ int runepkg_util_get_package_suggestions(const char *search_name, const char *db
  */
 void runepkg_util_motd(void);
 
-#endif // RUNEPKG_UTIL_H
+#endif /* RUNEPKG_UTIL_H */

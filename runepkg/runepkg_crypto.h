@@ -11,11 +11,13 @@
 #ifndef RUNEPKG_CRYPTO_H
 #define RUNEPKG_CRYPTO_H
 
+#ifndef RUNEPKG_PORTABLE_H
+#include "runepkg_portable.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdbool.h>
 
 /**
  * @brief Verifies the cryptographic signature of a file.
@@ -35,4 +37,4 @@ bool runepkg_crypto_is_enabled(void);
 }
 #endif
 
-#endif // RUNEPKG_CRYPTO_H
+#endif /* RUNEPKG_CRYPTO_H */

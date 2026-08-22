@@ -1,9 +1,19 @@
-/* runepkg_completion.h - completion helpers for runepkg
- */
+/*****************************************************************************
+ * Filename:    runepkg_completion.h
+ * Author:      <michkochris@gmail.com>
+ * Date:        2025-01-04
+ * Description: Completion helpers for runepkg
+ ******************************************************************************/
+
 #ifndef RUNEPKG_COMPLETION_H
 #define RUNEPKG_COMPLETION_H
 
-#include <stdint.h>
+#include "runepkg_portable.h"
+#include <limits.h>
+
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 
 int is_completion_trigger(char *argv[]);
 int prefix_search_and_print(const char *prefix);

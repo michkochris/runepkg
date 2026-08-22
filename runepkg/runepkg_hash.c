@@ -4,14 +4,9 @@
  * Date:        2025-01-04
  * Description: Hash table implementation for runepkg package index
  * LICENSE:     GPL v3
- * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
- * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
- * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
- * ANY LATER VERSION.
- * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
- * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ***************************************************************************/
 
+#include "runepkg_portable.h"
 #include "runepkg_hash.h"
 #include "runepkg_util.h"
 #include "runepkg_pack.h"
@@ -19,24 +14,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 
-// --- Global Variables ---
+/* --- Global Variables --- */
 runepkg_hash_table_t *runepkg_main_hash_table = NULL;
 
-// --- Utility Functions ---
+/* --- Utility Functions --- */
 
 /**
  * @brief Checks if a number is prime.
- * @param num The number to check.
- * @return True if prime, false otherwise.
  */
 static bool is_prime(size_t num) {
+    size_t i;
     if (num <= 1) return false;
     if (num <= 3) return true;
     if (num % 2 == 0 || num % 3 == 0) return false;
 
-    for (size_t i = 5; i * i <= num; i += 6) {
+    for (i = 5; i * i <= num; i += 6) {
         if (num % i == 0 || num % (i + 2) == 0)
             return false;
     }
@@ -45,8 +38,6 @@ static bool is_prime(size_t num) {
 
 /**
  * @brief Finds the next prime number greater than or equal to num.
- * @param num The starting number.
- * @return The next prime number.
  */
 static size_t find_next_prime(size_t num) {
     if (num <= 2) return 2;
@@ -60,30 +51,24 @@ static size_t find_next_prime(size_t num) {
 
 /**
  * @brief Hash function using FNV-1a algorithm.
- * @param name The string to hash.
- * @param table_size The size of the hash table.
- * @return The hash value.
  */
 static unsigned int hash_function(const char *name, size_t table_size) {
-    if (!name || table_size == 0) return 0;
-
     const unsigned int FNV_PRIME_32 = 16777619U;
     const unsigned int FNV_OFFSET_BASIS_32 = 2166136261U;
-
     unsigned int hash = FNV_OFFSET_BASIS_32;
-    for (const char *p = name; *p != '\0'; p++) {
+    const char *p;
+
+    if (!name || table_size == 0) return 0;
+
+    for (p = name; *p != '\0'; p++) {
         hash ^= (unsigned char)*p;
         hash *= FNV_PRIME_32;
     }
     return hash % table_size;
 }
 
-// --- Memory Management Functions ---
+/* --- Memory Management Functions --- */
 
-/**
- * @brief Frees all allocated memory in a unified PkgInfo structure.
- * @param pkg_info Pointer to the PkgInfo structure to free.
- */
 void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     if (!pkg_info) return;
 
@@ -108,7 +93,8 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->extraction_workspace_path);
 
     if (pkg_info->file_list) {
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        int i;
+        for (i = 0; i < pkg_info->file_count; i++) {
             runepkg_util_free_and_null(&pkg_info->file_list[i]);
         }
         free(pkg_info->file_list);
@@ -117,21 +103,17 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     pkg_info->file_count = 0;
 }
 
-// --- Hash Table Core Functions ---
+/* --- Hash Table Core Functions --- */
 
-/**
- * @brief Creates and initializes a new hash table.
- * @param initial_size The desired initial size of the hash table.
- * @return A pointer to the new hash table, or NULL on failure.
- */
 runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
+    runepkg_hash_table_t *table;
     runepkg_error_t err = runepkg_validate_size(initial_size, 1000000, "hash table size");
     if (err != RUNEPKG_SUCCESS) {
         runepkg_util_error("Invalid hash table size: %s\n", runepkg_error_string(err));
         return NULL;
     }
 
-    runepkg_hash_table_t *table = runepkg_secure_malloc(sizeof(runepkg_hash_table_t));
+    table = runepkg_secure_malloc(sizeof(runepkg_hash_table_t));
     if (!table) {
         runepkg_util_error("Failed to allocate memory for hash table structure.\n");
         return NULL;
@@ -160,21 +142,17 @@ runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
     table->count = 0;
     table->provides_size = initial_size;
 
-    /* suppressed per-table creation message to reduce startup noise */
     return table;
 }
 
-/**
- * @brief Searches the hash table for a package.
- * @param table A pointer to the hash table.
- * @param name The name of the package to search for.
- * @return A pointer to the package info, or NULL if not found.
- */
 PkgInfo* runepkg_hash_search(runepkg_hash_table_t *table, const char *name) {
+    unsigned int index;
+    runepkg_hash_node_t *current;
+
     if (!table || !name || name[0] == '\0') return NULL;
 
-    unsigned int index = hash_function(name, table->size);
-    runepkg_hash_node_t *current = table->buckets[index];
+    index = hash_function(name, table->size);
+    current = table->buckets[index];
 
     while (current) {
         if (current->data.package_name && strcmp(current->data.package_name, name) == 0) {
@@ -185,16 +163,13 @@ PkgInfo* runepkg_hash_search(runepkg_hash_table_t *table, const char *name) {
     return NULL;
 }
 
-/**
- * @brief Resizes the hash table.
- * @param table A pointer to the hash table.
- * @param new_size The new size for the table.
- * @return 0 on success, -1 on failure.
- */
 static void add_to_provides_map(runepkg_hash_table_t *table, runepkg_hash_node_t *node) {
+    char *provides_copy;
+    char *token;
+
     if (!node->data.provides) return;
-    char *provides_copy = strdup(node->data.provides);
-    char *token = strtok(provides_copy, ",");
+    provides_copy = strdup(node->data.provides);
+    token = strtok(provides_copy, ",");
     while (token) {
         char *trimmed = runepkg_util_trim_whitespace(token);
         size_t name_len = strcspn(trimmed, " (");
@@ -211,9 +186,12 @@ static void add_to_provides_map(runepkg_hash_table_t *table, runepkg_hash_node_t
 }
 
 static void remove_from_provides_map(runepkg_hash_table_t *table, runepkg_hash_node_t *node) {
+    char *provides_copy;
+    char *token;
+
     if (!node->data.provides) return;
-    char *provides_copy = strdup(node->data.provides);
-    char *token = strtok(provides_copy, ",");
+    provides_copy = strdup(node->data.provides);
+    token = strtok(provides_copy, ",");
     while (token) {
         char *trimmed = runepkg_util_trim_whitespace(token);
         size_t name_len = strcspn(trimmed, " (");
@@ -235,83 +213,19 @@ static void remove_from_provides_map(runepkg_hash_table_t *table, runepkg_hash_n
     free(provides_copy);
 }
 
-static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size) {
-    if (!table) return -1;
+static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size);
 
-    if (new_size < MIN_HASH_TABLE_SIZE) {
-        new_size = MIN_HASH_TABLE_SIZE;
-    }
-    new_size = find_next_prime(new_size);
-
-    if (new_size == table->size) return 0;
-
-    runepkg_hash_node_t **new_buckets = runepkg_secure_calloc(new_size, sizeof(runepkg_hash_node_t*));
-    if (!new_buckets) {
-        runepkg_util_error("Failed to allocate memory for hash table resize.\n");
-        return -1;
-    }
-
-    runepkg_provides_node_t **new_provides = runepkg_secure_calloc(new_size, sizeof(runepkg_provides_node_t*));
-    if (!new_provides) {
-        free(new_buckets);
-        runepkg_util_error("Failed to allocate memory for provides map resize.\n");
-        return -1;
-    }
-
-    runepkg_util_log_verbose("Resizing hash table from %zu to %zu buckets\n", table->size, new_size);
-
-    runepkg_hash_node_t **old_buckets = table->buckets;
-    runepkg_provides_node_t **old_provides = table->provides_buckets;
-    size_t old_size = table->size;
-
-    table->buckets = new_buckets;
-    table->provides_buckets = new_provides;
-    table->size = new_size;
-    table->provides_size = new_size;
-    table->count = 0;
-
-    for (size_t i = 0; i < old_size; i++) {
-        runepkg_hash_node_t *current = old_buckets[i];
-        while (current) {
-            runepkg_hash_node_t *next = current->next;
-            unsigned int new_index = hash_function(current->data.package_name, new_size);
-            current->next = table->buckets[new_index];
-            table->buckets[new_index] = current;
-            table->count++;
-            
-            add_to_provides_map(table, current);
-            current = next;
-        }
-
-        // Clear old provides nodes
-        runepkg_provides_node_t *pcurr = old_provides[i];
-        while (pcurr) {
-            runepkg_provides_node_t *pnext = pcurr->next;
-            free(pcurr->virtual_name);
-            free(pcurr);
-            pcurr = pnext;
-        }
-    }
-
-    free(old_buckets);
-    free(old_provides);
-    return 0;
-}
-
-/**
- * @brief Adds a package to the hash table with deep copy.
- * @param table A pointer to the hash table.
- * @param pkg_info The package info to add.
- * @return 0 on success, -1 on failure.
- */
 int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_info) {
+    PkgInfo *existing;
+    runepkg_hash_node_t *new_node;
+    unsigned int index;
+
     if (!table || !pkg_info || !pkg_info->package_name) {
         runepkg_util_error("Invalid parameters for hash table add operation.\n");
         return -1;
     }
 
-    // Check if package already exists
-    PkgInfo *existing = runepkg_hash_search(table, pkg_info->package_name);
+    existing = runepkg_hash_search(table, pkg_info->package_name);
     if (existing) {
         runepkg_util_log_verbose("Package '%s' already exists in hash table, updating.\n", pkg_info->package_name);
         runepkg_hash_free_package_info(existing);
@@ -346,8 +260,9 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
             } else {
                 existing->file_list = runepkg_secure_malloc(pkg_info->file_count * sizeof(char*));
                 if (existing->file_list) {
+                    int i;
                     existing->file_count = pkg_info->file_count;
-                    for (int i = 0; i < pkg_info->file_count; i++) {
+                    for (i = 0; i < pkg_info->file_count; i++) {
                         existing->file_list[i] = pkg_info->file_list[i] ? runepkg_secure_strdup(pkg_info->file_list[i]) : NULL;
                     }
                 } else {
@@ -369,7 +284,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         }
     }
 
-    runepkg_hash_node_t *new_node = runepkg_secure_malloc(sizeof(runepkg_hash_node_t));
+    new_node = runepkg_secure_malloc(sizeof(runepkg_hash_node_t));
     if (!new_node) {
         runepkg_util_error("Failed to allocate memory for new hash table node.\n");
         return -1;
@@ -407,8 +322,9 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         } else {
             new_node->data.file_list = runepkg_secure_malloc(pkg_info->file_count * sizeof(char*));
             if (new_node->data.file_list) {
+                int i;
                 new_node->data.file_count = pkg_info->file_count;
-                for (int i = 0; i < pkg_info->file_count; i++) {
+                for (i = 0; i < pkg_info->file_count; i++) {
                     new_node->data.file_list[i] = pkg_info->file_list[i] ? runepkg_secure_strdup(pkg_info->file_list[i]) : NULL;
                 }
             } else {
@@ -420,7 +336,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
         new_node->data.file_count = 0;
     }
 
-    unsigned int index = hash_function(pkg_info->package_name, table->size);
+    index = hash_function(pkg_info->package_name, table->size);
     new_node->next = table->buckets[index];
     table->buckets[index] = new_node;
     table->count++;
@@ -429,17 +345,86 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     return 0;
 }
 
-/**
- * @brief Removes a package from the hash table.
- * @param table A pointer to the hash table.
- * @param name The name of the package to remove.
- */
+static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size) {
+    runepkg_hash_node_t **new_buckets;
+    runepkg_provides_node_t **new_provides;
+    runepkg_hash_node_t **old_buckets;
+    runepkg_provides_node_t **old_provides;
+    size_t old_size;
+    size_t i;
+
+    if (!table) return -1;
+
+    if (new_size < MIN_HASH_TABLE_SIZE) {
+        new_size = MIN_HASH_TABLE_SIZE;
+    }
+    new_size = find_next_prime(new_size);
+
+    if (new_size == table->size) return 0;
+
+    new_buckets = runepkg_secure_calloc(new_size, sizeof(runepkg_hash_node_t*));
+    if (!new_buckets) {
+        runepkg_util_error("Failed to allocate memory for hash table resize.\n");
+        return -1;
+    }
+
+    new_provides = runepkg_secure_calloc(new_size, sizeof(runepkg_provides_node_t*));
+    if (!new_provides) {
+        free(new_buckets);
+        runepkg_util_error("Failed to allocate memory for provides map resize.\n");
+        return -1;
+    }
+
+    runepkg_util_log_verbose("Resizing hash table from %lu to %lu buckets\n", (unsigned long)table->size, (unsigned long)new_size);
+
+    old_buckets = table->buckets;
+    old_provides = table->provides_buckets;
+    old_size = table->size;
+
+    table->buckets = new_buckets;
+    table->provides_buckets = new_provides;
+    table->size = new_size;
+    table->provides_size = new_size;
+    table->count = 0;
+
+    for (i = 0; i < old_size; i++) {
+        runepkg_hash_node_t *current = old_buckets[i];
+        while (current) {
+            runepkg_hash_node_t *next = current->next;
+            unsigned int new_index = hash_function(current->data.package_name, new_size);
+            current->next = table->buckets[new_index];
+            table->buckets[new_index] = current;
+            table->count++;
+
+            add_to_provides_map(table, current);
+            current = next;
+        }
+
+        {
+            runepkg_provides_node_t *pcurr = old_provides[i];
+            while (pcurr) {
+                runepkg_provides_node_t *pnext = pcurr->next;
+                free(pcurr->virtual_name);
+                free(pcurr);
+                pcurr = pnext;
+            }
+        }
+    }
+
+    free(old_buckets);
+    free(old_provides);
+    return 0;
+}
+
 void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) {
+    unsigned int index;
+    runepkg_hash_node_t *current;
+    runepkg_hash_node_t *prev = NULL;
+
     if (!table || !name || name[0] == '\0') return;
 
-    unsigned int index = hash_function(name, table->size);
-    runepkg_hash_node_t *current = table->buckets[index];
-    runepkg_hash_node_t *prev = NULL;
+    index = hash_function(name, table->size);
+    current = table->buckets[index];
 
     while (current && strcmp(current->data.package_name, name) != 0) {
         prev = current;
@@ -468,10 +453,6 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
     }
 }
 
-/**
- * @brief Destroys the hash table and frees all memory.
- * @param table A pointer to the hash table to destroy.
- */
 void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
     if (!table) return;
 
@@ -482,9 +463,10 @@ void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
 }
 
 void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
+    size_t i;
     if (!table) return;
 
-    for (size_t i = 0; i < table->size; i++) {
+    for (i = 0; i < table->size; i++) {
         runepkg_hash_node_t *current = table->buckets[i];
         while (current) {
             runepkg_hash_node_t *temp = current;
@@ -495,7 +477,7 @@ void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
         table->buckets[i] = NULL;
     }
 
-    for (size_t i = 0; i < table->provides_size; i++) {
+    for (i = 0; i < table->provides_size; i++) {
         runepkg_provides_node_t *pcurr = table->provides_buckets[i];
         while (pcurr) {
             runepkg_provides_node_t *pnext = pcurr->next;
@@ -510,9 +492,11 @@ void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
 }
 
 int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
+    unsigned int index;
+    runepkg_provides_node_t *curr;
     if (!table || !pkg_name) return 0;
-    unsigned int index = hash_function(pkg_name, table->provides_size);
-    runepkg_provides_node_t *curr = table->provides_buckets[index];
+    index = hash_function(pkg_name, table->provides_size);
+    curr = table->provides_buckets[index];
     while (curr) {
         if (strcmp(curr->virtual_name, pkg_name) == 0) return 1;
         curr = curr->next;
@@ -520,12 +504,8 @@ int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_na
     return 0;
 }
 
-// --- Display Functions ---
+/* --- Display Functions --- */
 
-/**
- * @brief Prints package information from the hash table.
- * @param pkg_info A pointer to the package info to print.
- */
 void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     if (!pkg_info) {
         printf("No package information available in hash table.\n");
@@ -574,8 +554,9 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
 
     printf("\nHash Table File List (%d files):\n", pkg_info->file_count);
     if (pkg_info->file_count > 0 && pkg_info->file_list) {
+        int i;
         printf("================================\n");
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        for (i = 0; i < pkg_info->file_count; i++) {
             if (pkg_info->file_list[i]) {
                 printf("  %s\n", pkg_info->file_list[i]);
             }
@@ -586,11 +567,9 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     printf("\n");
 }
 
-/**
- * @brief Lists all packages in the hash table.
- * @param table A pointer to the hash table.
- */
 void runepkg_hash_list_packages(runepkg_hash_table_t *table) {
+    int count = 0;
+    size_t i;
     if (!table) {
         printf("Hash table is NULL.\n");
         return;
@@ -599,8 +578,7 @@ void runepkg_hash_list_packages(runepkg_hash_table_t *table) {
     printf("Packages in Hash Table:\n");
     printf("======================\n");
     
-    int count = 0;
-    for (size_t i = 0; i < table->size; i++) {
+    for (i = 0; i < table->size; i++) {
         runepkg_hash_node_t *current = table->buckets[i];
         while (current) {
             if (current->data.package_name) {
@@ -613,5 +591,3 @@ void runepkg_hash_list_packages(runepkg_hash_table_t *table) {
     
     printf("\nTotal packages: %d\n", count);
 }
-
-// --- REMOVED: upkg_hash_convert_package_info is no longer needed with unified PkgInfo ---

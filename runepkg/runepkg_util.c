@@ -12,6 +12,7 @@
  * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ***************************************************************************/
 
+#include "runepkg_portable.h"
 #include "runepkg_util.h"
 #include "runepkg_config.h"
 #include "runepkg_defensive.h"
@@ -24,29 +25,28 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <ctype.h>
-#include <stdbool.h>
 #include <limits.h>
 #include <dirent.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-// External global variable for verbose logging
+/* External global variable for verbose logging */
 extern bool g_verbose_mode;
-// External global variable for debug logging
+/* External global variable for debug logging */
 extern bool g_debug_mode;
 
-// --- Logging Functions ---
+/* --- Logging Functions --- */
 
 void runepkg_util_log_verbose(const char *format, ...) {
+    va_list args;
     if (!g_verbose_mode) return;
     
-    va_list args;
     va_start(args, format);
     printf("[VERBOSE] ");
     vprintf(format, args);
@@ -56,9 +56,9 @@ void runepkg_util_log_verbose(const char *format, ...) {
 /* `runepkg_log_verbose` is mapped to `runepkg_util_log_verbose` via header macro. */
 
 void runepkg_util_log_debug(const char *format, ...) {
+    va_list args;
     if (!g_debug_mode) return;
     
-    va_list args;
     va_start(args, format);
     printf("[DEBUG] ");
     vprintf(format, args);
@@ -81,7 +81,7 @@ void runepkg_util_security_blocked(const char *format, ...) {
     va_end(args);
 }
 
-// --- Memory Management ---
+/* --- Memory Management --- */
 
 void runepkg_util_free_and_null(char **ptr) {
     if (ptr != NULL && *ptr != NULL) {
@@ -90,11 +90,11 @@ void runepkg_util_free_and_null(char **ptr) {
     }
 }
 
-// --- String Manipulation ---
+/* --- String Manipulation --- */
 
 char *runepkg_util_trim_whitespace(char *str) {
-    if (str == NULL) return NULL;
     char *end;
+    if (str == NULL) return NULL;
 
     while (isspace((unsigned char)*str)) str++;
 
@@ -110,11 +110,13 @@ char *runepkg_util_trim_whitespace(char *str) {
 }
 
 char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n) {
+    size_t src_len;
+    size_t copy_len;
     if (!dest || !src || n == 0) {
         return NULL;
     }
-    size_t src_len = strlen(src);
-    size_t copy_len = (src_len >= n) ? (n - 1) : src_len;
+    src_len = strlen(src);
+    copy_len = (src_len >= n) ? (n - 1) : src_len;
     memcpy(dest, src, copy_len);
     dest[copy_len] = '\0';
     return dest;
@@ -124,9 +126,9 @@ char *runepkg_util_concat_path(const char *dir, const char *file) {
     return runepkg_secure_path_concat(dir, file);
 }
 
-// --- Version Comparison ---
+/* --- Version Comparison --- */
 
-// Debian character weights: ~ < (nothing) < letters < non-letters
+/* Debian character weights: ~ < (nothing) < letters < non-letters */
 static int vercmp_weight(int c) {
     if (c == '~') return -1;
     if (c == 0) return 0;
@@ -134,53 +136,60 @@ static int vercmp_weight(int c) {
     return c;
 }
 
-// Helper: Compare two version parts using Debian collation rules
+/* Helper: Compare two version parts using Debian collation rules */
 static int compare_collation(const char *a, const char *b) {
     const char *pa = a, *pb = b;
     while (*pa || *pb) {
-        // Lexical part (up to first digit)
-        while ((*pa && !isdigit(*pa)) || (*pb && !isdigit(*pb))) {
-            int wa = vercmp_weight((*pa && !isdigit(*pa)) ? *pa : 0);
-            int wb = vercmp_weight((*pb && !isdigit(*pb)) ? *pb : 0);
+        /* Lexical part (up to first digit) */
+        while ((*pa && !isdigit((unsigned char)*pa)) || (*pb && !isdigit((unsigned char)*pb))) {
+            int wa = vercmp_weight((*pa && !isdigit((unsigned char)*pa)) ? *pa : 0);
+            int wb = vercmp_weight((*pb && !isdigit((unsigned char)*pb)) ? *pb : 0);
             if (wa != wb) return (wa < wb) ? -1 : 1;
-            if (*pa && !isdigit(*pa)) pa++;
-            if (*pb && !isdigit(*pb)) pb++;
+            if (*pa && !isdigit((unsigned char)*pa)) pa++;
+            if (*pb && !isdigit((unsigned char)*pb)) pb++;
         }
 
-        // Numerical part
-        if (isdigit(*pa) || isdigit(*pb)) {
+        /* Numerical part */
+        if (isdigit((unsigned char)*pa) || isdigit((unsigned char)*pb)) {
+            size_t len_a, len_b;
+            const char *start_a, *start_b;
             while (*pa == '0') pa++;
             while (*pb == '0') pb++;
-            const char *start_a = pa;
-            while (isdigit(*pa)) pa++;
-            const char *start_b = pb;
-            while (isdigit(*pb)) pb++;
+            start_a = pa;
+            while (isdigit((unsigned char)*pa)) pa++;
+            start_b = pb;
+            while (isdigit((unsigned char)*pb)) pb++;
 
-            size_t len_a = pa - start_a;
-            size_t len_b = pb - start_b;
+            len_a = pa - start_a;
+            len_b = pb - start_b;
             if (len_a < len_b) return -1;
             if (len_a > len_b) return 1;
-            int cmp = strncmp(start_a, start_b, len_a);
-            if (cmp != 0) return cmp;
+            {
+                int cmp = strncmp(start_a, start_b, len_a);
+                if (cmp != 0) return cmp;
+            }
         }
     }
     return 0;
 }
 
-// Parse version into epoch, upstream, revision
+/* Parse version into epoch, upstream, revision */
 static void parse_version(const char *version, long *epoch, char *upstream, char *revision) {
+    char *colon;
+    char *dash;
+
     *epoch = 0;
     runepkg_secure_strcpy(upstream, 256, version);
     revision[0] = '\0';
 
-    char *colon = strchr(upstream, ':');
+    colon = strchr(upstream, ':');
     if (colon) {
         *colon = '\0';
         *epoch = strtol(upstream, NULL, 10);
         memmove(upstream, colon + 1, strlen(colon + 1) + 1);
     }
 
-    char *dash = strrchr(upstream, '-');
+    dash = strrchr(upstream, '-');
     if (dash) {
         runepkg_secure_strcpy(revision, 256, dash + 1);
         *dash = '\0';
@@ -188,65 +197,75 @@ static void parse_version(const char *version, long *epoch, char *upstream, char
 }
 
 int runepkg_util_compare_versions(const char *v1, const char *v2) {
+    long epoch1, epoch2;
+    char up1[256], up2[256], rev1[256], rev2[256];
+    int cmp;
+
     if (!v1 || !v2) return v1 ? 1 : (v2 ? -1 : 0);
     if (strcmp(v1, v2) == 0) return 0;
 
-    long epoch1, epoch2;
-    char up1[256], up2[256], rev1[256], rev2[256];
     parse_version(v1, &epoch1, up1, rev1);
     parse_version(v2, &epoch2, up2, rev2);
 
     if (epoch1 < epoch2) return -1;
     if (epoch1 > epoch2) return 1;
 
-    int cmp = compare_collation(up1, up2);
+    cmp = compare_collation(up1, up2);
     if (cmp != 0) return cmp;
 
     return compare_collation(rev1, rev2);
 }
 
-// --- Dependency Parsing ---
+/* --- Dependency Parsing --- */
 
 int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint) {
+    char *cons;
+    char *cons_trim;
+    size_t op_len;
+    char op[3];
+    char ver[128];
+    char *ver_trim;
+    int cmp;
+    int result = -1;
+
     if (!installed_version || !constraint) return -1;
 
-    // Make a trimmed copy of the constraint to simplify parsing and logging
-    char *cons = strdup(constraint);
+    /* Make a trimmed copy of the constraint to simplify parsing and logging */
+    cons = strdup(constraint);
     if (!cons) return -1;
-    char *cons_trim = runepkg_util_trim_whitespace(cons);
+    cons_trim = runepkg_util_trim_whitespace(cons);
 
-    // Parse operator and version from the trimmed copy
-    size_t op_len = strcspn(cons_trim, " 0123456789");
+    /* Parse operator and version from the trimmed copy */
+    op_len = strcspn(cons_trim, " 0123456789");
     if (op_len == 0 || op_len > 2) {
         free(cons);
         return -1;
     }
 
-    char op[3] = {0};
+    memset(op, 0, sizeof(op));
     memcpy(op, cons_trim, op_len);
     op[op_len] = '\0';
 
-    char ver[128] = {0};
+    memset(ver, 0, sizeof(ver));
     if (strlen(cons_trim + op_len) >= sizeof(ver)) {
         free(cons);
         return -1;
     }
     runepkg_secure_strcpy(ver, sizeof(ver), cons_trim + op_len);
-    char *ver_trim = runepkg_util_trim_whitespace(ver);
+    ver_trim = runepkg_util_trim_whitespace(ver);
 
-    int cmp = runepkg_util_compare_versions(installed_version, ver_trim);
+    cmp = runepkg_util_compare_versions(installed_version, ver_trim);
 
-    int result = -1;
     if (strcmp(op, ">=") == 0) result = (cmp >= 0);
     else if (strcmp(op, "<=") == 0) result = (cmp <= 0);
     else if (strcmp(op, "==") == 0) result = (cmp == 0);
-    else if (strcmp(op, "=") == 0) result = (cmp == 0);  // Debian uses = for exact match
+    else if (strcmp(op, "=") == 0) result = (cmp == 0);  /* Debian uses = for exact match */
     else if (strcmp(op, "!=") == 0) result = (cmp != 0);
     else if (strcmp(op, ">") == 0) result = (cmp > 0);
     else if (strcmp(op, "<") == 0) result = (cmp < 0);
-    else if (strcmp(op, "<<") == 0) result = (cmp < 0);  // dpkg uses << for strict less
-    else if (strcmp(op, ">>") == 0) result = (cmp > 0);  // dpkg uses >> for strict greater
-    else result = -1;  // Unknown op
+    else if (strcmp(op, "<<") == 0) result = (cmp < 0);  /* dpkg uses << for strict less */
+    else if (strcmp(op, ">>") == 0) result = (cmp > 0);  /* dpkg uses >> for strict greater */
+    else result = -1;  /* Unknown op */
 
     runepkg_util_log_debug("check_version_constraint(installed='%s', constraint='%s') -> op='%s' ver='%s' cmp=%d result=%d\n",
         installed_version, cons_trim, op, ver_trim, cmp, result);
@@ -255,45 +274,45 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
     return result;
 }
 
-// --- Dependency Parsing ---
-
 Dependency **parse_depends_with_constraints(const char *depends) {
+    int count = 1;
+    const char *p;
+    Dependency **result;
+    char *copy;
+    char *token;
+    int i = 0;
+
     if (!depends || *depends == '\0') return NULL;
 
-    // Count commas
-    int count = 1;
-    for (const char *p = depends; *p; p++) {
+    for (p = depends; *p; p++) {
         if (*p == ',') count++;
     }
 
-    Dependency **result = calloc(count + 1, sizeof(Dependency*));
+    result = calloc(count + 1, sizeof(Dependency*));
     if (!result) return NULL;
 
-    char *copy = strdup(depends);
+    copy = strdup(depends);
     if (!copy) {
         free(result);
         return NULL;
     }
 
-    char *token = strtok(copy, ",");
-    int i = 0;
+    token = strtok(copy, ",");
     while (token && i < count) {
-        // Trim
+        char *pipe;
         while (*token == ' ' || *token == '\t') token++;
         if (*token == '\0') {
             token = strtok(NULL, ",");
             continue;
         }
 
-        // Handle alternatives (OR dependency): take the first one
-        // Note: we do this before checking for parentheses so we get A even if it's A | B (>= 1)
-        char *pipe = strchr(token, '|');
+        pipe = strchr(token, '|');
         if (pipe) *pipe = '\0';
 
         result[i] = calloc(1, sizeof(Dependency));
         if (!result[i]) {
-            // Free all
-            for (int j = 0; j < i; j++) {
+            int j;
+            for (j = 0; j < i; j++) {
                 free(result[j]->package);
                 free(result[j]->constraint);
                 free(result[j]);
@@ -303,35 +322,39 @@ Dependency **parse_depends_with_constraints(const char *depends) {
             return NULL;
         }
 
-        // Parse package and constraint
-        char *paren = strchr(token, '(');
-        if (paren) {
-            *paren = '\0';
-            char *close = strchr(paren + 1, ')');
-            if (close) *close = '\0';
+        {
+            char *paren = strchr(token, '(');
+            if (paren) {
+                char *pkg_part;
+                char *extra;
+                char *inner;
+                char *end;
+                char *close;
 
-            // Strip :any, [arch], <profile> from package name
-            char *pkg_part = token;
-            char *extra = strpbrk(pkg_part, ":[<");
-            if (extra) *extra = '\0';
-            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+                *paren = '\0';
+                close = strchr(paren + 1, ')');
+                if (close) *close = '\0';
 
-            // Extract constraint without parentheses
-            char *inner = paren + 1;
-            while (*inner && (*inner == ' ' || *inner == '(')) inner++;
-            char *end = inner + strlen(inner) - 1;
-            while (end > inner && (*end == ' ' || *end == ')')) {
-                *end = '\0';
-                end--;
+                pkg_part = token;
+                extra = strpbrk(pkg_part, ":[<");
+                if (extra) *extra = '\0';
+                result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+
+                inner = paren + 1;
+                while (*inner && (*inner == ' ' || *inner == '(')) inner++;
+                end = inner + strlen(inner) - 1;
+                while (end > inner && (*end == ' ' || *end == ')')) {
+                    *end = '\0';
+                    end--;
+                }
+                result[i]->constraint = strdup(inner);
+            } else {
+                char *pkg_part = token;
+                char *extra = strpbrk(pkg_part, ":[<");
+                if (extra) *extra = '\0';
+                result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+                result[i]->constraint = NULL;
             }
-            result[i]->constraint = strdup(inner);
-        } else {
-            // Strip :any, [arch], <profile> from package name even if no version constraint
-            char *pkg_part = token;
-            char *extra = strpbrk(pkg_part, ":[<");
-            if (extra) *extra = '\0';
-            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
-            result[i]->constraint = NULL;
         }
 
         i++;
@@ -343,21 +366,24 @@ Dependency **parse_depends_with_constraints(const char *depends) {
 }
 
 int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
+    char *real_path;
+    char *real_dir;
+    size_t dir_len;
+    int result;
+
     if (!path || !dir) return -1;
 
-    char *real_path = realpath(path, NULL);
-    char *real_dir = realpath(dir, NULL);
+    real_path = realpath(path, NULL);
+    real_dir = realpath(dir, NULL);
 
     if (!real_path || !real_dir) {
         free(real_path);
         free(real_dir);
-        // If it doesn't exist yet, we can't realpath it.
-        // We'll trust the logical check for now or handle missing files specifically.
         return 1;
     }
 
-    size_t dir_len = strlen(real_dir);
-    int result = (strncmp(real_path, real_dir, dir_len) == 0 &&
+    dir_len = strlen(real_dir);
+    result = (strncmp(real_path, real_dir, dir_len) == 0 &&
                   (real_path[dir_len] == '\0' || real_path[dir_len] == '/'));
 
     free(real_path);
@@ -365,7 +391,7 @@ int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
     return result;
 }
 
-// --- File System Operations ---
+/* --- File System Operations --- */
 
 int runepkg_util_file_exists(const char *filepath) {
     return (access(filepath, F_OK) == 0);
@@ -416,7 +442,6 @@ int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
                     ret = -1;
                     break;
                 } else {
-                    // Check if it's actually a directory
                     struct stat st;
                     if (stat(temp_path, &st) == 0) {
                         if (!S_ISDIR(st.st_mode)) {
@@ -451,23 +476,28 @@ int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
 
 char *runepkg_util_read_file_content(const char *filepath, size_t *len) {
     FILE *f = fopen(filepath, "rb");
+    long file_size_long;
+    size_t file_size;
+    char *buffer;
+    size_t bytes_read;
+
     if (!f) {
         if (len) *len = 0;
         return NULL;
     }
 
     fseek(f, 0, SEEK_END);
-    long file_size_long = ftell(f);
+    file_size_long = ftell(f);
     if (file_size_long == -1) {
         perror("ftell error");
         fclose(f);
         if (len) *len = 0;
         return NULL;
     }
-    size_t file_size = (size_t)file_size_long;
+    file_size = (size_t)file_size_long;
     fseek(f, 0, SEEK_SET);
 
-    char *buffer = (char *)malloc(file_size + 1);
+    buffer = (char *)malloc(file_size + 1);
     if (!buffer) {
         runepkg_util_error("Memory allocation failed for file content\n");
         fclose(f);
@@ -475,7 +505,7 @@ char *runepkg_util_read_file_content(const char *filepath, size_t *len) {
         return NULL;
     }
 
-    size_t bytes_read = fread(buffer, 1, file_size, f);
+    bytes_read = fread(buffer, 1, file_size, f);
     if (bytes_read != file_size) {
         runepkg_util_log_verbose("Warning: Mismatch in expected vs. actual bytes read for %s\n", filepath);
     }
@@ -491,6 +521,7 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
     char buffer[65536];
     size_t bytes;
     int ret = 0;
+    struct stat st;
 
     src = fopen(source_path, "rb");
     if (!src) {
@@ -523,7 +554,6 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
     fclose(src);
     fclose(dest);
 
-    struct stat st;
     if (stat(source_path, &st) == 0) {
         if (chmod(destination_path, st.st_mode & 0777) == -1) {
             perror("Warning: Could not set permissions on copied file");
@@ -535,23 +565,26 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
     return ret;
 }
 
-// --- Configuration File Operations ---
+/* --- Configuration File Operations --- */
 
 char *runepkg_util_get_config_value(const char *filepath, const char *key, char separator) {
-    /* entry log removed to reduce verbose noise */
-
     FILE *file = fopen(filepath, "r");
+    char line[PATH_MAX * 2];
+    char *value = NULL;
+    size_t key_len = strlen(key);
+
     if (file == NULL) {
         runepkg_util_log_debug("Failed to open config file '%s'. Error: %s\n", filepath, strerror(errno));
         return NULL;
     }
 
-    char line[PATH_MAX * 2];
-    char *value = NULL;
-    size_t key_len = strlen(key);
-
     while (fgets(line, sizeof(line), file) != NULL) {
         char *trimmed_line = runepkg_util_trim_whitespace(line);
+        char *potential_separator;
+        char *start_of_value;
+        char *raw_value;
+        char *trimmed_value;
+
         if (strlen(trimmed_line) == 0 || trimmed_line[0] == '#') {
             continue;
         }
@@ -560,7 +593,7 @@ char *runepkg_util_get_config_value(const char *filepath, const char *key, char 
             continue;
         }
 
-        char *potential_separator = trimmed_line + key_len;
+        potential_separator = trimmed_line + key_len;
         while (*potential_separator != '\0' && isspace((unsigned char)*potential_separator)) {
             potential_separator++;
         }
@@ -569,18 +602,17 @@ char *runepkg_util_get_config_value(const char *filepath, const char *key, char 
             continue;
         }
 
-        char *start_of_value = potential_separator + 1;
+        start_of_value = potential_separator + 1;
         while (*start_of_value != '\0' && isspace((unsigned char)*start_of_value)) {
             start_of_value++;
         }
 
-        char *raw_value = strdup(start_of_value);
+        raw_value = strdup(start_of_value);
         if (!raw_value) {
-            /* memory failure; nothing to return */
             break;
         }
 
-        char *trimmed_value = runepkg_util_trim_whitespace(raw_value);
+        trimmed_value = runepkg_util_trim_whitespace(raw_value);
 
         if (trimmed_value[0] == '~' && (trimmed_value[1] == '/' || trimmed_value[1] == '\0')) {
             char *home_dir = getenv("HOME");
@@ -615,12 +647,14 @@ char *runepkg_util_get_config_value(const char *filepath, const char *key, char 
 }
 
 bool runepkg_util_parse_yes_no(const char *s, bool default_val) {
+    char buf[32];
+    size_t j = 0;
+    size_t i;
+
     if (!s || s[0] == '\0')
         return default_val;
 
-    char buf[32];
-    size_t j = 0;
-    for (size_t i = 0; s[i] && j + 1 < sizeof(buf); i++)
+    for (i = 0; s[i] && j + 1 < sizeof(buf); i++)
         buf[j++] = (char)tolower((unsigned char)s[i]);
     buf[j] = '\0';
 
@@ -631,17 +665,17 @@ bool runepkg_util_parse_yes_no(const char *s, bool default_val) {
     return default_val;
 }
 
-// --- Command Execution ---
+/* --- Command Execution --- */
 
 int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
+    pid_t pid;
     runepkg_util_log_debug("Executing command: %s\n", command_path);
-    pid_t pid = fork();
+    pid = fork();
 
     if (pid == -1) {
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
-        // Use execvp to search PATH and allow relative command names
         execvp(argv[0], argv);
         perror("Failed to execute command");
         _exit(1);
@@ -670,14 +704,14 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
 }
 
 int runepkg_util_execute_command_silent(const char *command_path, char *const argv[]) {
+    pid_t pid;
     runepkg_util_log_debug("Executing silent command: %s\n", command_path);
-    pid_t pid = fork();
+    pid = fork();
 
     if (pid == -1) {
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
-        // Redirect stdout and stderr to /dev/null
         int devnull = open("/dev/null", O_WRONLY);
         if (devnull != -1) {
             dup2(devnull, STDOUT_FILENO);
@@ -700,9 +734,15 @@ int runepkg_util_execute_command_silent(const char *command_path, char *const ar
     return -1;
 }
 
-// --- .deb Package Operations ---
+/* --- .deb Package Operations --- */
 
 static int extract_deb_archive(const char *deb_path, const char *destination_dir) {
+    char *absolute_deb_path;
+    char current_dir[PATH_MAX];
+    char *ar_path;
+    char *argv_ar[4];
+    int result;
+
     runepkg_util_log_verbose("Extracting .deb file '%s' to '%s'...\n", deb_path, destination_dir);
 
     if (runepkg_util_create_dir_recursive(destination_dir, 0755) != 0) {
@@ -710,14 +750,13 @@ static int extract_deb_archive(const char *deb_path, const char *destination_dir
         return -1;
     }
 
-    char *absolute_deb_path = realpath(deb_path, NULL);
+    absolute_deb_path = realpath(deb_path, NULL);
     if (!absolute_deb_path) {
         perror("Failed to resolve absolute path for .deb file");
         runepkg_util_error("Could not resolve absolute path for '%s'.\n", deb_path);
         return -1;
     }
 
-    char current_dir[PATH_MAX];
     if (getcwd(current_dir, sizeof(current_dir)) == NULL) {
         perror("getcwd failed");
         runepkg_util_error("Failed to get current working directory.\n");
@@ -732,16 +771,13 @@ static int extract_deb_archive(const char *deb_path, const char *destination_dir
         return -1;
     }
 
-    char *ar_path = "/usr/bin/ar";
+    ar_path = "/usr/bin/ar";
+    argv_ar[0] = "ar";
+    argv_ar[1] = "-x";
+    argv_ar[2] = absolute_deb_path;
+    argv_ar[3] = NULL;
 
-    char *argv_ar[] = {
-        "ar",
-        "-x",
-        absolute_deb_path,
-        NULL
-    };
-
-    int result = runepkg_util_execute_command(ar_path, argv_ar);
+    result = runepkg_util_execute_command(ar_path, argv_ar);
 
     if (chdir(current_dir) != 0) {
         perror("Failed to change back to original directory");
@@ -806,12 +842,17 @@ static int find_tar_archives(const char *deb_extract_dir, char **control_archive
 }
 
 static int extract_tar_archive(const char *archive_path, const char *destination_dir) {
+    char *archive_name;
+    char *tar_path;
+    char *argv_tar[8];
+    int result;
+
     if (!archive_path || !destination_dir) {
         runepkg_util_error("extract_tar_archive: NULL archive_path or destination_dir.\n");
         return -1;
     }
 
-    char *archive_name = basename((char*)archive_path);
+    archive_name = basename((char*)archive_path);
     runepkg_util_log_verbose("Extracting tar archive '%s' to '%s'...\n", archive_name, destination_dir);
 
     if (!runepkg_util_file_exists(archive_path)) {
@@ -824,19 +865,17 @@ static int extract_tar_archive(const char *archive_path, const char *destination
         return -1;
     }
 
-    char *tar_path = "/usr/bin/tar";
+    tar_path = "/usr/bin/tar";
 
-    char *argv_tar[] = {
-        "tar",
-        "--force-local",
-        "-xf",
-        (char *)archive_path,
-        "-C",
-        (char *)destination_dir,
-        NULL
-    };
+    argv_tar[0] = "tar";
+    argv_tar[1] = "--force-local";
+    argv_tar[2] = "-xf";
+    argv_tar[3] = (char *)archive_path;
+    argv_tar[4] = "-C";
+    argv_tar[5] = (char *)destination_dir;
+    argv_tar[6] = NULL;
 
-    int result = runepkg_util_execute_command(tar_path, argv_tar);
+    result = runepkg_util_execute_command(tar_path, argv_tar);
 
     if (result != 0) {
         runepkg_util_error("Failed to execute 'tar' for archive extraction.\n");
@@ -848,6 +887,12 @@ static int extract_tar_archive(const char *archive_path, const char *destination
 }
 
 int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_dir) {
+    char *temp_dir;
+    char *control_archive_path = NULL;
+    char *data_archive_path = NULL;
+    char *control_extract_dir;
+    char *data_extract_dir;
+
     if (!deb_path || !extract_dir) {
         runepkg_util_error("extract_deb_complete: NULL deb_path or extract_dir.\n");
         return -1;
@@ -860,7 +905,7 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
         return -1;
     }
 
-    char *temp_dir = runepkg_util_concat_path(extract_dir, "temp_deb_extract");
+    temp_dir = runepkg_util_concat_path(extract_dir, "temp_deb_extract");
     if (!temp_dir) {
         runepkg_util_error("Failed to create temporary directory path.\n");
         return -1;
@@ -872,16 +917,14 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
         return -1;
     }
 
-    char *control_archive_path = NULL;
-    char *data_archive_path = NULL;
     if (find_tar_archives(temp_dir, &control_archive_path, &data_archive_path) != 0) {
         runepkg_util_error("Failed to find tar archives in .deb extraction.\n");
         runepkg_util_free_and_null(&temp_dir);
         return -1;
     }
 
-    char *control_extract_dir = runepkg_util_concat_path(extract_dir, "control");
-    char *data_extract_dir = runepkg_util_concat_path(extract_dir, "data");
+    control_extract_dir = runepkg_util_concat_path(extract_dir, "control");
+    data_extract_dir = runepkg_util_concat_path(extract_dir, "data");
     
     if (!control_extract_dir || !data_extract_dir) {
         runepkg_util_error("Failed to create extraction directory paths.\n");
@@ -929,12 +972,22 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
 }
 
 int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
+    char *abs_source;
+    char *control_dir;
+    char *data_dir;
+    char cwd[PATH_MAX];
+    char *deb_bin_path;
+    FILE *f;
+    char *control_tar;
+    char *data_tar;
+    char *abs_output;
+
     if (!source_dir || !output_deb) {
         runepkg_util_error("create_deb: NULL source_dir or output_deb.\n");
         return -1;
     }
 
-    char *abs_source = realpath(source_dir, NULL);
+    abs_source = realpath(source_dir, NULL);
     if (!abs_source) {
         perror("realpath source_dir");
         return -1;
@@ -942,8 +995,8 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
 
     runepkg_util_log_verbose("Building .deb package: %s from %s\n", output_deb, abs_source);
 
-    char *control_dir = runepkg_util_concat_path(abs_source, "control");
-    char *data_dir = runepkg_util_concat_path(abs_source, "data");
+    control_dir = runepkg_util_concat_path(abs_source, "control");
+    data_dir = runepkg_util_concat_path(abs_source, "data");
 
     if (!runepkg_util_file_exists(control_dir)) {
         runepkg_util_error("Control directory not found: %s\n", control_dir);
@@ -956,16 +1009,15 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
         return -1;
     }
 
-    char cwd[PATH_MAX];
     if (!getcwd(cwd, sizeof(cwd))) {
         perror("getcwd");
         free(control_dir); free(data_dir); free(abs_source);
         return -1;
     }
 
-    // 1. Create debian-binary
-    char *deb_bin_path = runepkg_util_concat_path(abs_source, "debian-binary");
-    FILE *f = fopen(deb_bin_path, "w");
+    /* 1. Create debian-binary */
+    deb_bin_path = runepkg_util_concat_path(abs_source, "debian-binary");
+    f = fopen(deb_bin_path, "w");
     if (!f) {
         perror("fopen debian-binary");
         free(control_dir); free(data_dir); free(deb_bin_path); free(abs_source);
@@ -974,53 +1026,81 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
     fprintf(f, "2.0\n");
     fclose(f);
 
-    // 2. Create control.tar.gz
-    char *control_tar = runepkg_util_concat_path(abs_source, "control.tar.gz");
+    /* 2. Create control.tar.gz */
+    control_tar = runepkg_util_concat_path(abs_source, "control.tar.gz");
     if (chdir(control_dir) != 0) {
         perror("chdir control");
         free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(abs_source);
         return -1;
     }
-    char *argv_control[] = {(char*)"tar", (char*)"--force-local", (char*)"-czf", control_tar, (char*)".", NULL};
-    if (runepkg_util_execute_command("/usr/bin/tar", argv_control) != 0) {
-        runepkg_util_error("Failed to create control.tar.gz\n");
-        if (chdir(cwd) != 0) perror("chdir rollback failed");
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(abs_source);
-        return -1;
+    {
+        char *argv_control[7];
+        argv_control[0] = (char*)"tar";
+        argv_control[1] = (char*)"--force-local";
+        argv_control[2] = (char*)"-czf";
+        argv_control[3] = control_tar;
+        argv_control[4] = (char*)".";
+        argv_control[5] = NULL;
+
+        if (runepkg_util_execute_command("/usr/bin/tar", argv_control) != 0) {
+            runepkg_util_error("Failed to create control.tar.gz\n");
+            if (chdir(cwd) != 0) perror("chdir rollback failed");
+            free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(abs_source);
+            return -1;
+        }
     }
 
-    // 3. Create data.tar.xz
-    char *data_tar = runepkg_util_concat_path(abs_source, "data.tar.xz");
+    /* 3. Create data.tar.xz */
+    data_tar = runepkg_util_concat_path(abs_source, "data.tar.xz");
     if (chdir(data_dir) != 0) {
         perror("chdir data");
         if (chdir(cwd) != 0) perror("chdir rollback failed");
         free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
         return -1;
     }
-    char *argv_data[] = {(char*)"tar", (char*)"--force-local", (char*)"-cJf", data_tar, (char*)".", NULL};
-    if (runepkg_util_execute_command("/usr/bin/tar", argv_data) != 0) {
-        runepkg_util_error("Failed to create data.tar.xz\n");
-        if (chdir(cwd) != 0) perror("chdir rollback failed");
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
-        return -1;
+    {
+        char *argv_data[7];
+        argv_data[0] = (char*)"tar";
+        argv_data[1] = (char*)"--force-local";
+        argv_data[2] = (char*)"-cJf";
+        argv_data[3] = data_tar;
+        argv_data[4] = (char*)".";
+        argv_data[5] = NULL;
+
+        if (runepkg_util_execute_command("/usr/bin/tar", argv_data) != 0) {
+            runepkg_util_error("Failed to create data.tar.xz\n");
+            if (chdir(cwd) != 0) perror("chdir rollback failed");
+            free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
+            return -1;
+        }
     }
 
-    // 4. Assemble with ar
+    /* 4. Assemble with ar */
     if (chdir(abs_source) != 0) {
         perror("chdir abs_source");
         if (chdir(cwd) != 0) perror("chdir rollback failed");
         free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
         return -1;
     }
-    // Use absolute path for output if it doesn't start with /
-    char *abs_output = output_deb[0] == '/' ? strdup(output_deb) : runepkg_util_concat_path(cwd, output_deb);
+    /* Use absolute path for output if it doesn't start with / */
+    abs_output = output_deb[0] == '/' ? strdup(output_deb) : runepkg_util_concat_path(cwd, output_deb);
 
-    char *argv_ar[] = {(char*)"ar", (char*)"-rc", abs_output, (char*)"debian-binary", (char*)"control.tar.gz", (char*)"data.tar.xz", NULL};
-    if (runepkg_util_execute_command("/usr/bin/ar", argv_ar) != 0) {
-        runepkg_util_error("Failed to assemble .deb with ar\n");
-        if (chdir(cwd) != 0) perror("chdir rollback failed");
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
-        return -1;
+    {
+        char *argv_ar[8];
+        argv_ar[0] = (char*)"ar";
+        argv_ar[1] = (char*)"-rc";
+        argv_ar[2] = abs_output;
+        argv_ar[3] = (char*)"debian-binary";
+        argv_ar[4] = (char*)"control.tar.gz";
+        argv_ar[5] = (char*)"data.tar.xz";
+        argv_ar[6] = NULL;
+
+        if (runepkg_util_execute_command("/usr/bin/ar", argv_ar) != 0) {
+            runepkg_util_error("Failed to assemble .deb with ar\n");
+            if (chdir(cwd) != 0) perror("chdir rollback failed");
+            free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
+            return -1;
+        }
     }
 
     if (chdir(cwd) != 0) perror("chdir rollback failed");
@@ -1031,19 +1111,22 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
 }
 
 int runepkg_util_init_fhs(const char *root) {
+    const char *dirs[16];
+    int num_dirs = 16;
+    int i;
+    char *etc_dir;
+
     if (!root) return -1;
 
-    // Standard LFS-style directories (without leading slash for security check compatibility)
-    const char *dirs[] = {
-        "bin", "sbin", "etc", "lib", "lib64",
-        "usr/bin", "usr/sbin", "usr/lib", "usr/local/bin",
-        "var/lib/dpkg", "var/log", "tmp", "root", "proc", "sys", "dev"
-    };
-    int num_dirs = sizeof(dirs) / sizeof(dirs[0]);
+    /* Standard LFS-style directories */
+    dirs[0] = "bin"; dirs[1] = "sbin"; dirs[2] = "etc"; dirs[3] = "lib";
+    dirs[4] = "lib64"; dirs[5] = "usr/bin"; dirs[6] = "usr/sbin"; dirs[7] = "usr/lib";
+    dirs[8] = "usr/local/bin"; dirs[9] = "var/lib/dpkg"; dirs[10] = "var/log";
+    dirs[11] = "tmp"; dirs[12] = "root"; dirs[13] = "proc"; dirs[14] = "sys"; dirs[15] = "dev";
 
     runepkg_util_log_verbose("Initializing FHS skeleton in: %s\n", root);
 
-    for (int i = 0; i < num_dirs; i++) {
+    for (i = 0; i < num_dirs; i++) {
         char *path = runepkg_util_concat_path(root, dirs[i]);
         if (path) {
             if (!runepkg_util_file_exists(path)) {
@@ -1053,8 +1136,8 @@ int runepkg_util_init_fhs(const char *root) {
         }
     }
 
-    // Create basic /etc/passwd if it doesn't exist
-    char *etc_dir = runepkg_util_concat_path(root, "etc");
+    /* Create basic /etc/passwd if it doesn't exist */
+    etc_dir = runepkg_util_concat_path(root, "etc");
     if (etc_dir) {
         char *passwd = runepkg_util_concat_path(etc_dir, "passwd");
         if (passwd && !runepkg_util_file_exists(passwd)) {
@@ -1072,49 +1155,53 @@ int runepkg_util_init_fhs(const char *root) {
 }
 
 char **parse_depends(const char *depends) {
+    int count = 1;
+    const char *p;
+    char **result;
+    char *copy;
+    char *token;
+    int i = 0;
+
     if (!depends || *depends == '\0') return NULL;
 
-    // Count commas to estimate size
-    int count = 1;
-    for (const char *p = depends; *p; p++) {
+    for (p = depends; *p; p++) {
         if (*p == ',') count++;
     }
 
-    char **result = calloc(count + 1, sizeof(char*));
+    result = calloc(count + 1, sizeof(char*));
     if (!result) return NULL;
 
-    char *copy = strdup(depends);
+    copy = strdup(depends);
     if (!copy) {
         free(result);
         return NULL;
     }
 
-    char *token = strtok(copy, ",");
-    int i = 0;
+    token = strtok(copy, ",");
     while (token && i < count) {
-        // Trim leading whitespace
+        char *pipe;
+        char *end;
+        char *extra;
+        char *clean_name;
+
         while (*token == ' ' || *token == '\t') token++;
 
-        // Handle alternatives (OR dependency): take the first one
-        char *pipe = strchr(token, '|');
+        pipe = strchr(token, '|');
         if (pipe) *pipe = '\0';
 
-        // Find end: stop at space, tab, or '('
-        char *end = token;
+        end = token;
         while (*end && *end != ' ' && *end != '\t' && *end != '(') end++;
         *end = '\0';
 
-        // Strip Debian-specific suffixes and restrictions: :any, [arch], <profile>
-        char *extra = strpbrk(token, ":[<");
+        extra = strpbrk(token, ":[<");
         if (extra) *extra = '\0';
-        char *clean_name = runepkg_util_trim_whitespace(token);
+        clean_name = runepkg_util_trim_whitespace(token);
 
-        // If not empty, add
         if (*clean_name) {
             result[i] = strdup(clean_name);
             if (!result[i]) {
-                // Free previous
-                for (int j = 0; j < i; j++) free(result[j]);
+                int j;
+                for (j = 0; j < i; j++) free(result[j]);
                 free(result);
                 free(copy);
                 return NULL;
@@ -1128,26 +1215,29 @@ char **parse_depends(const char *depends) {
     return result;
 }
 
-// --- File System Utilities ---
+/* --- File System Utilities --- */
 
 off_t runepkg_util_get_dir_size(const char *path) {
     DIR *dir = opendir(path);
-    if (!dir) return 0;
-
     off_t total = 0;
     struct dirent *entry;
+
+    if (!dir) return 0;
+
     while ((entry = readdir(dir)) != NULL) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-        char fullpath[PATH_MAX];
-        snprintf(fullpath, sizeof(fullpath), "%.*s/%s", (int)(sizeof(fullpath)-258), path, entry->d_name);
+        {
+            char fullpath[PATH_MAX];
+            struct stat st;
+            snprintf(fullpath, sizeof(fullpath), "%.*s/%s", (int)(sizeof(fullpath)-258), path, entry->d_name);
 
-        struct stat st;
-        if (stat(fullpath, &st) == 0) {
-            if (S_ISDIR(st.st_mode)) {
-                total += runepkg_util_get_dir_size(fullpath);
-            } else {
-                total += st.st_size;
+            if (stat(fullpath, &st) == 0) {
+                if (S_ISDIR(st.st_mode)) {
+                    total += runepkg_util_get_dir_size(fullpath);
+                } else {
+                    total += st.st_size;
+                }
             }
         }
     }
@@ -1155,22 +1245,22 @@ off_t runepkg_util_get_dir_size(const char *path) {
     return total;
 }
 
-// --- String Formatting Utilities ---
+/* --- String Formatting Utilities --- */
 
 char *runepkg_util_format_size(off_t size_bytes, char *buffer, size_t buffer_size) {
-    if (!buffer || buffer_size == 0) return NULL;
-
     double size;
     const char *unit;
 
-    if (size_bytes >= 1024LL * 1024 * 1024) {
-        size = (double)size_bytes / (1024 * 1024 * 1024);
+    if (!buffer || buffer_size == 0) return NULL;
+
+    if (size_bytes >= (off_t)1024 * 1024 * 1024) {
+        size = (double)size_bytes / (1024.0 * 1024.0 * 1024.0);
         unit = "GB";
-    } else if (size_bytes >= 1024 * 1024) {
-        size = (double)size_bytes / (1024 * 1024);
+    } else if (size_bytes >= (off_t)1024 * 1024) {
+        size = (double)size_bytes / (1024.0 * 1024.0);
         unit = "MB";
-    } else if (size_bytes >= 1024) {
-        size = (double)size_bytes / 1024;
+    } else if (size_bytes >= (off_t)1024) {
+        size = (double)size_bytes / 1024.0;
         unit = "KB";
     } else {
         size = (double)size_bytes;
@@ -1186,47 +1276,53 @@ char *runepkg_util_format_size(off_t size_bytes, char *buffer, size_t buffer_siz
     return buffer;
 }
 
-// --- Terminal Utilities ---
+/* --- Terminal Utilities --- */
 
 int runepkg_util_get_terminal_width(void) {
     struct winsize w;
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         return w.ws_col;
     }
-    return 80; // fallback
+    return 80; /* fallback */
 }
 
-// --- Output Formatting Utilities ---
+/* --- Output Formatting Utilities --- */
 
 void runepkg_util_print_columns(const char *items[], int count, const char *prefix) {
+    size_t max_len = 0;
+    int col_width;
+    int width;
+    int cols;
+    int rows;
+    int r;
+    int i;
+
     if (!items || count <= 0) return;
 
-    // Find maximum length
-    size_t max_len = 0;
-    for (int i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         if (items[i]) {
             size_t len = strlen(items[i]);
             if (len > max_len) max_len = len;
         }
     }
 
-    int col_width = max_len + 2;
-    int width = runepkg_util_get_terminal_width();
+    col_width = (int)max_len + 2;
+    width = runepkg_util_get_terminal_width();
 
-    // Adjust width for prefix
     if (prefix) {
         int prefix_len = (int)strlen(prefix);
         if (prefix_len < width) width -= prefix_len;
-        else width = 1; // Fallback
+        else width = 1;
     }
 
-    int cols = width / col_width;
+    cols = width / col_width;
     if (cols < 1) cols = 1;
-    int rows = (count + cols - 1) / cols;
+    rows = (count + cols - 1) / cols;
 
-    for (int r = 0; r < rows; r++) {
+    for (r = 0; r < rows; r++) {
+        int c;
         if (prefix) printf("%s", prefix);
-        for (int c = 0; c < cols; c++) {
+        for (c = 0; c < cols; c++) {
             int idx = r * cols + c;
             if (idx < count && items[idx]) {
                 printf("%-*s", col_width, items[idx]);
@@ -1236,10 +1332,9 @@ void runepkg_util_print_columns(const char *items[], int count, const char *pref
     }
 }
 
-// --- MOTD ---
+/* --- MOTD --- */
 
 void runepkg_util_motd(void) {
-    /* Built-in ASCII art: Cyan rune on Grey stone */
     printf("  \033[90m[#####]\033[0m  \033[1;37mrunepkg\033[0m\n");
     printf("  \033[90m[#\033[1;36m\\ /\033[90m#]\033[0m  \033[37mversion 1.0.4\033[0m\n");
     printf("  \033[90m[# \033[1;36mV \033[90m#]\033[0m\n");
@@ -1247,17 +1342,19 @@ void runepkg_util_motd(void) {
 }
 
 int runepkg_util_get_package_suggestions(const char *search_name, const char *db_dir, char suggestions[][PATH_MAX], int max_suggestions) {
+    DIR *dir;
+    int suggestion_count = 0;
+    struct dirent *entry;
+
     if (!search_name || !db_dir || !suggestions || max_suggestions <= 0) {
         return 0;
     }
 
-    DIR *dir = opendir(db_dir);
+    dir = opendir(db_dir);
     if (!dir) {
         return 0;
     }
 
-    int suggestion_count = 0;
-    struct dirent *entry;
     while ((entry = readdir(dir)) != NULL && suggestion_count < max_suggestions) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             if (strstr(entry->d_name, search_name) != NULL) {

@@ -1,33 +1,35 @@
 /******************************************************************************
  * Filename:    runepkg_md5sums.h
  * Author:      <michkochris@gmail.com>
- * Date:        2025-05-12
- * Description: Standalone MD5 implementation for runepkg
- * LICENSE:     GPL v3
+ * Date:        started 01-02-2025
+ * Description: MD5 checksum computation for runepkg
+ *
+ * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
+ * GPLV3
  ******************************************************************************/
 
 #ifndef RUNEPKG_MD5SUMS_H
 #define RUNEPKG_MD5SUMS_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include "runepkg_portable.h"
 
+/* MD5 context structure */
 typedef struct {
-    uint64_t size;        // Size of input in bytes
-    uint32_t buffer[4];   // Current accumulated MD5 sum
-    uint8_t input[64];    // Input to be used in next step
+    uint32_t state[4];
+    uint32_t count[2];
+    uint8_t  buffer[64];
 } runepkg_md5_ctx;
 
 void runepkg_md5_init(runepkg_md5_ctx *ctx);
-void runepkg_md5_update(runepkg_md5_ctx *ctx, const uint8_t *input, size_t input_len);
-void runepkg_md5_final(runepkg_md5_ctx *ctx, uint8_t result[16]);
+void runepkg_md5_update(runepkg_md5_ctx *ctx, const uint8_t *input, size_t len);
+void runepkg_md5_final(runepkg_md5_ctx *ctx, uint8_t digest[16]);
 
 /**
- * @brief Computes the MD5 hash of a file.
+ * @brief Computes MD5 hash of a file.
  * @param path Path to the file.
- * @param output Buffer of at least 33 bytes to store the hex string.
+ * @param output Buffer to store the resulting 32-char hex string (must be 33 bytes).
  * @return 0 on success, -1 on failure.
  */
 int runepkg_md5_file(const char *path, char output[33]);
 
-#endif // RUNEPKG_MD5SUMS_H
+#endif /* RUNEPKG_MD5SUMS_H */

@@ -11,21 +11,20 @@
 #ifndef RUNEPKG_DEFENSIVE_H
 #define RUNEPKG_DEFENSIVE_H
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
 #include <errno.h>
 #include <stdarg.h>
-#include <stdbool.h>
 
-// --- Security Limits ---
-#define RUNEPKG_MAX_STRING_LEN      (1024 * 1024)  // 1MB max string
-#define RUNEPKG_MAX_PATH_LEN        4096           // 4KB max path
-#define RUNEPKG_MAX_FILE_COUNT      100000         // 100K max files
-#define RUNEPKG_MAX_ALLOC_SIZE      (256 * 1024 * 1024) // 256MB max allocation
+/* --- Security Limits --- */
+#define RUNEPKG_MAX_STRING_LEN      (1024 * 1024)  /* 1MB max string */
+#define RUNEPKG_MAX_PATH_LEN        4096           /* 4KB max path */
+#define RUNEPKG_MAX_FILE_COUNT      100000         /* 100K max files */
+#define RUNEPKG_MAX_ALLOC_SIZE      (256 * 1024 * 1024) /* 256MB max allocation */
 
-// --- Defensive Return Codes ---
+/* --- Defensive Return Codes --- */
 typedef enum {
     RUNEPKG_SUCCESS = 0,
     RUNEPKG_ERROR_NULL_POINTER = -1,
@@ -36,7 +35,7 @@ typedef enum {
     RUNEPKG_ERROR_SIZE_LIMIT = -6
 } runepkg_error_t;
 
-// --- Secure Memory Management ---
+/* --- Secure Memory Management --- */
 
 /**
  * @brief Secure malloc with size validation and zero initialization
@@ -83,7 +82,7 @@ char* runepkg_secure_strndup(const char* str, size_t max_len);
  */
 void runepkg_secure_free(void** ptr, size_t size);
 
-// --- Secure String Operations ---
+/* --- Secure String Operations --- */
 
 /**
  * @brief Secure string copy with bounds checking
@@ -130,7 +129,7 @@ char* runepkg_secure_sprintf(size_t max_len, const char* format, ...);
  */
 int runepkg_secure_snprintf(char* dest, size_t dest_size, const char* format, ...);
 
-// --- Input Validation ---
+/* --- Input Validation --- */
 
 /**
  * @brief Validate pointer is not NULL
@@ -165,7 +164,7 @@ runepkg_error_t runepkg_validate_size(size_t size, size_t max_size, const char* 
  */
 runepkg_error_t runepkg_validate_file_count(int count);
 
-// --- Secure File Operations ---
+/* --- Secure File Operations --- */
 
 /**
  * @brief Secure file reading with size limits
@@ -183,13 +182,13 @@ char* runepkg_secure_read_file(const char* filepath, size_t max_size, size_t* ou
  */
 runepkg_error_t runepkg_validate_path(const char* path);
 
-// --- Memory Debugging (if enabled) ---
+/* --- Memory Debugging (if enabled) --- */
 #ifdef RUNEPKG_DEBUG_MEMORY
 void runepkg_memory_stats(void);
 size_t runepkg_memory_usage(void);
 #endif
 
-// --- Error Messages ---
+/* --- Error Messages --- */
 const char* runepkg_error_string(runepkg_error_t error);
 
-#endif // RUNEPKG_DEFENSIVE_H
+#endif /* RUNEPKG_DEFENSIVE_H */

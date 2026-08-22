@@ -13,7 +13,7 @@
 CC ?= gcc
 CXX ?= g++
 # Added strict flags and security hardening
-CFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef -std=c99 -D_GNU_SOURCE -g -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -MMD -MP -pthread -fdiagnostics-color=always
+CFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef -std=c89 -D_GNU_SOURCE -D_XOPEN_SOURCE=700 -g -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -MMD -MP -pthread -fdiagnostics-color=always
 CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef -std=c++17 -D_GNU_SOURCE -g -O2 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -MMD -MP -pthread -fdiagnostics-color=always
 
 LDFLAGS = -pthread -pie -Wl,-z,relro,-z,now -Wl,-z,noexecstack

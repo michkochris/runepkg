@@ -15,7 +15,7 @@
 #ifndef RUNEPKG_HANDLE_H
 #define RUNEPKG_HANDLE_H
 
-#include <stdbool.h>
+#include "runepkg_portable.h"
 #include "runepkg_hash.h"
 /* Public APIs moved into smaller modules */
 #include "runepkg_install.h"

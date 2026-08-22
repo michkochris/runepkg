@@ -23,25 +23,25 @@
 #ifndef RUNEPKG_PACK_H
 #define RUNEPKG_PACK_H
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
-#include "runepkg_hash.h" // We now include the header with the unified PkgInfo struct
+#include "runepkg_hash.h" /* We now include the header with the unified PkgInfo struct */
 
-// Define PATH_MAX if not defined
+/* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
 #define PATH_MAX 4096
 #endif
 
-// Recommended Internal Struct for pkginfo.bin Header (from self-completing-binary.txt)
+/* Recommended Internal Struct for pkginfo.bin Header (from self-completing-binary.txt) */
 typedef struct {
-    uint32_t magic;      // 0x52554E45 ("RUNE")
-    char pkgname[64];    // Fixed width for zero-offset seeking
-    char version[32];    // Fixed width
-    uint64_t data_start; // Offset to actual package payload
+    uint32_t magic;      /* 0x52554E45 ("RUNE") */
+    char pkgname[64];    /* Fixed width for zero-offset seeking */
+    char version[32];    /* Fixed width */
+    uint64_t data_start; /* Offset to actual package payload */
 } PkgHeader;
 
-// --- Function Prototypes ---
+/* --- Function Prototypes --- */
 
 /**
  * @brief Initializes a package info structure with NULL values.
@@ -105,4 +105,4 @@ char *runepkg_pack_create_extraction_path(const char *base_dir, const char *deb_
  */
 int runepkg_pack_collect_file_list(const char *data_dir_path, PkgInfo *pkg_info);
 
-#endif // RUNEPKG_PACK_H
+#endif /* RUNEPKG_PACK_H */

@@ -6,20 +6,9 @@
  *
  * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
  * GPLV3
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <https://www.gnu.org/licenses/>.
  ******************************************************************************/
 
+#include "runepkg_portable.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,20 +28,19 @@
 #include "runepkg_pack.h"
 #include "runepkg_defensive.h"
 
-/* AutocompleteHeader is defined in runepkg_storage.h for shared use */
-
-// Compare function for qsort
+/* Compare function for qsort */
 static int compare_packages(const void *a, const void *b) {
     return strcmp(*(const char **)a, *(const char **)b);
 }
 
-// --- Public Storage Functions ---
+/* --- Public Storage Functions --- */
 
 /**
  * @brief Gets the full path to a package directory
  */
 int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_version, 
                                     char *path_buffer) {
+    int ret;
     if (!pkg_name || !pkg_version || !path_buffer) {
         return -1;
     }
@@ -62,7 +50,7 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
         return -1;
     }
 
-    int ret = snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+    ret = snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
     if (ret >= PATH_MAX) {
         return -1;
     }
@@ -73,18 +61,18 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
  * @brief Creates a package directory in the persistent storage
  */
 int runepkg_storage_create_package_directory(const char *pkg_name, const char *pkg_version) {
+    char pkg_dir_path[PATH_MAX];
     if (!pkg_name || !pkg_version) {
         return -1;
     }
 
-    char pkg_dir_path[PATH_MAX];
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
     runepkg_log_verbose("Creating package directory: %s\n", pkg_dir_path);
 
-    // Use the unified utility function to create the directory
+    /* Use the unified utility function to create the directory */
     if (runepkg_util_create_dir_recursive(pkg_dir_path, 0755) != 0) {
         printf("Error: Failed to create package directory: %s\n", pkg_dir_path);
         return -1;
@@ -99,46 +87,46 @@ int runepkg_storage_create_package_directory(const char *pkg_name, const char *p
  */
 int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_version, 
                                       const PkgInfo *pkg_info) {
+    char pkg_dir_path[PATH_MAX];
+    char *binary_file_path;
+    FILE *bin_file;
+    PkgHeader header;
+    size_t slen;
+
     if (!pkg_name || !pkg_version || !pkg_info) {
         return -1;
     }
-
-    char pkg_dir_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
+    binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
 
     runepkg_log_verbose("Writing package info to: %s\n", binary_file_path);
 
-    FILE *bin_file = fopen(binary_file_path, "wb");
+    bin_file = fopen(binary_file_path, "wb");
     if (!bin_file) {
         runepkg_log_verbose("Failed to open binary file for writing: %s\n", binary_file_path);
         free(binary_file_path);
         return -1;
     }
 
-    // Write PkgHeader for fast mmap access
-    PkgHeader header;
-    header.magic = 0x52554E45;  // "RUNE"
+    /* Write PkgHeader for fast mmap access */
+    header.magic = 0x52554E45;  /* "RUNE" */
     memset(header.pkgname, 0, sizeof(header.pkgname));
     memset(header.version, 0, sizeof(header.version));
     if (pkg_name) runepkg_util_safe_strncpy(header.pkgname, pkg_name, sizeof(header.pkgname));
     if (pkg_version) runepkg_util_safe_strncpy(header.version, pkg_version, sizeof(header.version));
-    header.data_start = sizeof(PkgHeader);  // Data starts after header
+    header.data_start = sizeof(PkgHeader);  /* Data starts after header */
 
     fwrite(&header, sizeof(PkgHeader), 1, bin_file);
 
-    // Write string lengths and strings to binary file
-    size_t len;
-    
-    // Helper macro to write a string and its length
+    /* Helper macro to write a string and its length */
     #define WRITE_STRING(s) \
-        len = (s) ? strlen(s) + 1 : 0; \
-        fwrite(&len, sizeof(size_t), 1, bin_file); \
-        if (len > 0) fwrite(s, 1, len, bin_file);
+        slen = (s) ? strlen(s) + 1 : 0; \
+        fwrite(&slen, sizeof(size_t), 1, bin_file); \
+        if (slen > 0) fwrite(s, 1, slen, bin_file);
 
     WRITE_STRING(pkg_info->package_name);
     WRITE_STRING(pkg_info->version);
@@ -153,16 +141,16 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     WRITE_STRING(pkg_info->homepage);
     WRITE_STRING(pkg_info->filename);
 
-    // Write file_count
+    /* Write file_count */
     fwrite(&pkg_info->file_count, sizeof(int), 1, bin_file);
 
-    // --- NEW: Write file list directly into the binary file ---
+    /* Write file list directly into the binary file */
     if (pkg_info->file_list && pkg_info->file_count > 0) {
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        int i;
+        for (i = 0; i < pkg_info->file_count; i++) {
             WRITE_STRING(pkg_info->file_list[i]);
         }
     }
-    // --- END NEW CODE ---
 
     fclose(bin_file);
     free(binary_file_path);
@@ -176,44 +164,45 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
  */
 int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_version,
                                      PkgInfo *pkg_info) {
+    char pkg_dir_path[PATH_MAX];
+    char *binary_file_path;
+    FILE *bin_file;
+    size_t slen;
+
     if (!pkg_name || !pkg_version || !pkg_info) {
         return -1;
     }
-
-    char pkg_dir_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
+    binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
 
     runepkg_log_verbose("Reading package info from: %s\n", binary_file_path);
 
     runepkg_pack_init_package_info(pkg_info);
 
-    FILE *bin_file = fopen(binary_file_path, "rb");
+    bin_file = fopen(binary_file_path, "rb");
     if (!bin_file) {
         runepkg_log_verbose("Failed to open binary file for reading: %s\n", binary_file_path);
         free(binary_file_path);
         return -1;
     }
 
-    // Skip the PkgHeader
+    /* Skip the PkgHeader */
     if (fseek(bin_file, sizeof(PkgHeader), SEEK_SET) != 0) {
         fclose(bin_file);
+        free(binary_file_path);
         return -1;
     }
 
-    // Read string lengths and strings from binary file
-    size_t len;
-    
-    // Helper macro to read a string and its length
+    /* Helper macro to read a string and its length */
     #define READ_STRING(s) \
-        if (fread(&len, sizeof(size_t), 1, bin_file) != 1) goto read_error; \
-        if (len > 0) { \
-            s = malloc(len); \
-            if (!s || fread(s, 1, len, bin_file) != len) goto read_error; \
+        if (fread(&slen, sizeof(size_t), 1, bin_file) != 1) goto read_error; \
+        if (slen > 0) { \
+            s = malloc(slen); \
+            if (!s || fread(s, 1, slen, bin_file) != slen) goto read_error; \
         } else { \
             s = NULL; \
         }
@@ -233,19 +222,19 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
 
     if (fread(&pkg_info->file_count, sizeof(int), 1, bin_file) != 1) goto read_error;
     
-    // --- NEW: Read file list directly from the binary file ---
+    /* Read file list directly from the binary file */
     if (pkg_info->file_count > 0) {
+        int i;
         pkg_info->file_list = malloc(pkg_info->file_count * sizeof(char *));
         if (!pkg_info->file_list) {
             printf("Error: Memory allocation failed for file list.\n");
             goto read_error;
         }
 
-        for (int i = 0; i < pkg_info->file_count; i++) {
+        for (i = 0; i < pkg_info->file_count; i++) {
             READ_STRING(pkg_info->file_list[i]);
         }
     }
-    // --- END NEW CODE ---
 
     fclose(bin_file);
     free(binary_file_path);
@@ -266,18 +255,20 @@ read_error:
  * @brief Checks if a package exists in persistent storage
  */
 int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version) {
+    char pkg_dir_path[PATH_MAX];
+    char *binary_file_path;
+    int exists;
+
     if (!pkg_name || !pkg_version) {
         return -1;
     }
-
-    char pkg_dir_path[PATH_MAX];
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
-    char *binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
-    int exists = runepkg_util_file_exists(binary_file_path) ? 1 : 0;
+    binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
+    exists = runepkg_util_file_exists(binary_file_path) ? 1 : 0;
     free(binary_file_path);
     return exists;
 }
@@ -303,30 +294,22 @@ int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_ver
  * @brief Removes a package from persistent storage
  */
 int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version) {
+    char pkg_dir_path[PATH_MAX];
     if (!pkg_name || !pkg_version) {
         return -1;
     }
 
-    char pkg_dir_path[PATH_MAX];
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
     }
 
     runepkg_log_verbose("Removing package directory: %s\n", pkg_dir_path);
-    /* If the package directory does not exist, treat as success. This
-     * avoids noisy warnings when interleaving remove/install for the
-     * same package where the directory may already be absent.
-     */
     if (!runepkg_util_file_exists(pkg_dir_path)) {
         runepkg_log_verbose("Package directory not present, nothing to remove: %s\n", pkg_dir_path);
         return 0;
     }
 
     if (runepkg_storage_remove_directory_tree(pkg_dir_path) != 0) {
-        /* Failures here are non-fatal for higher-level flows that may
-         * immediately reinstall the package; log verbosely instead of
-         * printing a user-visible warning so output remains clean.
-         */
         runepkg_log_verbose("Warning: Failed to remove package directory: %s\n", pkg_dir_path);
         return -1;
     }
@@ -334,24 +317,25 @@ int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version
     return 0;
 }
 
-// --- Directory removal (also used to purge temporary extraction trees) ---
+/* --- Directory removal (also used to purge temporary extraction trees) --- */
 int runepkg_storage_remove_directory_tree(const char *path) {
     DIR *dir = opendir(path);
+    struct dirent *entry;
+    int ret = 0;
+
     if (!dir) {
         return -1;
     }
 
-    struct dirent *entry;
-    int ret = 0;
-
     while ((entry = readdir(dir)) != NULL) {
+        char *child;
+        struct stat st;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
 
-        char *child = runepkg_util_concat_path(path, entry->d_name);
+        child = runepkg_util_concat_path(path, entry->d_name);
 
-        struct stat st;
         if (lstat(child, &st) != 0) {
             free(child);
             ret = -1;
@@ -382,6 +366,20 @@ int runepkg_storage_remove_directory_tree(const char *path) {
  * @brief Lists all packages in persistent storage
  */
 int runepkg_storage_list_packages(const char *pattern) {
+    DIR *dir;
+    struct dirent *entry;
+    char **packages = NULL;
+    int count = 0;
+    int capacity = 0;
+    size_t max_len = 0;
+    int i;
+    struct winsize w;
+    int width = 80;
+    int col_width;
+    int cols;
+    int rows;
+    int r;
+
     if (!g_runepkg_db_dir) {
         printf("Error: runepkg database directory not configured.\n");
         return -1;
@@ -389,26 +387,21 @@ int runepkg_storage_list_packages(const char *pattern) {
 
     runepkg_log_verbose("Listing packages from: %s\n", g_runepkg_db_dir);
 
-    DIR *dir = opendir(g_runepkg_db_dir);
+    dir = opendir(g_runepkg_db_dir);
     if (!dir) {
         printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
         return -1;
     }
 
-    struct dirent *entry;
-    char **packages = NULL;
-    int count = 0;
-    int capacity = 0;
-    size_t max_len = 0;
-    
     while ((entry = readdir(dir)) != NULL) {
+        bool is_dir;
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-        bool is_dir = (entry->d_type == DT_DIR);
+        is_dir = (entry->d_type == DT_DIR);
         if (entry->d_type == DT_UNKNOWN) {
-            char full[PATH_MAX];
-            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), g_runepkg_db_dir, entry->d_name);
+            char full[PATH_MAX + 256];
             struct stat st;
+            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), g_runepkg_db_dir, entry->d_name);
             if (stat(full, &st) == 0) {
                 is_dir = S_ISDIR(st.st_mode);
             }
@@ -417,8 +410,9 @@ int runepkg_storage_list_packages(const char *pattern) {
         if (is_dir) {
             if (!pattern || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) {
                 if (count >= capacity) {
+                    char **new_packages;
                     capacity = (capacity == 0) ? 1024 : capacity * 2;
-                    char **new_packages = realloc(packages, capacity * sizeof(char *));
+                    new_packages = realloc(packages, capacity * sizeof(char *));
                     if (!new_packages) {
                         perror("realloc failed in list_packages");
                         break;
@@ -438,28 +432,23 @@ int runepkg_storage_list_packages(const char *pattern) {
     closedir(dir);
 
     if (count == 0) {
-        return 0; // No packages
+        return 0;
     }
 
-    // Sort packages alphabetically
     qsort(packages, count, sizeof(char *), compare_packages);
 
-    // Get terminal width
-    struct winsize w;
-    int width = 80; // default
     if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
         width = w.ws_col;
     }
 
-    // Calculate number of columns
-    int col_width = max_len + 2; // +2 for spacing
-    int cols = width / col_width;
+    col_width = (int)max_len + 2;
+    cols = width / col_width;
     if (cols < 1) cols = 1;
 
-    // Print in columns
-    int rows = (count + cols - 1) / cols; // ceil(count / cols)
-    for (int r = 0; r < rows; r++) {
-        for (int c = 0; c < cols; c++) {
+    rows = (count + cols - 1) / cols;
+    for (r = 0; r < rows; r++) {
+        int c;
+        for (c = 0; c < cols; c++) {
             int idx = r * cols + c;
             if (idx < count) {
                 printf("%-*s", (int)col_width, packages[idx]);
@@ -468,8 +457,7 @@ int runepkg_storage_list_packages(const char *pattern) {
         printf("\n");
     }
 
-    // Free memory
-    for (int i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) {
         free(packages[i]);
     }
     free(packages);
@@ -481,22 +469,27 @@ int runepkg_storage_list_packages(const char *pattern) {
  * @brief Helper to scan a directory for subdirectories or specific files and add to a string array
  */
 static int scan_and_add_entries(const char *dir_path, char ***entries, int *count, bool subdirs_only, const char *suffix_filter, bool add_absolute) {
+    DIR *dir;
+    struct dirent *entry;
     if (!dir_path) return 0;
-    DIR *dir = opendir(dir_path);
+    dir = opendir(dir_path);
     if (!dir) return 0;
 
-    struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
+        bool is_dir;
+        bool is_reg;
+        char *to_add = NULL;
+        int i;
+
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-        bool is_dir = (entry->d_type == DT_DIR);
-        bool is_reg = (entry->d_type == DT_REG);
+        is_dir = (entry->d_type == DT_DIR);
+        is_reg = (entry->d_type == DT_REG);
 
-        // Fallback for DT_UNKNOWN
         if (entry->d_type == DT_UNKNOWN) {
             char full[PATH_MAX + 256];
-            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), dir_path, entry->d_name);
             struct stat st;
+            snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), dir_path, entry->d_name);
             if (stat(full, &st) == 0) {
                 is_dir = S_ISDIR(st.st_mode);
                 is_reg = S_ISREG(st.st_mode);
@@ -510,13 +503,10 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
             size_t slen = strlen(suffix_filter);
             if (nlen < slen || strcmp(entry->d_name + nlen - slen, suffix_filter) != 0) continue;
         } else if (suffix_filter && !is_dir) {
-            // Not a directory and doesn't match suffix filter
             continue;
         }
 
-        char *to_add = NULL;
         if (add_absolute) {
-            // Add the absolute path
             char *full_path = runepkg_util_concat_path(dir_path, entry->d_name);
             if (full_path) {
                 if (is_dir) {
@@ -529,13 +519,9 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
             }
 
             if (to_add) {
-                // Check for duplicates
                 bool exists = false;
-                for (int i = 0; i < *count; i++) {
-                    if (strcmp((*entries)[i], to_add) == 0) {
-                        exists = true;
-                        break;
-                    }
+                for (i = 0; i < *count; i++) {
+                    if (strcmp((*entries)[i], to_add) == 0) { exists = true; break; }
                 }
                 if (!exists) {
                     char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
@@ -546,18 +532,13 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                 } else free(to_add);
             }
 
-            // Also add the basename for flexible matching (e.g. binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
                 if (to_add) snprintf(to_add, strlen(entry->d_name) + 2, "%s", entry->d_name);
             } else {
                 to_add = strdup(entry->d_name);
             }
-
-            // Note: We don't return here, we fall through to the duplicate check below
-            // and add the basename as well.
         } else {
-            // Not absolute mode (usually for db_dir), add full name (binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
                 if (to_add) snprintf(to_add, strlen(entry->d_name) + 2, "%s", entry->d_name);
@@ -565,35 +546,35 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                 to_add = strdup(entry->d_name);
             }
 
-            // SPECIAL: For database directories, also add the package name WITHOUT the version
-            // so 'runepkg -s bin[TAB]' suggests 'binutils' even if only 'binutils-2.4.7' is on disk.
             if (to_add && is_dir && !add_absolute) {
                 char *last_dash = NULL;
-                for (char *p = entry->d_name; *p; p++) {
-                    if (*p == '-' && *(p + 1) && isdigit(*(p + 1))) {
+                char *p;
+                for (p = entry->d_name; *p; p++) {
+                    if (*p == '-' && *(p + 1) && isdigit((unsigned char)*(p + 1))) {
                         last_dash = p;
                         break;
                     }
                 }
                 if (last_dash) {
-                    size_t name_only_len = last_dash - entry->d_name;
+                    size_t name_only_len = (size_t)(last_dash - entry->d_name);
                     char *name_only = malloc(name_only_len + 1);
                     if (name_only) {
                         runepkg_util_safe_strncpy(name_only, entry->d_name, name_only_len + 1);
                         name_only[name_only_len] = '\0';
 
-                        // Check for duplicates for the short name
-                        bool exists = false;
-                        for (int i = 0; i < *count; i++) {
-                            if (strcmp((*entries)[i], name_only) == 0) { exists = true; break; }
-                        }
-                        if (!exists) {
-                            char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
-                            if (temp) {
-                                *entries = temp;
-                                (*entries)[(*count)++] = name_only;
+                        {
+                            bool exists = false;
+                            for (i = 0; i < *count; i++) {
+                                if (strcmp((*entries)[i], name_only) == 0) { exists = true; break; }
+                            }
+                            if (!exists) {
+                                char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
+                                if (temp) {
+                                    *entries = temp;
+                                    (*entries)[(*count)++] = name_only;
+                                } else free(name_only);
                             } else free(name_only);
-                        } else free(name_only);
+                        }
                     }
                 }
             }
@@ -601,28 +582,28 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
 
         if (!to_add) continue;
 
-        // Check for duplicates before adding
-        bool exists = false;
-        for (int i = 0; i < *count; i++) {
-            if (strcmp((*entries)[i], to_add) == 0) {
-                exists = true;
-                break;
+        {
+            bool exists = false;
+            for (i = 0; i < *count; i++) {
+                if (strcmp((*entries)[i], to_add) == 0) { exists = true; break; }
+            }
+            if (exists) {
+                free(to_add);
+                continue;
             }
         }
-        if (exists) {
-            free(to_add);
-            continue;
-        }
 
-        char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
-        if (!temp) {
-            free(to_add);
-            closedir(dir);
-            return -1;
+        {
+            char **temp = realloc(*entries, (*count + 1) * sizeof(char *));
+            if (!temp) {
+                free(to_add);
+                closedir(dir);
+                return -1;
+            }
+            *entries = temp;
+            (*entries)[*count] = to_add;
+            (*count)++;
         }
-        *entries = temp;
-        (*entries)[*count] = to_add;
-        (*count)++;
     }
     closedir(dir);
     return 0;
@@ -632,6 +613,15 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
  * @brief Builds the binary autocomplete index (runepkg_autocomplete.bin)
  */
 int runepkg_storage_build_autocomplete_index(void) {
+    char **packages = NULL;
+    int count = 0;
+    size_t strings_size = 0;
+    int i;
+    char index_path[PATH_MAX];
+    FILE *fp;
+    AutocompleteHeader hdr;
+    uint32_t offset = 0;
+
     if (!g_runepkg_db_dir) {
         runepkg_log_verbose("Error: runepkg database directory not configured.\n");
         return -1;
@@ -639,30 +629,25 @@ int runepkg_storage_build_autocomplete_index(void) {
 
     runepkg_log_verbose("Building consolidated autopool index...\n");
 
-    char **packages = NULL;
-    int count = 0;
-
-    // 1. Scan installed packages (directories in db_dir) - store Basename
+    /* 1. Scan installed packages */
     if (scan_and_add_entries(g_runepkg_db_dir, &packages, &count, true, NULL, false) != 0) {
         runepkg_log_verbose("Error: Failed to scan database directory.\n");
         goto error_cleanup;
     }
 
-    // 2. Scan build directory (directories and .dsc files) - store Absolute Path
+    /* 2. Scan build directory */
     if (g_build_dir) {
-        // Add directories (for -b)
         if (scan_and_add_entries(g_build_dir, &packages, &count, true, NULL, true) != 0) {
             runepkg_log_verbose("Error: Failed to scan build directory for subdirs.\n");
             goto error_cleanup;
         }
-        // Add .dsc files (for source-build)
         if (scan_and_add_entries(g_build_dir, &packages, &count, false, ".dsc", true) != 0) {
             runepkg_log_verbose("Error: Failed to scan build directory for .dsc files.\n");
             goto error_cleanup;
         }
     }
 
-    // 3. Scan debs directory (for -i autocompletion of built packages) - store Absolute Path
+    /* 3. Scan debs directory */
     if (g_debs_dir) {
         if (scan_and_add_entries(g_debs_dir, &packages, &count, false, ".deb", true) != 0) {
             runepkg_log_verbose("Error: Failed to scan debs directory for .deb files.\n");
@@ -670,15 +655,7 @@ int runepkg_storage_build_autocomplete_index(void) {
         }
     }
 
-    // 4. Scan download directory (for -u and -i autocompletion of downloaded packages) - store Absolute Path
-    if (g_download_dir) {
-        if (scan_and_add_entries(g_download_dir, &packages, &count, false, ".deb", true) != 0) {
-            runepkg_log_verbose("Error: Failed to scan download directory for .deb files.\n");
-            goto error_cleanup;
-        }
-    }
-
-    // 4. Scan download directory (for -u and -i autocompletion of downloaded packages) - store Absolute Path
+    /* 4. Scan download directory */
     if (g_download_dir) {
         if (scan_and_add_entries(g_download_dir, &packages, &count, false, ".deb", true) != 0) {
             runepkg_log_verbose("Error: Failed to scan download directory for .deb files.\n");
@@ -691,55 +668,45 @@ int runepkg_storage_build_autocomplete_index(void) {
         return 0;
     }
 
-    // Sort packages alphabetically
     qsort(packages, count, sizeof(char *), compare_packages);
 
-    // Calculate sizes
-    size_t strings_size = 0;
-    for (int i = 0; i < count; i++) {
-        strings_size += strlen(packages[i]) + 1; // +1 for null terminator
+    for (i = 0; i < count; i++) {
+        strings_size += strlen(packages[i]) + 1;
     }
 
-    // Build the file path
-    char index_path[PATH_MAX];
     snprintf(index_path, sizeof(index_path), "%s/runepkg_autocomplete.bin", g_runepkg_db_dir);
 
-    FILE *fp = fopen(index_path, "wb");
+    fp = fopen(index_path, "wb");
     if (!fp) {
         runepkg_log_verbose("Error: Cannot create index file: %s\n", index_path);
         goto error_cleanup;
     }
 
-    // Write header
-    AutocompleteHeader hdr = {
-        .magic = 0x52554E45, // "RUNE"
-        .version = 1,
-        .entry_count = (uint32_t)count,
-        .strings_size = (uint32_t)strings_size
-    };
+    /* Write header */
+    hdr.magic = 0x52554E45; /* "RUNE" */
+    hdr.version = 1;
+    hdr.entry_count = (uint32_t)count;
+    hdr.strings_size = (uint32_t)strings_size;
     fwrite(&hdr, sizeof(hdr), 1, fp);
 
-    // Write offset table (relative to start of string blob)
-    uint32_t offset = 0;
-    for (int i = 0; i < count; i++) {
+    /* Write offset table */
+    for (i = 0; i < count; i++) {
         fwrite(&offset, sizeof(uint32_t), 1, fp);
         offset += strlen(packages[i]) + 1;
     }
 
-    // Write string blob
-    for (int i = 0; i < count; i++) {
+    /* Write string blob */
+    for (i = 0; i < count; i++) {
         fwrite(packages[i], strlen(packages[i]) + 1, 1, fp);
     }
 
     fclose(fp);
 
-    // Make the index readable by all users
     if (chmod(index_path, 0644) != 0) {
         runepkg_log_verbose("Warning: Failed to set permissions on autocomplete index\n");
     }
 
-    // Free memory
-    for (int i = 0; i < count; i++) free(packages[i]);
+    for (i = 0; i < count; i++) free(packages[i]);
     free(packages);
 
     runepkg_log_verbose("Autocomplete index built: %d entries, %s\n", count, index_path);
@@ -747,7 +714,7 @@ int runepkg_storage_build_autocomplete_index(void) {
 
 error_cleanup:
     if (packages) {
-        for (int i = 0; i < count; i++) free(packages[i]);
+        for (i = 0; i < count; i++) free(packages[i]);
         free(packages);
     }
     return -1;

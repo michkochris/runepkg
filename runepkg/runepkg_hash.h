@@ -23,19 +23,19 @@
 #ifndef RUNEPKG_HASH_H
 #define RUNEPKG_HASH_H
 
+#include "runepkg_portable.h"
 #include <stddef.h>
-#include <stdbool.h>
 
-// --- Hash Table Configuration ---
+/* --- Hash Table Configuration --- */
 #define INITIAL_HASH_TABLE_SIZE 2
 #define GROW_LOAD_FACTOR_THRESHOLD 0.75
 #define SHRINK_LOAD_FACTOR_THRESHOLD 0.25
 #define MIN_HASH_TABLE_SIZE 2
 #define MAX_SUGGESTIONS 10
 
-// --- Unified PkgInfo Structure ---
-// This is the unified struct that will be used across the application.
-// It's the single source of truth for all package data.
+/* --- Unified PkgInfo Structure --- */
+/* This is the unified struct that will be used across the application.
+ * It's the single source of truth for all package data. */
 typedef struct PkgInfo {
     char *package_name;
     char *version;
@@ -43,7 +43,7 @@ typedef struct PkgInfo {
     char *maintainer;
     char *description;
     char *depends;
-    char *provides; // Added support for Virtual Packages
+    char *provides; /* Added support for Virtual Packages */
     char *installed_size;
     char *section;
     char *priority;
@@ -56,25 +56,25 @@ typedef struct PkgInfo {
     bool md5_verified;
     char **file_list;
     int file_count;
-    char *control_dir_path; // Re-added: Path to the extracted 'control' directory.
-    char *data_dir_path;    // Re-added: Path to the extracted 'data' directory.
-    char *extraction_workspace_path; // NEW: The top-level extraction directory.
+    char *control_dir_path; /* Re-added: Path to the extracted 'control' directory. */
+    char *data_dir_path;    /* Re-added: Path to the extracted 'data' directory. */
+    char *extraction_workspace_path; /* NEW: The top-level extraction directory. */
 } PkgInfo;
 
-// --- Hash Table Node Structure ---
+/* --- Hash Table Node Structure --- */
 typedef struct runepkg_hash_node {
-    PkgInfo data; // Use the new PkgInfo struct
+    PkgInfo data; /* Use the new PkgInfo struct */
     struct runepkg_hash_node *next;
 } runepkg_hash_node_t;
 
-// --- Provides Mapping Node ---
+/* --- Provides Mapping Node --- */
 typedef struct runepkg_provides_node {
     char *virtual_name;
     struct runepkg_hash_node *provider;
     struct runepkg_provides_node *next;
 } runepkg_provides_node_t;
 
-// --- Hash Table Structure ---
+/* --- Hash Table Structure --- */
 typedef struct runepkg_hash_table {
     runepkg_hash_node_t **buckets;
     size_t size;
@@ -83,11 +83,11 @@ typedef struct runepkg_hash_table {
     size_t provides_size;
 } runepkg_hash_table_t;
 
-// --- Global Variables ---
+/* --- Global Variables --- */
 extern bool g_verbose_mode;
 extern runepkg_hash_table_t *runepkg_main_hash_table;
 
-// --- Function Prototypes ---
+/* --- Function Prototypes --- */
 
 /**
  * @brief Creates and initializes a new hash table.
@@ -149,4 +149,4 @@ void runepkg_hash_list_packages(runepkg_hash_table_t *table);
  */
 void runepkg_hash_free_package_info(PkgInfo *pkg_info);
 
-#endif // RUNEPKG_HASH_H
+#endif /* RUNEPKG_HASH_H */
