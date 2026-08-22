@@ -149,8 +149,16 @@ runepkg_hash_table_t* runepkg_hash_create_table(size_t initial_size) {
         return NULL;
     }
 
+    table->provides_buckets = runepkg_secure_calloc(initial_size, sizeof(runepkg_provides_node_t*));
+    if (!table->provides_buckets) {
+        runepkg_secure_free((void**)&table->buckets, initial_size * sizeof(runepkg_hash_node_t*));
+        runepkg_secure_free((void**)&table, sizeof(runepkg_hash_table_t));
+        return NULL;
+    }
+
     table->size = initial_size;
     table->count = 0;
+    table->provides_size = initial_size;
 
     /* suppressed per-table creation message to reduce startup noise */
     return table;
@@ -183,6 +191,50 @@ PkgInfo* runepkg_hash_search(runepkg_hash_table_t *table, const char *name) {
  * @param new_size The new size for the table.
  * @return 0 on success, -1 on failure.
  */
+static void add_to_provides_map(runepkg_hash_table_t *table, runepkg_hash_node_t *node) {
+    if (!node->data.provides) return;
+    char *provides_copy = strdup(node->data.provides);
+    char *token = strtok(provides_copy, ",");
+    while (token) {
+        char *trimmed = runepkg_util_trim_whitespace(token);
+        size_t name_len = strcspn(trimmed, " (");
+        char *vname = runepkg_secure_strndup(trimmed, name_len);
+        unsigned int index = hash_function(vname, table->provides_size);
+        runepkg_provides_node_t *pnode = runepkg_secure_malloc(sizeof(runepkg_provides_node_t));
+        pnode->virtual_name = vname;
+        pnode->provider = node;
+        pnode->next = table->provides_buckets[index];
+        table->provides_buckets[index] = pnode;
+        token = strtok(NULL, ",");
+    }
+    free(provides_copy);
+}
+
+static void remove_from_provides_map(runepkg_hash_table_t *table, runepkg_hash_node_t *node) {
+    if (!node->data.provides) return;
+    char *provides_copy = strdup(node->data.provides);
+    char *token = strtok(provides_copy, ",");
+    while (token) {
+        char *trimmed = runepkg_util_trim_whitespace(token);
+        size_t name_len = strcspn(trimmed, " (");
+        char *vname = runepkg_secure_strndup(trimmed, name_len);
+        unsigned int index = hash_function(vname, table->provides_size);
+        runepkg_provides_node_t *curr = table->provides_buckets[index];
+        runepkg_provides_node_t *prev = NULL;
+        while (curr) {
+            if (strcmp(curr->virtual_name, vname) == 0 && curr->provider == node) {
+                if (prev) prev->next = curr->next;
+                else table->provides_buckets[index] = curr->next;
+                free(curr->virtual_name); free(curr);
+                break;
+            }
+            prev = curr; curr = curr->next;
+        }
+        free(vname); token = strtok(NULL, ",");
+    }
+    free(provides_copy);
+}
+
 static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size) {
     if (!table) return -1;
 
@@ -199,30 +251,50 @@ static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size) {
         return -1;
     }
 
+    runepkg_provides_node_t **new_provides = runepkg_secure_calloc(new_size, sizeof(runepkg_provides_node_t*));
+    if (!new_provides) {
+        free(new_buckets);
+        runepkg_util_error("Failed to allocate memory for provides map resize.\n");
+        return -1;
+    }
+
     runepkg_util_log_verbose("Resizing hash table from %zu to %zu buckets\n", table->size, new_size);
 
     runepkg_hash_node_t **old_buckets = table->buckets;
+    runepkg_provides_node_t **old_provides = table->provides_buckets;
     size_t old_size = table->size;
 
     table->buckets = new_buckets;
+    table->provides_buckets = new_provides;
     table->size = new_size;
+    table->provides_size = new_size;
     table->count = 0;
 
     for (size_t i = 0; i < old_size; i++) {
         runepkg_hash_node_t *current = old_buckets[i];
         while (current) {
             runepkg_hash_node_t *next = current->next;
-            
             unsigned int new_index = hash_function(current->data.package_name, new_size);
             current->next = table->buckets[new_index];
             table->buckets[new_index] = current;
             table->count++;
             
+            add_to_provides_map(table, current);
             current = next;
+        }
+
+        // Clear old provides nodes
+        runepkg_provides_node_t *pcurr = old_provides[i];
+        while (pcurr) {
+            runepkg_provides_node_t *pnext = pcurr->next;
+            free(pcurr->virtual_name);
+            free(pcurr);
+            pcurr = pnext;
         }
     }
 
     free(old_buckets);
+    free(old_provides);
     return 0;
 }
 
@@ -381,6 +453,8 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
             table->buckets[index] = current->next;
         }
 
+        remove_from_provides_map(table, current);
+
         runepkg_hash_free_package_info(&current->data);
         free(current);
         table->count--;
@@ -403,6 +477,7 @@ void runepkg_hash_destroy_table(runepkg_hash_table_t *table) {
 
     runepkg_hash_clear_table(table);
     free(table->buckets);
+    free(table->provides_buckets);
     free(table);
 }
 
@@ -419,7 +494,30 @@ void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
         }
         table->buckets[i] = NULL;
     }
+
+    for (size_t i = 0; i < table->provides_size; i++) {
+        runepkg_provides_node_t *pcurr = table->provides_buckets[i];
+        while (pcurr) {
+            runepkg_provides_node_t *pnext = pcurr->next;
+            free(pcurr->virtual_name);
+            free(pcurr);
+            pcurr = pnext;
+        }
+        table->provides_buckets[i] = NULL;
+    }
+
     table->count = 0;
+}
+
+int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
+    if (!table || !pkg_name) return 0;
+    unsigned int index = hash_function(pkg_name, table->provides_size);
+    runepkg_provides_node_t *curr = table->provides_buckets[index];
+    while (curr) {
+        if (strcmp(curr->virtual_name, pkg_name) == 0) return 1;
+        curr = curr->next;
+    }
+    return 0;
 }
 
 // --- Display Functions ---

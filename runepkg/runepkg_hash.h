@@ -67,11 +67,20 @@ typedef struct runepkg_hash_node {
     struct runepkg_hash_node *next;
 } runepkg_hash_node_t;
 
+// --- Provides Mapping Node ---
+typedef struct runepkg_provides_node {
+    char *virtual_name;
+    struct runepkg_hash_node *provider;
+    struct runepkg_provides_node *next;
+} runepkg_provides_node_t;
+
 // --- Hash Table Structure ---
 typedef struct runepkg_hash_table {
     runepkg_hash_node_t **buckets;
     size_t size;
     size_t count;
+    runepkg_provides_node_t **provides_buckets;
+    size_t provides_size;
 } runepkg_hash_table_t;
 
 // --- Global Variables ---

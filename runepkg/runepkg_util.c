@@ -462,7 +462,7 @@ char *runepkg_util_read_file_content(const char *filepath, size_t *len) {
 
 int runepkg_util_copy_file(const char *source_path, const char *destination_path) {
     FILE *src, *dest;
-    char buffer[4096];
+    char buffer[65536];
     size_t bytes;
     int ret = 0;
 

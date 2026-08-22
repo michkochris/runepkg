@@ -91,10 +91,11 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
 
     runepkg_util_log_verbose("Verifying MD5 checksums for %s...\n", pkg_info->package_name);
 
-    char line[PATH_MAX + 64];
+    char *line = NULL;
+    size_t line_cap = 0;
     int errors = 0;
     int total = 0;
-    while (fgets(line, sizeof(line), f)) {
+    while (getline(&line, &line_cap, f) != -1) {
         char expected_md5[33];
         char *rel_path;
 
@@ -159,6 +160,7 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
         free(full_path);
     }
 
+    free(line);
     fclose(f);
     free(md5sums_path);
 
@@ -509,34 +511,6 @@ int clandestine_handle_install(const char *pkg_name, const char *origin_deb_path
     }
 
     free(candidate);
-    return 0;
-}
-/* Helper to check if a virtual package is provided by any installed package */
-int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
-    if (!table) return 0;
-    for (size_t i = 0; i < table->size; i++) {
-        runepkg_hash_node_t *node = table->buckets[i];
-        while (node) {
-            if (node->data.provides) {
-                char *provides_copy = strdup(node->data.provides);
-                char *token = strtok(provides_copy, ",");
-                while (token) {
-                    char *trimmed = runepkg_util_trim_whitespace(token);
-
-                    // Debian 'Provides' can include versions, e.g. "pkg (= 1.0)" or just "pkg"
-                    // We only want the name for satisfying dependencies by name.
-                    size_t name_len = strcspn(trimmed, " (");
-                    if (name_len > 0 && strncmp(trimmed, pkg_name, name_len) == 0 && pkg_name[name_len] == '\0') {
-                        free(provides_copy);
-                        return 1;
-                    }
-                    token = strtok(NULL, ",");
-                }
-                free(provides_copy);
-            }
-            node = node->next;
-        }
-    }
     return 0;
 }
 
