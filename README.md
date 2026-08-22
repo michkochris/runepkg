@@ -6,6 +6,9 @@
 
 **runepkg** is a lightning-fast, high-performance .deb package manager. It is designed to be versatile: serving as both a high-level tool like `apt` or `apt-get` for managing repositories and dependencies, and a low-level tool for minimal embedded systems. It offers the surgical precision required for custom builds and installs, providing the freedom to bypass the rigid policies of mainstream distributions.
 
+### **Milestone: Proven at Scale**
+Recently, **runepkg** successfully passed massive stress tests, installing comprehensive environments like **GNOME** (`task-gnome-desktop`) and **XFCE** (`task-xfce-desktop`). These tests involved resolving and downloading thousands of dependencies simultaneously, proving the stability of our reworked multithreaded networking and robust dependency engine.
+
 ## **Architecture & Portability**
 
 **runepkg** is built with a dual-tier architecture to suit different environments:
@@ -24,8 +27,9 @@ Developed from years of experience with Custom Cross Linux From Scratch (LFS), *
 
 - **High-Speed Metadata:** Instead of parsing large flat files on every call, **runepkg** uses **binary-serialized metadata** (`pkginfo.bin`) and **memory-mapped indices** (`mmap`). This enables $O(\log n)$ search speeds across tens of thousands of packages.
 - **Efficient Lookups:** A custom **FNV-1a hash table** with prime-sized buckets maintains $O(1)$ lookup performance regardless of database size.
-- **Parallel Execution:** Features **parallel file extraction** via `pthread` for faster installs.
-- **"Clandestine" Dependency Resolution:** Intelligently detects local sibling `.deb` files to satisfy dependencies before reaching for the network.
+- **Parallel Execution:** Features **parallel file extraction** and a **reworked, thread-safe networking pool** for high-stability multi-gigabyte downloads.
+- **"Clandestine" Dependency Resolution:** A robust logic layer that intelligently detects local sibling `.deb` files, resolving complex dependency chains before reaching for the network.
+- **Informative Interaction:** A refined output style that provides clear, interactive feedback on package status, installation progress, and unearthing source runes.
 - **Hardened Plumbing:** The core C engine features `secure_malloc` with zero-wiping for enhanced security and reliability.
 
 Technical details on these architectural decisions can be found in [INTERNALS.md](./INTERNALS.md).
@@ -136,6 +140,7 @@ Advanced Repository Management (Network/FFI):
   source-depends <pkg>                    Download source package and its runtime-dependencies.
   source-build-depends <pkg>              Download source package and its build-dependencies.
 
+  info <pkg>                              Show repository information for a package.
   build <pkg|path>                        Build a source package by name or path to .dsc.
   buildpkg-split <package.dsc>            Build and split a source package into separate .debs.
                                           (Will auto-fetch from repo if name provided).

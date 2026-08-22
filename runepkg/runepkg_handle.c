@@ -323,7 +323,7 @@ int handle_remove(const char *package_name) {
         } else if (match_count > 1) {
             // Multiple matches - show them like -l does
             print_package_data_header();
-            printf("Looking for package... '%s' did you mean?\n\n", package_name);
+            printf("'%s' not found... did you mean?\n\n", package_name);
             
             // Collect and display matching packages
             char matches[100][PATH_MAX];
@@ -361,7 +361,7 @@ int handle_remove(const char *package_name) {
             if (suggestion_count > 0) {
                 // Show suggestions in the same clean format
                 print_package_data_header();
-                printf("Looking for package... '%s' did you mean?\n\n", package_name);
+                printf("'%s' not installed... did you mean?\n\n", package_name);
                 
                 const char *items[100];
                 for (int i = 0; i < suggestion_count; i++) {
@@ -370,7 +370,7 @@ int handle_remove(const char *package_name) {
                 runepkg_util_print_columns(items, suggestion_count, "    ");
                 return -2; // Suggestions shown, no removal performed
             } else {
-                printf("Error: package not installed: %s\n", trimmed);
+                printf("'%s' not installed... did you mean?\n\n", package_name);
                 return -1;
             }
         }
@@ -541,15 +541,26 @@ int handle_status(const char *package_name) {
         }
     } else {
         // Multiple matches or no matches - show suggestions
-        printf("Looking for package... '%s' did you mean?\n\n", package_name);
-        char suggestions[100][PATH_MAX];
-        int match_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
-        if (match_count > 0) {
-            const char *items[100];
-            for (int i = 0; i < match_count; i++) {
-                items[i] = suggestions[i];
+        if (exact_match_count == 0) {
+            printf("'%s' not installed... did you mean?\n\n", package_name);
+            char suggestions[12][PATH_MAX];
+            int count = runepkg_completion_get_repo_suggestions(package_name, suggestions, 12);
+            if (count > 0) {
+                const char *items[12];
+                for (int i = 0; i < count; i++) items[i] = suggestions[i];
+                runepkg_util_print_columns(items, count, "    ");
             }
-            runepkg_util_print_columns(items, match_count, "    ");
+        } else {
+            printf("'%s' not found... did you mean?\n\n", package_name);
+            char suggestions[100][PATH_MAX];
+            int match_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
+            if (match_count > 0) {
+                const char *items[100];
+                for (int i = 0; i < match_count; i++) {
+                    items[i] = suggestions[i];
+                }
+                runepkg_util_print_columns(items, match_count, "    ");
+            }
         }
         return -2; // Special code: showed suggestions, no status shown
     }
@@ -711,13 +722,24 @@ void handle_list_files(const char *package_name) {
     }
 
     // Multiple or no matches - show suggestions
-    printf("Looking for package... '%s' did you mean?\n\n", package_name);
-    char suggestions[100][PATH_MAX];
-    int suggestion_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
-    if (suggestion_count > 0) {
-        const char *items[100];
-        for (int i = 0; i < suggestion_count; i++) items[i] = suggestions[i];
-        runepkg_util_print_columns(items, suggestion_count, "    ");
+    if (match_count == 0) {
+        printf("'%s' not installed... did you mean?\n\n", package_name);
+        char suggestions[12][PATH_MAX];
+        int count = runepkg_completion_get_repo_suggestions(package_name, suggestions, 12);
+        if (count > 0) {
+            const char *items[12];
+            for (int i = 0; i < count; i++) items[i] = suggestions[i];
+            runepkg_util_print_columns(items, count, "    ");
+        }
+    } else {
+        printf("'%s' not found... did you mean?\n\n", package_name);
+        char suggestions[100][PATH_MAX];
+        int suggestion_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
+        if (suggestion_count > 0) {
+            const char *items[100];
+            for (int i = 0; i < suggestion_count; i++) items[i] = suggestions[i];
+            runepkg_util_print_columns(items, suggestion_count, "    ");
+        }
     }
 }
 
@@ -1049,7 +1071,14 @@ int handle_md5_check(const char *package_name) {
     closedir(dir);
 
     if (!found_pkg[0]) {
-        runepkg_util_error("Package %s not found.\n", package_name);
+        printf("'%s' not installed... did you mean?\n\n", package_name);
+        char suggestions[100][PATH_MAX];
+        int suggestion_count = runepkg_util_get_package_suggestions(package_name, g_runepkg_db_dir, suggestions, 100);
+        if (suggestion_count > 0) {
+            const char *items[100];
+            for (int i = 0; i < suggestion_count; i++) items[i] = suggestions[i];
+            runepkg_util_print_columns(items, suggestion_count, "    ");
+        }
         return -1;
     }
 

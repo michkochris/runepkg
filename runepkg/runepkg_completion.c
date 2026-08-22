@@ -616,8 +616,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     strncpy(inferred_cmd, "upgrade", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "search") == 0) {
                     strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
+                } else if (strcmp(tok, "info") == 0) {
+                    strncpy(inferred_cmd, "info", sizeof(inferred_cmd)-1);
                 } else if (strcmp(tok, "-S") == 0 || strcmp(tok, "--search") == 0) {
-                    strncpy(inferred_cmd, "search-file", sizeof(inferred_cmd)-1);
                 }
                 last_token = tok;
                 tok = strtok_r(NULL, " \t", &saveptr);
@@ -766,6 +767,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
             return;
         }
+        if (strcmp(inferred_cmd, "info") == 0) {
+            repo_prefix_search_and_print(partial);
+            return;
+        }
         if (strcmp(inferred_cmd, "search") == 0) {
             repo_prefix_search_and_print(partial);
             return;
@@ -798,7 +803,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
         } else {
             const char *sub_cmds[] = {
-                "install", "remove", "list", "status", "list-files", "search",
+                "install", "remove", "list", "status", "list-files", "search", "info",
                 "download-only", "download-depends", "download-build-depends", "depends", "verify", "update", "upgrade", "source", "source-depends", "source-build-depends", "buildpkg-split", "build"
             };
             int num_sub = sizeof(sub_cmds) / sizeof(sub_cmds[0]);

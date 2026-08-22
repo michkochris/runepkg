@@ -33,13 +33,15 @@ To maintain speed when navigating large repositories (40,000+ entries), the engi
 2.  **The Anti-Jumping Ritual**: To prevent Bash from incorrectly adding a space after a directory name, the engine suggests both the directory name and a hidden "deep" version (e.g., `dir/` and `dir/.`). This forces the shell to wait for further user input, allowing for one-slash-at-a-time navigation.
 
 ---
+### Informative Terminal Interaction
+User feedback has been refined to be both thematic and precise. The interface avoids "noisy" generic progress bars in favor of descriptive success sequences. For example, when unearthing source package runes, the tool provides specific path feedback and installation status, ensuring the user always knows exactly what has been prepared and where it resides.
 
 ## 3. Acquisition: The C++ FFI Networking Layer
 
 **runepkg** uses a **Foreign Function Interface (FFI)** to bridge the performance of C with the modern networking capabilities of C++.
 
 ### Parallel Repository Synchronization
-The `runepkg update` routine fetches multiple `Packages.gz` and `Sources.gz` files in parallel using `std::future`. Decompression and indexing occur on-the-fly via `zlib`, significantly reducing the time required to sync with remote repositories.
+The `runepkg update` routine fetches multiple `Packages.gz` and `Sources.gz` files in parallel using `std::future`. The networking layer has been reworked with a thread-safe task pool, ensuring rock-solid stability even during massive multi-gigabyte transactions like full desktop environment installs. Decompression and indexing occur on-the-fly via `zlib`, significantly reducing the time required to sync with remote repositories.
 
 ### Tiered Discovery
 Acquisition is prioritized to keep the workspace tidy:
@@ -53,7 +55,7 @@ Acquisition is prioritized to keep the workspace tidy:
 Once metadata is acquired, the engine must resolve how to proceed with installation or building.
 
 ### "Clandestine" Dependency Resolution
-When a `.deb` is targeted for installation, the engine performs a local search for sibling packages in the same directory. This "clandestine" resolution allows users to satisfy dependencies with local files before the tool attempts to reach out to the network.
+When a `.deb` is targeted for installation, the engine performs a local search for sibling packages in the same directory. This "clandestine" resolution has been heavily reworked to handle massive dependency trees. It now employs a recursive "spider" logic that prevents collisions between local discovery and repository resolution, ensuring that local files are always prioritized and correctly mapped into the installation transaction.
 
 ### Intelligent Build Orchestration
 The `buildpkg-split` command leverages the C++ layer to orchestrate complex tasks:

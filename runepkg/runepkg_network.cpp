@@ -292,6 +292,12 @@ struct PkgMetadata {
     std::string provides;
     std::string filename;
     std::string source_name;
+    std::string description;
+    std::string maintainer;
+    std::string section;
+    std::string priority;
+    std::string homepage;
+    std::string architecture;
     size_t size = 0;
 };
 
@@ -739,6 +745,24 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
                 if (!meta_data.source_name.empty() && meta_data.source_name.back() == '\r') meta_data.source_name.pop_back();
             } else if (line.compare(0, 6, "Size: ") == 0) {
                 try { meta_data.size = std::stoull(line.substr(6)); } catch (...) { meta_data.size = 0; }
+            } else if (line.compare(0, 13, "Description: ") == 0) {
+                meta_data.description = line.substr(13);
+                if (!meta_data.description.empty() && meta_data.description.back() == '\r') meta_data.description.pop_back();
+            } else if (line.compare(0, 12, "Maintainer: ") == 0) {
+                meta_data.maintainer = line.substr(12);
+                if (!meta_data.maintainer.empty() && meta_data.maintainer.back() == '\r') meta_data.maintainer.pop_back();
+            } else if (line.compare(0, 9, "Section: ") == 0) {
+                meta_data.section = line.substr(9);
+                if (!meta_data.section.empty() && meta_data.section.back() == '\r') meta_data.section.pop_back();
+            } else if (line.compare(0, 10, "Priority: ") == 0) {
+                meta_data.priority = line.substr(10);
+                if (!meta_data.priority.empty() && meta_data.priority.back() == '\r') meta_data.priority.pop_back();
+            } else if (line.compare(0, 10, "Homepage: ") == 0) {
+                meta_data.homepage = line.substr(10);
+                if (!meta_data.homepage.empty() && meta_data.homepage.back() == '\r') meta_data.homepage.pop_back();
+            } else if (line.compare(0, 14, "Architecture: ") == 0) {
+                meta_data.architecture = line.substr(14);
+                if (!meta_data.architecture.empty() && meta_data.architecture.back() == '\r') meta_data.architecture.pop_back();
             }
         }
     }
@@ -827,13 +851,12 @@ extern "C" int runepkg_repo_install(const char *pkg_name) {
     resolve_recursive(clean_pkg, resolved, order, visiting, g_force_mode);
 
     if (resolved.empty()) {
-        std::cerr << "\033[1;31m[error]\033[0m Could not find package '" << clean_pkg << "' in repositories." << std::endl;
+        printf("'%s' not found... did you mean?\n\n", clean_pkg.c_str());
 
         // Show suggestions from repository
         char suggestions[12][PATH_MAX];
         int count = runepkg_completion_get_repo_suggestions(clean_pkg.c_str(), suggestions, 12);
         if (count > 0) {
-            printf("\033[1;33m - did you mean:\033[0m\n");
             const char *items[12];
             for (int k = 0; k < count; k++) items[k] = suggestions[k];
             runepkg_util_print_columns(items, count, "    ");
@@ -1302,4 +1325,51 @@ extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
         if (!dsc_path.empty()) runepkg_source_unpack(dsc_path.c_str());
     }
     curl_global_cleanup(); runepkg_storage_build_autocomplete_index(); return 0;
+}
+
+extern "C" int runepkg_repo_info(const char *pkg_name) {
+    if (!pkg_name) return -1;
+
+    std::string index_path = std::string(g_runepkg_db_dir) + "/repo_index.bin";
+    if (!runepkg_util_file_exists(index_path.c_str())) {
+        std::cerr << "\033[1;31m[error]\033[0m Repository index not found. Please run 'runepkg update' first." << std::endl;
+        return -1;
+    }
+
+    PkgMetadata meta = get_package_metadata(pkg_name);
+    if (meta.url.empty()) {
+        printf("'%s' not found... did you mean?\n\n", pkg_name);
+        char suggestions[12][PATH_MAX];
+        int count = runepkg_completion_get_repo_suggestions(pkg_name, suggestions, 12);
+        if (count > 0) {
+            const char *items[12];
+            for (int i = 0; i < count; i++) items[i] = suggestions[i];
+            runepkg_util_print_columns(items, count, "    ");
+        }
+        return -1;
+    }
+
+    printf("Package: %s\n", meta.name.c_str());
+    printf("Version: %s\n", meta.version.empty() ? "(unknown)" : meta.version.c_str());
+    printf("Architecture: %s\n", meta.architecture.empty() ? "(unknown)" : meta.architecture.c_str());
+    printf("Maintainer: %s\n", meta.maintainer.empty() ? "(unknown)" : meta.maintainer.c_str());
+    printf("Description: %s\n", meta.description.empty() ? "(unknown)" : meta.description.c_str());
+    printf("Depends: %s\n", meta.depends.empty() ? "(none)" : meta.depends.c_str());
+    char size_buf[32];
+    printf("Download-Size: %s\n", runepkg_util_format_size(meta.size, size_buf, sizeof(size_buf)));
+    printf("Section: %s\n", meta.section.empty() ? "(unknown)" : meta.section.c_str());
+    printf("Priority: %s\n", meta.priority.empty() ? "(unknown)" : meta.priority.c_str());
+    printf("Homepage: %s\n", meta.homepage.empty() ? "(unknown)" : meta.homepage.c_str());
+
+    // Check if installed
+    if (runepkg_main_hash_table) {
+        PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, meta.name.c_str());
+        if (info) {
+            printf("Status: installed (version %s)\n", info->version);
+        } else {
+            printf("Status: not installed\n");
+        }
+    }
+
+    return 0;
 }

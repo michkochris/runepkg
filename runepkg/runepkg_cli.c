@@ -83,6 +83,7 @@ void usage(void) {
     printf("  source-depends <pkg>                    Download source package and its runtime-dependencies.\n");
     printf("  source-build-depends <pkg>              Download source package and its build-dependencies.\n\n");
 
+    printf("  info <pkg>                              Show repository information for a package.\n");
     printf("  build <pkg|path>                        Build a source package by name or path to .dsc.\n");
     printf("  buildpkg-split <package.dsc>            Build and split a source package into separate .debs.\n");
     printf("                                          (Will auto-fetch from repo if name provided).\n\n");
@@ -313,20 +314,17 @@ int main(int argc, char *argv[]) {
             if (failed_count > 0) {
                 printf("Failed to find packages:\n");
                 for(int j = 0; j < failed_count; j++) {
-                    printf("  %s", failed_packages[j]);
+                    printf("'%s' not installed... did you mean?\n\n", failed_packages[j]);
                     
                     // Show suggestions for this failed package
                     char suggestions[10][PATH_MAX];
                     int suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
                     if (suggestion_count > 0) {
-                        printf(" - did you mean:\n");
                         const char *items[10];
                         for (int k = 0; k < suggestion_count; k++) {
                             items[k] = suggestions[k];
                         }
                         runepkg_util_print_columns(items, suggestion_count, "    ");
-                    } else {
-                        printf(" - not found\n");
                     }
                     
                     free(failed_packages[j]);
@@ -761,6 +759,20 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: source-build-depends command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "info") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                if (runepkg_repo_info(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
+#else
+                printf("Notice: Repository information requires a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+#endif
+                i++;
+            } else {
+                printf("Error: info command requires a package name.\n");
             }
         } else {
             cli_failed = 1;
