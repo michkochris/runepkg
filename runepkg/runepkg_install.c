@@ -36,7 +36,7 @@ int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pk
     // In LFS/ISO creation scenarios (alternate root), we skip them to avoid breakage.
     if (!g_system_install_root || strcmp(g_system_install_root, "/") != 0) {
         char *script_name = basename((char*)script_path);
-        printf("\033[1;33m[warning]\033[0m (non-root install) detected skipping %s for %s\n",
+        printf("\033[1;33m[warning]\033[0m Non-root: skipping %s for %s\n",
                script_name, pkg_info->package_name);
         return 0;
     }
@@ -163,7 +163,8 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
     free(md5sums_path);
 
     if (errors == 0) {
-        printf("\033[1;32m[integrity]\033[0m Verified %d files for %s.\n", total, pkg_info->package_name);
+        printf("\033[1;34m[md5sums]\033[0m \033[1;32mPassed\033[0m for %s-%s\n",
+               pkg_info->package_name, pkg_info->version ? pkg_info->version : "0");
         return 0;
     } else {
         runepkg_util_error("MD5 verification failed with %d errors for %s.\n", errors, pkg_info->package_name);
@@ -1040,9 +1041,7 @@ else {
         if (g_verbose_mode) {
             runepkg_pack_print_package_info(&pkg_info);
         } else {
-            printf("Selecting previously unselected package %s.\n",
-                   pkg_info.package_name ? pkg_info.package_name : "(unknown)");
-            printf("Unpacking %s (%s) ...\n",
+            printf("\033[1;34m[runepkg]\033[0m Installing %s-%s\n",
                    pkg_info.package_name ? pkg_info.package_name : "(unknown)",
                    pkg_info.version ? pkg_info.version : "(unknown)");
         }

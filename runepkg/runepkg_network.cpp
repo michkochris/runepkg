@@ -907,7 +907,7 @@ extern "C" int runepkg_repo_install(const char *pkg_name) {
     }
 
     if (fail_count == 0) {
-        std::cout << "\033[1;32m[success]\033[0m Downloaded " << resolved.size() << " packages to " << g_download_dir << std::endl;
+        std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << resolved.size() << " packages to " << g_download_dir << std::endl;
     } else {
         std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
     }
@@ -1013,6 +1013,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     }
 
     if (fail_count == 0) {
+        std::cout << std::endl;
         if (!recursive) {
             std::string top_filename = resolved[clean_pkg].url.substr(resolved[clean_pkg].url.find_last_of('/') + 1);
             std::string top_dest = std::string(g_download_dir) + "/" + top_filename;
@@ -1081,7 +1082,7 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     }
 
     if (fail_count == 0) {
-        std::cout << "\033[1;32m[success]\033[0m Downloaded " << resolved.size() << " packages to " << g_download_dir << std::endl;
+        std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << resolved.size() << " packages to " << g_download_dir << std::endl;
     } else {
         std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
     }
