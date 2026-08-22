@@ -47,6 +47,7 @@ char *g_download_dir = NULL;
 char *g_build_dir = NULL;
 char *g_debs_dir = NULL;
 bool g_md5_checks = true;
+bool g_verify_signatures = false;
 
 RuneSource **g_sources = NULL;
 int g_sources_count = 0;
@@ -304,6 +305,10 @@ int runepkg_config_load() {
         char *md5_checks_val = runepkg_util_get_config_value(config_file_path, "md5_checks", '=');
         g_md5_checks = runepkg_util_parse_yes_no(md5_checks_val, true);
         free(md5_checks_val);
+
+        char *verify_sigs_val = runepkg_util_get_config_value(config_file_path, "gpg_check", '=');
+        g_verify_signatures = runepkg_util_parse_yes_no(verify_sigs_val, true);
+        free(verify_sigs_val);
     }
 
     /* Concise summary for verbose mode: one-line summary instead of
@@ -311,14 +316,14 @@ int runepkg_config_load() {
      * still enables internal verbose logs elsewhere. */
     if (g_verbose_mode) {
         if (config_file_path) {
-            runepkg_log_verbose("Configuration loaded from %s; base=%s, control=%s, db=%s, install=%s cleanup=%s md5_checks=%s\n",
+            runepkg_log_verbose("Configuration loaded from %s; base=%s, db=%s, install=%s cleanup=%s md5_checks=%s gpg_check=%s\n",
                                config_file_path,
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",
-                               g_control_dir ? g_control_dir : "(null)",
                                g_runepkg_db_dir ? g_runepkg_db_dir : "(null)",
                                g_install_dir_internal ? g_install_dir_internal : "(null)",
                                g_cleanup_extract_dirs ? "yes" : "no",
-                               g_md5_checks ? "yes" : "no");
+                               g_md5_checks ? "yes" : "no",
+                               g_verify_signatures ? "yes" : "no");
         } else {
             runepkg_log_verbose("Configuration loaded using defaults; base=%s, control=%s, db=%s, install=%s cleanup=%s md5_checks=%s\n",
                                g_runepkg_base_dir ? g_runepkg_base_dir : "(null)",

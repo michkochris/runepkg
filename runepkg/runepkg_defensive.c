@@ -336,6 +336,25 @@ char* runepkg_secure_sprintf(size_t max_len, const char* format, ...) {
     return buffer;
 }
 
+int runepkg_secure_snprintf(char* dest, size_t dest_size, const char* format, ...) {
+    if (!dest || !format || dest_size == 0) {
+        return -1;
+    }
+
+    va_list args;
+    va_start(args, format);
+    int result = vsnprintf(dest, dest_size, format, args);
+    va_end(args);
+
+    if (result < 0 || (size_t)result >= dest_size) {
+        runepkg_util_error("snprintf formatting failed or truncated\n");
+        if (dest_size > 0) dest[dest_size - 1] = '\0';
+        return -1;
+    }
+
+    return result;
+}
+
 // --- Input Validation ---
 
 runepkg_error_t runepkg_validate_pointer(const void* ptr, const char* name) {
@@ -393,10 +412,27 @@ runepkg_error_t runepkg_validate_path(const char* path) {
     
     // Check for path traversal attacks
     if (strstr(path, "..")) {
-        runepkg_util_security_blocked("path traversal attempt: %s\n", path);
-        return RUNEPKG_ERROR_INVALID_INPUT;
+        // More specific check to allow things like "pkg..version" but block traversal
+        if (strcmp(path, "..") == 0 || strncmp(path, "../", 3) == 0 ||
+            strstr(path, "/../") != NULL) {
+            runepkg_util_security_blocked("path traversal attempt: %s\n", path);
+            return RUNEPKG_ERROR_INVALID_INPUT;
+        }
+
+        // Check if it ends with "/.."
+        size_t plen = strlen(path);
+        if (plen >= 3 && strcmp(path + plen - 3, "/..") == 0) {
+            runepkg_util_security_blocked("path traversal attempt: %s\n", path);
+            return RUNEPKG_ERROR_INVALID_INPUT;
+        }
     }
     
+    // Block multiple consecutive slashes which can be used to bypass some filters
+    if (strstr(path, "//")) {
+        runepkg_util_security_blocked("multiple slashes in path: %s\n", path);
+        return RUNEPKG_ERROR_INVALID_INPUT;
+    }
+
     // Check for absolute paths when not expected
     if (path[0] == '/' && strlen(path) > 1) {
         runepkg_util_log_debug("Absolute path detected: %s\n", path);

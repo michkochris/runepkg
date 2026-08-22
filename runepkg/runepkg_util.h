@@ -133,6 +133,14 @@ typedef struct {
  */
 Dependency **parse_depends_with_constraints(const char *depends);
 
+/**
+ * @brief Checks if a path is located under a specified directory.
+ * @param path The path to check.
+ * @param dir The directory that should contain the path.
+ * @return 1 if it is under the directory, 0 otherwise, -1 on error.
+ */
+int runepkg_util_is_path_under_dir(const char *path, const char *dir);
+
 // --- File System Operations ---
 
 /**
@@ -224,6 +232,11 @@ int runepkg_util_init_fhs(const char *root);
  * @return 0 on successful command execution, or a non-zero exit status/error code on failure.
  */
 int runepkg_util_execute_command(const char *command_path, char *const argv[]);
+
+/**
+ * @brief Executes a command but suppresses all output (stdout/stderr).
+ */
+int runepkg_util_execute_command_silent(const char *command_path, char *const argv[]);
 
 /**
  * @brief Parses the Depends field from a package control file.

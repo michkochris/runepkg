@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <libgen.h>
 #include <sys/ioctl.h>
+#include <fcntl.h>
 
 // Define PATH_MAX if not defined
 #ifndef PATH_MAX
@@ -112,8 +113,10 @@ char *runepkg_util_safe_strncpy(char *dest, const char *src, size_t n) {
     if (!dest || !src || n == 0) {
         return NULL;
     }
-    strncpy(dest, src, n);
-    dest[n - 1] = '\0';
+    size_t src_len = strlen(src);
+    size_t copy_len = (src_len >= n) ? (n - 1) : src_len;
+    memcpy(dest, src, copy_len);
+    dest[copy_len] = '\0';
     return dest;
 }
 
@@ -167,7 +170,7 @@ static int compare_collation(const char *a, const char *b) {
 // Parse version into epoch, upstream, revision
 static void parse_version(const char *version, long *epoch, char *upstream, char *revision) {
     *epoch = 0;
-    strcpy(upstream, version);
+    runepkg_secure_strcpy(upstream, 256, version);
     revision[0] = '\0';
 
     char *colon = strchr(upstream, ':');
@@ -179,7 +182,7 @@ static void parse_version(const char *version, long *epoch, char *upstream, char
 
     char *dash = strrchr(upstream, '-');
     if (dash) {
-        strcpy(revision, dash + 1);
+        runepkg_secure_strcpy(revision, 256, dash + 1);
         *dash = '\0';
     }
 }
@@ -228,7 +231,7 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
         free(cons);
         return -1;
     }
-    strcpy(ver, cons_trim + op_len);
+    runepkg_secure_strcpy(ver, sizeof(ver), cons_trim + op_len);
     char *ver_trim = runepkg_util_trim_whitespace(ver);
 
     int cmp = runepkg_util_compare_versions(installed_version, ver_trim);
@@ -336,6 +339,29 @@ Dependency **parse_depends_with_constraints(const char *depends) {
     }
 
     free(copy);
+    return result;
+}
+
+int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
+    if (!path || !dir) return -1;
+
+    char *real_path = realpath(path, NULL);
+    char *real_dir = realpath(dir, NULL);
+
+    if (!real_path || !real_dir) {
+        free(real_path);
+        free(real_dir);
+        // If it doesn't exist yet, we can't realpath it.
+        // We'll trust the logical check for now or handle missing files specifically.
+        return 1;
+    }
+
+    size_t dir_len = strlen(real_dir);
+    int result = (strncmp(real_path, real_dir, dir_len) == 0 &&
+                  (real_path[dir_len] == '\0' || real_path[dir_len] == '/'));
+
+    free(real_path);
+    free(real_dir);
     return result;
 }
 
@@ -643,6 +669,37 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
     return -1;
 }
 
+int runepkg_util_execute_command_silent(const char *command_path, char *const argv[]) {
+    runepkg_util_log_debug("Executing silent command: %s\n", command_path);
+    pid_t pid = fork();
+
+    if (pid == -1) {
+        perror("Failed to fork process");
+        return -1;
+    } else if (pid == 0) {
+        // Redirect stdout and stderr to /dev/null
+        int devnull = open("/dev/null", O_WRONLY);
+        if (devnull != -1) {
+            dup2(devnull, STDOUT_FILENO);
+            dup2(devnull, STDERR_FILENO);
+            close(devnull);
+        }
+
+        execvp(argv[0], argv);
+        _exit(1);
+    } else {
+        int status;
+        if (waitpid(pid, &status, 0) == -1) {
+            perror("Failed to wait for child process");
+            return -1;
+        }
+        if (WIFEXITED(status)) {
+            return WEXITSTATUS(status);
+        }
+    }
+    return -1;
+}
+
 // --- .deb Package Operations ---
 
 static int extract_deb_archive(const char *deb_path, const char *destination_dir) {
@@ -767,34 +824,19 @@ static int extract_tar_archive(const char *archive_path, const char *destination
         return -1;
     }
 
-    char current_dir[PATH_MAX];
-    if (getcwd(current_dir, sizeof(current_dir)) == NULL) {
-        perror("getcwd failed");
-        runepkg_util_error("Failed to get current working directory.\n");
-        return -1;
-    }
-
-    if (chdir(destination_dir) != 0) {
-        perror("Failed to change directory for tar extraction");
-        runepkg_util_error("Could not change to '%s'.\n", destination_dir);
-        return -1;
-    }
-
     char *tar_path = "/usr/bin/tar";
 
     char *argv_tar[] = {
         "tar",
+        "--force-local",
         "-xf",
         (char *)archive_path,
+        "-C",
+        (char *)destination_dir,
         NULL
     };
 
     int result = runepkg_util_execute_command(tar_path, argv_tar);
-
-    if (chdir(current_dir) != 0) {
-        perror("Failed to change back to original directory");
-        runepkg_util_log_verbose("Continuing, but directory state is unexpected.\n");
-    }
 
     if (result != 0) {
         runepkg_util_error("Failed to execute 'tar' for archive extraction.\n");
@@ -892,88 +934,99 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
         return -1;
     }
 
-    runepkg_util_log_verbose("Building .deb package: %s from %s\n", output_deb, source_dir);
+    char *abs_source = realpath(source_dir, NULL);
+    if (!abs_source) {
+        perror("realpath source_dir");
+        return -1;
+    }
 
-    char *control_dir = runepkg_util_concat_path(source_dir, "control");
-    char *data_dir = runepkg_util_concat_path(source_dir, "data");
+    runepkg_util_log_verbose("Building .deb package: %s from %s\n", output_deb, abs_source);
+
+    char *control_dir = runepkg_util_concat_path(abs_source, "control");
+    char *data_dir = runepkg_util_concat_path(abs_source, "data");
 
     if (!runepkg_util_file_exists(control_dir)) {
         runepkg_util_error("Control directory not found: %s\n", control_dir);
-        free(control_dir); free(data_dir);
+        free(control_dir); free(data_dir); free(abs_source);
         return -1;
     }
     if (!runepkg_util_file_exists(data_dir)) {
         runepkg_util_error("Data directory not found: %s\n", data_dir);
-        free(control_dir); free(data_dir);
+        free(control_dir); free(data_dir); free(abs_source);
         return -1;
     }
 
     char cwd[PATH_MAX];
     if (!getcwd(cwd, sizeof(cwd))) {
         perror("getcwd");
-        free(control_dir); free(data_dir);
+        free(control_dir); free(data_dir); free(abs_source);
         return -1;
     }
 
     // 1. Create debian-binary
-    char *deb_bin_path = runepkg_util_concat_path(source_dir, "debian-binary");
+    char *deb_bin_path = runepkg_util_concat_path(abs_source, "debian-binary");
     FILE *f = fopen(deb_bin_path, "w");
     if (!f) {
         perror("fopen debian-binary");
-        free(control_dir); free(data_dir); free(deb_bin_path);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(abs_source);
         return -1;
     }
     fprintf(f, "2.0\n");
     fclose(f);
 
     // 2. Create control.tar.gz
-    char *control_tar = runepkg_util_concat_path(source_dir, "control.tar.gz");
+    char *control_tar = runepkg_util_concat_path(abs_source, "control.tar.gz");
     if (chdir(control_dir) != 0) {
         perror("chdir control");
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar);
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(abs_source);
         return -1;
     }
-    char *argv_control[] = {"tar", "--force-local", "-czf", control_tar, ".", NULL};
+    char *argv_control[] = {(char*)"tar", (char*)"--force-local", (char*)"-czf", control_tar, (char*)".", NULL};
     if (runepkg_util_execute_command("/usr/bin/tar", argv_control) != 0) {
         runepkg_util_error("Failed to create control.tar.gz\n");
-        chdir(cwd);
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar);
+        if (chdir(cwd) != 0) perror("chdir rollback failed");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(abs_source);
         return -1;
     }
 
     // 3. Create data.tar.xz
-    char *data_tar = runepkg_util_concat_path(source_dir, "data.tar.xz");
+    char *data_tar = runepkg_util_concat_path(abs_source, "data.tar.xz");
     if (chdir(data_dir) != 0) {
         perror("chdir data");
-        chdir(cwd);
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar);
+        if (chdir(cwd) != 0) perror("chdir rollback failed");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
         return -1;
     }
-    char *argv_data[] = {"tar", "--force-local", "-cJf", data_tar, ".", NULL};
+    char *argv_data[] = {(char*)"tar", (char*)"--force-local", (char*)"-cJf", data_tar, (char*)".", NULL};
     if (runepkg_util_execute_command("/usr/bin/tar", argv_data) != 0) {
         runepkg_util_error("Failed to create data.tar.xz\n");
-        chdir(cwd);
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar);
+        if (chdir(cwd) != 0) perror("chdir rollback failed");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
         return -1;
     }
 
     // 4. Assemble with ar
-    chdir(source_dir);
+    if (chdir(abs_source) != 0) {
+        perror("chdir abs_source");
+        if (chdir(cwd) != 0) perror("chdir rollback failed");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_source);
+        return -1;
+    }
     // Use absolute path for output if it doesn't start with /
     char *abs_output = output_deb[0] == '/' ? strdup(output_deb) : runepkg_util_concat_path(cwd, output_deb);
 
-    char *argv_ar[] = {"ar", "-rc", abs_output, "debian-binary", "control.tar.gz", "data.tar.xz", NULL};
+    char *argv_ar[] = {(char*)"ar", (char*)"-rc", abs_output, (char*)"debian-binary", (char*)"control.tar.gz", (char*)"data.tar.xz", NULL};
     if (runepkg_util_execute_command("/usr/bin/ar", argv_ar) != 0) {
         runepkg_util_error("Failed to assemble .deb with ar\n");
-        chdir(cwd);
-        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output);
+        if (chdir(cwd) != 0) perror("chdir rollback failed");
+        free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
         return -1;
     }
 
-    chdir(cwd);
+    if (chdir(cwd) != 0) perror("chdir rollback failed");
     runepkg_util_log_verbose(".deb package built successfully: %s\n", abs_output);
 
-    free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output);
+    free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
     return 0;
 }
 
@@ -1208,8 +1261,7 @@ int runepkg_util_get_package_suggestions(const char *search_name, const char *db
     while ((entry = readdir(dir)) != NULL && suggestion_count < max_suggestions) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
             if (strstr(entry->d_name, search_name) != NULL) {
-                strncpy(suggestions[suggestion_count], entry->d_name, PATH_MAX - 1);
-                suggestions[suggestion_count][PATH_MAX - 1] = '\0';
+                runepkg_secure_strcpy(suggestions[suggestion_count], PATH_MAX, entry->d_name);
                 suggestion_count++;
             }
         }

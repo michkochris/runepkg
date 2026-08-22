@@ -196,7 +196,7 @@ private:
                 chmod("./configure", 0755);
                 if (runepkg_util_execute_command("./configure", argv) != 0) {
                     std::cerr << "ERROR: Configure failed" << std::endl;
-                    chdir(cwd);
+                    if (chdir(cwd) != 0) perror("rollback chdir failed");
                     return false;
                 }
             }
@@ -207,7 +207,7 @@ private:
         char* argv_make[] = {(char*)"make", NULL};
         if (runepkg_util_execute_command("make", argv_make) != 0) {
             std::cerr << "ERROR: Make failed" << std::endl;
-            chdir(cwd);
+            if (chdir(cwd) != 0) perror("rollback chdir failed");
             return false;
         }
 
@@ -217,11 +217,11 @@ private:
         char* argv_install[] = {(char*)"make", (char*)"install", (char*)dest_arg.c_str(), NULL};
         if (runepkg_util_execute_command("make", argv_install) != 0) {
             std::cerr << "ERROR: Install to temp area failed" << std::endl;
-            chdir(cwd);
+            if (chdir(cwd) != 0) perror("rollback chdir failed");
             return false;
         }
 
-        chdir(cwd);
+        if (chdir(cwd) != 0) perror("chdir failed");
 
         // 4. Parse debian/control for binary packages
         std::vector<BinaryPackage> packages;
@@ -600,12 +600,12 @@ private:
             // Try direct execution if make fails (sometimes rules is just a script)
             if (runepkg_util_execute_command("./debian/rules", argv + 1) != 0) {
                 std::cerr << "ERROR: Build failed (debian/rules binary)" << std::endl;
-                chdir(cwd);
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
                 return false;
             }
         }
 
-        chdir(cwd);
+        if (chdir(cwd) != 0) perror("chdir failed");
         return true;
     }
 

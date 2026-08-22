@@ -20,6 +20,7 @@
 #include "runepkg_storage.h"
 #include "runepkg_config.h"
 #include "runepkg_util.h"
+#include "runepkg_defensive.h"
 
 int is_completion_trigger(char *argv[]) {
     (void)argv; /* suppressed unused warning; argc check is done by caller */
@@ -200,7 +201,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
 
             if (next_slash) {
                 size_t seg_len = (next_slash - virtual_dirs[i]) + 1;
-                strncpy(segment, virtual_dirs[i], seg_len);
+    runepkg_secure_strcpy(segment, sizeof(segment), virtual_dirs[i]);
                 segment[seg_len] = '\0';
 
                 // Anti-jumping for virtual segments
@@ -383,11 +384,11 @@ int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
                     char segment[PATH_MAX];
                     size_t seg_len = (next_slash - name) + 1;
                     if (seg_len < sizeof(segment)) {
-                        strncpy(segment, name, seg_len);
+                        runepkg_secure_strcpy(segment, sizeof(segment), name);
                         segment[seg_len] = '\0';
                         if (strcmp(segment, last_printed) != 0) {
                             printf("%s\n", segment);
-                            strncpy(last_printed, segment, sizeof(last_printed)-1);
+                            runepkg_secure_strcpy(last_printed, sizeof(last_printed), segment);
                             found = 1;
                         }
                         /* Also print the full name as a "secondary" option to keep completion open and prevent jumping */
@@ -485,7 +486,7 @@ int repo_generic_prefix_search(const char *prefix, const char *index_filename) {
             if (strncmp(prefix, entries[i].name, prefix_len) != 0) break;
             if (strcmp(last_printed, entries[i].name) != 0) {
                 printf("%s\n", entries[i].name);
-                strncpy(last_printed, entries[i].name, sizeof(last_printed)-1);
+                runepkg_secure_strcpy(last_printed, sizeof(last_printed), entries[i].name);
             }
         }
     }
@@ -521,9 +522,9 @@ int runepkg_completion_get_repo_suggestions(const char *search_name, char sugges
     for (uint32_t i = 0; i < count && found < max_suggestions; i++) {
         if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) {
             if (strcmp(last_added, entries[i].name) != 0) {
-                strncpy(suggestions[found], entries[i].name, PATH_MAX - 1);
+                runepkg_secure_strcpy(suggestions[found], PATH_MAX, entries[i].name);
                 suggestions[found][PATH_MAX - 1] = '\0';
-                strncpy(last_added, entries[i].name, sizeof(last_added) - 1);
+                runepkg_secure_strcpy(last_added, sizeof(last_added), entries[i].name);
                 found++;
             }
         }
@@ -544,7 +545,7 @@ int runepkg_completion_get_repo_suggestions(const char *search_name, char sugges
                     }
                     if (already) continue;
 
-                    strncpy(suggestions[found], entries[i].name, PATH_MAX - 1);
+                    runepkg_secure_strcpy(suggestions[found], PATH_MAX, entries[i].name);
                     suggestions[found][PATH_MAX - 1] = '\0';
                     found++;
                 }
@@ -591,33 +592,33 @@ void handle_binary_completion(const char *partial, const char *prev) {
             const char *last_token = NULL;
             while (tok) {
                 if (strcmp(tok, "install") == 0 || strcmp(tok, "-i") == 0 || strcmp(tok, "--install") == 0) {
-                    strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "install");
                 } else if (strcmp(tok, "remove") == 0 || strcmp(tok, "-r") == 0 || strcmp(tok, "--remove") == 0) {
-                    strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "remove");
                 } else if (strcmp(tok, "list") == 0 || strcmp(tok, "-l") == 0 || strcmp(tok, "-L") == 0 || strcmp(tok, "--list") == 0 || strcmp(tok, "list-files") == 0) {
-                    strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "list");
                 } else if (strcmp(tok, "status") == 0 || strcmp(tok, "-s") == 0 || strcmp(tok, "--status") == 0) {
-                    strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "status");
                 } else if (strcmp(tok, "-u") == 0 || strcmp(tok, "--unpack") == 0) {
-                    strncpy(inferred_cmd, "unpack", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "unpack");
                 } else if (strcmp(tok, "-b") == 0 || strcmp(tok, "--build") == 0) {
-                    strncpy(inferred_cmd, "build", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "build");
                 } else if (strcmp(tok, "-m") == 0 || strcmp(tok, "--md5check") == 0) {
-                    strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "md5check");
                 } else if (strcmp(tok, "source") == 0 || strcmp(tok, "source-depends") == 0 || strcmp(tok, "source-build-depends") == 0) {
-                    strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source");
                 } else if (strcmp(tok, "download-only") == 0 || strcmp(tok, "download-depends") == 0 || strcmp(tok, "download-build-depends") == 0) {
-                    strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "download-only");
                 } else if (strcmp(tok, "buildpkg-split") == 0 || strcmp(tok, "--buildpkg-split") == 0) {
-                    strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source-build");
                 } else if (strcmp(tok, "update") == 0) {
-                    strncpy(inferred_cmd, "update", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "update");
                 } else if (strcmp(tok, "upgrade") == 0) {
-                    strncpy(inferred_cmd, "upgrade", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "upgrade");
                 } else if (strcmp(tok, "search") == 0) {
-                    strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
                 } else if (strcmp(tok, "info") == 0) {
-                    strncpy(inferred_cmd, "info", sizeof(inferred_cmd)-1);
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "info");
                 } else if (strcmp(tok, "-S") == 0 || strcmp(tok, "--search") == 0) {
                 }
                 last_token = tok;
@@ -634,40 +635,40 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     if (t2) t2 = strtok_r(NULL, " \t", &save2);
                     while (t2) {
                         if (strcmp(t2, "install") == 0 || strcmp(t2, "-i") == 0 || strcmp(t2, "--install") == 0) {
-                            strncpy(inferred_cmd, "install", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "install");
                             break;
                         } else if (strcmp(t2, "remove") == 0 || strcmp(t2, "-r") == 0 || strcmp(t2, "--remove") == 0) {
-                            strncpy(inferred_cmd, "remove", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "remove");
                             break;
                         } else if (strcmp(t2, "list") == 0 || strcmp(t2, "-l") == 0 || strcmp(t2, "-L") == 0 || strcmp(t2, "--list") == 0 || strcmp(t2, "list-files") == 0) {
-                            strncpy(inferred_cmd, "list", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "list");
                             break;
                         } else if (strcmp(t2, "status") == 0 || strcmp(t2, "-s") == 0 || strcmp(t2, "--status") == 0) {
-                            strncpy(inferred_cmd, "status", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "status");
                             break;
                         } else if (strcmp(t2, "-u") == 0 || strcmp(t2, "--unpack") == 0) {
-                            strncpy(inferred_cmd, "unpack", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "unpack");
                             break;
                         } else if (strcmp(t2, "-b") == 0 || strcmp(t2, "--build") == 0) {
-                            strncpy(inferred_cmd, "build", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "build");
                             break;
                         } else if (strcmp(t2, "-m") == 0 || strcmp(t2, "--md5check") == 0) {
-                            strncpy(inferred_cmd, "md5check", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "md5check");
                             break;
                         } else if (strcmp(t2, "source") == 0 || strcmp(t2, "source-depends") == 0 || strcmp(t2, "source-build-depends") == 0) {
-                            strncpy(inferred_cmd, "source", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source");
                             break;
                         } else if (strcmp(t2, "download-only") == 0 || strcmp(t2, "download-depends") == 0 || strcmp(t2, "download-build-depends") == 0) {
-                            strncpy(inferred_cmd, "download-only", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "download-only");
                             break;
                         } else if (strcmp(t2, "buildpkg-split") == 0 || strcmp(t2, "--buildpkg-split") == 0) {
-                            strncpy(inferred_cmd, "source-build", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source-build");
                             break;
                         } else if (strcmp(t2, "search") == 0) {
-                            strncpy(inferred_cmd, "search", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
                             break;
                         } else if (strcmp(t2, "-S") == 0 || strcmp(t2, "--search") == 0) {
-                            strncpy(inferred_cmd, "search-file", sizeof(inferred_cmd)-1);
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search-file");
                             break;
                         }
                         t2 = strtok_r(NULL, " \t", &save2);

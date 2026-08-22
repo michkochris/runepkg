@@ -37,6 +37,7 @@
 #include "runepkg_config.h"
 #include "runepkg_util.h"
 #include "runepkg_pack.h"
+#include "runepkg_defensive.h"
 
 /* AutocompleteHeader is defined in runepkg_storage.h for shared use */
 
@@ -124,8 +125,8 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     header.magic = 0x52554E45;  // "RUNE"
     memset(header.pkgname, 0, sizeof(header.pkgname));
     memset(header.version, 0, sizeof(header.version));
-    if (pkg_name) strncpy(header.pkgname, pkg_name, sizeof(header.pkgname) - 1);
-    if (pkg_version) strncpy(header.version, pkg_version, sizeof(header.version) - 1);
+    if (pkg_name) runepkg_util_safe_strncpy(header.pkgname, pkg_name, sizeof(header.pkgname));
+    if (pkg_version) runepkg_util_safe_strncpy(header.version, pkg_version, sizeof(header.version));
     header.data_start = sizeof(PkgHeader);  // Data starts after header
 
     fwrite(&header, sizeof(PkgHeader), 1, bin_file);
@@ -520,7 +521,7 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
             if (full_path) {
                 if (is_dir) {
                     to_add = malloc(strlen(full_path) + 2);
-                    if (to_add) sprintf(to_add, "%s/", full_path);
+                    if (to_add) snprintf(to_add, strlen(full_path) + 2, "%s/", full_path);
                     free(full_path);
                 } else {
                     to_add = full_path;
@@ -548,7 +549,7 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
             // Also add the basename for flexible matching (e.g. binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
-                if (to_add) sprintf(to_add, "%s", entry->d_name);
+                if (to_add) snprintf(to_add, strlen(entry->d_name) + 2, "%s", entry->d_name);
             } else {
                 to_add = strdup(entry->d_name);
             }
@@ -559,7 +560,7 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
             // Not absolute mode (usually for db_dir), add full name (binutils-2.47-2)
             if (is_dir) {
                 to_add = malloc(strlen(entry->d_name) + 2);
-                if (to_add) sprintf(to_add, "%s", entry->d_name);
+                if (to_add) snprintf(to_add, strlen(entry->d_name) + 2, "%s", entry->d_name);
             } else {
                 to_add = strdup(entry->d_name);
             }
@@ -578,7 +579,7 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                     size_t name_only_len = last_dash - entry->d_name;
                     char *name_only = malloc(name_only_len + 1);
                     if (name_only) {
-                        strncpy(name_only, entry->d_name, name_only_len);
+                        runepkg_util_safe_strncpy(name_only, entry->d_name, name_only_len + 1);
                         name_only[name_only_len] = '\0';
 
                         // Check for duplicates for the short name

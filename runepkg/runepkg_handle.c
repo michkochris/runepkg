@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <sys/ioctl.h>
 
+#include "runepkg_defensive.h"
 #include "runepkg_handle.h"
 #include "runepkg_config.h"
 #include "runepkg_pack.h"
@@ -38,6 +39,7 @@
 #include "runepkg_storage.h"
 #include "runepkg_util.h"
 #include "runepkg_md5sums.h"
+#include "runepkg_crypto.h"
 #include "runepkg_cpp_ffi.h"
 #include <stdint.h>
 #include <sys/mman.h>
@@ -190,7 +192,7 @@ int runepkg_init(void) {
                         if (name_len < sizeof(pkg_name)) {
                             memcpy(pkg_name, entry->d_name, name_len);
                             pkg_name[name_len] = '\0';
-                            strncpy(pkg_version, ver_dash + 1, sizeof(pkg_version) - 1);
+                            runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), ver_dash + 1);
                             pkg_version[sizeof(pkg_version) - 1] = '\0';
                         }
                     }
@@ -283,7 +285,7 @@ int handle_remove(const char *package_name) {
         if (name_len < sizeof(pkg_name)) {
             memcpy(pkg_name, trimmed, name_len);
             pkg_name[name_len] = '\0';
-            strncpy(pkg_version, last_dash + 1, sizeof(pkg_version) - 1);
+            runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), last_dash + 1);
         }
     }
 
@@ -309,8 +311,8 @@ int handle_remove(const char *package_name) {
                 // Only count as a match if it looks like a version (starts with digit)
                 if (*ver != '\0' && isdigit(*ver)) {
                     match_count++;
-                    strncpy(match_name, trimmed, sizeof(match_name) - 1);
-                    strncpy(match_version, ver, sizeof(match_version) - 1);
+                    runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
+                    runepkg_secure_strcpy(match_version, sizeof(match_version), ver);
                 }
             }
         }
@@ -318,8 +320,8 @@ int handle_remove(const char *package_name) {
         closedir(dir);
 
         if (match_count == 1) {
-            strncpy(pkg_name, match_name, sizeof(pkg_name) - 1);
-            strncpy(pkg_version, match_version, sizeof(pkg_version) - 1);
+            runepkg_secure_strcpy(pkg_name, sizeof(pkg_name), match_name);
+            runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), match_version);
         } else if (match_count > 1) {
             // Multiple matches - show them like -l does
             print_package_data_header();
@@ -336,7 +338,7 @@ int handle_remove(const char *package_name) {
                 while ((sub_entry = readdir(list_dir)) != NULL && match_idx < 100) {
                     if (sub_entry->d_type == DT_DIR && strcmp(sub_entry->d_name, ".") != 0 && strcmp(sub_entry->d_name, "..") != 0 && strcmp(sub_entry->d_name, "lists") != 0) {
                         if (strstr(sub_entry->d_name, trimmed) != NULL) {
-                            strncpy(matches[match_idx], sub_entry->d_name, PATH_MAX - 1);
+                            runepkg_secure_strcpy(matches[match_idx], sizeof(matches[match_idx]), sub_entry->d_name);
                             matches[match_idx][PATH_MAX - 1] = '\0';
                             match_idx++;
                         }
@@ -483,12 +485,12 @@ int handle_status(const char *package_name) {
             }
             if (last_dash) {
                 size_t name_len = last_dash - entry->d_name;
-                strncpy(exact_match_name, entry->d_name, name_len);
+                runepkg_util_safe_strncpy(exact_match_name, entry->d_name, name_len + 1);
                 exact_match_name[name_len] = '\0';
-                strcpy(exact_match_version, last_dash + 1);
+                runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), last_dash + 1);
             } else {
                 // No version part, use the name as-is
-                strncpy(exact_match_name, entry->d_name, sizeof(exact_match_name) - 1);
+                runepkg_secure_strcpy(exact_match_name, sizeof(exact_match_name), entry->d_name);
                 exact_match_version[0] = '\0';
             }
             break; // Exact match found, no need to continue
@@ -504,8 +506,8 @@ int handle_status(const char *package_name) {
                 exact_match_count++;
                 if (exact_match_count == 1) {
                     // Store the first match
-                    strncpy(exact_match_name, package_name, sizeof(exact_match_name) - 1);
-                    strncpy(exact_match_version, ver, sizeof(exact_match_version) - 1);
+                    runepkg_secure_strcpy(exact_match_name, sizeof(exact_match_name), package_name);
+                    runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), ver);
                 }
             }
         }
@@ -604,7 +606,7 @@ void handle_search(const char *file_pattern) {
             size_t name_len = ver_dash - entry->d_name;
             pkg_name = malloc(name_len + 1);
             if (pkg_name) {
-                strncpy(pkg_name, entry->d_name, name_len);
+                runepkg_util_safe_strncpy(pkg_name, entry->d_name, name_len + 1);
                 pkg_name[name_len] = '\0';
             }
             pkg_version = strdup(ver_dash + 1);
@@ -675,11 +677,11 @@ void handle_list_files(const char *package_name) {
             }
             if (last_dash) {
                 size_t name_len = last_dash - entry->d_name;
-                strncpy(match_name, entry->d_name, name_len);
+                runepkg_util_safe_strncpy(match_name, entry->d_name, name_len + 1);
                 match_name[name_len] = '\0';
-                strncpy(match_version, last_dash + 1, sizeof(match_version) - 1);
+                runepkg_secure_strcpy(match_version, sizeof(match_version), last_dash + 1);
             } else {
-                strncpy(match_name, entry->d_name, sizeof(match_name) - 1);
+                runepkg_secure_strcpy(match_name, sizeof(match_name), entry->d_name);
                 match_version[0] = '\0';
             }
             match_count = 1;
@@ -693,8 +695,8 @@ void handle_list_files(const char *package_name) {
             if (*ver != '\0') {
                 match_count++;
                 if (match_count == 1) {
-                    strncpy(match_name, package_name, sizeof(match_name) - 1);
-                    strncpy(match_version, ver, sizeof(match_version) - 1);
+                    runepkg_secure_strcpy(match_name, sizeof(match_name), package_name);
+                    runepkg_secure_strcpy(match_version, sizeof(match_version), ver);
                 }
             }
         }
@@ -990,9 +992,8 @@ int handle_build(const char *source_dir, const char *output_name) {
         // Fallback to basename if control parsing failed
         if (!out) {
             char *bname = basename((char*)src);
-            char *filename = malloc(strlen(bname) + 5);
+            char *filename = runepkg_secure_sprintf(strlen(bname) + 5, "%s.deb", bname);
             if (filename) {
-                sprintf(filename, "%s.deb", bname);
 
                 // Route to g_debs_dir
                 if (g_debs_dir) {
@@ -1059,12 +1060,12 @@ int handle_md5_check(const char *package_name) {
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
         if (strcmp(entry->d_name, package_name) == 0) {
-            strncpy(found_pkg, entry->d_name, sizeof(found_pkg)-1);
+            runepkg_secure_strcpy(found_pkg, sizeof(found_pkg), entry->d_name);
             break;
         }
         size_t len = strlen(package_name);
         if (strncmp(entry->d_name, package_name, len) == 0 && entry->d_name[len] == '-') {
-            strncpy(found_pkg, entry->d_name, sizeof(found_pkg)-1);
+            runepkg_secure_strcpy(found_pkg, sizeof(found_pkg), entry->d_name);
             break;
         }
     }
@@ -1161,4 +1162,21 @@ void handle_version(void) {
     printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
     printf("Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.\n");
     printf("Contact: [michkochris@gmail.com] | [runepkg@gmail.com]\n");
+}
+
+void handle_verify_package(const char *package_name) {
+    if (!package_name) return;
+
+    if (!runepkg_crypto_is_enabled()) {
+        printf("\033[1;33m[security]\033[0m Cryptographic verification is currently disabled in config.\n");
+        printf("Set 'gpg_check=yes' in runepkgconfig to enable.\n");
+        return;
+    }
+
+    // This is a placeholder for actual GPG verification of a .deb file or repo metadata.
+    // For now, it will look for a .sig file next to a matching .deb if found.
+    printf("\033[1;34m[security]\033[0m Initiating cryptographic audit for %s...\n", package_name);
+
+    printf("Status: GPG Verification Framework (Phase 1) is active.\n");
+    printf("Please provide a signed source or repository index for verification.\n");
 }

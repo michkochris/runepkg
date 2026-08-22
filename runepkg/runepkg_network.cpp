@@ -30,6 +30,7 @@ extern "C" {
     #include "runepkg_handle.h"
     #include "runepkg_install.h"
     #include "runepkg_storage.h"
+    #include "runepkg_crypto.h"
 }
 
 // Architecture - default to amd64 for now
@@ -130,35 +131,33 @@ void print_multi_progress() {
 
 void update_progress(const std::string& name, double fraction) {
     if (fraction >= 1.0) {
-        bool first_completion = false;
+        std::string display_name = name;
+        if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
+
         {
             std::lock_guard<std::mutex> lock(g_progress_mutex);
             if (g_completed_names.find(name) == g_completed_names.end()) {
                 g_completed_names.insert(name);
                 g_active_downloads.erase(name);
-                first_completion = true;
-            }
-        }
 
-        if (first_completion) {
-            g_finished_count++;
-            std::string display_name = name;
-            if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
-            std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
-            render_runic_bar(20, 1.0);
-            std::cout << " 100.0%\033[K" << std::endl;
+                g_finished_count++;
+                std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
+                render_runic_bar(20, 1.0);
+                std::cout << " 100.0%\033[K" << std::endl;
+            }
         }
     } else {
         static std::map<std::string, int> last_percent;
         int current_percent = (int)(fraction * 100);
 
         if (last_percent[name] != current_percent) {
+            std::string display_name = name;
+            if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
+
             std::lock_guard<std::mutex> lock(g_progress_mutex);
             g_active_downloads[name] = fraction;
             last_percent[name] = current_percent;
 
-            std::string display_name = name;
-            if (display_name.length() > 25) display_name = display_name.substr(0, 22) + "...";
             std::cout << "\r  \033[1;34m->\033[0m " << std::left << std::setw(25) << display_name << " ";
             render_runic_bar(20, fraction);
             std::cout << " " << std::fixed << std::setprecision(1) << std::right << std::setw(5) << (fraction * 100.0) << "%\033[K" << std::flush;
@@ -226,6 +225,7 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
     curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_progress_cb);
     curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &pkg_name);
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+    curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
 
     CURLcode res = curl_easy_perform(curl);
     fclose(fp);
@@ -971,7 +971,12 @@ extern "C" int runepkg_repo_install(const char *pkg_name) {
     ParallelExecutor pool(0);
     for (size_t i = 0; i < tasks.size(); i++) {
         futures.push_back(pool.enqueue([&tasks, i]() {
-            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            bool ok = download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            if (ok && runepkg_crypto_is_enabled()) {
+                // Attempt to download signature if enabled
+                download_file(tasks[i].url + ".sig", tasks[i].dest_path + ".sig", 0, tasks[i].pkg_name + " (sig)", false);
+            }
+            return ok;
         }));
     }
 
@@ -1077,7 +1082,12 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
     ParallelExecutor pool(0);
     for (size_t i = 0; i < tasks.size(); i++) {
         futures.push_back(pool.enqueue([&tasks, i]() {
-            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            bool ok = download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            if (ok && runepkg_crypto_is_enabled()) {
+                // Attempt to download signature if enabled
+                download_file(tasks[i].url + ".sig", tasks[i].dest_path + ".sig", 0, tasks[i].pkg_name + " (sig)", false);
+            }
+            return ok;
         }));
     }
 
@@ -1146,7 +1156,12 @@ extern "C" int runepkg_repo_build_depends_download(const char *pkg_name) {
     ParallelExecutor pool(0);
     for (size_t i = 0; i < tasks.size(); i++) {
         futures.push_back(pool.enqueue([&tasks, i]() {
-            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            bool ok = download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            if (ok && runepkg_crypto_is_enabled()) {
+                // Attempt to download signature if enabled
+                download_file(tasks[i].url + ".sig", tasks[i].dest_path + ".sig", 0, tasks[i].pkg_name + " (sig)", false);
+            }
+            return ok;
         }));
     }
 
@@ -1238,7 +1253,12 @@ extern "C" int runepkg_upgrade(void) {
     ParallelExecutor pool(0);
     for (size_t i = 0; i < tasks.size(); i++) {
         futures.push_back(pool.enqueue([&tasks, i]() {
-            return download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            bool ok = download_file(tasks[i].url, tasks[i].dest_path, tasks[i].size, tasks[i].pkg_name);
+            if (ok && runepkg_crypto_is_enabled()) {
+                // Attempt to download signature if enabled
+                download_file(tasks[i].url + ".sig", tasks[i].dest_path + ".sig", 0, tasks[i].pkg_name + " (sig)", false);
+            }
+            return ok;
         }));
     }
 

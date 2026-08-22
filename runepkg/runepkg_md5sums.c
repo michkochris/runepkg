@@ -230,7 +230,7 @@ int runepkg_md5_file(const char *path, char output[33]) {
     fclose(f);
 
     for (int i = 0; i < 16; i++)
-        sprintf(&output[i*2], "%02x", hash[i]);
+        snprintf(&output[i*2], 3, "%02x", hash[i]);
     output[32] = '\0';
 
     return 0;

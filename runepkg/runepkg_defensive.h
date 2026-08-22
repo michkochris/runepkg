@@ -120,6 +120,16 @@ char* runepkg_secure_path_concat(const char* dir, const char* file);
  */
 char* runepkg_secure_sprintf(size_t max_len, const char* format, ...);
 
+/**
+ * @brief Secure snprintf wrapper with bounds checking
+ * @param dest Destination buffer
+ * @param dest_size Size of destination buffer
+ * @param format Format string
+ * @param ... Format arguments
+ * @return Number of characters written (excluding null) or -1 on error
+ */
+int runepkg_secure_snprintf(char* dest, size_t dest_size, const char* format, ...);
+
 // --- Input Validation ---
 
 /**

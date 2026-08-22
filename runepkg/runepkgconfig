@@ -55,6 +55,10 @@ cleanup=yes
 # Enable MD5 integrity verification during installation (yes/no).
 md5_checks=yes
 
+# [gpg_check]
+# Enable GPG cryptographic signature verification for packages (yes/no).
+gpg_check=yes
+
 # --- Repository Sources ---
 # runepkg supports standard Debian sources.list syntax.
 #

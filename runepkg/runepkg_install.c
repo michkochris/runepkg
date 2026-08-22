@@ -4,6 +4,8 @@
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
+#include "runepkg_crypto.h"
+#include "runepkg_defensive.h"
 #include "runepkg_handle.h"
 #include "runepkg_md5sums.h"
 
@@ -104,7 +106,7 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
 
         if (strlen(line) < 35) continue;
 
-        strncpy(expected_md5, line, 32);
+        runepkg_util_safe_strncpy(expected_md5, line, 33);
         expected_md5[32] = '\0';
 
         // Path starts after hash and two spaces (usually)
@@ -165,8 +167,8 @@ int runepkg_install_verify_md5(const PkgInfo *pkg_info) {
     free(md5sums_path);
 
     if (errors == 0) {
-        printf("\033[1;34m[md5sums]\033[0m \033[1;32mPassed\033[0m for %s-%s\n",
-               pkg_info->package_name, pkg_info->version ? pkg_info->version : "0");
+        printf("\033[1;34m[md5sums]\033[0m \033[1;32mPassed\033[0m for %s\n",
+               pkg_info->package_name);
         return 0;
     } else {
         runepkg_util_error("MD5 verification failed with %d errors for %s.\n", errors, pkg_info->package_name);
@@ -185,6 +187,14 @@ typedef struct {
 // Internal function to perform the actual file system operation for a single file/dir/link
 // Returns 0 on success, -1 on error.
 static int perform_file_install(const char *src, const char *dst) {
+    extern char *g_system_install_root;
+
+    // Security Check: Ensure destination is within system install root
+    if (g_system_install_root && runepkg_util_is_path_under_dir(dst, g_system_install_root) == 0) {
+        runepkg_util_error("Security: Attempted to install file outside root: %s\n", dst);
+        return -1;
+    }
+
     struct stat st;
     if (lstat(src, &st) != 0) {
         fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to stat source: %s (%s)\n", src, strerror(errno));
@@ -226,6 +236,19 @@ static int perform_file_install(const char *src, const char *dst) {
         ssize_t len = readlink(src, link_target, sizeof(link_target) - 1);
         if (len >= 0) {
             link_target[len] = '\0';
+
+            // Security: Block absolute symlinks unless g_system_install_root is "/"
+            if (link_target[0] == '/' && g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
+                runepkg_util_error("Security: Blocked absolute symlink in non-root install: %s -> %s\n", dst, link_target);
+                return -1;
+            }
+
+            // Security: Check for traversal in relative symlinks
+            if (strstr(link_target, "..")) {
+                // This is a basic check, could be more sophisticated
+                runepkg_util_log_verbose("Warning: Relative symlink contains '..': %s -> %s\n", dst, link_target);
+            }
+
             char *dst_copy = strdup(dst);
             if (dst_copy) {
                 char *parent = dirname(dst_copy);
@@ -529,7 +552,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
     if (strstr(deb_file_path, ".deb") == NULL) {
         char pattern[PATH_MAX];
         if (strstr(deb_file_path, "*") != NULL) {
-            strncpy(pattern, deb_file_path, sizeof(pattern) - 1);
+            runepkg_secure_strcpy(pattern, sizeof(pattern), deb_file_path);
         } else {
             snprintf(pattern, sizeof(pattern), "%s*.deb", deb_file_path);
         }
@@ -578,7 +601,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         const char *baseptr = strrchr(deb_file_path, '/');
         const char *base = baseptr ? baseptr + 1 : deb_file_path;
         char base_copy[PATH_MAX];
-        strncpy(base_copy, base, sizeof(base_copy) - 1);
+        runepkg_secure_strcpy(base_copy, sizeof(base_copy), base);
         base_copy[sizeof(base_copy) - 1] = '\0';
         char *dot = strrchr(base_copy, '.');
         if (dot && strcmp(dot, ".deb") == 0) {
@@ -741,6 +764,26 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         if (pkg_info.version) dummy.version = strdup(pkg_info.version);
         runepkg_hash_add_package(installing_packages, &dummy);
         runepkg_pack_free_package_info(&dummy);
+
+        // GPG Signature Verification
+        if (runepkg_crypto_is_enabled()) {
+            char sig_path[PATH_MAX];
+            snprintf(sig_path, sizeof(sig_path), "%s.sig", deb_file_path);
+            if (runepkg_util_file_exists(sig_path)) {
+                if (runepkg_crypto_verify_file(deb_file_path, sig_path) != 0) {
+                    printf("\033[1;31m[error]\033[0m Failed gpg_sig for %s-%s\n",
+                           pkg_info.package_name, pkg_info.version ? pkg_info.version : "0");
+                    printf("\033[1;31m[error]\033[0m Aborting installation %s-%s\n",
+                           pkg_info.package_name, pkg_info.version ? pkg_info.version : "0");
+                    runepkg_hash_remove_package(installing_packages, pkg_info.package_name);
+                    runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                    runepkg_pack_free_package_info(&pkg_info);
+                    return -1;
+                }
+            } else {
+                printf("\033[1;34m[gpg_sig]\033[0m \033[1;33mSkipped\033[0m for %s (no signature found)\n", pkg_info.package_name);
+            }
+        }
 
         // MD5 Verification
         extern bool g_md5_checks;

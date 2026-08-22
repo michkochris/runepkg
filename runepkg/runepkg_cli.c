@@ -695,7 +695,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "verify") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
-                printf("Feature Pending: Cryptographic verification for '%s' is not yet implemented.\n", argv[i+1]);
+                handle_verify_package(argv[i+1]);
                 i++;
             } else {
                 printf("Error: verify command requires a package name.\n");

@@ -54,6 +54,7 @@ void handle_print_config_file(void);
 void handle_print_pkglist_file(void);
 void handle_version(void);
 void handle_update_pkglist(void);
+void handle_verify_package(const char *package_name);
 
 /* Completion and install APIs are declared in runepkg_completion.h
  * and runepkg_install.h respectively. */

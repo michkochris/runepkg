@@ -38,6 +38,7 @@ extern char *g_download_dir;
 extern char *g_build_dir;
 extern char *g_debs_dir;
 extern bool g_md5_checks;
+extern bool g_verify_signatures;
 
 /* When true (default), delete per-package extraction trees under control_dir after install/skip paths. */
 extern bool g_cleanup_extract_dirs;
