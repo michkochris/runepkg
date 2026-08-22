@@ -112,12 +112,14 @@ public:
         // Efficiency: Skip extraction if source tree already exists
         fs::path debian_dir = working_dir_ / "debian";
         if (fs::exists(debian_dir)) {
-            std::cout << "\033[1;32m[build]\033[0m Source already extracted at " << working_dir_ << ". Skipping extraction." << std::endl;
+            std::cout << "\033[1;34m[runepkg]\033[0m Source already extracted at " << working_dir_.string() << ". Skipping extraction." << std::endl;
             find_source_root();
+            std::cout << "\033[1;32m[success]\033[0m Runes for " << source_name_ << " unearthed at " << source_tree_root_.string() << std::endl;
             return 0;
         }
 
         if (!extract_source()) return -1;
+        std::cout << "\033[1;32m[success]\033[0m Runes for " << source_name_ << " unearthed at " << source_tree_root_.string() << std::endl;
         return 0;
     }
 
@@ -501,7 +503,7 @@ private:
     bool extract_source() {
         fs::path dsc_dir = fs::path(dsc_path_).parent_path();
 
-        std::cout << "\033[1;34m[build]\033[0m Extracting source " << source_name_ << " (" << version_ << ") to " << working_dir_ << "..." << std::endl;
+        std::cout << "\033[1;34m[runepkg]\033[0m Extracting source " << source_name_ << " " << working_dir_.string() << std::endl;
 
         for (const auto& f : source_files_) {
             fs::path src = dsc_dir / f;
@@ -559,7 +561,6 @@ private:
             }
         }
 
-        std::cout << "  -> Found source tree root: " << source_tree_root_ << std::endl;
 
         // IMPORTANT: Modern Debian packages often put 'debian/' in a separate tarball
         // If 'debian/' directory doesn't exist inside source_tree_root_ but exists in working_dir_, move it.

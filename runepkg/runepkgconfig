@@ -49,11 +49,11 @@ runepkg_debs=/var/lib/runepkg_dir/runepkg_debs
 
 # [cleanup]
 # Automatically delete extraction workspace after installation (yes/no).
-cleanup=yes
+cleanup=no
 
 # [md5_checks]
 # Enable MD5 integrity verification during installation (yes/no).
-md5_checks=yes
+md5_checks=no
 
 # --- Repository Sources ---
 # runepkg supports standard Debian sources.list syntax.
