@@ -1,0 +1,1144 @@
+/*****************************************************************************
+ * Filename:    runepkg_building.cpp
+ * Author:      <michkochris@gmail.com>
+ * Date:        2026-08-26
+ * Description: Debian Source Package Builder & Cross-Rune Forge for runepkg
+ * LICENSE:     GPL v3
+ ******************************************************************************/
+
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <set>
+#include <sstream>
+#include <filesystem>
+#include <algorithm>
+#include <cstring>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <utime.h>
+
+#include "runepkg_cpp_ffi.h"
+
+extern "C" {
+    #include "runepkg_config.h"
+    #include "runepkg_util.h"
+    #include "runepkg_handle.h"
+    #include "runepkg_storage.h"
+}
+
+namespace fs = std::filesystem;
+
+class DependencyFilter {
+public:
+    static bool is_host_build_tool(const std::string& pkg) {
+        static const std::set<std::string> host_tools = {
+            "debhelper", "debhelper-compat", "dpkg-dev", "quilt", "dh-autoreconf",
+            "dh-strip-nondeterminism", "autotools-dev", "automake", "autoconf",
+            "m4", "bison", "flex", "gettext", "pkg-config", "pkgconf", "make",
+            "cmake", "meson", "ninja-build", "help2man", "patch", "patchutils",
+            "diffstat", "po4a", "po-debconf", "chrpath", "gperf", "xsltproc"
+        };
+        if (host_tools.count(pkg)) return true;
+        if (pkg.rfind("dh-", 0) == 0) return true;
+        return false;
+    }
+
+    static bool is_pruned_bloat(const std::string& pkg) {
+        static const std::vector<std::string> prefixes = {
+            "texlive-", "python3-sphinx", "python3-pytest", "doxygen",
+            "asciidoc", "docbook-", "default-jdk", "libghc-", "ocaml-",
+            "ruby-", "node-", "libtest-", "fonts-", "valgrind"
+        };
+        for (const auto& p : prefixes) {
+            if (pkg.rfind(p, 0) == 0) return true;
+        }
+        return false;
+    }
+
+    static bool is_target_library(const std::string& pkg) {
+        if (is_host_build_tool(pkg) || is_pruned_bloat(pkg)) return false;
+        if (pkg.length() > 4 && pkg.substr(pkg.length() - 4) == "-dev") return true;
+        if (pkg.rfind("lib", 0) == 0) return true;
+        return false;
+    }
+
+    static bool is_unwanted_target_package(const std::string& pkg) {
+        if (pkg.rfind("lib32", 0) == 0 || pkg.rfind("lib64", 0) == 0 ||
+            pkg.rfind("libn32", 0) == 0 || pkg.rfind("libx32", 0) == 0) {
+            return true;
+        }
+        if (pkg.length() > 5 && pkg.substr(pkg.length() - 5) == "-udeb") {
+            return true;
+        }
+        return false;
+    }
+
+    static bool is_elf_file(const fs::path& path) {
+        if (!fs::is_regular_file(path)) return false;
+        try {
+            std::ifstream f(path, std::ios::binary);
+            char magic[4];
+            if (f.read(magic, 4) && memcmp(magic, "\x7f" "ELF", 4) == 0) return true;
+        } catch (...) {}
+        return false;
+    }
+};
+
+class SourceBuilder {
+public:
+    SourceBuilder(const std::string& dsc_path) : dsc_path_(dsc_path) {}
+
+    int build(bool split = false, const char* target_pkg = nullptr, bool install_to_sysroot = false) {
+        if (fs::is_directory(dsc_path_)) {
+            source_tree_root_ = dsc_path_;
+            fs::path parent = fs::path(dsc_path_).parent_path();
+            bool dsc_found = false;
+            for (const auto& entry : fs::directory_iterator(parent)) {
+                if (entry.path().extension() == ".dsc") {
+                    std::string old_dsc = dsc_path_;
+                    dsc_path_ = entry.path().string();
+                    if (parse_dsc()) {
+                        dsc_found = true;
+                        break;
+                    }
+                    dsc_path_ = old_dsc;
+                }
+            }
+
+            if (!dsc_found) {
+                if (!parse_metadata_from_tree()) {
+                    std::cerr << "ERROR: Could not determine package metadata from directory " << dsc_path_ << std::endl;
+                    return -1;
+                }
+            }
+
+            working_dir_ = fs::path(dsc_path_).parent_path();
+            std::cout << "\033[1;34m[build]\033[0m Building from source tree: " << source_name_ << " (" << version_ << ")" << std::endl;
+        } else {
+            if (unpack() != 0) return -1;
+        }
+
+        inspect_and_filter_dependencies();
+
+        if (!g_active_profile) {
+            runepkg_config_load_active_state();
+        }
+
+        if (g_active_profile && g_active_profile->sysroot) {
+            std::cout << "\033[1;34m[forge]\033[0m Cross-compiling for target sysroot: " << g_active_profile->sysroot << std::endl;
+            if (build_native(split, target_pkg)) {
+                if (install_to_sysroot) {
+                    std::cout << "  -> \033[1;32m[sysroot]\033[0m Installing contents to " << g_active_profile->sysroot << " ..." << std::endl;
+                    fs::path temp_install_dir = working_dir_ / "temp_install";
+                    if (fs::exists(temp_install_dir)) {
+                        for (const auto& entry : fs::directory_iterator(temp_install_dir)) {
+                            fs::copy(entry.path(), fs::path(g_active_profile->sysroot) / entry.path().filename(), fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+                        }
+                    }
+
+                    try {
+                        fs::path staged_dir = fs::path(g_active_profile->sysroot).parent_path() / "staged";
+                        fs::create_directories(staged_dir);
+                        std::ofstream marker(staged_dir / source_name_);
+                        marker << version_ << std::endl;
+                    } catch (...) {}
+
+                    return 0;
+                }
+                if (collect_results()) return 0;
+            }
+            return -1;
+        }
+
+        if (execute_rules()) {
+            if (collect_results()) return 0;
+        }
+
+        std::cout << "\033[1;33m[build]\033[0m Standard build failed or rules missing. Shifting to Native Build..." << std::endl;
+        if (build_native(split, target_pkg)) {
+            if (collect_results()) return 0;
+        }
+
+        return -1;
+    }
+
+    int unpack() {
+        if (!parse_dsc()) return -1;
+        if (!setup_workspace()) return -1;
+
+        bool already_extracted = false;
+        if (fs::exists(working_dir_ / "debian")) {
+            already_extracted = true;
+            source_tree_root_ = working_dir_;
+        } else {
+            for (const auto& entry : fs::directory_iterator(working_dir_)) {
+                if (entry.is_directory() && fs::exists(entry.path() / "debian")) {
+                    already_extracted = true;
+                    source_tree_root_ = entry.path();
+                    break;
+                }
+            }
+        }
+
+        if (already_extracted) {
+            std::cout << "  -> \033[1;32m[skip]\033[0m Source for " << source_name_ << " already unearched at " << source_tree_root_.filename() << std::endl;
+            return 0;
+        }
+
+        if (!extract_source()) return -1;
+        std::cout << "\033[1;32m[success]\033[0m Runes for " << source_name_ << " unearthed at " << source_tree_root_.string() << std::endl;
+        return 0;
+    }
+
+private:
+    std::string dsc_path_;
+    std::string source_name_;
+    std::string version_;
+    std::string build_depends_;
+    std::vector<std::string> source_files_;
+    fs::path working_dir_;
+    fs::path source_tree_root_;
+
+    void inspect_and_filter_dependencies() {
+        if (build_depends_.empty()) return;
+
+        std::cout << "\033[1;34m[ritual]\033[0m Inspecting alchemical ingredients (build dependencies)..." << std::endl;
+        char **deps = parse_depends(build_depends_.c_str());
+        if (!deps) return;
+
+        std::vector<std::string> host_tools;
+        std::vector<std::string> target_libs;
+        std::vector<std::string> pruned_bloat;
+
+        for (int i = 0; deps[i]; i++) {
+            std::string dep = deps[i];
+            if (DependencyFilter::is_host_build_tool(dep)) {
+                host_tools.push_back(dep);
+            } else if (DependencyFilter::is_pruned_bloat(dep)) {
+                pruned_bloat.push_back(dep);
+            } else if (DependencyFilter::is_target_library(dep)) {
+                target_libs.push_back(dep);
+            }
+            free(deps[i]);
+        }
+        free(deps);
+
+        if (!target_libs.empty()) {
+            std::cout << "  -> Target C/C++ dependencies: ";
+            for (const auto& l : target_libs) std::cout << l << " ";
+            std::cout << std::endl;
+        }
+        if (!host_tools.empty()) {
+            std::cout << "  -> \033[1;36m[host-tools]\033[0m Required on host system: ";
+            for (const auto& t : host_tools) std::cout << t << " ";
+            std::cout << std::endl;
+        }
+        if (!pruned_bloat.empty()) {
+            std::cout << "  -> \033[1;32m[prune]\033[0m Filtered " << pruned_bloat.size() << " non-essential doc/test suites." << std::endl;
+        }
+    }
+
+    struct BinaryPackage {
+        std::string name;
+        std::vector<std::string> control_lines;
+        bool version_found = false;
+    };
+
+    bool check_build_tools() {
+        const char* tools[] = {"make", "ar", "tar"};
+        for (const auto& t : tools) {
+            std::string cmd = "which " + std::string(t) + " > /dev/null 2>&1";
+            if (system(cmd.c_str()) != 0) {
+                std::cerr << "ERROR: Required build tool '" << t << "' not found in PATH." << std::endl;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void sanitize_autotools_timestamps() {
+        std::cout << "  -> Neutralizing autotools timestamp cascades..." << std::endl;
+        time_t base_time = time(nullptr) - 7200;
+
+        auto touch_file = [](const fs::path& p, time_t t) {
+            if (fs::exists(p)) {
+                struct utimbuf ub;
+                ub.actime = t;
+                ub.modtime = t;
+                utime(p.c_str(), &ub);
+            }
+        };
+
+        try {
+            // 1. M4 source definitions and Autoconf sources
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname.rfind(".m4") != std::string::npos || fname == "configure.ac" || fname == "configure.in") {
+                    touch_file(entry.path(), base_time);
+                }
+            }
+
+            // 2. Generated aclocal.m4
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname == "aclocal.m4") {
+                    touch_file(entry.path(), base_time + 10);
+                }
+            }
+
+            // 3. Generated config.h.in / configure
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname == "config.h.in" || fname == "config-h.in" || fname.rfind(".h.in") != std::string::npos) {
+                    touch_file(entry.path(), base_time + 20);
+                }
+                if (fname == "configure") {
+                    touch_file(entry.path(), base_time + 30);
+                }
+            }
+
+            // 4. Makefile.am sources
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname == "Makefile.am") {
+                    touch_file(entry.path(), base_time + 40);
+                }
+            }
+
+            // 5. Generated Makefile.in (MUST be newer than Makefile.am, configure.ac, and aclocal.m4)
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname == "Makefile.in") {
+                    touch_file(entry.path(), base_time + 50);
+                }
+            }
+
+            // 6. Generated Makefile (MUST be newer than Makefile.in and configure)
+            for (const auto& entry : fs::recursive_directory_iterator(source_tree_root_)) {
+                std::string fname = entry.path().filename().string();
+                if (fname == "Makefile") {
+                    touch_file(entry.path(), base_time + 60);
+                }
+            }
+        } catch (...) {}
+    }
+
+    bool build_native(bool split, const char* target_pkg = nullptr) {
+        std::cout << "\033[1;34m[build]\033[0m Starting Native Cross-Rune Build..." << std::endl;
+
+        if (!check_build_tools()) return false;
+
+        sanitize_autotools_timestamps();
+
+        fs::path temp_install_dir = working_dir_ / "temp_install";
+        try {
+            if (fs::exists(temp_install_dir)) fs::remove_all(temp_install_dir);
+            fs::create_directories(temp_install_dir);
+        } catch (const std::exception& e) {
+            std::cerr << "ERROR: Failed to create temp install area: " << e.what() << std::endl;
+            return false;
+        }
+
+        char cwd[PATH_MAX];
+        if (!getcwd(cwd, sizeof(cwd))) return false;
+        if (chdir(source_tree_root_.c_str()) != 0) return false;
+
+        std::string cc_bin = "gcc";
+        std::string cxx_bin = "g++";
+        std::string ar_bin = "ar";
+        std::string ranlib_bin = "ranlib";
+        std::string strip_bin = "strip";
+        std::string readelf_bin = "readelf";
+        std::string cflags_str = "-O2";
+        std::string cxxflags_str = "-O2";
+        std::string ldflags_str = "";
+
+        bool is_static_profile = (g_active_state.active_target && strstr(g_active_state.active_target, "static") != nullptr);
+
+        if (g_active_profile) {
+            std::string cross_bin = g_active_profile->cross_bin ? g_active_profile->cross_bin : "";
+            std::string triplet = g_active_profile->triplet ? g_active_profile->triplet : "";
+
+            if (!cross_bin.empty()) {
+                std::string old_path = getenv("PATH") ? getenv("PATH") : "";
+                setenv("PATH", (cross_bin + ":" + old_path).c_str(), 1);
+            }
+
+            if (g_active_profile->cc) cc_bin = cross_bin.empty() ? g_active_profile->cc : (cross_bin + "/" + g_active_profile->cc);
+            else if (!triplet.empty()) cc_bin = cross_bin + "/" + triplet + "-gcc";
+
+            if (g_active_profile->cxx) cxx_bin = cross_bin.empty() ? g_active_profile->cxx : (cross_bin + "/" + g_active_profile->cxx);
+            else if (!triplet.empty()) cxx_bin = cross_bin + "/" + triplet + "-g++";
+
+            if (g_active_profile->ar) ar_bin = cross_bin.empty() ? g_active_profile->ar : (cross_bin + "/" + g_active_profile->ar);
+            else if (!triplet.empty()) ar_bin = cross_bin + "/" + triplet + "-ar";
+
+            if (g_active_profile->ranlib) ranlib_bin = cross_bin.empty() ? g_active_profile->ranlib : (cross_bin + "/" + g_active_profile->ranlib);
+            else if (!triplet.empty()) ranlib_bin = cross_bin + "/" + triplet + "-ranlib";
+
+            if (g_active_profile->strip) strip_bin = cross_bin.empty() ? g_active_profile->strip : (cross_bin + "/" + g_active_profile->strip);
+            else if (!triplet.empty()) strip_bin = cross_bin + "/" + triplet + "-strip";
+
+            if (g_active_profile->readelf) readelf_bin = cross_bin.empty() ? g_active_profile->readelf : (cross_bin + "/" + g_active_profile->readelf);
+            else if (!triplet.empty()) readelf_bin = cross_bin + "/" + triplet + "-readelf";
+
+            char* env_cflags = getenv("CFLAGS");
+            if (g_active_profile->cflags) {
+                cflags_str = g_active_profile->cflags;
+                if (env_cflags && strstr(env_cflags, "-isystem")) {
+                    cflags_str = std::string(env_cflags) + " " + cflags_str;
+                }
+            } else if (env_cflags) {
+                cflags_str = env_cflags;
+            }
+
+            char* env_cxxflags = getenv("CXXFLAGS");
+            if (g_active_profile->cxxflags) {
+                cxxflags_str = g_active_profile->cxxflags;
+                if (env_cxxflags && strstr(env_cxxflags, "-isystem")) {
+                    cxxflags_str = std::string(env_cxxflags) + " " + cxxflags_str;
+                }
+            } else if (env_cxxflags) {
+                cxxflags_str = env_cxxflags;
+            }
+
+            if (g_active_profile->ldflags) ldflags_str = g_active_profile->ldflags;
+
+            if (g_active_profile->sysroot) {
+                setenv("PKG_CONFIG_SYSROOT_DIR", g_active_profile->sysroot, 1);
+                std::string pkg_lib = std::string(g_active_profile->sysroot) + "/usr/lib/pkgconfig";
+                setenv("PKG_CONFIG_LIBDIR", pkg_lib.c_str(), 1);
+            }
+
+            size_t s_pos = cflags_str.find("-static");
+            if (s_pos != std::string::npos) {
+                cflags_str.erase(s_pos, 7);
+            }
+
+            setenv("CC", cc_bin.c_str(), 1);
+            setenv("CXX", cxx_bin.c_str(), 1);
+            setenv("AR", ar_bin.c_str(), 1);
+            setenv("RANLIB", ranlib_bin.c_str(), 1);
+            setenv("STRIP", strip_bin.c_str(), 1);
+            setenv("READELF", readelf_bin.c_str(), 1);
+            setenv("CFLAGS", cflags_str.c_str(), 1);
+            setenv("CXXFLAGS", cxxflags_str.c_str(), 1);
+
+            unsetenv("LDFLAGS");
+        }
+
+        fs::path log_dir = working_dir_ / "logs";
+        try { fs::create_directories(log_dir); } catch (...) {}
+        std::string config_log = (log_dir / (source_name_ + "_configure.log")).string();
+        std::string build_log = (log_dir / (source_name_ + "_make.log")).string();
+        std::string install_log = (log_dir / (source_name_ + "_install.log")).string();
+
+        // 1. Configure
+        if (fs::exists("configure")) {
+            std::cout << "  -> Running ./configure ..." << std::endl;
+            std::vector<std::string> args = {
+                "./configure",
+                "--prefix=/usr",
+                "--sysconfdir=/etc",
+                "--localstatedir=/var",
+                "AUTOMAKE=true",
+                "ACLOCAL=true",
+                "AUTOCONF=true",
+                "AUTOHEADER=true"
+            };
+
+            if (g_active_profile) {
+                if (g_active_profile->sysroot) {
+                    args.push_back("--with-sysroot=" + std::string(g_active_profile->sysroot));
+                }
+                if (g_active_profile->triplet) {
+                    args.push_back("--host=" + std::string(g_active_profile->triplet));
+                    args.push_back("--build=x86_64-pc-linux-gnu");
+                }
+                if (is_static_profile) {
+                    args.push_back("--enable-static");
+                    args.push_back("--disable-shared");
+                }
+                args.push_back("CC=" + cc_bin);
+                args.push_back("CXX=" + cxx_bin);
+                args.push_back("AR=" + ar_bin);
+                args.push_back("RANLIB=" + ranlib_bin);
+                args.push_back("CFLAGS=" + cflags_str);
+                args.push_back("CXXFLAGS=" + cxxflags_str);
+            }
+
+            std::vector<char*> c_args;
+            for (auto& a : args) c_args.push_back(const_cast<char*>(a.c_str()));
+            c_args.push_back(nullptr);
+
+            if (runepkg_util_execute_command_telemetry("./configure", c_args.data(), config_log.c_str()) != 0) {
+                chmod("./configure", 0755);
+                if (runepkg_util_execute_command_telemetry("./configure", c_args.data(), config_log.c_str()) != 0) {
+                    std::cerr << "ERROR: Configure failed (see " << config_log << ")" << std::endl;
+                    if (chdir(cwd) != 0) perror("rollback chdir failed");
+                    return false;
+                }
+            }
+        }
+
+        // 2. Build & Stage
+        std::cout << "  -> Running make ..." << std::endl;
+
+        if (source_name_ == "bzip2" && is_static_profile) {
+            std::cout << "  -> \033[1;36m[forge-static]\033[0m Forging static bzip2 archive and tools directly..." << std::endl;
+
+            std::vector<std::string> srcs = {
+                "blocksort.c", "huffman.c", "crctable.c", "randtable.c",
+                "compress.c", "decompress.c", "bzlib.c"
+            };
+            std::vector<std::string> objs = {
+                "blocksort.o", "huffman.o", "crctable.o", "randtable.o",
+                "compress.o", "decompress.o", "bzlib.o"
+            };
+
+            for (size_t k = 0; k < srcs.size(); k++) {
+                std::vector<std::string> comp_args = {cc_bin, "-c", srcs[k], "-o", objs[k], "-O2", "-D_FILE_OFFSET_BITS=64"};
+                std::vector<char*> comp_argv;
+                for (auto& a : comp_args) comp_argv.push_back(const_cast<char*>(a.c_str()));
+                comp_argv.push_back(nullptr);
+                if (runepkg_util_execute_command_telemetry(cc_bin.c_str(), comp_argv.data(), build_log.c_str()) != 0) {
+                    std::cerr << "ERROR: Failed compiling " << srcs[k] << " (see " << build_log << ")" << std::endl;
+                    if (chdir(cwd) != 0) perror("rollback chdir failed");
+                    return false;
+                }
+            }
+
+            std::vector<std::string> ar_args = {ar_bin, "cq", "libbz2.a"};
+            ar_args.insert(ar_args.end(), objs.begin(), objs.end());
+            std::vector<char*> ar_argv;
+            for (auto& a : ar_args) ar_argv.push_back(const_cast<char*>(a.c_str()));
+            ar_argv.push_back(nullptr);
+            if (runepkg_util_execute_command_telemetry(ar_bin.c_str(), ar_argv.data(), build_log.c_str()) != 0) {
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+
+            char* ranlib_argv[] = {(char*)ranlib_bin.c_str(), (char*)"libbz2.a", NULL};
+            runepkg_util_execute_command_telemetry(ranlib_bin.c_str(), ranlib_argv, build_log.c_str());
+
+            std::vector<std::string> bz_args = {cc_bin, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2", "bzip2.c", "libbz2.a"};
+            std::vector<char*> bz_argv;
+            for (auto& a : bz_args) bz_argv.push_back(const_cast<char*>(a.c_str()));
+            bz_argv.push_back(nullptr);
+            if (runepkg_util_execute_command_telemetry(cc_bin.c_str(), bz_argv.data(), build_log.c_str()) != 0) {
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+
+            std::vector<std::string> rec_args = {cc_bin, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2recover", "bzip2recover.c"};
+            std::vector<char*> rec_argv;
+            for (auto& a : rec_args) rec_argv.push_back(const_cast<char*>(a.c_str()));
+            rec_argv.push_back(nullptr);
+            if (runepkg_util_execute_command_telemetry(cc_bin.c_str(), rec_argv.data(), build_log.c_str()) != 0) {
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+
+            fs::path bin_dest = temp_install_dir / "usr" / "bin";
+            fs::path lib_dest = temp_install_dir / "usr" / "lib";
+            fs::path inc_dest = temp_install_dir / "usr" / "include";
+            fs::create_directories(bin_dest);
+            fs::create_directories(lib_dest);
+            fs::create_directories(inc_dest);
+
+            fs::copy_file("libbz2.a", lib_dest / "libbz2.a", fs::copy_options::overwrite_existing);
+            fs::copy_file("bzlib.h", inc_dest / "bzlib.h", fs::copy_options::overwrite_existing);
+            fs::copy_file("bzip2", bin_dest / "bzip2", fs::copy_options::overwrite_existing);
+            fs::copy_file("bzip2recover", bin_dest / "bzip2recover", fs::copy_options::overwrite_existing);
+
+            std::error_code ec;
+            fs::create_symlink("bzip2", bin_dest / "bunzip2", ec);
+            fs::create_symlink("bzip2", bin_dest / "bzcat", ec);
+
+            chmod((bin_dest / "bzip2").c_str(), 0755);
+            chmod((bin_dest / "bzip2recover").c_str(), 0755);
+
+        } else {
+            std::vector<std::string> make_args = {
+                "make",
+                "AUTOMAKE=true",
+                "ACLOCAL=true",
+                "AUTOCONF=true",
+                "AUTOHEADER=true"
+            };
+            if (g_active_profile) {
+                make_args.push_back("CC=" + cc_bin);
+                make_args.push_back("CXX=" + cxx_bin);
+                make_args.push_back("AR=" + ar_bin);
+                make_args.push_back("RANLIB=" + ranlib_bin);
+                make_args.push_back("STRIP=" + strip_bin);
+                make_args.push_back("CFLAGS=" + cflags_str);
+                make_args.push_back("CXXFLAGS=" + cxxflags_str);
+
+                if (is_static_profile) {
+                    make_args.push_back("AM_LDFLAGS=-static -all-static");
+                }
+            }
+            std::vector<char*> argv_make;
+            for (auto& a : make_args) argv_make.push_back(const_cast<char*>(a.c_str()));
+            argv_make.push_back(nullptr);
+
+            if (runepkg_util_execute_command_telemetry("make", argv_make.data(), build_log.c_str()) != 0) {
+                std::cerr << "ERROR: Make failed (see " << build_log << ")" << std::endl;
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+
+            std::cout << "  -> Running make install DESTDIR=" << temp_install_dir << " ..." << std::endl;
+            std::string dest_arg = "DESTDIR=" + temp_install_dir.string();
+            std::string prefix_arg = "PREFIX=" + temp_install_dir.string() + "/usr";
+            std::vector<std::string> install_args = {
+                "make",
+                "install",
+                dest_arg,
+                prefix_arg,
+                "AUTOMAKE=true",
+                "ACLOCAL=true",
+                "AUTOCONF=true",
+                "AUTOHEADER=true"
+            };
+            if (g_active_profile) {
+                install_args.push_back("CC=" + cc_bin);
+                install_args.push_back("CXX=" + cxx_bin);
+                install_args.push_back("AR=" + ar_bin);
+                install_args.push_back("RANLIB=" + ranlib_bin);
+                install_args.push_back("STRIP=" + strip_bin);
+            }
+            std::vector<char*> argv_install;
+            for (auto& a : install_args) argv_install.push_back(const_cast<char*>(a.c_str()));
+            argv_install.push_back(nullptr);
+
+            if (runepkg_util_execute_command_telemetry("make", argv_install.data(), install_log.c_str()) != 0) {
+                std::cerr << "ERROR: Install to temp area failed (see " << install_log << ")" << std::endl;
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+        }
+
+        if (chdir(cwd) != 0) perror("chdir failed");
+
+        // 3.5 Manual strip of ELF files
+        if (g_active_profile && !strip_bin.empty()) {
+            std::cout << "  -> \033[1;36m[strip]\033[0m Forcing final rune stripping..." << std::endl;
+            for (const auto& entry : fs::recursive_directory_iterator(temp_install_dir)) {
+                if (DependencyFilter::is_elf_file(entry.path())) {
+                    char* argv_strip[] = {(char*)strip_bin.c_str(), (char*)entry.path().string().c_str(), NULL};
+                    if (runepkg_util_execute_command_silent(strip_bin.c_str(), argv_strip) != 0) {
+                        std::cerr << "     \033[1;33m[warning]\033[0m Stripping failed for: " << entry.path().filename() << std::endl;
+                    }
+                }
+            }
+        }
+
+        // 4. Parse debian/control
+        std::vector<BinaryPackage> packages;
+        fs::path src_control = source_tree_root_ / "debian" / "control";
+        if (fs::exists(src_control)) {
+            std::ifstream in(src_control);
+            std::string line;
+            BinaryPackage* current_pkg = nullptr;
+            while (std::getline(in, line)) {
+                if (!line.empty() && line.back() == '\r') line.pop_back();
+
+                if (line.compare(0, 8, "Package:") == 0) {
+                    packages.emplace_back();
+                    current_pkg = &packages.back();
+                    current_pkg->name = line.substr(8);
+                    current_pkg->name.erase(0, current_pkg->name.find_first_not_of(" \t"));
+                }
+
+                if (current_pkg) {
+                    if (line.empty()) {
+                        current_pkg = nullptr;
+                        continue;
+                    }
+
+                    if (line.compare(0, 8, "Version:") == 0) current_pkg->version_found = true;
+
+                    if (line.find("${") != std::string::npos) {
+                        size_t pos;
+                        while ((pos = line.find("${")) != std::string::npos) {
+                            size_t end_pos = line.find("}", pos);
+                            if (end_pos != std::string::npos) {
+                                size_t match_len = end_pos - pos + 1;
+                                size_t start = pos;
+                                while (start > 0 && (line[start-1] == ' ' || line[start-1] == ',')) { start--; match_len++; }
+                                while (pos + match_len < line.length() && (line[pos+match_len] == ' ' || line[pos+match_len] == ',')) { match_len++; }
+                                line.erase(start, match_len);
+                            } else break;
+                        }
+                        size_t last_val = line.find_last_not_of(" ,");
+                        if (last_val != std::string::npos) line = line.substr(0, last_val + 1);
+                        if (line.length() <= 8 || line.back() == ':') continue;
+                    }
+
+                    if (line.compare(0, 13, "Architecture:") == 0 && line.find("any") != std::string::npos) {
+                        std::string arch = (g_active_profile && g_active_profile->deb_host_arch) ? g_active_profile->deb_host_arch : "amd64";
+                        current_pkg->control_lines.push_back("Architecture: " + arch);
+                    } else {
+                        current_pkg->control_lines.push_back(line);
+                    }
+                }
+            }
+        }
+
+        if (packages.empty()) {
+            BinaryPackage synth;
+            synth.name = source_name_;
+            synth.control_lines.push_back("Package: " + source_name_);
+            synth.control_lines.push_back("Architecture: " + std::string(g_active_profile && g_active_profile->deb_host_arch ? g_active_profile->deb_host_arch : "amd64"));
+            synth.control_lines.push_back("Description: Synthesized rune package forged by runepkg");
+            packages.push_back(synth);
+        }
+
+        // 5. Create .deb packages with FHS preservation
+        if (!split) {
+            fs::path classic_staging = working_dir_ / "staging_classic";
+            fs::path classic_data = classic_staging / "data";
+            if (fs::exists(classic_staging)) fs::remove_all(classic_staging);
+            fs::create_directories(classic_data);
+
+            for (const auto& entry : fs::directory_iterator(temp_install_dir)) {
+                fs::copy(entry.path(), classic_data / entry.path().filename(), fs::copy_options::recursive);
+            }
+            return create_deb_from_pkg(packages[0], classic_staging);
+        } else {
+            bool success = true;
+            int forged_count = 0;
+            for (auto& pkg : packages) {
+                if (target_pkg != nullptr && pkg.name != target_pkg) continue;
+                if (g_active_profile && DependencyFilter::is_unwanted_target_package(pkg.name)) {
+                    continue;
+                }
+                forged_count++;
+
+                fs::path pkg_staging = working_dir_ / ("staging_" + pkg.name);
+                fs::path pkg_data = pkg_staging / "data";
+                fs::path pkg_control = pkg_staging / "control";
+                if (fs::exists(pkg_staging)) fs::remove_all(pkg_staging);
+                fs::create_directories(pkg_data);
+                fs::create_directories(pkg_control);
+
+                fs::path install_file = source_tree_root_ / "debian" / (pkg.name + ".install");
+                if (fs::exists(install_file)) {
+                    std::ifstream ins(install_file);
+                    std::string pattern;
+                    while (std::getline(ins, pattern)) {
+                        if (pattern.empty() || pattern[0] == '#') continue;
+                        std::string src_pattern = pattern;
+                        std::string dest_subpath = "";
+                        size_t space = pattern.find_last_of(" \t");
+                        if (space != std::string::npos) {
+                            src_pattern = pattern.substr(0, space);
+                            dest_subpath = pattern.substr(space + 1);
+                        }
+
+                        if (src_pattern.rfind("./", 0) == 0) src_pattern = src_pattern.substr(2);
+                        if (!src_pattern.empty() && src_pattern[0] == '/') src_pattern = src_pattern.substr(1);
+
+                        try {
+                            fs::path full_src = temp_install_dir / src_pattern;
+                            fs::path target_rel = (dest_subpath.empty() || dest_subpath == ".") ? fs::path(src_pattern) : (fs::path(dest_subpath) / fs::path(src_pattern).filename());
+                            fs::path full_dest = pkg_data / target_rel;
+
+                            if (fs::exists(full_src)) {
+                                if (fs::is_directory(full_src)) {
+                                    fs::create_directories(full_dest);
+                                    fs::copy(full_src, full_dest, fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+                                } else {
+                                    fs::create_directories(full_dest.parent_path());
+                                    fs::copy_file(full_src, full_dest, fs::copy_options::overwrite_existing);
+                                }
+                            }
+                        } catch (...) {}
+                    }
+                } else if (&pkg == &packages[0]) {
+                    for (const auto& entry : fs::directory_iterator(temp_install_dir)) {
+                        fs::copy(entry.path(), pkg_data / entry.path().filename(), fs::copy_options::recursive | fs::copy_options::overwrite_existing);
+                    }
+                }
+
+                if (!create_deb_from_pkg(pkg, pkg_staging)) success = false;
+            }
+
+            if (target_pkg != nullptr && forged_count == 0) {
+                std::cerr << "runepkg: Package '" << target_pkg << "' not found in debian/control stanzas" << std::endl;
+                return false;
+            }
+
+            return success;
+        }
+    }
+
+    std::string resolve_soname_to_package(const std::string& soname) {
+        if (soname.find("libc.so") != std::string::npos) return "musl";
+        if (soname.find("libm.so") != std::string::npos) return "musl";
+        if (soname.find("libz.so") != std::string::npos) return "zlib1g";
+        if (soname.find("libssl.so") != std::string::npos) return "libssl3";
+        if (soname.find("libcrypto.so") != std::string::npos) return "libssl3";
+
+        size_t last_dot = soname.find_last_of('.');
+        if (last_dot != std::string::npos && last_dot > 3) {
+            return soname.substr(0, last_dot);
+        }
+        return soname;
+    }
+
+    bool create_deb_from_pkg(BinaryPackage& pkg, const fs::path& staging_dir) {
+        fs::path data_dir = staging_dir / "data";
+        std::set<std::string> runtime_deps;
+
+        if (g_active_profile && fs::exists(data_dir)) {
+            std::cout << "  -> Resolving runtime dependencies for " << pkg.name << "..." << std::endl;
+            for (const auto& entry : fs::recursive_directory_iterator(data_dir)) {
+                if (!entry.is_regular_file()) continue;
+
+                std::ifstream f(entry.path(), std::ios::binary);
+                char magic[4];
+                f.read(magic, 4);
+                if (f.gcount() == 4 && memcmp(magic, "\x7f\x45\x4c\x46", 4) == 0) {
+                    char **deps = nullptr;
+                    int count = 0;
+                    if (runepkg_util_get_elf_dependencies(entry.path().c_str(), g_active_profile->readelf, &deps, &count) == 0) {
+                        for (int i = 0; i < count; i++) {
+                            std::string dep_pkg = resolve_soname_to_package(deps[i]);
+                            if (!dep_pkg.empty() && dep_pkg != "musl") runtime_deps.insert(dep_pkg);
+                            free(deps[i]);
+                        }
+                        free(deps);
+                    }
+                }
+            }
+        }
+
+        fs::path control_dir = staging_dir / "control";
+        fs::create_directories(control_dir);
+        fs::path dest_control = control_dir / "control";
+
+        std::ofstream out(dest_control);
+        std::string existing_depends;
+        for (const auto& l : pkg.control_lines) {
+            if (l.compare(0, 9, "Depends: ") == 0) {
+                existing_depends = l.substr(9);
+                continue;
+            }
+            if (l.compare(0, 13, "Architecture:") == 0 && g_active_profile && g_active_profile->deb_host_arch) {
+                out << "Architecture: " << g_active_profile->deb_host_arch << "\n";
+            } else {
+                out << l << "\n";
+            }
+        }
+
+        if (!pkg.version_found) out << "Version: " << version_ << "\n";
+
+        if (!runtime_deps.empty()) {
+            if (!existing_depends.empty()) existing_depends += ", ";
+            for (auto it = runtime_deps.begin(); it != runtime_deps.end(); ++it) {
+                existing_depends += *it;
+                if (std::next(it) != runtime_deps.end()) existing_depends += ", ";
+            }
+        }
+        if (!existing_depends.empty()) out << "Depends: " << existing_depends << "\n";
+
+        out.close();
+
+        std::cout << "  -> Assembling " << pkg.name << "..." << std::endl;
+        std::string arch = (g_active_profile && g_active_profile->deb_host_arch) ? g_active_profile->deb_host_arch : "amd64";
+        std::string out_deb_name = pkg.name + "_" + version_ + "_" + arch + ".deb";
+        fs::path out_deb_path = working_dir_ / out_deb_name;
+
+        if (runepkg_util_create_deb(staging_dir.c_str(), out_deb_path.c_str()) != 0) {
+            std::cerr << "ERROR: Assembly failed for " << pkg.name << std::endl;
+            return false;
+        }
+        return true;
+    }
+
+    bool parse_metadata_from_tree() {
+        if (!fs::exists(source_tree_root_ / "debian")) {
+            for (const auto& entry : fs::directory_iterator(source_tree_root_)) {
+                if (entry.is_directory() && fs::exists(entry.path() / "debian")) {
+                    source_tree_root_ = entry.path();
+                    break;
+                }
+            }
+        }
+
+        fs::path control_path = source_tree_root_ / "debian" / "control";
+        fs::path changelog_path = source_tree_root_ / "debian" / "changelog";
+
+        if (fs::exists(control_path)) {
+            char *pkg = runepkg_util_get_config_value(control_path.c_str(), "Source", ':');
+            if (!pkg) pkg = runepkg_util_get_config_value(control_path.c_str(), "Package", ':');
+
+            if (pkg) {
+                source_name_ = pkg;
+                free(pkg);
+            }
+
+            char *bd = runepkg_util_get_config_value(control_path.c_str(), "Build-Depends", ':');
+            if (bd) { if (!build_depends_.empty()) build_depends_ += ", "; build_depends_ += bd; free(bd); }
+            bd = runepkg_util_get_config_value(control_path.c_str(), "Build-Depends-Arch", ':');
+            if (bd) { if (!build_depends_.empty()) build_depends_ += ", "; build_depends_ += bd; free(bd); }
+            bd = runepkg_util_get_config_value(control_path.c_str(), "Build-Depends-Indep", ':');
+            if (bd) { if (!build_depends_.empty()) build_depends_ += ", "; build_depends_ += bd; free(bd); }
+        }
+
+        if (fs::exists(changelog_path)) {
+            std::ifstream in(changelog_path);
+            std::string line;
+            if (std::getline(in, line)) {
+                size_t open_paren = line.find('(');
+                size_t close_paren = line.find(')', open_paren);
+                if (open_paren != std::string::npos && close_paren != std::string::npos) {
+                    version_ = line.substr(open_paren + 1, close_paren - open_paren - 1);
+                    if (source_name_.empty()) {
+                        source_name_ = line.substr(0, open_paren);
+                        source_name_.erase(source_name_.find_last_not_of(" \t") + 1);
+                    }
+                }
+            }
+        }
+
+        return !source_name_.empty() && !version_.empty();
+    }
+
+    bool parse_dsc() {
+        std::ifstream file(dsc_path_);
+        if (!file.is_open()) {
+            std::cerr << "ERROR: Could not open DSC file: " << dsc_path_ << std::endl;
+            return false;
+        }
+
+        std::string line;
+        bool in_files = false;
+        while (std::getline(file, line)) {
+            if (!line.empty() && line.back() == '\r') line.pop_back();
+
+            if (line.compare(0, 8, "Source: ") == 0) {
+                source_name_ = line.substr(8);
+                source_name_.erase(source_name_.find_last_not_of(" \n\r\t") + 1);
+            } else if (line.compare(0, 9, "Version: ") == 0) {
+                version_ = line.substr(9);
+                version_.erase(version_.find_last_not_of(" \n\r\t") + 1);
+            } else if (line.compare(0, 15, "Build-Depends: ") == 0 ||
+                       line.compare(0, 20, "Build-Depends-Arch: ") == 0 ||
+                       line.compare(0, 21, "Build-Depends-Indep: ") == 0) {
+                size_t colon = line.find(':');
+                std::string val = line.substr(colon + 1);
+                val.erase(0, val.find_first_not_of(" \t"));
+                val.erase(val.find_last_not_of(" \n\r\t") + 1);
+                if (!build_depends_.empty()) build_depends_ += ", ";
+                build_depends_ += val;
+            } else if (line.compare(0, 6, "Files:") == 0) {
+                in_files = true;
+            } else if (in_files && !line.empty() && line[0] == ' ') {
+                std::stringstream ss(line);
+                std::string hash, size, filename;
+                ss >> hash >> size >> filename;
+                if (!filename.empty()) {
+                    filename.erase(std::remove_if(filename.begin(), filename.end(), ::iscntrl), filename.end());
+                    source_files_.push_back(filename);
+                }
+            } else if (in_files && !line.empty() && line[0] != ' ') {
+                in_files = false;
+            }
+        }
+
+        return !source_name_.empty() && !version_.empty();
+    }
+
+    bool setup_workspace() {
+        if (!g_build_dir) {
+            std::cerr << "ERROR: build_dir not configured" << std::endl;
+            return false;
+        }
+
+        std::string safe_version = version_;
+        std::replace(safe_version.begin(), safe_version.end(), ':', '_');
+
+        working_dir_ = fs::path(g_build_dir) / (source_name_ + "-" + safe_version + "-src");
+        try {
+            if (!fs::exists(working_dir_)) {
+                fs::create_directories(working_dir_);
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "ERROR: Failed to create workspace: " << e.what() << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    bool extract_source() {
+        fs::path dsc_dir = fs::path(dsc_path_).parent_path();
+
+        std::cout << "\033[1;34m[runepkg]\033[0m Extracting source " << source_name_ << " " << working_dir_.string() << std::endl;
+
+        for (const auto& f : source_files_) {
+            fs::path src = dsc_dir / f;
+            if (!fs::exists(src)) {
+                std::cerr << "ERROR: Source component missing: " << src << std::endl;
+                return false;
+            }
+
+            bool is_archive = false;
+            if (f.find(".tar.") != std::string::npos && f.find(".asc") == std::string::npos) {
+                is_archive = true;
+            }
+
+            if (is_archive) {
+                std::cout << "  -> \033[1;32m[extract]\033[0m " << f << "..." << std::endl;
+                char* argv[] = {(char*)"tar", (char*)"--force-local", (char*)"-xf", (char*)src.c_str(), (char*)"-C", (char*)working_dir_.c_str(), NULL};
+                if (runepkg_util_execute_command_silent("tar", argv) != 0) {
+                    std::cerr << "ERROR: Failed to extract " << f << std::endl;
+                    return false;
+                }
+            }
+        }
+
+        for (const auto& entry : fs::directory_iterator(working_dir_)) {
+            if (entry.is_directory()) {
+                std::string name = entry.path().filename().string();
+                if (name == "debian") continue;
+                if (name.find(source_name_) != std::string::npos) {
+                    source_tree_root_ = entry.path();
+                    break;
+                }
+                if (source_tree_root_.empty()) source_tree_root_ = entry.path();
+            }
+        }
+
+        if (source_tree_root_.empty()) {
+            if (fs::exists(working_dir_ / "debian")) {
+                source_tree_root_ = working_dir_;
+            } else {
+                std::cerr << "ERROR: Could not find extracted source tree" << std::endl;
+                return false;
+            }
+        }
+
+        fs::path debian_dir = source_tree_root_ / "debian";
+        fs::path outside_debian = working_dir_ / "debian";
+        if (!fs::exists(debian_dir) && fs::exists(outside_debian)) {
+            std::cout << "  -> Integrating debian/ directory into source tree..." << std::endl;
+            try {
+                fs::rename(outside_debian, debian_dir);
+            } catch (const std::exception& e) {
+                std::cerr << "ERROR: Failed to integrate debian/ directory: " << e.what() << std::endl;
+                return false;
+            }
+        }
+
+        fs::path patches_dir = debian_dir / "patches";
+        if (fs::exists(patches_dir / "series")) {
+            std::cout << "  -> \033[1;35m[patch]\033[0m Applying Debian source patches..." << std::endl;
+            char cwd[PATH_MAX];
+            if (getcwd(cwd, sizeof(cwd))) {
+                if (chdir(source_tree_root_.c_str()) == 0) {
+                    char* argv[] = {(char*)"quilt", (char*)"push", (char*)"-a", NULL};
+                    if (runepkg_util_execute_command_silent("quilt", argv) != 0) {
+                        std::ifstream series(patches_dir / "series");
+                        std::string patch;
+                        while (std::getline(series, patch)) {
+                            if (patch.empty() || patch[0] == '#') continue;
+                            std::cout << "     \033[1;34m*\033[0m Applying: " << patch << std::endl;
+                            std::string patch_path = (patches_dir / patch).string();
+                            char* p_argv[] = {(char*)"patch", (char*)"-p1", (char*)"-f", (char*)"--no-backup-if-mismatch", (char*)"-i", (char*)patch_path.c_str(), NULL};
+                            if (runepkg_util_execute_command_silent("patch", p_argv) != 0) {
+                                p_argv[1] = (char*)"-p2";
+                                runepkg_util_execute_command_silent("patch", p_argv);
+                            }
+                        }
+                    }
+                    if (chdir(cwd) != 0) perror("chdir rollback failed");
+                }
+            }
+        }
+
+        sanitize_autotools_timestamps();
+        return true;
+    }
+
+    bool execute_rules() {
+        if (!fs::exists(source_tree_root_ / "debian" / "rules")) return false;
+
+        std::cout << "\033[1;34m[build]\033[0m Attempting standard debian/rules build..." << std::endl;
+
+        char cwd[PATH_MAX];
+        if (!getcwd(cwd, sizeof(cwd))) return false;
+
+        if (chdir(source_tree_root_.c_str()) != 0) return false;
+
+        char* argv[] = {(char*)"debian/rules", (char*)"binary", NULL};
+        if (runepkg_util_execute_command("/usr/bin/make", argv) != 0) {
+            if (runepkg_util_execute_command("./debian/rules", argv + 1) != 0) {
+                std::cerr << "ERROR: Build failed (debian/rules binary)" << std::endl;
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
+        }
+
+        if (chdir(cwd) != 0) perror("chdir failed");
+        return true;
+    }
+
+    bool collect_results() {
+        if (!g_debs_dir) return false;
+
+        std::cout << "\033[1;34m[build]\033[0m Collecting built packages..." << std::endl;
+
+        int found = 0;
+        for (const auto& entry : fs::directory_iterator(working_dir_)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".deb") {
+                fs::path dest = fs::path(g_debs_dir) / entry.path().filename();
+                try {
+                    fs::rename(entry.path(), dest);
+                    std::cout << "\033[1;32m[build]\033[0m Successfully built package: " << dest.string() << std::endl;
+                    found++;
+                } catch (const std::exception& e) {
+                    std::cerr << "ERROR: Failed to move " << entry.path().filename() << " to " << g_debs_dir << ": " << e.what() << std::endl;
+                }
+            }
+        }
+
+        if (found == 0) {
+            std::cerr << "WARNING: No .deb files found after build" << std::endl;
+            return false;
+        }
+
+        runepkg_storage_build_autocomplete_index();
+        return true;
+    }
+};
+
+extern "C" int runepkg_source_build(const char *dsc_path) {
+    if (!dsc_path) return -1;
+    SourceBuilder builder(dsc_path);
+    return builder.build(false, nullptr);
+}
+
+extern "C" int runepkg_source_build_split(const char *dsc_path, const char *target_pkg) {
+    if (!dsc_path) return -1;
+    SourceBuilder builder(dsc_path);
+    return builder.build(true, target_pkg, false);
+}
+
+extern "C" int runepkg_source_build_sysroot(const char *dsc_path) {
+    if (!dsc_path) return -1;
+    SourceBuilder builder(dsc_path);
+    return builder.build(false, nullptr, true);
+}
+
+extern "C" int runepkg_source_unpack(const char *dsc_path) {
+    if (!dsc_path) return -1;
+    SourceBuilder builder(dsc_path);
+    return builder.unpack();
+}

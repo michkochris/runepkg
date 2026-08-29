@@ -1,0 +1,58 @@
+
+# command/usage...
+# notes: build-tollchain --target=<target> compiles build dependencies of target <pkg's>
+# target <pkg's> are isolated debian compatable package .deb's with only runtime dependencies included...
+# this creates a flow for embedded developer, and clean insertion/deployment of only runtime pkg's into embedded system space
+#
+# the plan is build-toolchain --target=<target-profile> along with target pkg's and runtime depends
+# in one go, one command, later a user can runepkg switch --target=<profile> this allows for user to resume
+# other runepkg commands like runepkg source <some-pkg> and runepkg build/buildpkg-split
+# a build-dependency resolver will be needed to add pkg's and libraries to /mnt/runepkg/<target-profile>
+#
+# 
+#
+runepkg build-toolchain --target=<profile> <pkg> <pkg> <pkg> <pkg> <pkg>
+# chart--------------------------------------------------------------------
+# build-toolchain --target=<profile>        ||||  <pkg> <pkg> <pkg> <pkg> <pkg>
+destructable			            ||||  target <pkg's> are debian compatable .deb's of target architecture & libc
+we dont keep track		            ||||  gets spit out into the runepkg_debs directory in active config...
+never any .deb's		            ||||  this area must rely on runtime dependencies to keep host embedded system clean
+never any .deb creation		            ||||  again debian comapatable .deb's, naming convention, ext...
+after runepkg source <pkg>                  ||||
+runepkg inteligently edit "only" debian rules ||
+and needed files,                           ||||
+with clever sed commands and such           ||||
+tries to install to:                        ||||
+resides in /mnt/runepkg/<target-profile>    ||||  
+profile of <target-profile>:
+symlink to / when building
+along with needed system variables
+similar to cross linux from scratch
+activated via a runepkg switch command
+runepkg switch --target=<profile>
+runepkg --print-profile prints 
+current target profile
+runepkg switch --reset can reset the env
+back to the host system
+
+determines whats needed for main job
+build-depends-pool of all target <pkg's>
+
+there is a state memory helper in place
+that helps runepkg remember the mmap repo
+info and current config even after a reboot 
+on some weird system, the config registry went 
+in /etc/runepkg next to defualt config.
+we can have active target registry in place
+as a safe guard...
+
+we keep runepkg system load factor based
+meaning no concurrent compiling
+just one by one and maybe we can create a 
+load factor based on cpu/ram
+
+logging can go in a specific directory
+specified in defualt runepkgconfig, called
+log_dir=/var/lib/runepkg_dir/log_dir
+
+

@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#/******************************************************************************
+# * Filename:    011-gcc-pass1
+# * Author:      <michkochris@gmail.com>
+# * Description: GCC Pass 1 (Bootstrap) for the crosstools
+# ******************************************************************************/
+
+. ./somelinuxconfig
+somelinux_ensure_loaded
+
+# --- Build Configuration ---
+# Find the rules file dynamically
+RULES_PATH=$(find "$SOMESRC" -path "*/gcc-14-*/debian/rules" | head -n 1)
+
+if [[ -f "$RULES_PATH" ]]; then
+    echo "  [config] Updating debian/rules for GCC Pass 1..."
+    cat << EOF > "$RULES_PATH"
+#!/usr/bin/make -f
+LDFLAGS += $(FORGE_LDFLAGS)
+%:
+	dh \$@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \\
+		--target=\$(CLFS_TARGET) \\
+		--prefix=/crosstools \\
+		--with-sysroot=\$(CLFS) \\
+		--with-newlib \\
+		--without-headers \\
+		--with-local-prefix=/crosstools \\
+		--with-native-system-header-dir=/usr/include \\
+		--disable-nls \\
+		--disable-shared \\
+		--disable-multilib \\
+		--disable-decimal-float \\
+		--disable-threads \\
+		--disable-libatomic \\
+		--disable-libgomp \\
+		--disable-libquadmath \\
+		--disable-libssp \\
+		--disable-libvtv \\
+		--disable-libstdcxx \\
+		--enable-languages=c \\
+		--with-gmp=/crosstools \\
+		--with-mpfr=/crosstools \\
+		--with-mpc=/crosstools \\
+		--with-isl=/crosstools \\
+		LDFLAGS="\$(LDFLAGS)"
+EOF
+    chmod +x "$RULES_PATH"
+
+    echo "  [config] Adjusting .install files..."
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|^usr/|crosstools/|g" {} +
+fi
+
+# --- Build Automation ---
+echo "  [forge] Ritual initiated: assembly of gcc-crosstools-bootstrap..."
+runepkg buildpkg-split "gcc-14"
+
+somelinux_exit "The forge ritual for gcc-crosstools-bootstrap is complete." 0

@@ -1,0 +1,106 @@
+# ******************************************************************************
+# * Filename:    runepkgconfig
+# * Author:      <michkochris@gmail.com>
+# * Date:        2025-05-12 (Updated 2026-08-24)
+# * Description: Professional configuration for runepkg package manager
+# ******************************************************************************/
+
+# [IMPORTANT]
+# - Do NOT leave a trailing forward slash (/) at the end of paths.
+# - Use absolute Linux path names.
+# - The system-wide location for this file is: /etc/runepkg/runepkgconfig
+
+# --- Path Expansion Features ---
+# runepkg supports dynamic expansion for all path settings:
+#
+# 1. Tilde Expansion (~):
+#    Expands to the current user's HOME directory.
+#    Example: runepkg_dir=~/runepkg_dir
+#
+# 2. Variable Expansion (${VAR}):
+#    Expands environment variables.
+#    Example: runepkg_db=${HOME}/.runepkg/db
+#
+# 3. Command Expansion (${pwd}):
+#    Expands to the current working directory where runepkg is executed.
+#    Example: install_dir=${pwd}/local_root
+
+# --- Environment Variables ---
+# RUNEPKG_CONFIG_PATH:
+#   Points to a custom location for this configuration file.
+#   Example: export RUNEPKG_CONFIG_PATH=$HOME/.runepkg/config
+
+# --- Core Paths (FHS Compliant) ---
+
+# [runepkg_dir]
+# The primary base directory for runepkg tool data.
+runepkg_dir=/var/lib/runepkg_dir
+
+# [control_dir]
+# Temporary workspace where .deb control archives are extracted for processing.
+control_dir=/var/lib/runepkg_dir/control_dir
+
+# [install_dir]
+# The target root for package installation (set to '/' for system-wide).
+install_dir=/var/lib/runepkg_dir/install_dir
+
+# [runepkg_db]
+# Persistent storage for the package manager's state.
+runepkg_db=/var/lib/runepkg_dir/runepkg_db
+
+# [download_dir]
+# Cache directory where downloaded .deb files are stored.
+download_dir=/var/lib/runepkg_dir/download_dir
+
+# [build_dir]
+# Standard workspace for building and unpacking packages locally.
+build_dir=/var/lib/runepkg_dir/build_dir
+
+# [runepkg_debs]
+# Dedicated output directory for built .deb files.
+runepkg_debs=/var/lib/runepkg_dir/runepkg_debs
+
+# --- Behavior Settings ---
+
+# [cleanup]
+# Automatically delete extraction workspace after installation (yes/no).
+cleanup=yes
+
+# [md5_checks]
+# Enable MD5 integrity verification during installation (yes/no).
+md5_checks=yes
+
+# [dpkg_host]
+# Enable synchronization with the host system's dpkg database (yes/no/auto).
+# When enabled, runepkg will index host-installed packages during 'update'
+# to satisfy build-tool dependencies without using apt-get.
+# 'auto' will enable sync if /var/lib/dpkg/status is detected.
+dpkg_host=auto
+
+# [gpg_check]
+# Enable GPG cryptographic signature verification for packages during install (yes/no).
+# currently a future proof feature, as no current debian based distro ever signs a .deb with a gpg signature...
+gpg_check=no
+
+# --- Repository Sources ---
+# runepkg supports standard Debian sources.list syntax.
+#
+# IMPORTANT: It is highly recommended to use ONLY ONE distribution ecosystem
+# at a time (e.g., just Kali, or just Debian Stable). While runepkg can aggregate
+# metadata from multiple sources, the current URL resolver prefers the first
+# base URL defined. Mixing repositories with different base URLs may cause
+# download failures (404) if a package exists in one but not the other.
+
+# [Example: Debian Stable (Bookworm)]
+# This is safe because all sources share the same base URL (deb.debian.org)
+# deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+# deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
+# deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
+# deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+
+# [Kali Linux Rolling]
+# runepkg and runar linux use kali rolling latest release style packages by default.
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+
+# end of file...

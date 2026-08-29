@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+#/******************************************************************************
+# * Filename:    001-file
+# * Author:      <michkochris@gmail.com>
+# * Description: File type identification utility for the crosstools forge
+# ******************************************************************************/
+
+. ./somelinuxconfig
+somelinux_ensure_loaded
+
+# --- Build Configuration ---
+# Find the rules file dynamically
+RULES_PATH=$(find "$SOMESRC" -path "*/file-*/debian/rules" | head -n 1)
+
+if [[ -f "$RULES_PATH" ]]; then
+    echo "  [config] Updating debian/rules..."
+    cat << EOF > "$RULES_PATH"
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# Increased buffer for magic peeking (Debian standard)
+CFLAGS += -DHOWMANY=0x18000
+LDFLAGS += $(FORGE_LDFLAGS)
+
+%:
+	dh \$@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \\
+		--prefix=/crosstools \\
+		--libdir=/crosstools/lib/\$(DEB_HOST_MULTIARCH) \\
+		--enable-static \\
+		--disable-libseccomp \\
+		--disable-silent-rules CFLAGS="\$(CFLAGS)" LDFLAGS="\$(LDFLAGS)"
+
+override_dh_auto_install:
+	dh_auto_install
+	# Relocate magic database
+	mkdir -p debian/tmp/crosstools/share/file
+	mv debian/tmp/crosstools/share/misc/* debian/tmp/crosstools/share/file/ 2>/dev/null || true
+	install -D -m 0644 magic/magic.local debian/tmp/etc/magic
+	install -D -m 0644 magic/magic.local debian/tmp/etc/magic.mime
+	# Remove libtool files
+	rm -f debian/tmp/crosstools/lib/$(DEB_HOST_MULTIARCH)/*.la
+EOF
+    chmod +x "$RULES_PATH"
+
+    echo "  [config] Adjusting .install files for /crosstools prefix and multiarch..."
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|^usr/|crosstools/|g" {} +
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|lib/\*/|lib/$DEB_HOST_MULTIARCH/|g" {} +
+else
+    echo "  [warning] debian/rules not found at $RULES_PATH"
+fi
+
+# --- Build Automation ---
+# Trigger the forge build using the modified rules and install files
+echo "  [forge] Ritual initiated: assembly of file-crosstools..."
+runepkg buildpkg-split "file"
+
+somelinux_exit "The forge ritual for file-crosstools is complete." 0

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#/******************************************************************************
+# * Filename:    005-gmp
+# * Author:      <michkochris@gmail.com>
+# * Description: GMP for the crosstools forge
+# ******************************************************************************/
+
+. ./somelinuxconfig
+somelinux_ensure_loaded
+
+# --- Build Configuration ---
+# Find the rules file dynamically
+RULES_PATH=$(find "$SOMESRC" -path "*/gmp-*/debian/rules" | head -n 1)
+
+if [[ -f "$RULES_PATH" ]]; then
+    echo "  [config] Updating debian/rules..."
+    cat << EOF > "$RULES_PATH"
+#!/usr/bin/make -f
+LDFLAGS += $(FORGE_LDFLAGS)
+%:
+	dh \$@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \\
+		--prefix=/crosstools \\
+		--libdir=/crosstools/lib/\$(DEB_HOST_MULTIARCH) \\
+		--enable-cxx \\
+		LDFLAGS="\$(LDFLAGS)"
+EOF
+    chmod +x "$RULES_PATH"
+
+    echo "  [config] Adjusting .install files..."
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|^usr/|crosstools/|g" {} +
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|lib/\*/|lib/$DEB_HOST_MULTIARCH/|g" {} +
+fi
+
+# --- Build Automation ---
+# Trigger the forge build using the modified rules and install files
+echo "  [forge] Ritual initiated: assembly of gmp-crosstools..."
+runepkg buildpkg-split "gmp"
+
+somelinux_exit "The forge ritual for gmp-crosstools is complete." 0

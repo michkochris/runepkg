@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+#/******************************************************************************
+# * Filename:    003-ncurses
+# * Author:      <michkochris@gmail.com>
+# * Description: ncurses for the crosstools forge
+# ******************************************************************************/
+
+. ./somelinuxconfig
+somelinux_ensure_loaded
+
+# --- Build Configuration ---
+# Find the rules file dynamically
+RULES_PATH=$(find "$SOMESRC" -path "*/ncurses-*/debian/rules" | head -n 1)
+
+if [[ -f "$RULES_PATH" ]]; then
+    echo "  [config] Updating debian/rules..."
+    cat << EOF > "$RULES_PATH"
+#!/usr/bin/make -f
+LDFLAGS += $(FORGE_LDFLAGS)
+%:
+	dh \$@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \\
+		--prefix=/crosstools \\
+		--libdir=/crosstools/lib/\$(DEB_HOST_MULTIARCH) \\
+		--with-shared \\
+		--without-debug \\
+		--enable-widec \\
+		--enable-overwrite \\
+		--with-pkg-config-libdir=/crosstools/lib/pkgconfig \\
+		LDFLAGS="\$(LDFLAGS)"
+
+override_dh_auto_install:
+	dh_auto_install
+	# Create widec symlinks for compatibility
+	for lib in ncurses form panel menu; do \\
+		ln -sfv lib\$\${lib}w.so debian/tmp/crosstools/lib/\$(DEB_HOST_MULTIARCH)/lib\$\${lib}.so; \\
+	done
+EOF
+    chmod +x "$RULES_PATH"
+
+    echo "  [config] Adjusting .install files..."
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|^usr/|crosstools/|g" {} +
+    find "$(dirname "$RULES_PATH")" -name "*.install" -exec sed -i "s|lib/\*/|lib/$DEB_HOST_MULTIARCH/|g" {} +
+fi
+
+# --- Build Automation ---
+# Trigger the forge build using the modified rules and install files
+echo "  [forge] Ritual initiated: assembly of ncurses-crosstools..."
+runepkg buildpkg-split "ncurses"
+
+somelinux_exit "The forge ritual for ncurses-crosstools is complete." 0

@@ -1,0 +1,11 @@
+I've identified and fixed a critical race condition that was causing the Segmentation fault during the "linux" source unearthing stage.
+The Root Cause:
+The crash was occurring in the parallel download engine. Multiple threads were simultaneously accessing and modifying a shared std::map (used for tracking percentage progress) without proper synchronization. Because the linux source download involves multiple large files processed in parallel, the collision was highly likely, leading to memory corruption and the segfault.
+The Fix:
+1.
+Mutex Protection: I've moved the progress map access inside the g_progress_mutex lock in   runepkg_network.cpp. This ensures only one thread can update the UI and the progress state at a time.
+2.
+Defensive NULL Checks: Added a safety check for g_build_dir in the download logic to prevent crashes if the build directory configuration is somehow lost or unset.
+3.
+Synchronized UI: The percentage tracking and the runic progress bar updates are now thread-safe, maintaining the clean single-line reporting style even with 8 parallel download threads.
+The updated runepkg is built and installed. Please resume the toolchain build:

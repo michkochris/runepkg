@@ -1,0 +1,25 @@
+#
+#
+# runepkg forge configuration for vsome_linux_builder
+#
+# export RUNEPKG_CONFIG_PATH=$(pwd)/vrunepkg_config
+#
+# --- Path Expansion Features ---
+# 1. Tilde Expansion (~): Expands to $HOME
+# 2. Variable Expansion (${VAR}): Expands environment variables
+# 3. Command Expansion (${pwd}): Expands to current working directory
+
+runepkg_dir=${pwd}/vrunepkg_dir
+control_dir=${pwd}/vrunepkg_dir/control_dir
+install_dir=${pwd}/vrunepkg_dir
+runepkg_db=${pwd}/vrunepkg_dir/runepkg_db
+download_dir=${pwd}/vrunepkg_dir/download_dir
+build_dir=${pwd}/vrunepkg_dir/build_dir
+runepkg_debs=${pwd}/vrunepkg_dir/runepkg_debs
+
+cleanup=no
+md5_checks=yes
+gpg_check=no
+
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware

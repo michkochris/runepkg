@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+#/******************************************************************************
+# * Filename:    somelinuxconfig.sh
+# * Author:      <michkochris@gmail.com>
+# * Date:        2025-01-04
+# * Description: some configuration and variables
+# ******************************************************************************/
+
+set +h && umask 022
+LC_ALL=POSIX
+
+CWD=$(pwd)
+# --- Path Definitions and ensure all ---
+# VRUNEPKG_DIR: Shared metadata directory (parent directory)
+export VRUNEPKG_DIR=$(dirname "$CWD")/vrunepkg_dir
+# SOMELINUX: Root for the build, managed within VRUNEPKG_DIR
+export SOMELINUX=$VRUNEPKG_DIR/mnt
+# SOMESRC: Directory for source packages
+export SOMESRC=$VRUNEPKG_DIR/build_dir
+# LFS / CLFS: Build directories for Stage 1/2
+export LFS=$SOMELINUX/lfs
+export CLFS=$SOMELINUX/clfs
+
+# Initialize toolchain paths
+export CLFSPATH=$CLFS/crosstools/bin
+export LFSPATH=$LFS/tools/bin
+export PATH=$CLFSPATH:$LFSPATH:$PATH
+export CONFIG_SITE=$CLFS/usr/share/config.site
+export PKG_CONFIG_PATH=$CLFS/crosstools/lib/pkgconfig:$CLFS/usr/share/pkgconfig
+# Cross-compilation link flags (rpath)
+export FORGE_LDFLAGS="-Wl,-rpath,/crosstools/lib/${DEB_HOST_MULTIARCH} -Wl,-rpath,/crosstools/lib"
+# Ensure directories exist
+mkdir -pv $LFS $CLFS $SOMESRC $VRUNEPKG_DIR
+# --- Path Definitions and ensure all ---
+
+# --- debian specific compatibility function helpers ---
+get_triplet() {
+  local arch="$1"
+  local libc="${2:-gnu}"
+  local vendor="$3"
+
+  local triplet
+  case "$arch" in
+    x86_64)  triplet="x86_64" ;;
+    aarch64) triplet="aarch64" ;;
+    armv7l)  triplet="arm" ;;
+    i686)    triplet="i386" ;;
+    *)       triplet="$arch" ;;
+  esac
+
+  if [[ -n "$vendor" ]]; then
+    triplet="${triplet}-${vendor}-linux"
+  else
+    triplet="${triplet}-linux"
+  fi
+
+  case "$arch" in
+    armv7l)
+      [[ "$libc" == "musl" ]] && triplet="${triplet}-musleabihf" || triplet="${triplet}-gnueabihf"
+      ;;
+    *)
+      triplet="${triplet}-${libc}"
+      ;;
+  esac
+  echo "$triplet"
+}
+
+# Triplet set 1: Host and Build environment
+export BUILD=$(echo ${MACHTYPE} | sed -e 's/-[^-]*//')
+export HOST=$(echo ${MACHTYPE} | sed -e 's/-[^-]*//')
+
+# Triplet set 2: The Stage 3 Target (Runar Linux Musl)
+export TARGET=$(uname -m)-runar-linux-musl
+
+# Canonical Debian and Bootstrap Triplets
+export DEB_HOST_MULTIARCH=$(get_triplet $(uname -m) gnu)
+export DEB_TARGET_MULTIARCH=$(get_triplet $(uname -m) musl)
+export CLFS_TARGET=$(get_triplet $(uname -m) musl unknown)
+
+# Debian Architecture Name
+case $(uname -m) in
+  x86_64)  export DEB_ARCH=amd64 ;;
+  aarch64) export DEB_ARCH=arm64 ;;
+  armv7l)  export DEB_ARCH=armhf ;;
+  i686)    export DEB_ARCH=i386 ;;
+  *)       export DEB_ARCH=$(uname -m) ;;
+esac
+# --- debian specific compatibility function helpers ---
+
+# --- somelinux function Helpers ---
+somelinux_exit() {
+  local msg="$1"
+  local code="${2:-1}"
+  echo -e "\n  [somelinux] status: $msg"
+  exit "$code"
+}
+
+somelinux_check_env() {
+  # Safety Check: Protect the Host System
+  if [[ -z "$CLFS" || "$CLFS" == "/" ]]; then
+    somelinux_exit "CLFS is undefined or set to host root (/)! Safety abort to protect system."
+  fi
+
+  # Optional: Bridge to runepkg sandbox if config exists
+  if [[ -f "$CWD/vrunepkg_config" ]]; then
+    export RUNEPKG_CONFIG_PATH="$CWD/vrunepkg_config"
+    echo "  [somelinux] environment initialized (runepkg sandbox enabled)"
+  else
+    echo "  [somelinux] environment initialized (standalone mode)"
+  fi
+
+  export SOMELINUX_CONFIG_LOADED=1
+}
+
+somelinux_ensure_loaded() {
+  if [[ -z "$SOMELINUX_CONFIG_LOADED" ]]; then
+    echo -e "\n  [somelinux] CRITICAL: config not loaded correctly. Aborting."
+    exit 1
+  fi
+}
+
+# Automatically check the environment
+somelinux_check_env
+# --- somelinux function Helpers ---
