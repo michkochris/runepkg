@@ -23,8 +23,8 @@
 - **High-Level Version**: The extended C++ FFI suite transforms **runepkg** into a lightning fast **Debian** repository package manager but with a sophisticated toolchain and **Debian** compatible source package builder suited for rapid embedded systems deployment.
     - **Compact Extended Footprint**: Professional-grade binary size (**2.5 MB** 100% static) including full networking, compression, and C++ runtime.
     - **Parallel Networking**: High-speed multi-threaded repository synchronization and package downloading using `libcurl`.
-    - **Debian Source Building**: High-speed workflow for unearthing and forging source packages. `runepkg source` downloads and sets up package, `runepkg build` triggers a build, and `runepkg buildpkg-split` splits package into multiple debian compatible `.deb` fragments (e.g., bin, dev, doc, ext...).
-    - **Cross-Toolchain Engine**: (`build-toolchain --target={target-profile} <pkg's>`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
+    - **Debian Source Building**: High-speed workflow for unearthing and forging source packages. `runepkg source <pkg>` downloads and sets up package, `runepkg build <pkg>` triggers a build, and `runepkg buildpkg-split <pkg>` splits package into multiple debian compatible `.deb` fragments (e.g., bin, dev, doc, ext...).
+    - **Cross-Toolchain Engine**: (`build-toolchain <profile> <pkg's>`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
 
 **Lightning-Fast Binary Autocompletion**: Both versions of **runepkg** leverage a high-performance binary completion engine for rapid shell integration. The **Low-Level Core** provides instant suggestions for command-line options and installed packages, while the **High-Level Version** delivers predictive discovery for over **70,000+ Debian Repository Packages** via sophisticated drop-down menus. This includes resolution for **Debian Source Packages** when using `runepkg source <pkg>`, maximizing productivity directly from the shell.
 
@@ -37,6 +37,17 @@
 -   **Deterministic Cross-Toolchain Forge (`build-toolchain`):** Automatically provisions isolated, disposable Stage-1 cross-compilers to build Debian-compatible binaries and runtime dependencies for specific target profiles (e.g., `x86_64-musl-static`, `x86_64-musl-shared`, `aarch64-linux-gnu`) without polluting the host environment.
 -   **Granular Sub-Package Splitting (`buildpkg-split`):** Compiles Debian source packages directly and segments the resulting tree into discrete Debian fragments (`bin`, `dev`, `doc`, `lib`) or compiles only a targeted sub-package.
 -   **Hardened Memory Safety:** Built on a security-first memory model (`secure_malloc`) featuring automated zero-wiping, buffer protection, and strict path traversal validation.
+
+---
+
+## When to Use runepkg
+
+**Use runepkg if you:**
+- Need to compile Debian specific source packages for non-native architectures (ARM, RISC-V, x86_64-musl)
+- Are building embedded Linux systems and want full Debian specific package ecosystem access
+- Require minimal, isolated binaries with controlled dependencies for production deployment into Debian specific Linux system
+- Are maintaining custom Linux distributions based on specific Debian packages
+
 ---
 
 ## Architecture & System Support
@@ -187,7 +198,7 @@ make musl-all && sudo make install
 ```
 
 > [!TIP]
-> `make musl-all` constructs an isolated musl toolchain and builds all required dependencies (`libcurl`, `zlib`) from source, outputting a static binary that runs across any Linux distribution with zero shared library dependencies. Detailed technical background can be found in [HOLY_GRAIL.md](./HOLY_GRAIL.md).
+> `make musl-all` fetches isolated musl toolchain and builds all required dependencies (`libcurl`, `zlib`) from source, outputting a static binary that runs across any Linux distribution with zero shared library dependencies. Detailed technical background can be found in [HOLY_GRAIL.md](./HOLY_GRAIL.md).
 
 ### 3. uClibc-NG Build Options (Future)
 
