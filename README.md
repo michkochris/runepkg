@@ -351,6 +351,10 @@ Note: C++ features are enabled based on your build target (`make all`).
 
 Developed from years of experience with Custom Cross Linux From Scratch (LFS), **runepkg** views ancient `.deb` packages as "runes"—valuable historical artifacts. This tool empowers you to unearth and run legacy software from Debian archives safely in modern environments.
 
+## Technical Audit
+---
+An independent architectural assessment of the codebase's structural soundness and systems programming standards can be found in [COPILOT.md](./COPILOT.md) 🤖
+
 ## Contact
 ---
 🍆 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
