@@ -117,53 +117,7 @@ int runepkg_resolver_dump_tree(const char *pkg_name);
 /* C++ Matrix Engine & Recipe Definitions                                     */
 /* -------------------------------------------------------------------------- */
 #ifdef __cplusplus
-
-#include <string>
-#include <vector>
-#include <functional>
-#include <filesystem>
-
-namespace fs = std::filesystem;
-
-enum class BuildSystem {
-    AUTOTOOLS,
-    CMAKE,
-    MESON,
-    CUSTOM_MAKE
-};
-
-struct ProfileMatrix {
-    std::string profile_name;
-    std::string arch;        /* "x86_64", "aarch64", "armhf", "riscv64" */
-    std::string libc;        /* "musl", "glibc" */
-    bool is_static = false;
-    bool is_pie = false;
-    std::string triplet;
-    std::string sysroot;
-    std::string crosstools;
-    std::string cross_bin;
-};
-
-struct RuneMatrixRecipe {
-    std::string package_name;
-    BuildSystem build_system = BuildSystem::AUTOTOOLS;
-
-    std::vector<std::string> extra_conf_args;
-    std::vector<std::string> make_build_targets;
-    std::vector<std::string> make_install_targets;
-
-    std::function<bool(const fs::path& work_dir, const ProfileMatrix& matrix)> pre_configure_hook;
-    std::function<bool(const fs::path& work_dir, const ProfileMatrix& matrix)> custom_build_hook;
-    std::function<bool(const fs::path& work_dir, const fs::path& dest_dir, const ProfileMatrix& matrix)> custom_install_hook;
-};
-
-class RuneMatrixEngine {
-public:
-    static ProfileMatrix parse_profile(const std::string& profile_name);
-    static const RuneMatrixRecipe* get_recipe(const std::string& pkg_name);
-    static BuildSystem detect_build_system(const fs::path& src_dir);
-};
-
-#endif /* __cplusplus */
+#include "runepkg_matrix.h"
+#endif
 
 #endif /* RUNEPKG_CPP_FFI_H */

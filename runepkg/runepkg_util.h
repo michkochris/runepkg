@@ -36,6 +36,13 @@
 /** Interpret yes/no style strings (case-insensitive). Empty/missing uses default_val. */
 bool runepkg_util_parse_yes_no(const char *s, bool default_val);
 
+/**
+ * @brief Asks the user for confirmation (y/N).
+ * @param prompt The prompt to display.
+ * @return true if confirmed, false otherwise.
+ */
+bool runepkg_util_confirm(const char *prompt);
+
 /* --- Logging Functions --- */
 
 /**

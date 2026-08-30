@@ -1,0 +1,38 @@
+PROJECT STATUS REPORT: runepkg (The Forge & Matrix Architecture)
+DATE: 2026-08-30
+SUBJECT: Decoupling, Toolchain Bootstrap, and Declarative Cross-Forge
+
+1. ARCHITECTURAL OVERVIEW
+runepkg has evolved from a minimal .deb package manager into a dual-mode system:
+- Core Mode (C): High-speed local package operations, FHS-compliant assembly.
+- Extended Mode (C++ FFI): Parallel network synchronization, dependency graph resolution, and the "Forge" (a cross-compilation ecosystem).
+
+2. THE FORGE: DESTRUCTIBLE TOOLCHAIN BOOTSTRAP
+The system implements a structurally correct 4-stage bootstrap process for creating isolated cross-toolchains:
+- Stage 1A (Cross-Binutils): Establishes the linker and assembler for the target triplet.
+- Stage 1B (GCC Core): A freestanding bootstrap compiler (C only) used to build the target's C library.
+- Stage 1C (Headers & Libc): Sanitized installation of Linux kernel headers and the C library (musl/glibc) into the target sysroot.
+- Stage 1D (GCC Final): Full-featured C/C++ compiler with target runtime libraries (libgcc, libstdc++).
+
+The toolchain resides in a profile-specific prefix (/mnt/runepkg/{profile}/crosstools) and targets an isolated sysroot (/mnt/runepkg/{profile}/sysroot).
+
+3. DECOUPLING: THE MATRIX ENGINE
+A major refactor has eliminated hardcoded package logic. Build instructions are now fully declarative:
+- Rule Format (.txt): Packages are defined in target-rules/ using simple keys (package, build_system, configure_args, etc.).
+- Binary Matrix DB: These rules are compiled into a high-performance hash table (matrix_rules.bin) for instant lookup during forge operations.
+- Shell Hooks: The engine supports pre_configure, build_override, and post_install shell hooks. These hooks have access to context variables (${TARGET_TRIPLE}, ${STATIC_BUILD}, ${DESTDIR}), allowing complex patching (e.g., bzip2's Makefile-libbz2_so) to be handled entirely outside the C++ source.
+- Integrated Compiler: The rule compiler is now a library function within runepkg itself, triggered automatically during 'runepkg update'.
+
+4. DEPENDENCY RESOLUTION & VISUALIZATION
+- Minimal Resolver: A custom graph harvester analyzes ~100k+ package stanzas to build a minimal build-dependency tree, avoiding "dependency hell" by focusing on target-native C/C++ requirements.
+- Tree Visualizer: The 'depends' command provides a recursive ASCII visualization of this minimal tree.
+- Host-Depends Logic: Missing build tools on the host system are detected, explicitly confirmed with the user, and installed via dpkg with automatic sudo elevation where required.
+
+5. MISCELLANEOUS IMPROVEMENTS & FIXES
+- Autocomplete Index: Integrated target profile names (x86_64-musl-static, etc.) and package names into the binary completion engine for seamless shell interaction.
+- Permission Safety: Transitioned from silent failure/redirection to interactive sudo elevation for privileged operations.
+- Environment Sanitization: The bootstrap engine now aggressively sanitizes the host environment (PATH, CC, CFLAGS) to prevent poisoning the Stage 1 build.
+- Autotools Neutralization: Automated timestamp cascades and 'autogen.sh' triggers ensure clean builds from aging Debian source packages.
+
+CURRENT STANDING:
+The system is now "Sound" and completely decoupled. The C++ codebase acts as a generic orchestrator (The Engine), while the specific package behaviors are maintained as declarative text assets (The Runes).

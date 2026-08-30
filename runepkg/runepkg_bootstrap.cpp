@@ -365,6 +365,11 @@ private:
 
         if (c_tools.empty()) return true;
 
+        if (!runepkg_util_confirm("Do you want to install these missing host tools?")) {
+            std::cerr << "\033[1;33m[warning]\033[0m Build dependency check skipped by user." << std::endl;
+            return false;
+        }
+
         /* Non-recursive download: resolve only uninstalled missing tools via resolver */
         std::cout << "  -> \033[1;33m[ritual]\033[0m Fetching host packages via runepkg..." << std::endl;
         if (runepkg_repo_download_multiple(c_tools.data(), c_tools.size(), false) != 0) {
@@ -377,12 +382,20 @@ private:
         if (has_dpkg) {
             std::cout << "  -> \033[1;34m[host-dpkg]\033[0m Unpacking host tools with dpkg -i..." << std::endl;
             std::string ddir = g_download_dir ? g_download_dir : (get_active_base_dir() + "/download_dir");
-            std::string dpkg_cmd = "dpkg -i --force-depends " + ddir + "/*.deb >/dev/null 2>&1";
+
+            std::string sudo_prefix = "";
+            if (getuid() != 0) {
+                std::cout << "  -> \033[1;33m[privilege-elevation]\033[0m Requesting sudo for dpkg..." << std::endl;
+                sudo_prefix = "sudo ";
+            }
+
+            /* Primary attempt: visible to user so they can see sudo prompt or errors */
+            std::string dpkg_cmd = sudo_prefix + "dpkg -i --force-depends " + ddir + "/*.deb";
             int dpkg_res = system(dpkg_cmd.c_str());
+
             if (dpkg_res != 0) {
-                std::string dpkg_retry = "dpkg -i --force-depends " + ddir + "/*.deb";
-                if (system(dpkg_retry.c_str()) != 0) {
-                }
+                std::cerr << "\033[1;31mERROR:\033[0m dpkg installation failed." << std::endl;
+                return false;
             }
         } else {
             std::cout << "  -> \033[1;34m[install]\033[0m Installing host tools to prefix..." << std::endl;
@@ -842,19 +855,24 @@ private:
         fs::path build_dir = src / "build_runepkg";
         reset_build_directory(build_dir);
 
-        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
-
-        std::vector<std::string> conf_args = {
-            "--prefix=" + std::string(profile_->crosstools),
-            "--build=" + host_triplet_,
-            "--host=" + host_triplet_,
-            "--target=" + triplet,
-            "--with-sysroot=" + std::string(profile_->sysroot),
-            "--disable-nls",
-            "--disable-werror",
-            "--disable-gprofng",
-            "--enable-plugins"
-        };
+        std::vector<std::string> conf_args;
+        const RuneMatrixRecipe* recipe = RuneMatrixEngine::get_recipe("binutils-bootstrap");
+        if (recipe) {
+            conf_args = recipe->extra_conf_args;
+        } else {
+            std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+            conf_args = {
+                "--prefix=" + std::string(profile_->crosstools),
+                "--build=" + host_triplet_,
+                "--host=" + host_triplet_,
+                "--target=" + triplet,
+                "--with-sysroot=" + std::string(profile_->sysroot),
+                "--disable-nls",
+                "--disable-werror",
+                "--disable-gprofng",
+                "--enable-plugins"
+            };
+        }
 
         if (execute_step("binutils_configure", build_dir, "../configure", conf_args) != 0) return -1;
         if (execute_step("binutils_make", build_dir, "make", {j_arg_}) != 0) return -1;
@@ -870,33 +888,46 @@ private:
         reset_build_directory(build_dir);
         stub_distro_defaults(src, build_dir);
 
-        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+        std::vector<std::string> conf_args;
+        std::vector<std::string> make_args = {j_arg_, "all-gcc", "all-target-libgcc"};
+        std::vector<std::string> inst_args = {"install-gcc", "install-target-libgcc"};
 
-        std::vector<std::string> conf_args = {
-            "--prefix=" + std::string(profile_->crosstools),
-            "--build=" + host_triplet_,
-            "--host=" + host_triplet_,
-            "--target=" + triplet,
-            "--without-headers",
-            "--with-newlib",
-            "--enable-languages=c",
-            "--disable-threads",
-            "--disable-shared",
-            "--disable-multilib",
-            "--disable-nls",
-            "--disable-werror",
-            "--disable-libatomic",
-            "--disable-libgomp",
-            "--disable-libquadmath",
-            "--disable-libssp",
-            "--disable-libvtv",
-            "--disable-libstdcxx",
-            "--disable-libsanitizer"
-        };
+        const RuneMatrixRecipe* recipe = RuneMatrixEngine::get_recipe("gcc-stage1-bootstrap");
+        if (recipe) {
+            conf_args = recipe->extra_conf_args;
+            if (!recipe->make_build_targets.empty()) {
+                make_args = {j_arg_};
+                make_args.insert(make_args.end(), recipe->make_build_targets.begin(), recipe->make_build_targets.end());
+            }
+            if (!recipe->make_install_targets.empty()) inst_args = recipe->make_install_targets;
+        } else {
+            std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+            conf_args = {
+                "--prefix=" + std::string(profile_->crosstools),
+                "--build=" + host_triplet_,
+                "--host=" + host_triplet_,
+                "--target=" + triplet,
+                "--without-headers",
+                "--with-newlib",
+                "--enable-languages=c",
+                "--disable-threads",
+                "--disable-shared",
+                "--disable-multilib",
+                "--disable-nls",
+                "--disable-werror",
+                "--disable-libatomic",
+                "--disable-libgomp",
+                "--disable-libquadmath",
+                "--disable-libssp",
+                "--disable-libvtv",
+                "--disable-libstdcxx",
+                "--disable-libsanitizer"
+            };
+        }
 
         if (execute_step("gcc_boot_conf", build_dir, "../configure", conf_args) != 0) return -1;
-        if (execute_step("gcc_boot_make", build_dir, "make", {j_arg_, "all-gcc", "all-target-libgcc"}) != 0) return -1;
-        if (execute_step("gcc_boot_inst", build_dir, "make", {"install-gcc", "install-target-libgcc"}) != 0) return -1;
+        if (execute_step("gcc_boot_make", build_dir, "make", make_args) != 0) return -1;
+        if (execute_step("gcc_boot_inst", build_dir, "make", inst_args) != 0) return -1;
         return 0;
     }
 
@@ -924,17 +955,23 @@ private:
             runepkg_util_execute_command_silent("make", clean_argv);
         }
 
-        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
-        std::string cc_val = std::string(profile_->cross_bin) + "/" + triplet + "-gcc";
-        
-        std::vector<std::string> conf_args = {
-            "CC=" + cc_val,
-            "--prefix=/usr",
-            "--syslibdir=/usr/lib",
-            "--target=" + triplet,
-            "--enable-static",
-            "--enable-shared"
-        };
+        std::vector<std::string> conf_args;
+        const RuneMatrixRecipe* recipe = RuneMatrixEngine::get_recipe("musl-bootstrap");
+        if (recipe) {
+            conf_args = recipe->extra_conf_args;
+        } else {
+            std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+            std::string cc_val = std::string(profile_->cross_bin) + "/" + triplet + "-gcc";
+
+            conf_args = {
+                "CC=" + cc_val,
+                "--prefix=/usr",
+                "--syslibdir=/usr/lib",
+                "--target=" + triplet,
+                "--enable-static",
+                "--enable-shared"
+            };
+        }
 
         if (execute_step("musl_configure", src, "./configure", conf_args) != 0) return -1;
         if (execute_step("musl_make", src, "make", {j_arg_}) != 0) return -1;
@@ -956,41 +993,58 @@ private:
         reset_build_directory(build_dir);
         stub_distro_defaults(src, build_dir);
 
-        std::string triplet_str = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
-        fs::path toolexeclib = fs::path(profile_->crosstools) / triplet_str / "lib";
+        std::vector<std::string> conf_args;
+        std::vector<std::string> make_args_gcc = {j_arg_, "all-gcc"};
+        std::vector<std::string> make_args_libgcc = {j_arg_, "all-target-libgcc"};
+        std::vector<std::string> inst_args_libgcc = {"install-target-libgcc"};
+        std::vector<std::string> make_args_libstdc = {j_arg_, "all-target-libstdc++-v3"};
+        std::vector<std::string> inst_args_final = {"install-gcc", "install-target-libstdc++-v3"};
 
-        std::vector<std::string> conf_args = {
-            "--prefix=" + std::string(profile_->crosstools),
-            "--build=" + host_triplet_,
-            "--host=" + host_triplet_,
-            "--target=" + triplet_str,
-            "--with-sysroot=" + std::string(profile_->sysroot),
-            "--with-build-sysroot=" + std::string(profile_->sysroot),
-            "--with-native-system-header-dir=/usr/include",
-            "--with-toolexeclibdir=" + toolexeclib.string(),
-            "--enable-languages=c,c++",
-            "--enable-threads=posix",
-            matrix_.is_static ? "--disable-shared" : "--enable-shared",
-            "--enable-static",
-            "--disable-nls",
-            "--disable-multilib",
-            "--disable-werror",
-            "--disable-libstdcxx-pch",
-            "--disable-libsanitizer",
-            "--disable-libssp",
-            "--disable-libquadmath",
-            "--disable-libvtv",
-            "--disable-libgomp",
-            "--disable-libatomic",
-            "CFLAGS_FOR_TARGET=-O2 -g",
-            "CXXFLAGS_FOR_TARGET=-O2 -g"
-        };
+        const RuneMatrixRecipe* recipe = RuneMatrixEngine::get_recipe("gcc-final-bootstrap");
+        if (recipe) {
+            conf_args = recipe->extra_conf_args;
+            // For bootstrap, we have a multi-stage make process.
+            // The recipe can't easily capture the split make calls without more complexity.
+            // For now, let's keep the split logic but use the recipe flags if provided.
+        } else {
+            std::string triplet_str = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+            fs::path toolexeclib = fs::path(profile_->crosstools) / triplet_str / "lib";
+
+            conf_args = {
+                "--prefix=" + std::string(profile_->crosstools),
+                "--build=" + host_triplet_,
+                "--host=" + host_triplet_,
+                "--target=" + triplet_str,
+                "--with-sysroot=" + std::string(profile_->sysroot),
+                "--with-build-sysroot=" + std::string(profile_->sysroot),
+                "--with-native-system-header-dir=/usr/include",
+                "--with-toolexeclibdir=" + toolexeclib.string(),
+                "--enable-languages=c,c++",
+                "--enable-threads=posix",
+                matrix_.is_static ? "--disable-shared" : "--enable-shared",
+                "--enable-static",
+                "--disable-nls",
+                "--disable-multilib",
+                "--disable-werror",
+                "--disable-libstdcxx-pch",
+                "--disable-libsanitizer",
+                "--disable-libssp",
+                "--disable-libquadmath",
+                "--disable-libvtv",
+                "--disable-libgomp",
+                "--disable-libatomic",
+                "CFLAGS_FOR_TARGET=-O2 -g",
+                "CXXFLAGS_FOR_TARGET=-O2 -g"
+            };
+        }
 
         if (execute_step("gcc_final_conf", build_dir, "../configure", conf_args) != 0) return -1;
-        if (execute_step("gcc_final_make_gcc", build_dir, "make", {j_arg_, "all-gcc"}) != 0) return -1;
-        if (execute_step("gcc_final_make_libgcc", build_dir, "make", {j_arg_, "all-target-libgcc"}) != 0) return -1;
-        if (execute_step("gcc_final_inst_libgcc", build_dir, "make", {"install-target-libgcc"}) != 0) return -1;
+        if (execute_step("gcc_final_make_gcc", build_dir, "make", make_args_gcc) != 0) return -1;
+        if (execute_step("gcc_final_make_libgcc", build_dir, "make", make_args_libgcc) != 0) return -1;
+        if (execute_step("gcc_final_inst_libgcc", build_dir, "make", inst_args_libgcc) != 0) return -1;
 
+        std::string triplet_str = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+        fs::path toolexeclib = fs::path(profile_->crosstools) / triplet_str / "lib";
         fs::path libgcc_path = toolexeclib / "libgcc.a";
         fs::path libgcc_eh_path = toolexeclib / "libgcc_eh.a";
         if (fs::exists(libgcc_path) && !fs::exists(libgcc_eh_path)) {
@@ -1000,8 +1054,8 @@ private:
 
         sync_target_sysroot_links();
 
-        if (execute_step("gcc_final_make_libstdcxx", build_dir, "make", {j_arg_, "all-target-libstdc++-v3"}) != 0) return -1;
-        if (execute_step("gcc_final_inst", build_dir, "make", {"install-gcc", "install-target-libstdc++-v3"}) != 0) return -1;
+        if (execute_step("gcc_final_make_libstdcxx", build_dir, "make", make_args_libstdc) != 0) return -1;
+        if (execute_step("gcc_final_inst", build_dir, "make", inst_args_final) != 0) return -1;
 
         return 0;
     }

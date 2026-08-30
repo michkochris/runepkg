@@ -1,0 +1,5 @@
+package = musl-bootstrap
+build_system = autotools
+configure_args = --prefix=/usr --syslibdir=/usr/lib --target=${TARGET_TRIPLE} --enable-static --enable-shared
+libc = musl
+arch = any

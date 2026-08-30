@@ -87,7 +87,7 @@ void usage(void) {
     printf("  switch [profile]                        Switch the active target profile or reset to host.\n");
     printf("  --print-profile                         Print detailed info about the active target profile.\n");
     printf("  build-toolchain <profile> [pkgs...]     Bootstrap toolchain and forge target .debs.\n");
-    printf("  resolve-tree <pkg>                      Inspect minimal target C/C++ build dependency tree.\n\n");
+    printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n\n");
 
     printf("Source Building & Fragmenting:\n");
     printf("  info <pkg>...                           Show repository information for a package.\n");
@@ -104,10 +104,7 @@ void usage(void) {
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
     printf("      --print-autopool                    Print the contents of the consolidated autocomplete pool.\n");
-    printf("      --rebuild-autocomplete              Rebuild the local package name index.\n\n");
-
-    printf("Experimental/Future:\n");
-    printf("  depends <pkg>                           Placeholder: Graphical dependency visualizer.\n");
+    printf("      --rebuild-autocomplete              Rebuild the local package name index.\n");
     printf("  verify <pkg>                            Cryptographic package verification using GPG.\n\n");
 
     handle_version();
@@ -725,8 +722,7 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-                    printf("Feature Pending: Graphical dependency visualizer for '%s' is not yet implemented.\n", argv[i+1]);
-                    i++;
+                    handle_resolve_tree(argv[++i]);
                 }
             } else {
                 printf("Error: depends command requires a package name.\n");
@@ -871,13 +867,13 @@ int main(int argc, char *argv[]) {
                     handle_build_toolchain(target);
                 }
             }
-        } else if (strcmp(argv[i], "resolve-tree") == 0) {
+        } else if (strcmp(argv[i], "resolve-tree") == 0 || strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 while (i + 1 < argc && argv[i+1][0] != '-') {
                     if (handle_resolve_tree(argv[++i]) != 0) cli_failed = 1;
                 }
             } else {
-                printf("Error: resolve-tree requires a package name.\n");
+                printf("Error: %s requires a package name.\n", argv[i]);
                 cli_failed = 1;
             }
         } else {

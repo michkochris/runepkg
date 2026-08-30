@@ -254,22 +254,78 @@ public:
     }
 
     void dump_tree_view(const std::string& pkg_name) {
-        RuneTargetPlan *plan = nullptr;
-        if (resolve_tree(pkg_name, ResolveMode::MODE_BUILD, &plan) == 0 && plan) {
-            std::cout << "\033[1;34m[runepkg]\033[0m Target Build Tree for '\033[1;32m" << pkg_name << "\033[0m':" << std::endl;
-            for (int i = 0; i < plan->node_count; i++) {
-                std::cout << "  " << (i + 1) << ". \033[1;36m" << plan->nodes[i].package_name
-                          << "\033[0m (" << plan->nodes[i].version << ")" << std::endl;
+        std::string db_path = get_default_db_path();
+        std::unordered_map<std::string, RuneGraphEntry> graph;
 
-                if (plan->nodes[i].target_build_depends_count > 0) {
-                    std::cout << "     -> Target Libs: ";
-                    for (int j = 0; j < plan->nodes[i].target_build_depends_count; j++) {
-                        std::cout << plan->nodes[i].target_build_depends[j] << " ";
-                    }
-                    std::cout << std::endl;
+        if (load_binary_graph(db_path, graph) != 0) {
+            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir :
+                                   (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/lists" : "/var/lib/runepkg_dir/runepkg_db/lists");
+            harvest(lists_dir, db_path);
+            load_binary_graph(db_path, graph);
+        }
+
+        std::string root = clean_package_key(pkg_name);
+        if (graph.find(root) == graph.end()) {
+            std::string src_key = "src:" + root;
+            if (graph.count(src_key)) root = src_key;
+            else {
+                char *src_res = runepkg_repo_find_source_for_binary(pkg_name.c_str());
+                if (src_res) {
+                    root = "src:" + std::string(src_res);
+                    free(src_res);
                 }
             }
-            runepkg_resolver_free_plan(plan);
+        }
+
+        if (graph.find(root) == graph.end()) {
+            std::cerr << "ERROR: Package '" << pkg_name << "' not found." << std::endl;
+            return;
+        }
+
+        std::cout << "\033[1;34m[tree]\033[0m Dependency Visualization for \033[1;32m" << pkg_name << "\033[0m" << std::endl;
+        std::unordered_set<std::string> seen;
+        dump_node_recursive(root, "", true, graph, seen);
+    }
+
+private:
+    void dump_node_recursive(const std::string& pkg, const std::string& prefix, bool is_last,
+                            const std::unordered_map<std::string, RuneGraphEntry>& graph,
+                            std::unordered_set<std::string>& seen) {
+        auto it = graph.find(pkg);
+        if (it == graph.end()) return;
+
+        std::string display_name = it->second.package;
+        if (display_name.rfind("src:", 0) == 0) display_name = display_name.substr(4);
+
+        std::cout << prefix << (is_last ? "└── " : "├── ") << "\033[1;36m" << display_name << "\033[0m";
+
+        if (seen.count(pkg)) {
+            std::cout << " \033[1;33m(already listed)\033[0m" << std::endl;
+            return;
+        }
+        std::cout << " (" << it->second.version << ")" << std::endl;
+        seen.insert(pkg);
+
+        std::vector<std::string> deps;
+        /* For build tree, we focus on target build depends */
+        if (pkg.rfind("src:", 0) == 0) {
+            deps = it->second.target_build_depends;
+        } else {
+            deps = it->second.depends;
+            for (const auto& pd : it->second.pre_depends) deps.push_back(pd);
+        }
+
+        /* Clean and resolve dependencies to their real names in graph */
+        std::vector<std::string> resolved_deps;
+        for (const auto& d : deps) {
+            std::string cd = clean_package_key(d);
+            if (graph.count(cd)) resolved_deps.push_back(cd);
+            else if (graph.count("src:" + cd)) resolved_deps.push_back("src:" + cd);
+        }
+
+        std::string new_prefix = prefix + (is_last ? "    " : "│   ");
+        for (size_t i = 0; i < resolved_deps.size(); i++) {
+            dump_node_recursive(resolved_deps[i], new_prefix, (i == resolved_deps.size() - 1), graph, seen);
         }
     }
 

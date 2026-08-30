@@ -132,7 +132,7 @@ C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
-          runepkg_crypto.h runepkg_cpp_ffi.h
+          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_matrix.h
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
@@ -188,7 +188,7 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
+	$(Q)rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:
@@ -218,6 +218,11 @@ install: $(TARGET)
              mkdir -p $(DESTDIR)$(ETCDIR)/runepkg/targets; \
              cp targets/*.conf $(DESTDIR)$(ETCDIR)/runepkg/targets/ 2>/dev/null || true; \
              chmod 644 $(DESTDIR)$(ETCDIR)/runepkg/targets/*.conf 2>/dev/null || true; \
+          fi; \
+          if [ -d target-rules ]; then \
+             echo "$(CYAN)Installing target rules...$(RESET)"; \
+             mkdir -p $(DESTDIR)$(ETCDIR)/runepkg/target-rules; \
+             cp -r target-rules/* $(DESTDIR)$(ETCDIR)/runepkg/target-rules/; \
           fi; \
        fi; \
     fi

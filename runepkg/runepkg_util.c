@@ -780,6 +780,20 @@ bool runepkg_util_parse_yes_no(const char *s, bool default_val) {
     return default_val;
 }
 
+bool runepkg_util_confirm(const char *prompt) {
+    char resp[16];
+    if (g_auto_confirm_deps) {
+        printf("%s [y/N] \033[1;33my (auto)\033[0m\n", prompt);
+        return true;
+    }
+    printf("%s [y/N] ", prompt);
+    fflush(stdout);
+    if (fgets(resp, sizeof(resp), stdin) && (resp[0] == 'y' || resp[0] == 'Y')) {
+        return true;
+    }
+    return false;
+}
+
 /* --- Command Execution --- */
 
 float runepkg_util_get_load_factor(void) {

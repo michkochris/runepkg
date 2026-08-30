@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <utime.h>
+#include <thread>
 
 #include "runepkg_cpp_ffi.h"
 
@@ -343,6 +344,10 @@ private:
         ProfileMatrix matrix = RuneMatrixEngine::parse_profile(g_active_state.active_target ? g_active_state.active_target : "");
         const RuneMatrixRecipe* recipe = RuneMatrixEngine::get_recipe(source_name_);
 
+        unsigned int cores = std::thread::hardware_concurrency();
+        if (cores == 0) cores = 1;
+        std::string j_arg = "-j" + std::to_string(cores);
+
         std::string cc_bin = "gcc";
         std::string cxx_bin = "g++";
         std::string ar_bin = "ar";
@@ -422,7 +427,27 @@ private:
             setenv("CFLAGS", cflags_str.c_str(), 1);
             setenv("CXXFLAGS", cxxflags_str.c_str(), 1);
 
-            unsetenv("LDFLAGS");
+            if (!ldflags_str.empty()) {
+                setenv("LDFLAGS", ldflags_str.c_str(), 1);
+            } else {
+                unsetenv("LDFLAGS");
+            }
+        }
+
+        if (recipe) {
+            for (const auto& f : recipe->extra_cflags) {
+                cflags_str += " " + f;
+                cxxflags_str += " " + f;
+            }
+            for (const auto& f : recipe->extra_ldflags) {
+                if (!ldflags_str.empty()) ldflags_str += " ";
+                ldflags_str += f;
+            }
+
+            // Re-sync env if recipe added more
+            setenv("CFLAGS", cflags_str.c_str(), 1);
+            setenv("CXXFLAGS", cxxflags_str.c_str(), 1);
+            if (!ldflags_str.empty()) setenv("LDFLAGS", ldflags_str.c_str(), 1);
         }
 
         fs::path log_dir = working_dir_ / "logs";
@@ -432,8 +457,13 @@ private:
         std::string install_log = (log_dir / (source_name_ + "_install.log")).string();
 
         // 1. Pre-configure hook execution or automated configure script bootstrap
-        if (recipe && recipe->pre_configure_hook) {
-            recipe->pre_configure_hook(source_tree_root_, matrix);
+        if (recipe && !recipe->pre_configure_shell.empty()) {
+            std::cout << "  -> Executing pre-configure shell hook..." << std::endl;
+            if (system(recipe->pre_configure_shell.c_str()) != 0) {
+                std::cerr << "ERROR: Pre-configure shell hook failed." << std::endl;
+                if (chdir(cwd) != 0) perror("rollback chdir failed");
+                return false;
+            }
         } else if (!fs::exists("configure")) {
             if (fs::exists("autogen.sh")) {
                 std::cout << "  -> Running ./autogen.sh ..." << std::endl;
@@ -479,6 +509,9 @@ private:
                 args.push_back("RANLIB=" + ranlib_bin);
                 args.push_back("CFLAGS=" + cflags_str);
                 args.push_back("CXXFLAGS=" + cxxflags_str);
+                if (!ldflags_str.empty()) {
+                    args.push_back("LDFLAGS=" + ldflags_str);
+                }
             }
 
             if (recipe) {
@@ -504,16 +537,17 @@ private:
         // 2. Build pass (Custom recipe hook dispatch vs Standard Make)
         std::cout << "  -> Running make ..." << std::endl;
 
-        if (recipe && recipe->custom_build_hook) {
-            std::cout << "  -> \033[1;36m[forge-recipe]\033[0m Executing custom matrix build hook for " << source_name_ << "..." << std::endl;
-            if (!recipe->custom_build_hook(source_tree_root_, matrix)) {
-                std::cerr << "ERROR: Custom build hook failed for " << source_name_ << " (see " << build_log << ")" << std::endl;
+        if (recipe && !recipe->build_override_shell.empty()) {
+            std::cout << "  -> \033[1;36m[forge-recipe]\033[0m Executing build override shell hook for " << source_name_ << "..." << std::endl;
+            if (system(recipe->build_override_shell.c_str()) != 0) {
+                std::cerr << "ERROR: Build override shell hook failed for " << source_name_ << " (see " << build_log << ")" << std::endl;
                 if (chdir(cwd) != 0) perror("rollback chdir failed");
                 return false;
             }
         } else {
             std::vector<std::string> make_args = {
                 "make",
+                j_arg,
                 "AUTOMAKE=true",
                 "ACLOCAL=true",
                 "AUTOCONF=true",
@@ -527,6 +561,9 @@ private:
                 make_args.push_back("STRIP=" + strip_bin);
                 make_args.push_back("CFLAGS=" + cflags_str);
                 make_args.push_back("CXXFLAGS=" + cxxflags_str);
+                if (!ldflags_str.empty()) {
+                    make_args.push_back("LDFLAGS=" + ldflags_str);
+                }
 
                 if (matrix.is_static) {
                     make_args.push_back("AM_LDFLAGS=-static -all-static");
@@ -550,10 +587,11 @@ private:
         }
 
         // 3. Staging pass (Custom install hook dispatch vs Standard Make Install)
-        if (recipe && recipe->custom_install_hook) {
-            std::cout << "  -> \033[1;36m[forge-recipe]\033[0m Executing custom matrix install hook for " << source_name_ << "..." << std::endl;
-            if (!recipe->custom_install_hook(source_tree_root_, temp_install_dir, matrix)) {
-                std::cerr << "ERROR: Custom install hook failed for " << source_name_ << " (see " << install_log << ")" << std::endl;
+        if (recipe && !recipe->post_install_shell.empty()) {
+            std::cout << "  -> Executing post-install shell hook..." << std::endl;
+            setenv("DESTDIR", temp_install_dir.c_str(), 1);
+            if (system(recipe->post_install_shell.c_str()) != 0) {
+                std::cerr << "ERROR: Post-install shell hook failed." << std::endl;
                 if (chdir(cwd) != 0) perror("rollback chdir failed");
                 return false;
             }
@@ -563,6 +601,7 @@ private:
             std::string prefix_arg = "PREFIX=" + temp_install_dir.string() + "/usr";
             std::vector<std::string> install_args = {
                 "make",
+                j_arg,
                 "install",
                 dest_arg,
                 prefix_arg,

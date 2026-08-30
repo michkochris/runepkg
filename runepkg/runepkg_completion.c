@@ -460,6 +460,39 @@ void complete_file_paths(const char *partial) {
     complete_file_paths_ext(partial, NULL, NULL);
 }
 
+void complete_target_profiles(const char *partial) {
+    const char* targets_dirs[4];
+    int i;
+    targets_dirs[0] = "/etc/runepkg/targets/";
+    targets_dirs[1] = "targets/";
+    targets_dirs[2] = runepkg_config_resolve_path(NULL, 2);
+    targets_dirs[3] = NULL;
+
+    for (i = 0; i < 3; i++) {
+        DIR *d;
+        if (!targets_dirs[i]) continue;
+        d = opendir(targets_dirs[i]);
+        if (d) {
+            struct dirent *e;
+            while ((e = readdir(d)) != NULL) {
+                if (e->d_type == DT_REG || e->d_type == DT_LNK || e->d_type == DT_UNKNOWN) {
+                    size_t len = strlen(e->d_name);
+                    if (len > 5 && strcmp(e->d_name + len - 5, ".conf") == 0) {
+                        char name[64];
+                        runepkg_secure_strcpy(name, sizeof(name), e->d_name);
+                        name[len - 5] = '\0';
+                        if (strncmp(name, partial, strlen(partial)) == 0) {
+                            print_candidate(name);
+                        }
+                    }
+                }
+            }
+            closedir(d);
+        }
+    }
+    if (targets_dirs[2]) free((void*)targets_dirs[2]);
+}
+
 static void check_rebuild_autocomplete_index(void) {
     char index_path[PATH_MAX];
     struct stat index_st, db_dir_st, build_dir_st, debs_dir_st, download_dir_st;
@@ -784,9 +817,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
     const char *short_opts2[2];
     const char *long_opts6[6];
     const char *all_long_opts4[4];
-    const char *long_opts18[18];
     const char *short_opts12[12];
-    const char *sub_cmds19[19];
     char *buf;
     char *full_line_copy;
 
@@ -848,6 +879,12 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
                 } else if (strcmp(tok, "info") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "info");
+                } else if (strcmp(tok, "switch") == 0) {
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "switch");
+                } else if (strcmp(tok, "build-toolchain") == 0) {
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "build-toolchain");
+                } else if (strcmp(tok, "resolve-tree") == 0) {
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "resolve-tree");
                 }
                 last_token = tok;
                 tok = strtok(NULL, " \t");
@@ -1010,18 +1047,43 @@ void handle_binary_completion(const char *partial, const char *prev) {
             complete_file_paths(partial);
             return;
         }
+        if (strcmp(inferred_cmd, "switch") == 0) {
+            complete_target_profiles(partial);
+            return;
+        }
+        if (strcmp(inferred_cmd, "build-toolchain") == 0) {
+            int space_count = 0;
+            if (comp_line) {
+                int cp = comp_point_s ? atoi(comp_point_s) : (int)strlen(comp_line);
+                int k;
+                for (k = 0; k < cp; k++) if (comp_line[k] == ' ') space_count++;
+            }
+            if (space_count <= 2) {
+                complete_target_profiles(partial);
+            } else {
+                prefix_search_and_print_ext(partial, ":pkg");
+                repo_prefix_search_and_print(partial);
+            }
+            return;
+        }
+        if (strcmp(inferred_cmd, "resolve-tree") == 0) {
+            prefix_search_and_print_ext(partial, ":pkg");
+            repo_prefix_search_and_print(partial);
+            return;
+        }
     }
 
     if (strcmp(prev, "runepkg") == 0) {
         if (partial[0] == '-') {
             if (strncmp(partial, "--", 2) == 0) {
-                long_opts18[0] = "--install"; long_opts18[1] = "--remove"; long_opts18[2] = "--list";
-                long_opts18[3] = "--status"; long_opts18[4] = "--list-files"; long_opts18[5] = "--search";
-                long_opts18[6] = "--unpack"; long_opts18[7] = "--build"; long_opts18[8] = "--md5check";
-                long_opts18[9] = "--buildpkg-split"; long_opts18[10] = "--verbose"; long_opts18[11] = "--force";
-                long_opts18[12] = "--version"; long_opts18[13] = "--help"; long_opts18[14] = "--print-config";
-                long_opts18[15] = "--print-config-file"; long_opts18[16] = "--print-pkglist-file"; long_opts18[17] = "--print-autopool";
-                for (i = 0; i < 18; i++) if (strncmp(long_opts18[i], partial, strlen(partial)) == 0) print_candidate(long_opts18[i]);
+                const char *long_opts[] = {
+                    "--install", "--remove", "--list", "--status", "--list-files",
+                    "--search", "--unpack", "--build", "--md5check", "--buildpkg-split",
+                    "--verbose", "--force", "--version", "--help", "--print-config",
+                    "--print-config-file", "--print-pkglist-file", "--print-autopool",
+                    "--print-profile"
+                };
+                for (i = 0; i < 19; i++) if (strncmp(long_opts[i], partial, strlen(partial)) == 0) print_candidate(long_opts[i]);
             } else {
                 short_opts12[0] = "-i"; short_opts12[1] = "-r"; short_opts12[2] = "-l";
                 short_opts12[3] = "-s"; short_opts12[4] = "-L"; short_opts12[5] = "-S";
@@ -1030,14 +1092,14 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 for (i = 0; i < 12; i++) if (strncmp(short_opts12[i], partial, strlen(partial)) == 0) print_candidate(short_opts12[i]);
             }
         } else {
-            sub_cmds19[0] = "install"; sub_cmds19[1] = "remove"; sub_cmds19[2] = "list";
-            sub_cmds19[3] = "status"; sub_cmds19[4] = "list-files"; sub_cmds19[5] = "search";
-            sub_cmds19[6] = "info"; sub_cmds19[7] = "download-only"; sub_cmds19[8] = "download-depends";
-            sub_cmds19[9] = "download-build-depends"; sub_cmds19[10] = "depends"; sub_cmds19[11] = "verify";
-            sub_cmds19[12] = "update"; sub_cmds19[13] = "upgrade"; sub_cmds19[14] = "source";
-            sub_cmds19[15] = "source-depends"; sub_cmds19[16] = "source-build-depends"; sub_cmds19[17] = "buildpkg-split";
-            sub_cmds19[18] = "build";
-            for (i = 0; i < 19; i++) if (strncmp(sub_cmds19[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds19[i]);
+            const char *sub_cmds[] = {
+                "install", "remove", "list", "status", "list-files", "search",
+                "info", "download-only", "download-depends", "download-build-depends",
+                "depends", "verify", "update", "upgrade", "source",
+                "source-depends", "source-build-depends", "buildpkg-split", "build",
+                "switch", "build-toolchain", "resolve-tree"
+            };
+            for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
     } else if (partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {

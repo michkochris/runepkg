@@ -7,6 +7,7 @@
  ******************************************************************************/
 
 #include "runepkg_cpp_ffi.h"
+#include "runepkg_matrix.h"
 #include "runepkg_config.h"
 #include <iostream>
 #include <vector>
@@ -680,6 +681,9 @@ extern "C" int runepkg_update(void) {
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     std::cout << "\033[1;32mUpdate complete!\033[0m Binary/Source indexes updated. " << upgradable_count << " upgradable. Time: " << duration.count() / 1000.0 << "s" << std::endl;
+
+    std::cout << "\033[1;34m[matrix]\033[0m Synchronizing target forge rules..." << std::endl;
+    RuneMatrixEngine::recompile_binary();
 
     runepkg_storage_build_autocomplete_index();
     runepkg_resolver_harvest_graph(nullptr, nullptr);
