@@ -24,23 +24,32 @@ ProfileMatrix RuneMatrixEngine::parse_profile(const std::string& name) {
     m.is_pie = (name.find("pie") != std::string::npos);
 
     // Direct mapping from active targets/*.conf if loaded
-    if (g_active_profile) {
+    if (g_active_profile && name == (g_active_profile->name ? g_active_profile->name : "")) {
         if (g_active_profile->arch) m.arch = g_active_profile->arch;
         if (g_active_profile->libc) m.libc = g_active_profile->libc;
         if (g_active_profile->triplet) m.triplet = g_active_profile->triplet;
         if (g_active_profile->sysroot) m.sysroot = g_active_profile->sysroot;
         if (g_active_profile->crosstools) m.crosstools = g_active_profile->crosstools;
         if (g_active_profile->cross_bin) m.cross_bin = g_active_profile->cross_bin;
-    } else {
-        // Fallback heuristics if no target profile is actively switch-loaded
-        if (name.find("musl") != std::string::npos) m.libc = "musl";
-        else m.libc = "glibc";
+    }
 
+    // Fallback heuristics if fields are still empty
+    if (m.arch.empty()) {
         if (name.find("x86_64") != std::string::npos || name.find("amd64") != std::string::npos) m.arch = "x86_64";
         else if (name.find("aarch64") != std::string::npos || name.find("arm64") != std::string::npos) m.arch = "aarch64";
         else if (name.find("armhf") != std::string::npos || name.find("armv7") != std::string::npos) m.arch = "armhf";
         else if (name.find("riscv64") != std::string::npos) m.arch = "riscv64";
         else m.arch = "x86_64";
+    }
+
+    if (m.libc.empty()) {
+        if (name.find("musl") != std::string::npos) m.libc = "musl";
+        else m.libc = "glibc";
+    }
+
+    if (m.triplet.empty()) {
+        if (m.libc == "musl") m.triplet = m.arch + "-unknown-linux-musl";
+        else m.triplet = m.arch + "-linux-gnu";
     }
 
     return m;
@@ -76,57 +85,80 @@ static const std::unordered_map<std::string, RuneMatrixRecipe> g_instruction_tab
                 }
                 return true;
             },
-            // Custom direct static build hook
+            // Custom Matrix Build Hook (Handles Static/Shared Cross-Forge)
             [](const fs::path& /*dir*/, const ProfileMatrix& matrix) {
-                if (!matrix.is_static) return false;
+                std::string cc = matrix.cross_bin.empty() ? "gcc" : (matrix.cross_bin + "/" + matrix.triplet + "-gcc");
+                std::string ar = matrix.cross_bin.empty() ? "ar" : (matrix.cross_bin + "/" + matrix.triplet + "-ar");
+                std::string ranlib = matrix.cross_bin.empty() ? "ranlib" : (matrix.cross_bin + "/" + matrix.triplet + "-ranlib");
 
-                std::string cc = matrix.cross_bin.empty() ? "gcc" : (matrix.cross_bin + "/" + (matrix.triplet.empty() ? "x86_64-unknown-linux-musl-gcc" : matrix.triplet + "-gcc"));
-                std::string ar = matrix.cross_bin.empty() ? "ar" : (matrix.cross_bin + "/" + (matrix.triplet.empty() ? "x86_64-unknown-linux-musl-ar" : matrix.triplet + "-ar"));
-                std::string ranlib = matrix.cross_bin.empty() ? "ranlib" : (matrix.cross_bin + "/" + (matrix.triplet.empty() ? "x86_64-unknown-linux-musl-ranlib" : matrix.triplet + "-ranlib"));
+                if (matrix.is_static) {
+                    std::vector<std::string> srcs = {"blocksort.c", "huffman.c", "crctable.c", "randtable.c", "compress.c", "decompress.c", "bzlib.c"};
+                    std::vector<std::string> objs = {"blocksort.o", "huffman.o", "crctable.o", "randtable.o", "compress.o", "decompress.o", "bzlib.o"};
 
-                std::vector<std::string> srcs = {"blocksort.c", "huffman.c", "crctable.c", "randtable.c", "compress.c", "decompress.c", "bzlib.c"};
-                std::vector<std::string> objs = {"blocksort.o", "huffman.o", "crctable.o", "randtable.o", "compress.o", "decompress.o", "bzlib.o"};
+                    for (size_t k = 0; k < srcs.size(); k++) {
+                        std::vector<std::string> c_args = {cc, "-c", srcs[k], "-o", objs[k], "-O2", "-D_FILE_OFFSET_BITS=64"};
+                        std::vector<char*> c_argv;
+                        for (auto& a : c_args) c_argv.push_back(const_cast<char*>(a.c_str()));
+                        c_argv.push_back(nullptr);
+                        if (runepkg_util_execute_command_silent(cc.c_str(), c_argv.data()) != 0) return false;
+                    }
 
-                for (size_t k = 0; k < srcs.size(); k++) {
-                    std::vector<std::string> c_args = {cc, "-c", srcs[k], "-o", objs[k], "-O2", "-D_FILE_OFFSET_BITS=64"};
-                    std::vector<char*> c_argv;
-                    for (auto& a : c_args) c_argv.push_back(const_cast<char*>(a.c_str()));
-                    c_argv.push_back(nullptr);
-                    if (runepkg_util_execute_command_silent(cc.c_str(), c_argv.data()) != 0) return false;
+                    std::vector<std::string> ar_args = {ar, "cq", "libbz2.a"};
+                    ar_args.insert(ar_args.end(), objs.begin(), objs.end());
+                    std::vector<char*> ar_argv;
+                    for (auto& a : ar_args) ar_argv.push_back(const_cast<char*>(a.c_str()));
+                    ar_argv.push_back(nullptr);
+                    if (runepkg_util_execute_command_silent(ar.c_str(), ar_argv.data()) != 0) return false;
+
+                    char* ranlib_argv[] = {(char*)ranlib.c_str(), (char*)"libbz2.a", NULL};
+                    runepkg_util_execute_command_silent(ranlib.c_str(), ranlib_argv);
+
+                    std::vector<std::string> bz_args = {cc, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2", "bzip2.c", "libbz2.a"};
+                    std::vector<char*> bz_argv;
+                    for (auto& a : bz_args) bz_argv.push_back(const_cast<char*>(a.c_str()));
+                    bz_argv.push_back(nullptr);
+                    if (runepkg_util_execute_command_silent(cc.c_str(), bz_argv.data()) != 0) return false;
+
+                    std::vector<std::string> rec_args = {cc, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2recover", "bzip2recover.c"};
+                    std::vector<char*> rec_argv;
+                    for (auto& a : rec_args) rec_argv.push_back(const_cast<char*>(a.c_str()));
+                    rec_argv.push_back(nullptr);
+                    return (runepkg_util_execute_command_silent(cc.c_str(), rec_argv.data()) == 0);
+                } else {
+                    /* Shared build path using Makefile-libbz2_so */
+                    std::string cc_arg = "CC=" + cc;
+                    std::string ar_arg = "AR=" + ar;
+                    std::string ran_arg = "RANLIB=" + ranlib;
+
+                    char* so_argv[] = {(char*)"make", (char*)"-f", (char*)"Makefile-libbz2_so", (char*)cc_arg.c_str(), NULL};
+                    if (runepkg_util_execute_command_silent("make", so_argv) != 0) return false;
+
+                    char* main_argv[] = {(char*)"make", (char*)cc_arg.c_str(), (char*)ar_arg.c_str(), (char*)ran_arg.c_str(), (char*)"bzip2", (char*)"bzip2recover", NULL};
+                    return (runepkg_util_execute_command_silent("make", main_argv) == 0);
                 }
-
-                std::vector<std::string> ar_args = {ar, "cq", "libbz2.a"};
-                ar_args.insert(ar_args.end(), objs.begin(), objs.end());
-                std::vector<char*> ar_argv;
-                for (auto& a : ar_args) ar_argv.push_back(const_cast<char*>(a.c_str()));
-                ar_argv.push_back(nullptr);
-                if (runepkg_util_execute_command_silent(ar.c_str(), ar_argv.data()) != 0) return false;
-
-                char* ranlib_argv[] = {(char*)ranlib.c_str(), (char*)"libbz2.a", NULL};
-                runepkg_util_execute_command_silent(ranlib.c_str(), ranlib_argv);
-
-                std::vector<std::string> bz_args = {cc, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2", "bzip2.c", "libbz2.a"};
-                std::vector<char*> bz_argv;
-                for (auto& a : bz_args) bz_argv.push_back(const_cast<char*>(a.c_str()));
-                bz_argv.push_back(nullptr);
-                if (runepkg_util_execute_command_silent(cc.c_str(), bz_argv.data()) != 0) return false;
-
-                std::vector<std::string> rec_args = {cc, "-O2", "-D_FILE_OFFSET_BITS=64", "-static", "-o", "bzip2recover", "bzip2recover.c"};
-                std::vector<char*> rec_argv;
-                for (auto& a : rec_args) rec_argv.push_back(const_cast<char*>(a.c_str()));
-                rec_argv.push_back(nullptr);
-                return (runepkg_util_execute_command_silent(cc.c_str(), rec_argv.data()) == 0);
             },
             // Custom install staging hook
-            [](const fs::path& dir, const fs::path& dest, const ProfileMatrix& /*matrix*/) {
+            [](const fs::path& dir, const fs::path& dest, const ProfileMatrix& matrix) {
                 fs::path bin = dest / "usr" / "bin", lib = dest / "usr" / "lib", inc = dest / "usr" / "include";
                 fs::create_directories(bin); fs::create_directories(lib); fs::create_directories(inc);
-                fs::copy_file(dir / "libbz2.a", lib / "libbz2.a", fs::copy_options::overwrite_existing);
-                fs::copy_file(dir / "bzlib.h", inc / "bzlib.h", fs::copy_options::overwrite_existing);
-                fs::copy_file(dir / "bzip2", bin / "bzip2", fs::copy_options::overwrite_existing);
-                fs::copy_file(dir / "bzip2recover", bin / "bzip2recover", fs::copy_options::overwrite_existing);
-                chmod((bin / "bzip2").c_str(), 0755);
-                chmod((bin / "bzip2recover").c_str(), 0755);
+
+                if (fs::exists(dir / "libbz2.a")) fs::copy_file(dir / "libbz2.a", lib / "libbz2.a", fs::copy_options::overwrite_existing);
+                if (fs::exists(dir / "bzlib.h")) fs::copy_file(dir / "bzlib.h", inc / "bzlib.h", fs::copy_options::overwrite_existing);
+                if (fs::exists(dir / "bzip2")) fs::copy_file(dir / "bzip2", bin / "bzip2", fs::copy_options::overwrite_existing);
+                if (fs::exists(dir / "bzip2recover")) fs::copy_file(dir / "bzip2recover", bin / "bzip2recover", fs::copy_options::overwrite_existing);
+
+                if (fs::exists(bin / "bzip2")) chmod((bin / "bzip2").c_str(), 0755);
+                if (fs::exists(bin / "bzip2recover")) chmod((bin / "bzip2recover").c_str(), 0755);
+
+                if (!matrix.is_static) {
+                    /* Copy shared libraries produced by Makefile-libbz2_so */
+                    for (const auto& entry : fs::directory_iterator(dir)) {
+                        std::string fname = entry.path().filename().string();
+                        if (fname.find("libbz2.so") != std::string::npos) {
+                            fs::copy_file(entry.path(), lib / fname, fs::copy_options::overwrite_existing);
+                        }
+                    }
+                }
                 return true;
             }
         }

@@ -38,6 +38,18 @@ class BootstrapEngine {
 public:
     BootstrapEngine(const std::string& profile_name) : profile_name_(profile_name) {
         profile_ = runepkg_config_load_profile(profile_name.c_str());
+
+        /* Initialize the Matrix Engine state for this profile */
+        matrix_ = RuneMatrixEngine::parse_profile(profile_name);
+        if (profile_) {
+            if (profile_->arch) matrix_.arch = profile_->arch;
+            if (profile_->libc) matrix_.libc = profile_->libc;
+            if (profile_->triplet) matrix_.triplet = profile_->triplet;
+            if (profile_->sysroot) matrix_.sysroot = profile_->sysroot;
+            if (profile_->crosstools) matrix_.crosstools = profile_->crosstools;
+            if (profile_->cross_bin) matrix_.cross_bin = profile_->cross_bin;
+        }
+
         unsigned int cores = std::thread::hardware_concurrency();
         if (cores == 0) cores = 1;
         j_arg_ = "-j" + std::to_string(cores);
@@ -61,9 +73,49 @@ public:
             return -1;
         }
 
-        std::string triplet = profile_->triplet ? profile_->triplet : "x86_64-unknown-linux-musl";
+        /*
+         * [ritual] Environment Sanitization
+         * Ensure the bootstrap process is not poisoned by an existing active profile's environment.
+         * We need the host compiler to build the cross-toolchain Stage 1.
+         */
+        unsetenv("CC");
+        unsetenv("CXX");
+        unsetenv("LD");
+        unsetenv("AR");
+        unsetenv("RANLIB");
+        unsetenv("STRIP");
+        unsetenv("CFLAGS");
+        unsetenv("CXXFLAGS");
+        unsetenv("LDFLAGS");
+        unsetenv("PKG_CONFIG_SYSROOT_DIR");
+        unsetenv("PKG_CONFIG_LIBDIR");
+
+        /* Path sanitization: remove any existing runepkg toolchain bins from PATH */
+        char* current_path = getenv("PATH");
+        if (current_path) {
+            std::string path_str = current_path;
+            std::string cleaned_path = "";
+            size_t start = 0, end = 0;
+            while ((end = path_str.find(':', start)) != std::string::npos) {
+                std::string segment = path_str.substr(start, end - start);
+                if (segment.find("/mnt/runepkg/") == std::string::npos) {
+                    if (!cleaned_path.empty()) cleaned_path += ":";
+                    cleaned_path += segment;
+                }
+                start = end + 1;
+            }
+            std::string last = path_str.substr(start);
+            if (!last.empty() && last.find("/mnt/runepkg/") == std::string::npos) {
+                if (!cleaned_path.empty()) cleaned_path += ":";
+                cleaned_path += last;
+            }
+            setenv("PATH", cleaned_path.c_str(), 1);
+        }
+
+        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
 
         std::cout << "\033[1;34m[bootstrap]\033[0m Initializing Stage 1 Engine for " << profile_name_ << std::endl;
+        std::cout << "  -> Matrix Profile:    " << matrix_.profile_name << " (static=" << (matrix_.is_static ? "yes" : "no") << ")" << std::endl;
         std::cout << "  -> Hardware threads:  " << j_arg_.substr(2) << " (" << j_arg_ << ")" << std::endl;
         std::cout << "  -> Host Triplet:      " << host_triplet_ << std::endl;
         std::cout << "  -> Target Triplet:    " << triplet << std::endl;
@@ -72,14 +124,15 @@ public:
 
         if (!setup_sysroot_scaffold()) return -1;
 
+        std::cout << "  -> \033[1;36m[Stage 1A]\033[0m Cross-Binutils" << std::endl;
+        if (stage_binutils() != 0) { std::cerr << "FAILED: stage_binutils" << std::endl; return -1; }
+
         if (profile_->cross_bin) {
             std::string old_path = getenv("PATH") ? getenv("PATH") : "";
             std::string new_path = std::string(profile_->cross_bin) + ":" + old_path;
             setenv("PATH", new_path.c_str(), 1);
+            runepkg_log_verbose("Injected cross-bin path into PATH: %s\n", profile_->cross_bin);
         }
-
-        std::cout << "  -> \033[1;36m[Stage 1A]\033[0m Cross-Binutils" << std::endl;
-        if (stage_binutils() != 0) { std::cerr << "FAILED: stage_binutils" << std::endl; return -1; }
 
         std::cout << "  -> \033[1;36m[Stage 1B]\033[0m GCC Core (Freestanding Bootstrap)" << std::endl;
         if (stage_gcc_core() != 0) { std::cerr << "FAILED: stage_gcc_core" << std::endl; return -1; }
@@ -217,6 +270,7 @@ public:
 private:
     std::string profile_name_;
     TargetProfile* profile_;
+    ProfileMatrix matrix_;
     std::string j_arg_;
     std::string host_triplet_;
 
@@ -354,25 +408,28 @@ private:
     void inject_target_env_hacks() {
         if (!profile_) return;
 
-        ProfileMatrix matrix = RuneMatrixEngine::parse_profile(profile_name_);
+        std::string sysroot = profile_->sysroot ? profile_->sysroot : "";
 
-        if (matrix.is_static) {
+        if (matrix_.is_static) {
             std::cout << "  -> \033[1;34m[hack]\033[0m Injecting static linking specs." << std::endl;
+            setenv("LDFLAGS", "-static -static-libgcc -static-libstdc++", 1);
         } else {
             std::string pt_interp = "/lib64/ld-linux-x86-64.so.2";
-            if (matrix.libc == "musl") {
-                pt_interp = "/lib/ld-musl-" + matrix.arch + ".so.1";
-            } else if (matrix.arch == "aarch64") {
+            if (matrix_.libc == "musl") {
+                pt_interp = "/lib/ld-musl-" + matrix_.arch + ".so.1";
+            } else if (matrix_.arch == "aarch64") {
                 pt_interp = "/lib/ld-linux-aarch64.so.1";
             }
             std::cout << "  -> \033[1;34m[hack]\033[0m Predicting Debian PT_INTERP: " << pt_interp << std::endl;
-            std::string ldflags = "-Wl,--dynamic-linker=" + pt_interp + " -Wl,-rpath-link=/usr/lib/" + matrix.triplet;
+            std::string ldflags = "-Wl,--dynamic-linker=" + pt_interp;
+            if (!sysroot.empty()) {
+                ldflags += " -Wl,-rpath-link=" + sysroot + "/usr/lib/" + matrix_.triplet + " -Wl,-rpath-link=" + sysroot + "/usr/lib -Wl,-rpath-link=" + sysroot + "/lib";
+            }
             setenv("LDFLAGS", ldflags.c_str(), 1);
         }
 
-        std::string sysroot = profile_->sysroot ? profile_->sysroot : "";
         if (!sysroot.empty()) {
-            std::string extra_cflags = "-isystem " + sysroot + "/usr/include/" + matrix.triplet + " -isystem " + sysroot + "/usr/include";
+            std::string extra_cflags = "-isystem " + sysroot + "/usr/include/" + matrix_.triplet + " -isystem " + sysroot + "/usr/include";
 
             char* existing_cflags = getenv("CFLAGS");
             if (existing_cflags) {
@@ -416,27 +473,24 @@ private:
         try {
             fs::path sysroot = profile_->sysroot;
             fs::path crosstools = profile_->crosstools;
-            std::string triplet = profile_->triplet ? profile_->triplet : "x86_64-unknown-linux-musl";
+            std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
 
             fs::create_directories(sysroot / "usr" / "lib" / triplet);
             fs::create_directories(sysroot / "usr" / "include" / triplet);
             fs::create_directories(crosstools / triplet / "lib");
             fs::create_directories(crosstools / triplet / "include");
 
-            fs::path bin_link = sysroot / "bin";
-            if (!fs::exists(bin_link)) fs::create_directory_symlink("usr/bin", bin_link);
-            fs::path sbin_link = sysroot / "sbin";
-            if (!fs::exists(sbin_link)) fs::create_directory_symlink("usr/sbin", sbin_link);
+            auto force_symlink = [](const fs::path& target, const fs::path& link_path) {
+                if (fs::exists(link_path) || fs::is_symlink(link_path)) {
+                    fs::remove(link_path);
+                }
+                fs::create_directory_symlink(target, link_path);
+            };
 
-            fs::path sysroot_lib = sysroot / "lib";
-            if (!fs::exists(sysroot_lib)) {
-                fs::create_directory_symlink("usr/lib", sysroot_lib);
-            }
-
-            fs::path sysroot_inc = sysroot / "include";
-            if (!fs::exists(sysroot_inc)) {
-                fs::create_directory_symlink("usr/include", sysroot_inc);
-            }
+            force_symlink("usr/bin", sysroot / "bin");
+            force_symlink("usr/sbin", sysroot / "sbin");
+            force_symlink("usr/lib", sysroot / "lib");
+            force_symlink("usr/include", sysroot / "include");
 
             return true;
         } catch (const std::exception& e) {
@@ -447,7 +501,7 @@ private:
 
     void sync_target_sysroot_links() {
         try {
-            std::string triplet = profile_->triplet ? profile_->triplet : "x86_64-unknown-linux-musl";
+            std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
             fs::path triplet_dir = fs::path(profile_->crosstools) / triplet;
             fs::path sysroot_usr_lib = fs::path(profile_->sysroot) / "usr" / "lib";
             fs::path sysroot_lib = fs::path(profile_->sysroot) / "lib";
@@ -640,9 +694,11 @@ private:
         }
 
         if (fs::exists(linux64_h)) {
+            std::string musl_interp = "/lib/ld-musl-" + matrix_.arch + ".so.1";
+            std::string sed_expr = "s@/lib64/ld-linux-x86-64.so.2@" + musl_interp + "@g";
             char* sed_argv[] = {
                 (char*)"sed",
-                (char*)"-e", (char*)"s@/lib64/ld-linux-x86-64.so.2@/lib/ld-musl-x86_64.so.1@g",
+                (char*)"-e", (char*)sed_expr.c_str(),
                 (char*)"-e", (char*)"s@/lib64@/lib@g",
                 (char*)"-e", (char*)"s@/usr/lib64@/usr/lib@g",
                 (char*)"-i", (char*)linux64_h.c_str(),
@@ -786,11 +842,13 @@ private:
         fs::path build_dir = src / "build_runepkg";
         reset_build_directory(build_dir);
 
+        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+
         std::vector<std::string> conf_args = {
             "--prefix=" + std::string(profile_->crosstools),
             "--build=" + host_triplet_,
             "--host=" + host_triplet_,
-            "--target=" + std::string(profile_->triplet),
+            "--target=" + triplet,
             "--with-sysroot=" + std::string(profile_->sysroot),
             "--disable-nls",
             "--disable-werror",
@@ -812,11 +870,13 @@ private:
         reset_build_directory(build_dir);
         stub_distro_defaults(src, build_dir);
 
+        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+
         std::vector<std::string> conf_args = {
             "--prefix=" + std::string(profile_->crosstools),
             "--build=" + host_triplet_,
             "--host=" + host_triplet_,
-            "--target=" + std::string(profile_->triplet),
+            "--target=" + triplet,
             "--without-headers",
             "--with-newlib",
             "--enable-languages=c",
@@ -850,7 +910,7 @@ private:
     }
 
     int stage_libc() {
-        if (!profile_->libc || std::string(profile_->libc).find("musl") == std::string::npos) {
+        if (matrix_.libc != "musl") {
              std::cout << "  -> Skipping libc build (not musl)" << std::endl;
              return 0;
         }
@@ -864,13 +924,14 @@ private:
             runepkg_util_execute_command_silent("make", clean_argv);
         }
 
-        std::string cc_val = std::string(profile_->cross_bin) + "/" + std::string(profile_->triplet) + "-gcc";
+        std::string triplet = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
+        std::string cc_val = std::string(profile_->cross_bin) + "/" + triplet + "-gcc";
         
         std::vector<std::string> conf_args = {
             "CC=" + cc_val,
             "--prefix=/usr",
             "--syslibdir=/usr/lib",
-            "--target=" + std::string(profile_->triplet),
+            "--target=" + triplet,
             "--enable-static",
             "--enable-shared"
         };
@@ -895,7 +956,7 @@ private:
         reset_build_directory(build_dir);
         stub_distro_defaults(src, build_dir);
 
-        std::string triplet_str = profile_->triplet ? profile_->triplet : "x86_64-unknown-linux-musl";
+        std::string triplet_str = matrix_.triplet.empty() ? "x86_64-unknown-linux-musl" : matrix_.triplet;
         fs::path toolexeclib = fs::path(profile_->crosstools) / triplet_str / "lib";
 
         std::vector<std::string> conf_args = {
@@ -909,7 +970,7 @@ private:
             "--with-toolexeclibdir=" + toolexeclib.string(),
             "--enable-languages=c,c++",
             "--enable-threads=posix",
-            "--disable-shared",
+            matrix_.is_static ? "--disable-shared" : "--enable-shared",
             "--enable-static",
             "--disable-nls",
             "--disable-multilib",
@@ -1017,18 +1078,34 @@ extern "C" int handle_build_toolchain_with_targets(const char *target, const cha
 
 extern "C" int handle_build_toolchain_engine(const char* target_name) {
     if (!target_name) return -1;
+
+    /* Always switch context to the desired target first */
+    std::string switch_arg = std::string("--target=") + target_name;
+    handle_switch(switch_arg.c_str());
+
     BootstrapEngine engine(target_name);
-    return engine.run();
+    g_bootstrap_mode = true;
+    int res = engine.run();
+    g_bootstrap_mode = false;
+    return res;
 }
 
 extern "C" int handle_build_toolchain_targets(const char* target_name, const char** pkg_names, int count) {
     if (!target_name) return -1;
 
+    /* Always switch context to the desired target first */
+    std::string switch_arg = std::string("--target=") + target_name;
+    handle_switch(switch_arg.c_str());
+
     BootstrapEngine engine(target_name);
 
     if (!engine.is_toolchain_ready()) {
         std::cout << "\033[1;33m[toolchain]\033[0m Cross-compiler not found. Initiating bootstrap..." << std::endl;
-        if (engine.run() != 0) {
+        g_bootstrap_mode = true;
+        int res = engine.run();
+        g_bootstrap_mode = false;
+
+        if (res != 0) {
             std::cerr << "ERROR: Failed to bootstrap toolchain for " << target_name << std::endl;
             return -1;
         }
@@ -1036,7 +1113,7 @@ extern "C" int handle_build_toolchain_targets(const char* target_name, const cha
         std::cout << "\033[1;32m[toolchain]\033[0m Active cross-compiler verified for " << target_name << std::endl;
     }
 
-    std::string switch_arg = std::string("--target=") + target_name;
+    /* Refresh switch to ensure all forged packages use the newly built toolchain */
     handle_switch(switch_arg.c_str());
 
     for (int i = 0; i < count; i++) {

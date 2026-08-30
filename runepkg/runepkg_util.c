@@ -862,7 +862,7 @@ static void render_telemetry_bar(const char *command_path, float load_factor, in
 }
 
 static void prepare_execution_environment(void) {
-    if (g_active_profile) {
+    if (g_active_profile && !g_bootstrap_mode) {
         unsetenv("CPATH");
         unsetenv("LIBRARY_PATH");
         unsetenv("LD_LIBRARY_PATH");

@@ -49,6 +49,7 @@ int g_sources_count = 0;
 
 bool g_cleanup_extract_dirs = true;
 bool g_batch_mode = false;
+bool g_bootstrap_mode = false;
 struct runepkg_hash_table *g_batch_planned_packages = NULL;
 
 ActiveState g_active_state = {NULL, NULL, NULL, NULL, 0};

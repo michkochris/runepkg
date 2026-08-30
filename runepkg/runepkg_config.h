@@ -42,6 +42,7 @@ extern bool g_auto_confirm_siblings;
 extern bool g_asked_siblings;
 extern bool g_completion_mode;
 extern bool g_batch_mode;
+extern bool g_bootstrap_mode;
 extern struct runepkg_hash_table *g_batch_planned_packages;
 
 /* --- Target Profile & Active State --- */
