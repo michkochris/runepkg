@@ -94,7 +94,7 @@ This vision evolves package management by replacing the sequential, text-heavy b
 - **Intelligent Local-First Resolution:** A smart logic layer that automatically detects and resolves dependencies using sibling `.deb` files found in the local directory or download cache before reaching for the network.
 - **Security-Hardened Plumbing:** The core engine is built on a **security-first memory model** (`secure_malloc`) featuring automatic zero-wiping and strict **path traversal protection**. These defenses were refined through AI-driven security auditing to mitigate memory corruption risks and unauthorized filesystem access.
 - **Comprehensive musl libc Support:** Provides full compatibility for both the **Minimal C Core** and the **Extended C++ FFI Suite** when targeting **musl libc**.
-- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies.
+- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in [HOLY_GRAIL.md](./HOLY_GRAIL.md) 🏆
 - **Optional Cryptographic Trust:** A forward-thinking security layer that supports **detached GPG signatures** (`.sig` files). While standard Debian repositories sign at the index level, **runepkg** empowers users to verify individual "runes." This allows for the verification of custom-signed packages and provides a foundation for future secure-repository standards where every `.deb` is cryptographically immutable.
 - **Native Debian Source Building**: An integrated C++ pipeline that streamlines the fetching and compilation of Debian source packages, the produced .deb's are fully compatible with the Debian Ecosystem. Runepkg directly produces "Raw Debian Runes" from single package builds to multi-package splitting and allowing for the optional building of a sub-package. This is all done independently without the overhead of traditional Debian distribution build tools.
 - **Disposable Cross-Compilation Toolchain:** The `build-toolchain --target={profile} <pkg>` command bootstraps a destructible toolchain to cleanly cross-compile isolated, **Debian** compatible .deb's and runtime dependencies for the target packages. This enables rapid deployment of software into embedded **Debian Ecosystems** without contaminating the host environment.
@@ -331,8 +331,9 @@ Maintenance & Diagnostics:
 Cross-Compilation:
   build-toolchain <profile> <pkg's>       Construct isolated cross-compilation toolchain, 
                                           and forge target packages.
+  depends <pkg>                           Recursive ASCII tree visualization of target depends.
+
 Experimental/Future:
-  depends <pkg>                           Graphical dependency visualizer (placeholder).
   verify <pkg>                            Cryptographic package verification using GPG.
 
 Note: Commands can be interleaved, e.g., 'runepkg -v -i pkg1.deb -s pkg2 -i pkg3.deb'
