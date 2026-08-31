@@ -52,18 +52,15 @@ struct FilterOptions {
     std::string out_file = "curated_targets.txt";
 
     FilterOptions() {
-        // Initialize from runepkg config if available
-        if (g_runepkg_db_dir) db_dir = g_runepkg_db_dir;
-        else db_dir = "/var/lib/runepkg_dir/runepkg_db";
-
-        target_rules_dir = "/etc/runepkg/target-rules";
-        if (g_runepkg_base_dir) {
-            fs::path base(g_runepkg_base_dir);
-            fs::path rules = base / "target-rules";
-            if (fs::exists(rules)) {
-                target_rules_dir = rules.string();
-            }
+        // Strictly honor professional registry settings for the database
+        if (g_runepkg_db_dir) {
+            db_dir = g_runepkg_db_dir;
+        } else {
+            db_dir = "./runepkg_db";
         }
+
+        // Default to the professional system-wide rules path
+        target_rules_dir = "/etc/runepkg/target-rules";
     }
 
     // Filtering Flags
@@ -253,8 +250,11 @@ static std::map<std::string, PkgMetadata> load_sources(const std::string& db_dir
 }
 
 static void usage(const char* prog) {
-    std::cout << "\033[1;36mrunepkg_scalpel\033[0m - Surgical Package Filter & Rules Pruner\n"
+    std::cout << "\033[1;36mrunepkg_scalpel\033[0m - Professional Package Filter & Rules Pruner\n"
               << "Usage: " << prog << " [OPTIONS]\n\n"
+              << "Description:\n"
+              << "  A professional tool for surgical repo management. It prioritizes\n"
+              << "  the system configuration registry to find the active runepkg_db.\n\n"
               << "Profiles & Domains:\n"
               << "  --bootstrap-dev         Surgically isolate Debian-style Bootstrap + Minimal Dev tools\n"
               << "  --embedded-c            Keep only pure C/C++ sources (drop Python, Rust, Go, Java, etc.)\n"
@@ -270,9 +270,9 @@ static void usage(const char* prog) {
               << "  --exclude=<pattern>     Exclude package names containing pattern\n\n"
               << "Actions & Output:\n"
               << "  -o, --output=<file>     Output file path for curated @pkglist (default: curated_targets.txt)\n"
-              << "  --prune-rules           Prune non-matching package folders from /etc/runepkg/target-rules/\n"
+              << "  --prune-rules           Prune non-matching package folders from target-rules/\n"
               << "  --rules-dir=<dir>       Path to target-rules tree (default: /etc/runepkg/target-rules)\n"
-              << "  --db-dir=<dir>          Path to runepkg_db (default: /var/lib/runepkg_dir/runepkg_db)\n"
+              << "  --db-dir=<dir>          Path to runepkg_db (default: resolved via Registry)\n"
               << "  -h, --help              Display this help menu\n\n"
               << "Example:\n"
               << "  " << prog << " --embedded-c --autotools --prune-rules -o clean_rules.txt\n";

@@ -1,0 +1,1 @@
+../../r/rust-stable-pattern/build.txt

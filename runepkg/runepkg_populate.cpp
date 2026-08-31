@@ -139,38 +139,31 @@ static std::string generate_draft_template(const std::string& pkg_name) {
 }
 
 static void usage(const char* prog) {
-    std::cout << "\033[1;36mrunepkg_populate\033[0m - Canonical Rule Scaffolder\n"
+    std::cout << "\033[1;36mrunepkg_populate\033[0m - Professional Rule Scaffolder\n"
               << "Usage: " << prog << " [OPTIONS] [TARGET_RULES_DIR]\n\n"
               << "Options:\n"
               << "  --confirm               Mandatory flag to acknowledge and start scaffold generation\n"
-              << "  --db-dir=<dir>          Path to runepkg_db (default: from config)\n"
+              << "  --db-dir=<dir>          Path to runepkg_db (default: resolved via Registry or ./runepkg_db)\n"
               << "  -h, --help              Display this help menu\n\n"
               << "Description:\n"
-              << "  This tool scans repository metadata and creates thousands of package\n"
-              << "  rule templates in the target-rules directory. It is a high-volume\n"
-              << "  operation that should only be run when initializing or refreshing\n"
-              << "  the rule database.\n\n"
+              << "  This tool scans repository metadata (from the professional runepkg_db)\n"
+              << "  and creates package rule templates, typically for project source hacking.\n"
+              << "  By default, it targets the local './target-rules' directory.\n\n"
               << "Example:\n"
-              << "  " << prog << " --confirm /etc/runepkg/target-rules\n";
+              << "  " << prog << " --confirm ./target-rules\n";
 }
 
 int main(int argc, char* argv[]) {
-    // Initialize runepkg configuration
+    // Initialize runepkg configuration professionally (Registry -> Config)
     runepkg_init_paths();
-    runepkg_config_load();
+    if (runepkg_config_load() != 0) {
+        // Fallback to local defaults if no professional config is found
+        g_verbose_mode && std::cout << "[info] No system config found, using local fallbacks.\n";
+    }
 
     bool confirmed = false;
-    std::string db_dir = g_runepkg_db_dir ? g_runepkg_db_dir : "runepkg_db";
-    std::string target_rules_dir = "/etc/runepkg/target-rules"; // Default canonical location
-
-    // Try to resolve target-rules relative to base dir if possible
-    if (g_runepkg_base_dir) {
-        fs::path base(g_runepkg_base_dir);
-        fs::path rules = base / "target-rules";
-        if (fs::exists(rules)) {
-            target_rules_dir = rules.string();
-        }
-    }
+    std::string db_dir = g_runepkg_db_dir ? g_runepkg_db_dir : "./runepkg_db";
+    std::string target_rules_dir = "./target-rules"; // Default to local source tree replacement
 
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
