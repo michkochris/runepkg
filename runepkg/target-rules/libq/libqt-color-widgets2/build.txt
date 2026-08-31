@@ -1,0 +1,1 @@
+../../q/qt-color-widgets/build.txt

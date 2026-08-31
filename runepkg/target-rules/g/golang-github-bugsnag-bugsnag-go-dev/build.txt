@@ -1,0 +1,1 @@
+../golang-github-bugsnag-bugsnag-go/build.txt

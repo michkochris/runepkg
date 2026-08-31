@@ -1,0 +1,1 @@
+../../p/pyside6/build.txt

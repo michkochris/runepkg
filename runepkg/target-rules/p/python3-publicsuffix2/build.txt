@@ -1,0 +1,1 @@
+../python-publicsuffix2/build.txt

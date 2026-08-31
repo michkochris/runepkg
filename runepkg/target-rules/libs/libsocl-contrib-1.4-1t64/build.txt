@@ -1,0 +1,1 @@
+../../s/starpu-contrib/build.txt

@@ -1,0 +1,1 @@
+../libjibx1.2-java/build.txt

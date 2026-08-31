@@ -1,0 +1,1 @@
+../python-hdf5plugin/build.txt

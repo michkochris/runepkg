@@ -1,0 +1,1 @@
+../../w/wildfly-common/build.txt

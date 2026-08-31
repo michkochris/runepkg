@@ -1,0 +1,1 @@
+../libpal-java/build.txt

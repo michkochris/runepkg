@@ -1,0 +1,1 @@
+../../w/wxsqlite3/build.txt

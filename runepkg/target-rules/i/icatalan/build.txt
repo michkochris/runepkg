@@ -1,0 +1,1 @@
+../../s/softcatala-spell/build.txt

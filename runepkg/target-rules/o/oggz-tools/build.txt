@@ -1,0 +1,1 @@
+../../libo/liboggz/build.txt

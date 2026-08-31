@@ -1,0 +1,1 @@
+../../z/zd1211-firmware/build.txt

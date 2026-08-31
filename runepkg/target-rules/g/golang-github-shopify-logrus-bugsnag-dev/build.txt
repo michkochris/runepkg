@@ -1,0 +1,1 @@
+../golang-github-shopify-logrus-bugsnag/build.txt

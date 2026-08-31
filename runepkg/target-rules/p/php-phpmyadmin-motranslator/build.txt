@@ -1,0 +1,1 @@
+../phpmyadmin-motranslator/build.txt

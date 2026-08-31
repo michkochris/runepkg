@@ -1,0 +1,1 @@
+../../f/flatpak-kcm/build.txt

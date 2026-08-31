@@ -1,0 +1,1 @@
+../golang-github-masterminds-sprig/build.txt

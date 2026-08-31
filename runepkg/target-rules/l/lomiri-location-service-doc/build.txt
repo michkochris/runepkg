@@ -1,0 +1,1 @@
+../lomiri-location-service/build.txt

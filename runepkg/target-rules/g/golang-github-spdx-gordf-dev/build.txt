@@ -1,0 +1,1 @@
+../golang-github-spdx-gordf/build.txt

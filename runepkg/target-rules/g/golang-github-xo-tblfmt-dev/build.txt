@@ -1,0 +1,1 @@
+../golang-github-xo-tblfmt/build.txt

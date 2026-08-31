@@ -1,0 +1,1 @@
+../golang-github-viki-org-dnscache/build.txt

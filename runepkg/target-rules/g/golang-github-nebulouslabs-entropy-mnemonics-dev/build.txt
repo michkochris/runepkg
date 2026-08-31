@@ -1,0 +1,1 @@
+../golang-github-nebulouslabs-entropy-mnemonics/build.txt

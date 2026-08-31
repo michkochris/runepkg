@@ -1,0 +1,1 @@
+../python-aiowaqi/build.txt

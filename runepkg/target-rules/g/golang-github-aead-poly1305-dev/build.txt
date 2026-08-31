@@ -1,0 +1,1 @@
+../golang-github-aead-poly1305/build.txt

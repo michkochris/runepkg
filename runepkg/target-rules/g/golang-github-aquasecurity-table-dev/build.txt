@@ -1,0 +1,1 @@
+../golang-github-aquasecurity-table/build.txt

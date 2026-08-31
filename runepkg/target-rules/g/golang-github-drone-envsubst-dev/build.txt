@@ -1,0 +1,1 @@
+../golang-github-drone-envsubst/build.txt

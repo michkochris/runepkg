@@ -1,0 +1,1 @@
+../../h/hyprland-qt-support/build.txt

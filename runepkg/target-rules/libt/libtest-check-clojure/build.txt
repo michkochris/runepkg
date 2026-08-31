@@ -1,0 +1,1 @@
+../../t/test-check-clojure/build.txt

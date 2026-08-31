@@ -1,0 +1,1 @@
+../open-jtalk/build.txt

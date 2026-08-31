@@ -1,0 +1,1 @@
+../rust-rustdoc-stripper/build.txt

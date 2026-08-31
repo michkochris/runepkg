@@ -1,0 +1,1 @@
+../goxkcdpwgen/build.txt

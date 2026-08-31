@@ -1,0 +1,1 @@
+../libjsr305-java/build.txt

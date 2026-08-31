@@ -1,0 +1,1 @@
+../golang-github-ua-parser-uap-go/build.txt

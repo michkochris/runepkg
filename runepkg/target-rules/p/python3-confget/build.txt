@@ -1,0 +1,1 @@
+../../c/confget/build.txt

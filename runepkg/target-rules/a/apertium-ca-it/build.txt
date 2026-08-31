@@ -1,0 +1,1 @@
+../apertium-cat-ita/build.txt

@@ -1,0 +1,1 @@
+../../g/geronimo-concurrent-1.0-spec/build.txt

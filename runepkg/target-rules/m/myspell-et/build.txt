@@ -1,0 +1,1 @@
+../../i/ispell-et/build.txt

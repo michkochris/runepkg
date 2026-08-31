@@ -1,0 +1,1 @@
+../python-aiolichess/build.txt

@@ -1,0 +1,1 @@
+../golang-github-heroku-docker-registry-client/build.txt

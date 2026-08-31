@@ -1,0 +1,1 @@
+../apertium-oci-spa/build.txt

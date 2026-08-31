@@ -1,0 +1,1 @@
+../../s/sword/build.txt

@@ -1,0 +1,1 @@
+../rime-ipa/build.txt

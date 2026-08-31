@@ -1,0 +1,1 @@
+../../t/tree-sitter-powershell/build.txt

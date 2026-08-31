@@ -1,0 +1,1 @@
+../golang-github-d2r2-go-bsbmp/build.txt

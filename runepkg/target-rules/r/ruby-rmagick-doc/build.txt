@@ -1,0 +1,1 @@
+../ruby-rmagick/build.txt

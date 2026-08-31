@@ -1,0 +1,1 @@
+../uwsgi-plugin-pypy/build.txt

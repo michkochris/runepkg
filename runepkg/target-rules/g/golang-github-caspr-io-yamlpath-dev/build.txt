@@ -1,0 +1,1 @@
+../golang-github-caspr-io-yamlpath/build.txt

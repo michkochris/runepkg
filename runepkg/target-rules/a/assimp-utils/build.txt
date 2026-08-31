@@ -1,0 +1,1 @@
+../assimp/build.txt

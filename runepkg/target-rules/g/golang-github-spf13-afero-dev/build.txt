@@ -1,0 +1,1 @@
+../golang-github-spf13-afero/build.txt

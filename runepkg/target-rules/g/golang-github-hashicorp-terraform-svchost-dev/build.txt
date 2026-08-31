@@ -1,0 +1,1 @@
+../golang-github-hashicorp-terraform-svchost/build.txt

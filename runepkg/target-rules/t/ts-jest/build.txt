@@ -1,0 +1,1 @@
+../../n/node-ts-jest/build.txt

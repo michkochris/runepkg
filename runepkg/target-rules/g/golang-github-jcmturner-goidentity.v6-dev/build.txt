@@ -1,0 +1,1 @@
+../golang-github-jcmturner-goidentity.v6/build.txt

@@ -1,0 +1,1 @@
+../libsdl3-image/build.txt

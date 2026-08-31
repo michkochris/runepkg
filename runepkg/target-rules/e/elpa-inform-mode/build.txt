@@ -1,0 +1,1 @@
+../../i/inform-mode/build.txt

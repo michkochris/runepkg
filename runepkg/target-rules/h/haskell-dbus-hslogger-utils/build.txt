@@ -1,0 +1,1 @@
+../haskell-dbus-hslogger/build.txt

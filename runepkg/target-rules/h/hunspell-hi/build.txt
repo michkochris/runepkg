@@ -1,0 +1,1 @@
+../../libr/libreoffice-dictionaries/build.txt

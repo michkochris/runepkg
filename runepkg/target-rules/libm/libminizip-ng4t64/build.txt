@@ -1,0 +1,1 @@
+../../m/minizip-ng/build.txt

@@ -1,0 +1,1 @@
+../../g/gtkspell3/build.txt

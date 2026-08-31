@@ -1,0 +1,1 @@
+../../p/protoc-gen-doc/build.txt

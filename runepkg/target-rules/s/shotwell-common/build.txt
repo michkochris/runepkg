@@ -1,0 +1,1 @@
+../shotwell/build.txt

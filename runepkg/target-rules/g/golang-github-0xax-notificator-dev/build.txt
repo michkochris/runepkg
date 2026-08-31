@@ -1,0 +1,1 @@
+../golang-github-0xax-notificator/build.txt

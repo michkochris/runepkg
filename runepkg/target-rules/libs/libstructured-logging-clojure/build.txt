@@ -1,0 +1,1 @@
+../../s/structured-logging-clojure/build.txt

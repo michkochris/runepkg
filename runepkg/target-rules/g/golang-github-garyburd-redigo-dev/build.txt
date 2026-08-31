@@ -1,0 +1,1 @@
+../golang-github-garyburd-redigo/build.txt

@@ -1,0 +1,1 @@
+../../d/deviceinfo/build.txt

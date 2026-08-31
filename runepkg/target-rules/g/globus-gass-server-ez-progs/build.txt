@@ -1,0 +1,1 @@
+../globus-gass-server-ez/build.txt

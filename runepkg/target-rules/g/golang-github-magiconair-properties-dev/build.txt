@@ -1,0 +1,1 @@
+../golang-github-magiconair-properties/build.txt

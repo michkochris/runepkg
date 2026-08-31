@@ -1,0 +1,1 @@
+../../s/sdlgfx/build.txt

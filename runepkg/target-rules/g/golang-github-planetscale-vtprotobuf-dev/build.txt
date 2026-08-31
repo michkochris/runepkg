@@ -1,0 +1,1 @@
+../golang-github-planetscale-vtprotobuf/build.txt

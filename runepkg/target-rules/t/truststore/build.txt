@@ -1,0 +1,1 @@
+../../g/golang-github-smallstep-truststore/build.txt

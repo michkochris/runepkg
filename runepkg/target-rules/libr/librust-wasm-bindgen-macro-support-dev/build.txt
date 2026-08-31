@@ -1,0 +1,1 @@
+../../r/rust-wasm-bindgen-macro-support/build.txt

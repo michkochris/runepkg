@@ -1,0 +1,1 @@
+../../c/colord/build.txt

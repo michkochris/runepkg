@@ -1,0 +1,1 @@
+../../j/java-allocation-instrumenter/build.txt

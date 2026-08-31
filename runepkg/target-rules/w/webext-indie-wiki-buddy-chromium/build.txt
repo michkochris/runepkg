@@ -1,0 +1,1 @@
+../../i/indie-wiki-buddy/build.txt

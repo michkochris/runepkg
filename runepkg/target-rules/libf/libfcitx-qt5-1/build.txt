@@ -1,0 +1,1 @@
+../../f/fcitx-qt5/build.txt

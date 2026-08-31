@@ -1,0 +1,1 @@
+../golang-github-coreos-stream-metadata-go/build.txt

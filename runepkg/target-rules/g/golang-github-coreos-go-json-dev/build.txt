@@ -1,0 +1,1 @@
+../golang-github-coreos-go-json/build.txt

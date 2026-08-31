@@ -1,0 +1,1 @@
+../rime-emoji-cantonese/build.txt

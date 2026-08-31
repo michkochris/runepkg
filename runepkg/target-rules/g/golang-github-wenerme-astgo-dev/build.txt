@@ -1,0 +1,1 @@
+../golang-github-wenerme-astgo/build.txt

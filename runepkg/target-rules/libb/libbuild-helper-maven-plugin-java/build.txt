@@ -1,0 +1,1 @@
+../../b/build-helper-maven-plugin/build.txt

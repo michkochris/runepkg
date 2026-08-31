@@ -1,0 +1,1 @@
+../golang-github-smallstep-pkcs7/build.txt

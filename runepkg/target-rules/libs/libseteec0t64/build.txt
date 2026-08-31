@@ -1,0 +1,1 @@
+../../o/optee-client/build.txt

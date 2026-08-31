@@ -1,0 +1,1 @@
+../golang-github-calmh-xdr/build.txt

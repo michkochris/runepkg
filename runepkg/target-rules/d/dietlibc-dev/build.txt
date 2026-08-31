@@ -1,0 +1,1 @@
+../dietlibc/build.txt

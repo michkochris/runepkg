@@ -1,0 +1,1 @@
+../golang-codeberg-jwijenbergh-eduoauth-go/build.txt

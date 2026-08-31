@@ -1,0 +1,1 @@
+../python-deprecation-alias/build.txt

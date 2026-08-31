@@ -1,0 +1,1 @@
+../../s/spatial4j-0.4/build.txt

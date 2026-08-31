@@ -1,0 +1,1 @@
+../golang-github-nu7hatch-gouuid/build.txt

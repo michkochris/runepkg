@@ -1,0 +1,1 @@
+../golang-bugst-json/build.txt

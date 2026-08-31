@@ -1,0 +1,1 @@
+../python-adal/build.txt

@@ -1,0 +1,1 @@
+../../m/microsoft-authentication-extensions-for-python/build.txt

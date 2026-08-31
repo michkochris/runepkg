@@ -1,0 +1,1 @@
+../../g/goto-chg-el/build.txt

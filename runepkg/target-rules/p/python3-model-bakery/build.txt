@@ -1,0 +1,1 @@
+../python-model-bakery/build.txt

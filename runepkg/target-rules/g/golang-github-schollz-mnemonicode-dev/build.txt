@@ -1,0 +1,1 @@
+../golang-github-schollz-mnemonicode/build.txt

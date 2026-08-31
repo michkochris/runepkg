@@ -1,0 +1,1 @@
+../../s/shhmsg/build.txt

@@ -1,0 +1,1 @@
+../../c/crowdsec/build.txt

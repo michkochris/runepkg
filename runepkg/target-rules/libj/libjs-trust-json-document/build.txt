@@ -1,0 +1,1 @@
+../../n/node-trust-json-document/build.txt

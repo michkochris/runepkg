@@ -1,0 +1,1 @@
+../../c/chardet/build.txt

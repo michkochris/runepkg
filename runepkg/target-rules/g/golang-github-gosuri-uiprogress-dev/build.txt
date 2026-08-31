@@ -1,0 +1,1 @@
+../golang-github-gosuri-uiprogress/build.txt

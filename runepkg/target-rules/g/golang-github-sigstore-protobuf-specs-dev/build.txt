@@ -1,0 +1,1 @@
+../golang-github-sigstore-protobuf-specs/build.txt

@@ -1,0 +1,1 @@
+../../t/telepathy-glib/build.txt

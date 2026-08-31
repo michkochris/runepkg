@@ -1,0 +1,1 @@
+../../n/ncbi-tools6/build.txt

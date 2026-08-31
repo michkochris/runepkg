@@ -1,0 +1,1 @@
+../golang-gopkg-irc.v4/build.txt

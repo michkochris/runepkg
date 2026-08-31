@@ -1,0 +1,1 @@
+../golang-github-la5nta-wl2k-go/build.txt

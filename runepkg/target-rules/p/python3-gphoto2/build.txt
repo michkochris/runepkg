@@ -1,0 +1,1 @@
+../python-gphoto2/build.txt

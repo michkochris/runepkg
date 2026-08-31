@@ -1,0 +1,1 @@
+../golang-github-shopify-sarama/build.txt

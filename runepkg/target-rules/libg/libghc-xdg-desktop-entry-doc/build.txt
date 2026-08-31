@@ -1,0 +1,1 @@
+../../h/haskell-xdg-desktop-entry/build.txt

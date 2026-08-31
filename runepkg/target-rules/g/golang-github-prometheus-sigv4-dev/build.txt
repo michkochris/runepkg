@@ -1,0 +1,1 @@
+../golang-github-prometheus-sigv4/build.txt

@@ -1,0 +1,1 @@
+../../g/gnucobol4/build.txt

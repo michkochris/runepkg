@@ -1,0 +1,1 @@
+../../s/symmetrize/build.txt

@@ -1,0 +1,1 @@
+../../d/docker-credential-gcr/build.txt

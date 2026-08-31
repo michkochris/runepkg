@@ -1,0 +1,1 @@
+../../d/django-haystack-redis/build.txt

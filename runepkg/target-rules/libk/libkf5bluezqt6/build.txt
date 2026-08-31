@@ -1,0 +1,1 @@
+../../b/bluez-qt/build.txt

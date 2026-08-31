@@ -1,0 +1,1 @@
+../golang-github-burntsushi-locker/build.txt

@@ -1,0 +1,1 @@
+../../d/django-assets/build.txt

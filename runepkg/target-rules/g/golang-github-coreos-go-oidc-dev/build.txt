@@ -1,0 +1,1 @@
+../golang-github-coreos-go-oidc/build.txt

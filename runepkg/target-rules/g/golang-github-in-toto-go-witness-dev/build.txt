@@ -1,0 +1,1 @@
+../golang-github-in-toto-go-witness/build.txt

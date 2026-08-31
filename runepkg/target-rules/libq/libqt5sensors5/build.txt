@@ -1,0 +1,1 @@
+../../q/qtsensors-opensource-src/build.txt

@@ -1,0 +1,1 @@
+../../g/golang-github-valyala-quicktemplate/build.txt

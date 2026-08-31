@@ -1,0 +1,1 @@
+../python-xstatic-bootstrap-datepicker/build.txt

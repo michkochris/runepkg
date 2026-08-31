@@ -1,0 +1,1 @@
+../wmi/build.txt

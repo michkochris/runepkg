@@ -1,0 +1,1 @@
+../python-foscam/build.txt

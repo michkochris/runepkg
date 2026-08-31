@@ -1,0 +1,1 @@
+../../g/gst-plugins-bad1.0/build.txt

@@ -1,0 +1,1 @@
+../golang-github-hillu-go-yara/build.txt

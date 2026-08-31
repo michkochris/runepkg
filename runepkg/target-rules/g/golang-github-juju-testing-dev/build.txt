@@ -1,0 +1,1 @@
+../golang-github-juju-testing/build.txt

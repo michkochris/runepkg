@@ -1,0 +1,1 @@
+../go-gir-generator/build.txt

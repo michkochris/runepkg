@@ -1,0 +1,1 @@
+../python-xstatic-angular-ui-router/build.txt

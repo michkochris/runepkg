@@ -1,0 +1,1 @@
+../../d/docker-registry/build.txt

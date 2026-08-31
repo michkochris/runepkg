@@ -1,0 +1,1 @@
+../../s/sofia-sip/build.txt

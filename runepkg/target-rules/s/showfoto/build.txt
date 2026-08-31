@@ -1,0 +1,1 @@
+../../d/digikam/build.txt

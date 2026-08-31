@@ -1,0 +1,1 @@
+../../f/fstrcmp/build.txt

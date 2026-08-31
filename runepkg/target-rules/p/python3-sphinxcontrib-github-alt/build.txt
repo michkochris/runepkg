@@ -1,0 +1,1 @@
+../../s/sphinxcontrib-github-alt/build.txt

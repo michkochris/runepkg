@@ -1,0 +1,1 @@
+../golang-github-zitadel-schema/build.txt

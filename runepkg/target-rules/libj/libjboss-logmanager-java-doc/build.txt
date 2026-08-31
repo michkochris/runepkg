@@ -1,0 +1,1 @@
+../../j/jboss-logmanager/build.txt

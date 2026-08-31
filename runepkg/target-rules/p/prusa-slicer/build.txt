@@ -1,0 +1,1 @@
+../../s/slic3r-prusa/build.txt

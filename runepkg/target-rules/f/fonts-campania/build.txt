@@ -1,0 +1,1 @@
+../../c/campania/build.txt

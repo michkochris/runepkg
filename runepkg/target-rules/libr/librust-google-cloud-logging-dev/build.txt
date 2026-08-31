@@ -1,0 +1,1 @@
+../../r/rust-google-cloud-logging/build.txt

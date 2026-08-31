@@ -1,0 +1,1 @@
+../../h/haskell-lambdabot-misc-plugins/build.txt

@@ -1,0 +1,1 @@
+../../g/golang-k8s-kube-openapi/build.txt

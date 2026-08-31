@@ -1,0 +1,1 @@
+../golang-github-xhit-go-simple-mail/build.txt

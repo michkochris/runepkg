@@ -1,0 +1,1 @@
+../golang-github-serialx-hashring/build.txt

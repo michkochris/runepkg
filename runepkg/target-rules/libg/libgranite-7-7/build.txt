@@ -1,0 +1,1 @@
+../../g/granite-7/build.txt

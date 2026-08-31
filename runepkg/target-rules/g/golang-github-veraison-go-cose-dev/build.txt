@@ -1,0 +1,1 @@
+../golang-github-veraison-go-cose/build.txt

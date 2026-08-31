@@ -1,0 +1,1 @@
+../golang-github-neowaylabs-wabbit/build.txt

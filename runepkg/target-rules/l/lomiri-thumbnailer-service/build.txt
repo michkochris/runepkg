@@ -1,0 +1,1 @@
+../lomiri-thumbnailer/build.txt

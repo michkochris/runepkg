@@ -1,0 +1,1 @@
+../../p/pocketsphinx/build.txt

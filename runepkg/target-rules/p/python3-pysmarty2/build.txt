@@ -1,0 +1,1 @@
+../pysmarty2/build.txt

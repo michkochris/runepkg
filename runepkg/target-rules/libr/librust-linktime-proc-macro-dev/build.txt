@@ -1,0 +1,1 @@
+../../r/rust-linktime-proc-macro/build.txt

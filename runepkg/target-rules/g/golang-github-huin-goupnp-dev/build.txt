@@ -1,0 +1,1 @@
+../golang-github-huin-goupnp/build.txt

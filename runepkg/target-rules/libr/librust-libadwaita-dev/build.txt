@@ -1,0 +1,1 @@
+../../r/rust-libadwaita/build.txt

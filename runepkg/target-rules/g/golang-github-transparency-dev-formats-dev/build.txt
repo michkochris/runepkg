@@ -1,0 +1,1 @@
+../golang-github-transparency-dev-formats/build.txt

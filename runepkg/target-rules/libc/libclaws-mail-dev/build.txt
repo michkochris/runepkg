@@ -1,0 +1,1 @@
+../../c/claws-mail/build.txt

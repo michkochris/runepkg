@@ -1,0 +1,1 @@
+../../r/rust-reqsign-tencent-cos/build.txt

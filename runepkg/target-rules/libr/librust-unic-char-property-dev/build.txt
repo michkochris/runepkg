@@ -1,0 +1,1 @@
+../../r/rust-unic-char-property/build.txt

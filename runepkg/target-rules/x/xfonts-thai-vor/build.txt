@@ -1,0 +1,1 @@
+../../t/thaixfonts/build.txt

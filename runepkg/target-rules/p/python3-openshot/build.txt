@@ -1,0 +1,1 @@
+../../libo/libopenshot/build.txt

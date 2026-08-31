@@ -1,0 +1,1 @@
+../golang-github-bradleyjkemp-cupaloy/build.txt

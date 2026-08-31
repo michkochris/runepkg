@@ -1,0 +1,1 @@
+../../s/sdl-image1.2/build.txt

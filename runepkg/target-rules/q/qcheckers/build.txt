@@ -1,0 +1,1 @@
+../../k/kcheckers/build.txt

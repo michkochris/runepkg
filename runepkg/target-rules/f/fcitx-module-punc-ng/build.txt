@@ -1,0 +1,1 @@
+../fcitx-punc-ng/build.txt

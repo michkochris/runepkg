@@ -1,0 +1,1 @@
+../python-pynvml/build.txt

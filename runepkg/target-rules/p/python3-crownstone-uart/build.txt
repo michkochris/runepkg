@@ -1,0 +1,1 @@
+../python-crownstone-uart/build.txt

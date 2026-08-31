@@ -1,0 +1,1 @@
+../android-platform-tools-apksig/build.txt

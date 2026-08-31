@@ -1,0 +1,1 @@
+../../libg/libgravatar/build.txt

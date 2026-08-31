@@ -1,0 +1,1 @@
+../golang-github-makiuchi-d-gozxing/build.txt

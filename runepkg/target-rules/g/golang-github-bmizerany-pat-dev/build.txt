@@ -1,0 +1,1 @@
+../golang-github-bmizerany-pat/build.txt

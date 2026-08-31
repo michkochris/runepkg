@@ -1,0 +1,1 @@
+../../q/qr-code-generator/build.txt

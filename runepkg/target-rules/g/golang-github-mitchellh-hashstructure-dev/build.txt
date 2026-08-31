@@ -1,0 +1,1 @@
+../golang-github-mitchellh-hashstructure/build.txt

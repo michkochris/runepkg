@@ -1,0 +1,1 @@
+../../g/google-auto-service-java/build.txt

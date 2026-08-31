@@ -1,0 +1,1 @@
+../libnative-platform-java/build.txt

@@ -1,0 +1,1 @@
+../../r/rust-schemafy-core/build.txt

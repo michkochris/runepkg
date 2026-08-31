@@ -1,0 +1,1 @@
+../../libo/libosmo-sigtran/build.txt

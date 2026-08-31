@@ -1,0 +1,19 @@
+# runepkg target-rule draft template
+[package]
+name = carton
+build_system = autotools
+
+[flags]
+cflags = -O2 -D_FILE_OFFSET_BITS=64
+cxxflags = -O2
+ldflags =
+
+[autotools]
+conf_args = --prefix=/usr --sysconfdir=/etc --localstatedir=/var
+
+[make]
+targets = all
+install_targets = install
+
+[hooks]
+pre_configure = sanitize_timestamps

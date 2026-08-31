@@ -1,0 +1,1 @@
+../../h/haskell-data-functor-logistic/build.txt

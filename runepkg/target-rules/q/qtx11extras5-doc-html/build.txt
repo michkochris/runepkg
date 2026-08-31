@@ -1,0 +1,1 @@
+../qtx11extras-opensource-src/build.txt

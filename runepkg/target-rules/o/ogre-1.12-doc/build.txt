@@ -1,0 +1,1 @@
+../ogre-1.12/build.txt

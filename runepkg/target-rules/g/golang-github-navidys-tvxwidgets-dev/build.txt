@@ -1,0 +1,1 @@
+../golang-github-navidys-tvxwidgets/build.txt

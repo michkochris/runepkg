@@ -1,0 +1,1 @@
+../golang-k8s-sigs-json/build.txt

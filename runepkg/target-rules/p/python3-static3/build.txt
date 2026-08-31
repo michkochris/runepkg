@@ -1,0 +1,1 @@
+../python-static3/build.txt

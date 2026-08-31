@@ -1,0 +1,1 @@
+../libpam-x2go/build.txt

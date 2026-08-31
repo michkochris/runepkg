@@ -1,0 +1,1 @@
+../golang-github-linuxkit-virtsock/build.txt

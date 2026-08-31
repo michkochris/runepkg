@@ -1,0 +1,1 @@
+../../s/sddm-kcm/build.txt

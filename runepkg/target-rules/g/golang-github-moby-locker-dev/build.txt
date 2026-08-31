@@ -1,0 +1,1 @@
+../golang-github-moby-locker/build.txt

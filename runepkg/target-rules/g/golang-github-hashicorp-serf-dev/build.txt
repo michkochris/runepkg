@@ -1,0 +1,1 @@
+../golang-github-hashicorp-serf/build.txt

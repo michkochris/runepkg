@@ -1,0 +1,1 @@
+../python-translationstring/build.txt

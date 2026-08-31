@@ -1,0 +1,1 @@
+../golang-go.gearno-encoding-base58/build.txt

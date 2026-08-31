@@ -1,0 +1,1 @@
+../../s/sdl-ttf2.0/build.txt

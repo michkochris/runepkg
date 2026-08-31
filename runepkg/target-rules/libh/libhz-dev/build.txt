@@ -1,0 +1,1 @@
+../../z/zh-autoconvert/build.txt

@@ -1,0 +1,1 @@
+../../s/stix2/build.txt

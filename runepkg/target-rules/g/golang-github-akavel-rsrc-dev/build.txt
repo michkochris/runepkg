@@ -1,0 +1,1 @@
+../golang-github-akavel-rsrc/build.txt

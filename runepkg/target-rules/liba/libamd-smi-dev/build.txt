@@ -1,0 +1,1 @@
+../../a/amdsmi/build.txt

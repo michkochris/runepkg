@@ -1,0 +1,1 @@
+../../q/qscintilla2/build.txt

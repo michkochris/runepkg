@@ -1,0 +1,1 @@
+../hunspell-dict-ko/build.txt

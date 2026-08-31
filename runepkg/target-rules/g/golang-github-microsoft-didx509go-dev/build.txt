@@ -1,0 +1,1 @@
+../golang-github-microsoft-didx509go/build.txt

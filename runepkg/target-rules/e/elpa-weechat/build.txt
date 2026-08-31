@@ -1,0 +1,1 @@
+../../w/weechat-el/build.txt

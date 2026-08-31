@@ -1,0 +1,1 @@
+../../g/geonames/build.txt

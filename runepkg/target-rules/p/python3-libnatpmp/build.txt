@@ -1,0 +1,1 @@
+../../libn/libnatpmp/build.txt

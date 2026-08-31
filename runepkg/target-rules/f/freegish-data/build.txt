@@ -1,0 +1,1 @@
+../freegish/build.txt

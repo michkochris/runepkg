@@ -1,0 +1,1 @@
+../python-tesserocr/build.txt

@@ -1,0 +1,1 @@
+../../liba/libaccounts-glib/build.txt

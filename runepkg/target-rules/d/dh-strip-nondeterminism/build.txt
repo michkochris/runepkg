@@ -1,0 +1,1 @@
+../../s/strip-nondeterminism/build.txt

@@ -1,0 +1,1 @@
+../golang-forgejo-forgejo-contrib-go-libravatar/build.txt

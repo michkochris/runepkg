@@ -1,0 +1,1 @@
+../../h/haskell-sop-core/build.txt

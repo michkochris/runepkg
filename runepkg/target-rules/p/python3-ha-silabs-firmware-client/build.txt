@@ -1,0 +1,1 @@
+../../h/ha-silabs-firmware-client/build.txt

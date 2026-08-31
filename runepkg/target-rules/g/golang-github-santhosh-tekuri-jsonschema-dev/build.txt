@@ -1,0 +1,1 @@
+../golang-github-santhosh-tekuri-jsonschema/build.txt

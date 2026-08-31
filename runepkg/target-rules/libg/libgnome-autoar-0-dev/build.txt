@@ -1,0 +1,1 @@
+../../g/gnome-autoar/build.txt

@@ -1,0 +1,1 @@
+../../g/gnome-online-accounts/build.txt

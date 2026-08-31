@@ -1,0 +1,1 @@
+../../r/rust-indicatif-log-bridge/build.txt

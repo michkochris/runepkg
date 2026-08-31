@@ -1,0 +1,1 @@
+../../g/globus-gridmap-verify-myproxy-callout/build.txt

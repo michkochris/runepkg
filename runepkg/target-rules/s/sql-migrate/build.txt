@@ -1,0 +1,1 @@
+../../g/golang-github-rubenv-sql-migrate/build.txt

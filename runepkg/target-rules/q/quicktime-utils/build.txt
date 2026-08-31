@@ -1,0 +1,1 @@
+../../libq/libquicktime/build.txt

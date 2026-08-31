@@ -1,0 +1,1 @@
+../../g/gettext-ant-tasks/build.txt

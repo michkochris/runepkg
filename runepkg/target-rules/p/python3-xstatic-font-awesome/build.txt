@@ -1,0 +1,1 @@
+../python-xstatic-font-awesome/build.txt

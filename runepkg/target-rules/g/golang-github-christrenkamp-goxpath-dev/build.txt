@@ -1,0 +1,1 @@
+../golang-github-christrenkamp-goxpath/build.txt

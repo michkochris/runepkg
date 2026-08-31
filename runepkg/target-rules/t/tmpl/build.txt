@@ -1,0 +1,1 @@
+../../g/golang-github-benbjohnson-tmpl/build.txt

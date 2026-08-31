@@ -1,0 +1,1 @@
+../../libs/libshout-idjc/build.txt

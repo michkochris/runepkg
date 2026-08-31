@@ -1,0 +1,1 @@
+../../k/kyotocabinet/build.txt

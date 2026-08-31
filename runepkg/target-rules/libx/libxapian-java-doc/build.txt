@@ -1,0 +1,1 @@
+../../x/xapian-bindings/build.txt

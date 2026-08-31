@@ -1,0 +1,1 @@
+../../r/rust-pure-rust-locales/build.txt

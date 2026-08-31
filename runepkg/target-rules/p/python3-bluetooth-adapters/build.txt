@@ -1,0 +1,1 @@
+../python-bluetooth-adapters/build.txt

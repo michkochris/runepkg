@@ -1,0 +1,1 @@
+../golang-github-miekg-pkcs11/build.txt

@@ -1,0 +1,1 @@
+../../s/svgwrite/build.txt

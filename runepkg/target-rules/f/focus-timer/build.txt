@@ -1,0 +1,1 @@
+../../g/gnome-shell-pomodoro/build.txt

@@ -1,5 +1,8 @@
-package = binutils-bootstrap
+[package]
+name = binutils-bootstrap
 build_system = autotools
-configure_args = --prefix=${TOOLCHAIN_DIR} --build=x86_64-pc-linux-gnu --host=x86_64-pc-linux-gnu --target=${TARGET_TRIPLE} --with-sysroot=${SYSROOT_DIR} --disable-nls --disable-werror --disable-gprofng --enable-plugins
 libc = any
 arch = any
+
+[autotools]
+conf_args = --prefix=${TOOLCHAIN_DIR} --build=x86_64-pc-linux-gnu --host=x86_64-pc-linux-gnu --target=${TARGET_TRIPLE} --with-sysroot=${SYSROOT_DIR} --disable-nls --disable-werror --disable-gprofng --enable-plugins

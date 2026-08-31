@@ -1,0 +1,1 @@
+../../p/protobuf-java-format/build.txt

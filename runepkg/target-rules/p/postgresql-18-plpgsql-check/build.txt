@@ -1,0 +1,1 @@
+../plpgsql-check/build.txt

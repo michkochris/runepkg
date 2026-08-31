@@ -1,0 +1,1 @@
+../libnanoxml2-java/build.txt

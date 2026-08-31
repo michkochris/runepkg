@@ -1,0 +1,1 @@
+../golang-github-eclipse-paho.golang/build.txt

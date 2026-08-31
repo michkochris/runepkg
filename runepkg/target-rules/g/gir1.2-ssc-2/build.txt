@@ -1,0 +1,1 @@
+../../libs/libssc/build.txt

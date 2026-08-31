@@ -1,0 +1,1 @@
+../python-pyqtlet2/build.txt

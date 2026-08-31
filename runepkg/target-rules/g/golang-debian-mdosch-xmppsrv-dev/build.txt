@@ -1,0 +1,1 @@
+../golang-debian-mdosch-xmppsrv/build.txt

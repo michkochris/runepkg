@@ -1,0 +1,1 @@
+../golang-github-joyent-gosdc/build.txt

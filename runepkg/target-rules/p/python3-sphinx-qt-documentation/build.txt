@@ -1,0 +1,1 @@
+../../s/sphinx-qt-documentation/build.txt

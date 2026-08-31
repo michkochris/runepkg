@@ -1,0 +1,1 @@
+../../j/jetty-modify-sources-maven-plugin/build.txt

@@ -1,0 +1,1 @@
+../../o/osgi-annotation/build.txt

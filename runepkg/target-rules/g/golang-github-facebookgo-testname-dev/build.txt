@@ -1,0 +1,1 @@
+../golang-github-facebookgo-testname/build.txt

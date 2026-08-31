@@ -1,0 +1,1 @@
+../golang-github-bruth-assert/build.txt

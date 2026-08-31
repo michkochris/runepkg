@@ -1,0 +1,1 @@
+../../liba/libayatana-common/build.txt

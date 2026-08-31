@@ -1,0 +1,1 @@
+../../p/packagekit-qt/build.txt

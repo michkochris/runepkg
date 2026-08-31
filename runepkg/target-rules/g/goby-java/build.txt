@@ -1,0 +1,1 @@
+../../libg/libgoby-java/build.txt

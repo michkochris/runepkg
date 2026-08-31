@@ -1,0 +1,1 @@
+../../b/beancount-periodic/build.txt

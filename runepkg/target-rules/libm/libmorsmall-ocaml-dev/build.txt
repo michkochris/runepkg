@@ -1,0 +1,1 @@
+../../m/morsmall/build.txt

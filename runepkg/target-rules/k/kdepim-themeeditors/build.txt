@@ -1,0 +1,1 @@
+../../g/grantlee-editor/build.txt

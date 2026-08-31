@@ -1,0 +1,1 @@
+../golang-github-masahiro331-go-mvn-version/build.txt

@@ -1,0 +1,1 @@
+../libdist-zilla-plugin-test-podspelling-perl/build.txt

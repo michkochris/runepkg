@@ -1,0 +1,1 @@
+../../i/ispell.pt/build.txt

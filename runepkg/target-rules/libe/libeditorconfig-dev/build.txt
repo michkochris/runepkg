@@ -1,0 +1,1 @@
+../../e/editorconfig-core/build.txt

@@ -1,0 +1,1 @@
+../../a/astc-encoder/build.txt

@@ -1,0 +1,1 @@
+../libcmtspeechdata/build.txt

@@ -1,0 +1,1 @@
+../golang-github-cncf-xds/build.txt

@@ -1,0 +1,1 @@
+../golang-bugsnag-panicwrap/build.txt

@@ -1,0 +1,1 @@
+../../libq/libqrtr-glib/build.txt

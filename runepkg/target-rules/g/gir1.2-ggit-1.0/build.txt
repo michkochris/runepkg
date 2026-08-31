@@ -1,0 +1,1 @@
+../../libg/libgit2-glib/build.txt

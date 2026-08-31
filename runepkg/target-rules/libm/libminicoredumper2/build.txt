@@ -1,0 +1,1 @@
+../../m/minicoredumper/build.txt

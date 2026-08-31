@@ -1,0 +1,1 @@
+../../libs/libspelling/build.txt

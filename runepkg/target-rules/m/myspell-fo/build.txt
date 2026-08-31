@@ -1,0 +1,1 @@
+../../i/ispell-fo/build.txt

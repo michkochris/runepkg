@@ -1,0 +1,1 @@
+../../p/pkg-kde-tools/build.txt

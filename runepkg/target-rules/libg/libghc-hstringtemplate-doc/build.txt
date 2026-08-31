@@ -1,0 +1,1 @@
+../../h/haskell-hstringtemplate/build.txt

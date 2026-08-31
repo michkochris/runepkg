@@ -1,0 +1,1 @@
+../golang-github-in-toto-attestation/build.txt

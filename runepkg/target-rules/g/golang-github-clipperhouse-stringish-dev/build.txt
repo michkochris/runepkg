@@ -1,0 +1,1 @@
+../golang-github-clipperhouse-stringish/build.txt

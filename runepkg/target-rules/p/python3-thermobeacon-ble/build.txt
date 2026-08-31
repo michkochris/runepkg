@@ -1,0 +1,1 @@
+../../t/thermobeacon-ble/build.txt

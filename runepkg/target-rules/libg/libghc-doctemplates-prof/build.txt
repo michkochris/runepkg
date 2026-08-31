@@ -1,0 +1,1 @@
+../../h/haskell-doctemplates/build.txt

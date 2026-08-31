@@ -1,0 +1,1 @@
+../../g/globus-net-manager/build.txt

@@ -1,0 +1,1 @@
+../../p/python-glance-store/build.txt

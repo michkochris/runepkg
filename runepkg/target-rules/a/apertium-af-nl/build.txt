@@ -1,0 +1,1 @@
+../apertium-afr-nld/build.txt

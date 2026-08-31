@@ -1,0 +1,1 @@
+../../r/rust-encoding-index-simpchinese/build.txt

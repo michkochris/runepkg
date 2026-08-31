@@ -1,0 +1,1 @@
+../../k/ktextwidgets/build.txt

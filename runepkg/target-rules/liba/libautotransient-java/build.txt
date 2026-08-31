@@ -1,0 +1,1 @@
+../../a/autotransient-java/build.txt

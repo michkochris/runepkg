@@ -1,0 +1,1 @@
+../golang-github-qor-inflection/build.txt

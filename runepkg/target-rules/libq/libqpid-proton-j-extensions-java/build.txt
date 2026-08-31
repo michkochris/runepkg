@@ -1,0 +1,1 @@
+../../q/qpid-proton-j-extensions/build.txt

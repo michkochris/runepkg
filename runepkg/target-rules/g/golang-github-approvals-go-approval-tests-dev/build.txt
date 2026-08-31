@@ -1,0 +1,1 @@
+../golang-github-approvals-go-approval-tests/build.txt

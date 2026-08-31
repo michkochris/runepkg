@@ -1,0 +1,1 @@
+../../v/vdr-plugin-xineliboutput/build.txt

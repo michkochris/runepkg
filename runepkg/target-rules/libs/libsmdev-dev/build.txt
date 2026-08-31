@@ -1,0 +1,1 @@
+../libsmdev/build.txt

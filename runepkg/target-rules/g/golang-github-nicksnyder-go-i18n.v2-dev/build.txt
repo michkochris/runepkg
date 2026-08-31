@@ -1,0 +1,1 @@
+../golang-github-nicksnyder-go-i18n.v2/build.txt

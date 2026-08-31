@@ -1,0 +1,1 @@
+../../r/rust-pathsearch/build.txt

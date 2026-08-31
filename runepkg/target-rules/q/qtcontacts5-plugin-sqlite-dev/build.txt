@@ -1,0 +1,1 @@
+../qtcontacts-sqlite/build.txt

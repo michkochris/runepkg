@@ -1,0 +1,1 @@
+../libstrato/build.txt

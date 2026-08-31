@@ -1,0 +1,1 @@
+../fusioninventory-agent/build.txt

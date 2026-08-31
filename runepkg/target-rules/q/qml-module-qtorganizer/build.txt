@@ -1,0 +1,1 @@
+../qtpim-opensource-src/build.txt

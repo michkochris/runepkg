@@ -1,0 +1,1 @@
+../../v/vtzero/build.txt

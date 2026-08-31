@@ -1,0 +1,1 @@
+../golang-github-multiformats-go-base36/build.txt

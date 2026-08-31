@@ -1,0 +1,1 @@
+../python-powerfox/build.txt

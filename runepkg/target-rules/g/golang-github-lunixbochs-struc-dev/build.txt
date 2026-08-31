@@ -1,0 +1,1 @@
+../golang-github-lunixbochs-struc/build.txt

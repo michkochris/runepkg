@@ -1,0 +1,1 @@
+../golang-gopkg-editorconfig-editorconfig-core-go.v1/build.txt

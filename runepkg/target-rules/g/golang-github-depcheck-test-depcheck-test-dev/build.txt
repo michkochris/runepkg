@@ -1,0 +1,1 @@
+../golang-github-depcheck-test-depcheck-test/build.txt

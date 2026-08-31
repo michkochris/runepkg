@@ -1,0 +1,1 @@
+../../s/social-auth-core/build.txt

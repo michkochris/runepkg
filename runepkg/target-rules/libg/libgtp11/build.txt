@@ -1,0 +1,1 @@
+../../o/osmo-ggsn/build.txt

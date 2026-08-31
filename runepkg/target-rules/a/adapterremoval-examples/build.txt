@@ -1,0 +1,1 @@
+../adapterremoval/build.txt

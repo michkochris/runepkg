@@ -1,0 +1,1 @@
+../golang-github-atotto-clipboard/build.txt

@@ -1,0 +1,1 @@
+../../h/haskell-quickcheck-unicode/build.txt

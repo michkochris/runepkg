@@ -1,0 +1,1 @@
+../../k/kactivities-kf5/build.txt

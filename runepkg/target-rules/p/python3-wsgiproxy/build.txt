@@ -1,0 +1,1 @@
+../../w/wsgiproxy2/build.txt

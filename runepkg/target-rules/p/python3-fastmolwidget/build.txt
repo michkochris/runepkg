@@ -1,0 +1,1 @@
+../python-fastmolwidget/build.txt

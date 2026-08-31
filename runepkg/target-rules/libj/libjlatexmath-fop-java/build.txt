@@ -1,0 +1,1 @@
+../libjlatexmath-java/build.txt

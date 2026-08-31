@@ -1,0 +1,1 @@
+../golang-github-bep-goat/build.txt

@@ -1,0 +1,1 @@
+../golang-github-scaleft-sshkeys/build.txt

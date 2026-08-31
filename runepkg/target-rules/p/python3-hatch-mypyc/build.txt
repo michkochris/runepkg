@@ -1,0 +1,1 @@
+../python-hatch-mypyc/build.txt

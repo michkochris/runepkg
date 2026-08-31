@@ -1,0 +1,1 @@
+../golang-bindata/build.txt

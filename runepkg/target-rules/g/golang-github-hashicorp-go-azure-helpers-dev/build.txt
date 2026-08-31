@@ -1,0 +1,1 @@
+../golang-github-hashicorp-go-azure-helpers/build.txt

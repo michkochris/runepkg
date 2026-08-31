@@ -1,0 +1,1 @@
+../../r/rust-embed-doc-image/build.txt

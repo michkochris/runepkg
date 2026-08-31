@@ -1,0 +1,1 @@
+../musescore3/build.txt

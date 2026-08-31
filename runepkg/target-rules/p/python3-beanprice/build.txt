@@ -1,0 +1,1 @@
+../../b/beanprice/build.txt

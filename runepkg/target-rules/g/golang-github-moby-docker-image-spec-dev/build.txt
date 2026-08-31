@@ -1,0 +1,1 @@
+../golang-github-moby-docker-image-spec/build.txt

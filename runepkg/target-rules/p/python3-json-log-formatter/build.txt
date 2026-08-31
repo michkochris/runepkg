@@ -1,0 +1,1 @@
+../python-json-log-formatter/build.txt

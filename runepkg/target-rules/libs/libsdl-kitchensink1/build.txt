@@ -1,0 +1,1 @@
+../../s/sdl-kitchensink/build.txt

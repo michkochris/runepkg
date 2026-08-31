@@ -1,0 +1,1 @@
+../../m/maven-artifact-transfer/build.txt

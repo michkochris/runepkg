@@ -1,0 +1,1 @@
+../../m/mpvqt/build.txt

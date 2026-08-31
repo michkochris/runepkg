@@ -1,0 +1,1 @@
+../../o/osra/build.txt

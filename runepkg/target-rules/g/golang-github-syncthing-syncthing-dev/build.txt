@@ -1,0 +1,1 @@
+../../s/syncthing/build.txt

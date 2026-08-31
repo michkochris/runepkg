@@ -1,0 +1,1 @@
+../../r/rust-scriptisto/build.txt

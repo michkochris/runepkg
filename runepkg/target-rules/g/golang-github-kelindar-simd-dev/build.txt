@@ -1,0 +1,1 @@
+../golang-github-kelindar-simd/build.txt

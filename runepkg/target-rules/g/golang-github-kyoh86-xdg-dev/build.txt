@@ -1,0 +1,1 @@
+../golang-github-kyoh86-xdg/build.txt

@@ -1,0 +1,1 @@
+../../w/wacomtablet/build.txt

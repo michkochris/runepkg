@@ -1,0 +1,1 @@
+../golang-gopkg-hlandau-easyconfig.v1/build.txt

@@ -1,0 +1,1 @@
+../golang-gopkg-freddierice-go-losetup.v1/build.txt

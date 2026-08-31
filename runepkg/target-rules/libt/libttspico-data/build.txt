@@ -1,0 +1,1 @@
+../../s/svox/build.txt

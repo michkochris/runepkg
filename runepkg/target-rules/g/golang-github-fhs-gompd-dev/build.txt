@@ -1,0 +1,1 @@
+../golang-github-fhs-gompd/build.txt

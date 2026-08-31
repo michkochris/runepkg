@@ -1,0 +1,1 @@
+../gnustep-corebase/build.txt

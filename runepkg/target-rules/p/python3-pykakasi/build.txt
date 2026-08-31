@@ -1,0 +1,1 @@
+../python-pykakasi/build.txt

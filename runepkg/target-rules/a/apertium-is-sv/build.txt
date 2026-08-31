@@ -1,0 +1,1 @@
+../apertium-isl-swe/build.txt

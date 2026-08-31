@@ -1,0 +1,1 @@
+../libopenmpt-modplug/build.txt

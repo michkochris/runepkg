@@ -1,0 +1,1 @@
+../golang-github-hexops-gotextdiff/build.txt

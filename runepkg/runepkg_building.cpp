@@ -458,11 +458,16 @@ private:
 
         // 1. Pre-configure hook execution or automated configure script bootstrap
         if (recipe && !recipe->pre_configure_shell.empty()) {
-            std::cout << "  -> Executing pre-configure shell hook..." << std::endl;
-            if (system(recipe->pre_configure_shell.c_str()) != 0) {
-                std::cerr << "ERROR: Pre-configure shell hook failed." << std::endl;
-                if (chdir(cwd) != 0) perror("rollback chdir failed");
-                return false;
+            if (recipe->pre_configure_shell == "sanitize_timestamps") {
+                // Already done by the engine above, skip shell execution
+                std::cout << "  -> Internal hook [sanitize_timestamps] satisfied." << std::endl;
+            } else {
+                std::cout << "  -> Executing pre-configure shell hook..." << std::endl;
+                if (system(recipe->pre_configure_shell.c_str()) != 0) {
+                    std::cerr << "ERROR: Pre-configure shell hook failed." << std::endl;
+                    if (chdir(cwd) != 0) perror("rollback chdir failed");
+                    return false;
+                }
             }
         } else if (!fs::exists("configure")) {
             if (fs::exists("autogen.sh")) {

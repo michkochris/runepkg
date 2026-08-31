@@ -1,0 +1,1 @@
+../golang-github-smartystreets-go-aws-auth/build.txt

@@ -1,0 +1,1 @@
+../../s/sdl2-compat/build.txt

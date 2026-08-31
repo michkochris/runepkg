@@ -1,0 +1,1 @@
+../../s/shut-up/build.txt

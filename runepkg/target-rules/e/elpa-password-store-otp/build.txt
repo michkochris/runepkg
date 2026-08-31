@@ -1,0 +1,1 @@
+../../p/password-store-otp.el/build.txt

@@ -1,0 +1,1 @@
+../python-synologydsm-api/build.txt

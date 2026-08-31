@@ -1,0 +1,1 @@
+../../j/jupyterlab-macaulay2/build.txt

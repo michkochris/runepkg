@@ -1,0 +1,1 @@
+../golang-github-rifflock-lfshook/build.txt

@@ -1,0 +1,1 @@
+../pyautogui/build.txt

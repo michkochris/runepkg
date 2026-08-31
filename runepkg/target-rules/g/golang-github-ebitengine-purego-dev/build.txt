@@ -1,0 +1,1 @@
+../golang-github-ebitengine-purego/build.txt

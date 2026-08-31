@@ -1,0 +1,1 @@
+../golang-github-jinzhu-copier/build.txt

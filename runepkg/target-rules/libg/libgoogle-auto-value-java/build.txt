@@ -1,0 +1,1 @@
+../../g/google-auto-value-java/build.txt

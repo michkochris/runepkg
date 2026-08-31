@@ -1,0 +1,1 @@
+../../w/why3/build.txt

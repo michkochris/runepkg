@@ -1,0 +1,1 @@
+../golang-github-googlecloudplatform-guest-logging-go/build.txt

@@ -1,0 +1,1 @@
+../../r/rust-usb-ids/build.txt

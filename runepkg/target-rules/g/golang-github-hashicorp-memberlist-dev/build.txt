@@ -1,0 +1,1 @@
+../golang-github-hashicorp-memberlist/build.txt

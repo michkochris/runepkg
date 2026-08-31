@@ -1,0 +1,1 @@
+../../u/uchardet/build.txt

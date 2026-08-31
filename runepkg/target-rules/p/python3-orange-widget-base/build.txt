@@ -1,0 +1,1 @@
+../../o/orange-widget-base/build.txt

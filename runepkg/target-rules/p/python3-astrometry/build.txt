@@ -1,0 +1,1 @@
+../../a/astrometry.net/build.txt

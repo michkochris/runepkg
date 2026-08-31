@@ -1,0 +1,1 @@
+../golang-github-mattermost-xml-roundtrip-validator/build.txt

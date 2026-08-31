@@ -1,0 +1,1 @@
+../../g/gnome-terminal/build.txt

@@ -1,0 +1,1 @@
+../../r/rust-quick-xml/build.txt

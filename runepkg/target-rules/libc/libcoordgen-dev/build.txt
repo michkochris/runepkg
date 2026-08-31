@@ -1,0 +1,1 @@
+../../s/schroedinger-coordgenlibs/build.txt

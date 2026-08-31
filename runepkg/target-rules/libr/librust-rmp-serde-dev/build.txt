@@ -1,0 +1,1 @@
+../../r/rust-rmp-serde/build.txt

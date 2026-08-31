@@ -1,0 +1,1 @@
+../../f/freedict-wikdict/build.txt

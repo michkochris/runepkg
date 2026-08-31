@@ -1,0 +1,1 @@
+../python-pauvre/build.txt

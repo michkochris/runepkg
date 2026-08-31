@@ -1,0 +1,1 @@
+../../s/siridb-connector/build.txt

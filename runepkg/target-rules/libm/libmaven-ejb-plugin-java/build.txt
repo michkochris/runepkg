@@ -1,0 +1,1 @@
+../../m/maven-ejb-plugin/build.txt

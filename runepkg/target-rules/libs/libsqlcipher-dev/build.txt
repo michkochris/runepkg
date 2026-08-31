@@ -1,0 +1,1 @@
+../../s/sqlcipher/build.txt

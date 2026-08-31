@@ -1,0 +1,1 @@
+../golang-github-alecthomas-jsonschema/build.txt

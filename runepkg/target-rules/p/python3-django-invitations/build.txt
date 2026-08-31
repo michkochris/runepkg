@@ -1,0 +1,1 @@
+../../d/django-invitations/build.txt

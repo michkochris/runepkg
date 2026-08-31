@@ -1,0 +1,1 @@
+../golang-github-k0swe-wsjtx-go/build.txt

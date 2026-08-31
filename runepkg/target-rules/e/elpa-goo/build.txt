@@ -1,0 +1,1 @@
+../../g/goo/build.txt

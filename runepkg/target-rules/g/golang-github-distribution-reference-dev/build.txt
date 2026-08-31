@@ -1,0 +1,1 @@
+../golang-github-distribution-reference/build.txt

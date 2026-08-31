@@ -1,0 +1,1 @@
+../python-pure-python-adb/build.txt

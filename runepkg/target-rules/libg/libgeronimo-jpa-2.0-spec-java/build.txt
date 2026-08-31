@@ -1,0 +1,1 @@
+../../g/geronimo-jpa-2.0-spec/build.txt

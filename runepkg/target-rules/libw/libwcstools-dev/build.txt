@@ -1,0 +1,1 @@
+../../w/wcstools/build.txt

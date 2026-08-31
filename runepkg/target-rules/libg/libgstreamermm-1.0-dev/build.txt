@@ -1,0 +1,1 @@
+../../g/gstreamermm-1.0/build.txt

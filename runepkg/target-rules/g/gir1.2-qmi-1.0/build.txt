@@ -1,0 +1,1 @@
+../../libq/libqmi/build.txt

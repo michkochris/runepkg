@@ -1,0 +1,1 @@
+../golang-github-cznic-bufs/build.txt

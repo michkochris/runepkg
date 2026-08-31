@@ -1,0 +1,1 @@
+../golang-github-dop251-goja/build.txt

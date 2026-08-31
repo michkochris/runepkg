@@ -1,0 +1,1 @@
+../golang-github-tcnksm-go-gitconfig/build.txt

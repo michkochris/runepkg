@@ -1,0 +1,1 @@
+../../g/gst-python1.0/build.txt

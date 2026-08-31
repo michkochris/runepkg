@@ -1,0 +1,1 @@
+../../s/schroedinger-maeparser/build.txt

@@ -1,0 +1,1 @@
+../../q/qt6-sensors/build.txt

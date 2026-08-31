@@ -1,0 +1,1 @@
+../../g/geronimo-j2ee-management-1.1-spec/build.txt

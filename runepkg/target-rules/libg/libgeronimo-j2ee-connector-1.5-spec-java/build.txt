@@ -1,0 +1,1 @@
+../../g/geronimo-j2ee-connector-1.5-spec/build.txt

@@ -1,0 +1,1 @@
+../lynkeos.app/build.txt

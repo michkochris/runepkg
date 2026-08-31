@@ -1,0 +1,1 @@
+../../w/wikidiff2/build.txt

@@ -1,0 +1,1 @@
+../../u/utf8-locale/build.txt

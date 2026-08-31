@@ -1,0 +1,1 @@
+../golang-github-d2r2-go-sht3x/build.txt

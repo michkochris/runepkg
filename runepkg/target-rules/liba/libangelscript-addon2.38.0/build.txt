@@ -1,0 +1,1 @@
+../../a/angelscript/build.txt

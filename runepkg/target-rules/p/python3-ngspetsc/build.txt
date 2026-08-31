@@ -1,0 +1,1 @@
+../../n/ngspetsc/build.txt

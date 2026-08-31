@@ -1,0 +1,1 @@
+../kamailio/build.txt

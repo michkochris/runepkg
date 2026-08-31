@@ -1,0 +1,1 @@
+../../q/qt-advanced-docking-system/build.txt

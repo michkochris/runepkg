@@ -1,0 +1,1 @@
+../../r/rust-koibumi-base32/build.txt

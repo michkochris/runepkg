@@ -1,0 +1,1 @@
+../../g/git-auto-commit-mode/build.txt

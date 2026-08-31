@@ -1,0 +1,1 @@
+../python-griffe-typingdoc/build.txt

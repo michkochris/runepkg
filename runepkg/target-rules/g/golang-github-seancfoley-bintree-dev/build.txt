@@ -1,0 +1,1 @@
+../golang-github-seancfoley-bintree/build.txt

@@ -1,0 +1,1 @@
+../../s/squaremap/build.txt

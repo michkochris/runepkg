@@ -1,0 +1,1 @@
+../../n/node-getobject/build.txt

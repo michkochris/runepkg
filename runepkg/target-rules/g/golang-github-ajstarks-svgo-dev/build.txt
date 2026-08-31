@@ -1,0 +1,1 @@
+../golang-github-ajstarks-svgo/build.txt

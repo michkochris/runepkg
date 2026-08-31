@@ -1,0 +1,1 @@
+../../r/rust-magnus-macros/build.txt

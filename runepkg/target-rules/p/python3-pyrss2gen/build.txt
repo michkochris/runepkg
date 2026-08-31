@@ -1,0 +1,1 @@
+../python-pyrss2gen/build.txt

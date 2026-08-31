@@ -1,0 +1,1 @@
+../golang-github-tetratelabs-wazero/build.txt

@@ -1,0 +1,1 @@
+../../g/golang-github-go-enry-go-license-detector/build.txt

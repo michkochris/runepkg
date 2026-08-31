@@ -1,0 +1,1 @@
+../../q/quicktext/build.txt

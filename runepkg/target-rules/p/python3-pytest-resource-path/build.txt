@@ -1,0 +1,1 @@
+../python-pytest-resource-path/build.txt

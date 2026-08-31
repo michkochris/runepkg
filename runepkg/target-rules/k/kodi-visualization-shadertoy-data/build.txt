@@ -1,0 +1,1 @@
+../kodi-visualization-shadertoy/build.txt

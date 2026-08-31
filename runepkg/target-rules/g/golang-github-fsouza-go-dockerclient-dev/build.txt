@@ -1,0 +1,1 @@
+../golang-github-fsouza-go-dockerclient/build.txt

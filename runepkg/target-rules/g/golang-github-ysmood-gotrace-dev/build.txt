@@ -1,0 +1,1 @@
+../golang-github-ysmood-gotrace/build.txt

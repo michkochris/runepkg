@@ -1,0 +1,1 @@
+../../h/haskell-singleton-bool/build.txt

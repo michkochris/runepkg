@@ -1,0 +1,1 @@
+../../t/ttfautohint/build.txt

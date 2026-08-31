@@ -1,0 +1,1 @@
+../../t/tpm2-pkcs11/build.txt

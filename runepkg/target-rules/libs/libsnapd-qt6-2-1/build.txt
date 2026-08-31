@@ -1,0 +1,1 @@
+../../s/snapd-glib/build.txt

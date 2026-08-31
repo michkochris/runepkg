@@ -1,0 +1,1 @@
+../golang-github-issue9-assert/build.txt

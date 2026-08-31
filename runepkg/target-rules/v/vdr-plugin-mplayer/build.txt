@@ -1,0 +1,1 @@
+../vdr-plugin-mp3/build.txt

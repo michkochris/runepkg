@@ -1,0 +1,1 @@
+../../v/vdeplug-vdesl/build.txt

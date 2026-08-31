@@ -1,0 +1,1 @@
+../golang-github-adxgun-registry-auth/build.txt

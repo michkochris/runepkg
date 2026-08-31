@@ -1,0 +1,1 @@
+../apertium-spa-ast/build.txt

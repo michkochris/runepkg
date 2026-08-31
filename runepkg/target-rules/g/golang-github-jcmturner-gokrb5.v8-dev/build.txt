@@ -1,0 +1,1 @@
+../golang-github-jcmturner-gokrb5.v8/build.txt

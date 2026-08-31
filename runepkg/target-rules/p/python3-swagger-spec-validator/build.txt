@@ -1,0 +1,1 @@
+../../s/swagger-spec-validator/build.txt

@@ -1,0 +1,1 @@
+../../k/khronos-opencl-man/build.txt

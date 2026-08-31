@@ -1,0 +1,1 @@
+../rime-quick/build.txt

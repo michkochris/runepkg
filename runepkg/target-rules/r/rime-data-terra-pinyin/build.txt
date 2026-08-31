@@ -1,0 +1,1 @@
+../rime-terra-pinyin/build.txt

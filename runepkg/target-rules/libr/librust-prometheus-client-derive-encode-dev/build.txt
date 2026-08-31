@@ -1,0 +1,1 @@
+../../r/rust-prometheus-client-derive-encode/build.txt

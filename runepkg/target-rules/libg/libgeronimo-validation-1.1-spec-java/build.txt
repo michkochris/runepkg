@@ -1,0 +1,1 @@
+../../g/geronimo-validation-1.1-spec/build.txt

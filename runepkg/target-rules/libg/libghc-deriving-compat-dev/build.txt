@@ -1,0 +1,1 @@
+../../h/haskell-deriving-compat/build.txt

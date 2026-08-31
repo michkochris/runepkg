@@ -1,0 +1,1 @@
+../../c/click-help-colors/build.txt

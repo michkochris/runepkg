@@ -1,0 +1,1 @@
+../../m/msttcorefonts/build.txt

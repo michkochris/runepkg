@@ -1,0 +1,1 @@
+../../h/hsqldb1.8.0/build.txt

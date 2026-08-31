@@ -1,0 +1,1 @@
+../golang-github-btcsuite-btcd-chaincfg-chainhash/build.txt

@@ -1,0 +1,1 @@
+../../s/speedtest-go/build.txt

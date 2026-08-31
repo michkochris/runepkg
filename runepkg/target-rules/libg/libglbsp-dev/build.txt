@@ -1,0 +1,1 @@
+../../g/glbsp/build.txt

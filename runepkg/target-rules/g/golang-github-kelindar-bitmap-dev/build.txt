@@ -1,0 +1,1 @@
+../golang-github-kelindar-bitmap/build.txt

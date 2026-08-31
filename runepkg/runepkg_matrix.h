@@ -138,6 +138,8 @@ public:
     static const RuneMatrixRecord* find_record(const std::string& pkg_name);
 };
 
+extern "C" bool runepkg_matrix_compile_rules(const char* rules_dir, const char* output_bin);
+
 #endif /* __cplusplus */
 
 #endif /* RUNEPKG_MATRIX_H */

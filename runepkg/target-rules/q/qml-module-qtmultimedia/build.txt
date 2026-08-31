@@ -1,0 +1,1 @@
+../qtmultimedia-opensource-src/build.txt

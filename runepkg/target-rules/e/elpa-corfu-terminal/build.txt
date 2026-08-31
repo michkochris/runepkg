@@ -1,0 +1,1 @@
+../emacs-corfu-terminal/build.txt

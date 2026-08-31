@@ -1,0 +1,1 @@
+../golang-github-google-go-pkcs11/build.txt

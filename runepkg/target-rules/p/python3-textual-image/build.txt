@@ -1,0 +1,1 @@
+../../t/textual-image/build.txt

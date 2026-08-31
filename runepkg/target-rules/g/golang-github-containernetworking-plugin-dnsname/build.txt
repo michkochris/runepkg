@@ -1,0 +1,1 @@
+../golang-github-containers-dnsname/build.txt

@@ -1,0 +1,1 @@
+../../j/jquery-i18n-properties/build.txt

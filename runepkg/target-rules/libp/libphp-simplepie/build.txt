@@ -1,0 +1,1 @@
+../../s/simplepie/build.txt

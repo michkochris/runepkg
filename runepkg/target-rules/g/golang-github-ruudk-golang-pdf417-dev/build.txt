@@ -1,0 +1,1 @@
+../golang-github-ruudk-golang-pdf417/build.txt

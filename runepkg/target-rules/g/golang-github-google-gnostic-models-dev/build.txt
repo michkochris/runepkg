@@ -1,0 +1,1 @@
+../golang-github-google-gnostic-models/build.txt

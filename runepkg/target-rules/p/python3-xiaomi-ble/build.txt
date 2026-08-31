@@ -1,0 +1,1 @@
+../python-xiaomi-ble/build.txt

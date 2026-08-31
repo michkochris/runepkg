@@ -1,0 +1,1 @@
+../golang-github-serenize-snaker/build.txt

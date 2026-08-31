@@ -1,0 +1,1 @@
+../../r/rust-char-device/build.txt

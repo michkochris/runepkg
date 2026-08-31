@@ -1,0 +1,1 @@
+../golang-check.v1/build.txt

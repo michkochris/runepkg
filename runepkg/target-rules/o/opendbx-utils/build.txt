@@ -1,0 +1,1 @@
+../../libo/libopendbx/build.txt

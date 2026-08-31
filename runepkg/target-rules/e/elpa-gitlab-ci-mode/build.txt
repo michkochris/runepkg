@@ -1,0 +1,1 @@
+../../g/gitlab-ci-mode-el/build.txt

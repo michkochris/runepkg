@@ -1,0 +1,1 @@
+../../s/sord/build.txt

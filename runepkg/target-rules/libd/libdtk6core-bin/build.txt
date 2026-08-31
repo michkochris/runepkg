@@ -1,0 +1,1 @@
+../../d/dtk6core/build.txt

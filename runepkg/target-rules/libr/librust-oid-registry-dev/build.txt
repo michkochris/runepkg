@@ -1,0 +1,1 @@
+../../r/rust-oid-registry/build.txt

@@ -1,0 +1,1 @@
+../golang-github-shurcool-gopherjslib/build.txt

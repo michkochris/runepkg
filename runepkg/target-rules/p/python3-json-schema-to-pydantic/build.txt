@@ -1,0 +1,1 @@
+../../j/json-schema-to-pydantic/build.txt

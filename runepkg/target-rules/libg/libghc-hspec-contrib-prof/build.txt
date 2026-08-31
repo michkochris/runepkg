@@ -1,0 +1,1 @@
+../../h/haskell-hspec-contrib/build.txt

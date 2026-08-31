@@ -1,0 +1,1 @@
+../../r/rocm-hipamd/build.txt

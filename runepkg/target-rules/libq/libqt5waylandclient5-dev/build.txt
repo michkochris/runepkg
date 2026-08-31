@@ -1,0 +1,1 @@
+../../q/qtwayland-opensource-src/build.txt

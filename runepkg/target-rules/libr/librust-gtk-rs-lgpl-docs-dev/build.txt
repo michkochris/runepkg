@@ -1,0 +1,1 @@
+../../r/rust-gtk-rs-lgpl-docs/build.txt

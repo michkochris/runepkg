@@ -1,0 +1,1 @@
+../golang-github-azuread-microsoft-authentication-extensions-for-go/build.txt

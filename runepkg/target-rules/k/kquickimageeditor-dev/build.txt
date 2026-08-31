@@ -1,0 +1,1 @@
+../kquickimageeditor/build.txt

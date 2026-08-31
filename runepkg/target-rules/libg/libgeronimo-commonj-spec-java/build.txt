@@ -1,0 +1,1 @@
+../../g/geronimo-commonj-spec/build.txt

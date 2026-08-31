@@ -1,0 +1,1 @@
+../../v/vamp-plugin-sdk/build.txt

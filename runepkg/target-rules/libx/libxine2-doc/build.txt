@@ -1,0 +1,1 @@
+../../x/xine-lib-1.2/build.txt

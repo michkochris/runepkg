@@ -1,0 +1,1 @@
+../../k/kf6-kirigami/build.txt

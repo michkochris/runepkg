@@ -1,0 +1,1 @@
+../emacs-lsp-haskell/build.txt

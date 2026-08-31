@@ -1,0 +1,1 @@
+../../h/haskell-directory-ospath-streaming/build.txt

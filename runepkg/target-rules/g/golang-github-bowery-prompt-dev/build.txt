@@ -1,0 +1,1 @@
+../golang-github-bowery-prompt/build.txt

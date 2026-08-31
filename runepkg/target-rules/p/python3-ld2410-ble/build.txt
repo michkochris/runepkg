@@ -1,0 +1,1 @@
+../../l/ld2410-ble/build.txt

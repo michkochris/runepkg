@@ -1,0 +1,1 @@
+../shogivar/build.txt

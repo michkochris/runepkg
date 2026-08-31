@@ -1,0 +1,1 @@
+../../h/haskell-hxt-regex-xmlschema/build.txt

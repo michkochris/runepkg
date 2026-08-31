@@ -1,0 +1,1 @@
+../golang-github-oschwald-geoip2-golang/build.txt

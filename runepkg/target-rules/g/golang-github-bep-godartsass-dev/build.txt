@@ -1,0 +1,1 @@
+../golang-github-bep-godartsass/build.txt

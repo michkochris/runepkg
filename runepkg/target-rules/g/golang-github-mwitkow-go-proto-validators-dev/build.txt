@@ -1,0 +1,1 @@
+../golang-github-mwitkow-go-proto-validators/build.txt

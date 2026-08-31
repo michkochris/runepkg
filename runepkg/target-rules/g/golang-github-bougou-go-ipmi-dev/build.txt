@@ -1,0 +1,1 @@
+../golang-github-bougou-go-ipmi/build.txt

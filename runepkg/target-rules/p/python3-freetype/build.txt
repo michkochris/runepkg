@@ -1,0 +1,1 @@
+../../f/freetype-py/build.txt

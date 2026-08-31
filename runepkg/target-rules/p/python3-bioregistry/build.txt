@@ -1,0 +1,1 @@
+../python-bioregistry/build.txt

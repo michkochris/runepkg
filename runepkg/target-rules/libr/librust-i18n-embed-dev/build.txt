@@ -1,0 +1,1 @@
+../../r/rust-i18n-embed/build.txt

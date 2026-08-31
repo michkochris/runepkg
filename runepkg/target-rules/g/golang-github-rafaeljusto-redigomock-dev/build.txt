@@ -1,0 +1,1 @@
+../golang-github-rafaeljusto-redigomock/build.txt

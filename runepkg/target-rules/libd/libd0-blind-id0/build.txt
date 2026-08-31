@@ -1,0 +1,1 @@
+../../d/d0-blind-id/build.txt

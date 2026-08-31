@@ -1,0 +1,1 @@
+../../libv/libvsgpt/build.txt

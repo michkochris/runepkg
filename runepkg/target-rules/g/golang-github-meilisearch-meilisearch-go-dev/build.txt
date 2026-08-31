@@ -1,0 +1,1 @@
+../golang-github-meilisearch-meilisearch-go/build.txt

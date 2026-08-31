@@ -1,0 +1,1 @@
+../../k/kfilemetadata-kf5/build.txt

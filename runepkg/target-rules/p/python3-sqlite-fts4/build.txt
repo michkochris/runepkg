@@ -1,0 +1,1 @@
+../../s/sqlite-fts4/build.txt

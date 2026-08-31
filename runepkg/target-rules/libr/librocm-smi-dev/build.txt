@@ -1,0 +1,1 @@
+../../r/rocm-smi-lib/build.txt

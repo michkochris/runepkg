@@ -1,0 +1,1 @@
+../../n/nanomsg/build.txt

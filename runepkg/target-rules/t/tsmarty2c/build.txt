@@ -1,0 +1,1 @@
+../../s/smarty-gettext/build.txt

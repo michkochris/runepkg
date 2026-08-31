@@ -1,0 +1,1 @@
+../golang-github-farsightsec-go-nmsg/build.txt

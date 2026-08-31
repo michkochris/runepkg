@@ -1,0 +1,1 @@
+../python-autoskope-client/build.txt

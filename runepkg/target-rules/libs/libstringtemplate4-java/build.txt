@@ -1,0 +1,1 @@
+../../s/stringtemplate4/build.txt

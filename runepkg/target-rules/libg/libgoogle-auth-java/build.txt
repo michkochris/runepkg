@@ -1,0 +1,1 @@
+../../g/google-auth-java/build.txt

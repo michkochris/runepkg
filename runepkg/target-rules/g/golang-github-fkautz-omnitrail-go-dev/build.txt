@@ -1,0 +1,1 @@
+../golang-github-fkautz-omnitrail-go/build.txt

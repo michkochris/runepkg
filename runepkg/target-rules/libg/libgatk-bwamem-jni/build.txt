@@ -1,0 +1,1 @@
+../../g/gatk-bwamem/build.txt

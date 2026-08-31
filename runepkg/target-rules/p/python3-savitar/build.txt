@@ -1,0 +1,1 @@
+../../libs/libsavitar/build.txt

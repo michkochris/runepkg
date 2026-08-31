@@ -1,0 +1,1 @@
+../golang-gogoprotobuf/build.txt

@@ -1,0 +1,1 @@
+../golang-github-wader-gojq/build.txt

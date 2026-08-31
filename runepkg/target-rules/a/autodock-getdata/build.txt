@@ -1,0 +1,1 @@
+../autodocksuite/build.txt

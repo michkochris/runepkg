@@ -1,0 +1,1 @@
+../golang-github-pauloo27-go-mpris/build.txt

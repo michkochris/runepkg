@@ -1,0 +1,1 @@
+../../r/rust-symphonia-core/build.txt

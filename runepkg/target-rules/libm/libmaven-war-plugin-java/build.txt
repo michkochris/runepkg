@@ -1,0 +1,1 @@
+../../m/maven-war-plugin/build.txt

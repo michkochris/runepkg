@@ -1,0 +1,1 @@
+../../g/geronimo-jms-1.1-spec/build.txt

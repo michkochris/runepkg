@@ -1,0 +1,1 @@
+../gcc-mingw-w64/build.txt

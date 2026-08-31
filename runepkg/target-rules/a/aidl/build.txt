@@ -1,0 +1,1 @@
+../android-platform-system-tools-aidl/build.txt

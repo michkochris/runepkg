@@ -1,0 +1,1 @@
+../golang-github-anchore-go-struct-converter/build.txt

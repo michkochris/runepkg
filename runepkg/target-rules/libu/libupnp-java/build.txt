@@ -1,0 +1,1 @@
+../../s/sbbi-upnplib/build.txt

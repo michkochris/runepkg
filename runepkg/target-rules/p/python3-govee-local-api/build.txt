@@ -1,0 +1,1 @@
+../../g/govee-local-api/build.txt

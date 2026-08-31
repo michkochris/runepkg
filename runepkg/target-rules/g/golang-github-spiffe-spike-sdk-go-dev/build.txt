@@ -1,0 +1,1 @@
+../golang-github-spiffe-spike-sdk-go/build.txt

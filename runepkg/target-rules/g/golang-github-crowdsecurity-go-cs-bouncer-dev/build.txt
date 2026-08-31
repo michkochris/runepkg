@@ -1,0 +1,1 @@
+../golang-github-crowdsecurity-go-cs-bouncer/build.txt

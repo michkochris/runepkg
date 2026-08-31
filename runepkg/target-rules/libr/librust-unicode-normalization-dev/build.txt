@@ -1,0 +1,1 @@
+../../r/rust-unicode-normalization/build.txt

@@ -116,7 +116,7 @@ endif
 ifeq ($(WITH_CPP),1)
   override CFLAGS  += -DENABLE_CPP_FFI
   LDFLAGS += $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl") -lz
-  CPP_SOURCES = runepkg_network.cpp runepkg_building.cpp runepkg_bootstrap.cpp runepkg_resolver.cpp runepkg_host_dpkg.cpp runepkg_matrix.cpp
+  CPP_SOURCES = runepkg_network.cpp runepkg_building.cpp runepkg_bootstrap.cpp runepkg_resolver.cpp runepkg_host_dpkg.cpp runepkg_matrix.cpp runepkg_compiler.cpp
   CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
   LINKER = $(CXX)
 else
@@ -186,9 +186,19 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 -include $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
 
+POPULATE_TARGET = runepkg_populate
+
+$(POPULATE_TARGET): runepkg_populate.cpp
+	$(E) "  $(PURPLE)[ritual]$(RESET) Compiling Rule Scaffolder: $<"
+	$(Q)$(CXX) $(CXXFLAGS) $< -o $@
+
+populate-rules: $(POPULATE_TARGET)
+	@echo "$(BOLD)$(CYAN)Populating target-rules from runepkg_db...$(RESET)"
+	$(Q)./$(POPULATE_TARGET)
+
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d
+	$(Q)rm -f $(OBJS) $(TARGET) $(POPULATE_TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:

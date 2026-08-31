@@ -1,0 +1,1 @@
+../golang-github-gitleaks-go-gitdiff/build.txt

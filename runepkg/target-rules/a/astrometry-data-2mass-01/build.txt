@@ -1,0 +1,1 @@
+../astrometry-data-2mass/build.txt

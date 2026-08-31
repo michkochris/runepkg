@@ -1,0 +1,1 @@
+../../j/jackson-core/build.txt

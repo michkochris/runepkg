@@ -1,0 +1,1 @@
+../../g/geronimo-ejb-3.2-spec/build.txt

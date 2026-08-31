@@ -1,0 +1,1 @@
+../golang-github-rakyll-statik/build.txt

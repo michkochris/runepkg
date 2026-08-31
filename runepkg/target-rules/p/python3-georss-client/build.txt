@@ -1,0 +1,1 @@
+../python-georss-client/build.txt

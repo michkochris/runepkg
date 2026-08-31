@@ -1,0 +1,1 @@
+../../g/graphicsmagick/build.txt

@@ -1,0 +1,1 @@
+../../d/django-favicon-plus-reloaded/build.txt

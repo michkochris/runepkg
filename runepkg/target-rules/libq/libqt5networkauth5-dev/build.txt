@@ -1,0 +1,1 @@
+../../q/qtnetworkauth-everywhere-src/build.txt

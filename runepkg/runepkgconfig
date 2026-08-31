@@ -34,31 +34,31 @@
 
 # [runepkg_dir]
 # The primary base directory for runepkg tool data.
-runepkg_dir=/var/lib/runepkg_dir
+runepkg_dir=/srv/lib/runepkg_dir
 
 # [control_dir]
 # Temporary workspace where .deb control archives are extracted for processing.
-control_dir=/var/lib/runepkg_dir/control_dir
+control_dir=/srv/lib/runepkg_dir/control_dir
 
 # [install_dir]
 # The target root for package installation (set to '/' for system-wide).
-install_dir=/var/lib/runepkg_dir/install_dir
+install_dir=/srv/lib/runepkg_dir/install_dir
 
 # [runepkg_db]
 # Persistent storage for the package manager's state.
-runepkg_db=/var/lib/runepkg_dir/runepkg_db
+runepkg_db=/srv/lib/runepkg_dir/runepkg_db
 
 # [download_dir]
 # Cache directory where downloaded .deb files are stored.
-download_dir=/var/lib/runepkg_dir/download_dir
+download_dir=/srv/lib/runepkg_dir/download_dir
 
 # [build_dir]
 # Standard workspace for building and unpacking packages locally.
-build_dir=/var/lib/runepkg_dir/build_dir
+build_dir=/srv/lib/runepkg_dir/build_dir
 
 # [runepkg_debs]
 # Dedicated output directory for built .deb files.
-runepkg_debs=/var/lib/runepkg_dir/runepkg_debs
+runepkg_debs=/srv/lib/runepkg_dir/runepkg_debs
 
 # --- Behavior Settings ---
 

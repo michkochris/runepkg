@@ -1,0 +1,1 @@
+../../r/rust-fix-getters-rules/build.txt

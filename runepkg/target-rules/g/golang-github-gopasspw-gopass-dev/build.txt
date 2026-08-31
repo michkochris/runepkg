@@ -1,0 +1,1 @@
+../golang-github-gopasspw-gopass/build.txt

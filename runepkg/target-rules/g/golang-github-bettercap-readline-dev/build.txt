@@ -1,0 +1,1 @@
+../golang-github-bettercap-readline/build.txt

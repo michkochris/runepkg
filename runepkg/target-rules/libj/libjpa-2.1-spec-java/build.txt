@@ -1,0 +1,1 @@
+../../e/eclipselink-jpa-2.1-spec/build.txt

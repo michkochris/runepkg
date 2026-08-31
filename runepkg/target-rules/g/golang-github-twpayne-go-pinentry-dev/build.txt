@@ -1,0 +1,1 @@
+../golang-github-twpayne-go-pinentry/build.txt

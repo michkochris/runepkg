@@ -1,0 +1,1 @@
+../golang-github-google-s2a-go/build.txt
