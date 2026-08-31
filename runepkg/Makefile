@@ -150,7 +150,7 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install debug run termux-install uninstall test info with-cpp build-banner musl-all FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all runepkg_populate runepkg_scalpel FORCE
 
 build: build-banner $(TARGET)
 
@@ -187,18 +187,29 @@ $(TARGET): $(OBJS) .config_with_cpp
 -include $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
 
 POPULATE_TARGET = runepkg_populate
+SCALPEL_TARGET  = runepkg_scalpel
 
-$(POPULATE_TARGET): runepkg_populate.cpp
+$(POPULATE_TARGET): runepkg_populate.cpp runepkg_config.o runepkg_util.o runepkg_defensive.o runepkg_hash.o runepkg_storage.o runepkg_pack.o
 	$(E) "  $(PURPLE)[ritual]$(RESET) Compiling Rule Scaffolder: $<"
-	$(Q)$(CXX) $(CXXFLAGS) $< -o $@
+	$(Q)$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+runepkg_populate: $(POPULATE_TARGET)
+
+$(SCALPEL_TARGET): runepkg_scalpel.cpp runepkg_config.o runepkg_util.o runepkg_defensive.o runepkg_hash.o runepkg_storage.o runepkg_pack.o
+	$(E) "  $(PURPLE)[ritual]$(RESET) Compiling Surgical Scalpel: $<"
+	$(Q)$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+
+runepkg_scalpel: $(SCALPEL_TARGET)
 
 populate-rules: $(POPULATE_TARGET)
 	@echo "$(BOLD)$(CYAN)Populating target-rules from runepkg_db...$(RESET)"
-	$(Q)./$(POPULATE_TARGET)
+	$(Q)./$(POPULATE_TARGET) --confirm
+
+scalpel: $(SCALPEL_TARGET)
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) $(TARGET) $(POPULATE_TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d
+	$(Q)rm -f $(OBJS) $(TARGET) $(POPULATE_TARGET) $(SCALPEL_TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d runepkg_populate.d runepkg_scalpel.d
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:
@@ -229,20 +240,26 @@ install: $(TARGET)
              cp targets/*.conf $(DESTDIR)$(ETCDIR)/runepkg/targets/ 2>/dev/null || true; \
              chmod 644 $(DESTDIR)$(ETCDIR)/runepkg/targets/*.conf 2>/dev/null || true; \
           fi; \
-          if [ -d target-rules ]; then \
-             echo "$(CYAN)Installing target rules...$(RESET)"; \
-             mkdir -p $(DESTDIR)$(ETCDIR)/runepkg/target-rules; \
-             cp -r target-rules/* $(DESTDIR)$(ETCDIR)/runepkg/target-rules/; \
-          fi; \
        fi; \
     fi
-	@echo "$(GREEN)Installation complete.$(RESET)"
+	@echo "$(GREEN)Installation complete. (Run 'make install-target-rules' to sync the rules tree)$(RESET)"
+
+install-target-rules:
+	@if [ -d target-rules ]; then \
+       echo "$(CYAN)Installing target rules to $(DESTDIR)$(ETCDIR)/runepkg/target-rules...$(RESET)"; \
+       mkdir -p $(DESTDIR)$(ETCDIR)/runepkg/target-rules; \
+       cp -r target-rules/* $(DESTDIR)$(ETCDIR)/runepkg/target-rules/; \
+       echo "$(GREEN)Target rules installed.$(RESET)"; \
+    else \
+       echo "$(RED)Error: target-rules directory not found.$(RESET)"; \
+       exit 1; \
+    fi
 
 uninstall:
 	@echo "$(BOLD)$(YELLOW)Uninstalling $(TARGET)...$(RESET)"
 	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(TARGET)
-	$(Q)rm -rf $(DESTDIR)$(ETCDIR)/runepkg
+	@echo "$(YELLOW)Note: $(DESTDIR)$(ETCDIR)/runepkg has been preserved.$(RESET)"
 	@echo "$(GREEN)Uninstallation complete.$(RESET)"
 
 debug: CFLAGS += -DDEBUG -O0

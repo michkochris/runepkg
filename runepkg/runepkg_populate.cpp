@@ -19,6 +19,21 @@
 #include <algorithm>
 #include <cctype>
 
+extern "C" {
+#include "runepkg_config.h"
+#include "runepkg_util.h"
+}
+
+// Satisfy external symbols from runepkg_util.o and other objects
+extern "C" {
+    bool g_verbose_mode = false;
+    bool g_debug_mode = false;
+    bool g_auto_confirm_deps = false;
+    bool g_auto_confirm_siblings = false;
+    bool g_asked_siblings = false;
+    bool g_completion_mode = false;
+}
+
 namespace fs = std::filesystem;
 
 static std::string get_debian_prefix(const std::string& pkg_name) {
@@ -123,17 +138,52 @@ static std::string generate_draft_template(const std::string& pkg_name) {
     return tmpl;
 }
 
+static void usage(const char* prog) {
+    std::cout << "\033[1;36mrunepkg_populate\033[0m - Canonical Rule Scaffolder\n"
+              << "Usage: " << prog << " [OPTIONS] [TARGET_RULES_DIR]\n\n"
+              << "Options:\n"
+              << "  --confirm               Mandatory flag to acknowledge and start scaffold generation\n"
+              << "  --db-dir=<dir>          Path to runepkg_db (default: from config)\n"
+              << "  -h, --help              Display this help menu\n\n"
+              << "Description:\n"
+              << "  This tool scans repository metadata and creates thousands of package\n"
+              << "  rule templates in the target-rules directory. It is a high-volume\n"
+              << "  operation that should only be run when initializing or refreshing\n"
+              << "  the rule database.\n\n"
+              << "Example:\n"
+              << "  " << prog << " --confirm /etc/runepkg/target-rules\n";
+}
+
 int main(int argc, char* argv[]) {
-    // Default to project-relative paths
-    std::string db_dir = "runepkg_db";
-    std::string target_rules_dir = "target-rules";
+    // Initialize runepkg configuration
+    runepkg_init_paths();
+    runepkg_config_load();
 
-    if (argc > 1) target_rules_dir = argv[1];
-    if (argc > 2) db_dir = argv[2];
+    bool confirmed = false;
+    std::string db_dir = g_runepkg_db_dir ? g_runepkg_db_dir : "runepkg_db";
+    std::string target_rules_dir = "/etc/runepkg/target-rules"; // Default canonical location
 
-    if (!fs::exists(db_dir)) {
-        // Try absolute path if relative fails
-        db_dir = "/var/lib/runepkg_dir/runepkg_db";
+    // Try to resolve target-rules relative to base dir if possible
+    if (g_runepkg_base_dir) {
+        fs::path base(g_runepkg_base_dir);
+        fs::path rules = base / "target-rules";
+        if (fs::exists(rules)) {
+            target_rules_dir = rules.string();
+        }
+    }
+
+    for (int i = 1; i < argc; i++) {
+        std::string arg = argv[i];
+        if (arg == "--confirm") confirmed = true;
+        else if (arg == "-h" || arg == "--help") { usage(argv[0]); return 0; }
+        else if (arg.rfind("--db-dir=", 0) == 0) db_dir = arg.substr(9);
+        else if (arg[0] != '-') target_rules_dir = arg;
+    }
+
+    if (!confirmed) {
+        std::cerr << "\033[1;31m[safety]\033[0m No --confirm flag provided. Aborting high-volume operation.\n";
+        usage(argv[0]);
+        return 1;
     }
 
     std::cout << "\033[1;34m[scaffold]\033[0m Scanning sources and binary maps from " << db_dir << "..." << std::endl;
