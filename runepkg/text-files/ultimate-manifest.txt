@@ -1,0 +1,69 @@
+# =============================================================================
+# ULTIMATE RUNEPKG MANIFEST: The 100% Static musl-C++ FFI Supply Chain
+# =============================================================================
+# Target: x86_64-musl-static / x86_64-musl-shared
+# Goal:   A hermetically sealed, indestructible systems recovery & forge tool.
+# =============================================================================
+
+# --- [Stage 0: The Hermetic Forge] ---
+# These form the "Holy Grail" bootstrap toolchain.
+binutils
+gcc-12
+musl
+linux-headers-6.1  # Or latest stable headers
+
+# --- [Stage 1: Core Networking & Security] ---
+# Essential for runepkg to fetch upstream .dsc runes and patches.
+libcurl4-openssl-dev
+openssl
+ca-certificates
+zlib1g-dev
+libidn2-dev
+libpsl-dev
+libssh2-1-dev
+libzstd-dev
+
+# --- [Stage 2: The POSIX Base (Recovery Essentials)] ---
+# Core utilities for system unearthing and reconstruction.
+coreutils
+bash
+dash
+grep
+sed
+gawk
+diffutils
+findutils
+tar
+gzip
+bzip2
+xz-utils
+file
+util-linux
+e2fsprogs
+kmod
+ncurses-dev
+
+# --- [Stage 3: The Matrix Build System] ---
+# Tools required to execute the Matrix Engine's declarative rules.
+make
+patch
+autoconf
+automake
+libtool
+pkg-config
+cmake
+m4
+
+# --- [Stage 4: System Observability] ---
+# Low-level tools for binary inspection and debugging in isolated envs.
+binutils-dev
+elfutils
+strace
+gdb-minimal
+
+# =============================================================================
+# Build Strategy:
+# 1. runepkg build-toolchain x86_64-musl-static binutils gcc-12 musl
+# 2. runepkg switch --target=x86_64-musl-static
+# 3. xargs -a ultimate-manifest.txt runepkg build
+# =============================================================================
