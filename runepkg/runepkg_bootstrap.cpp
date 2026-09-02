@@ -1122,12 +1122,20 @@ extern "C" void handle_print_profile(void) {
     std::cout << "Status:          READY (Toolchain Context Active)" << std::endl;
 }
 
-extern "C" int handle_build_toolchain(const char *target) {
+extern "C" int handle_bootstrap(const char *target) {
     return handle_build_toolchain_engine(target);
 }
 
-extern "C" int handle_build_toolchain_with_targets(const char *target, const char **pkg_names, int count) {
+extern "C" int handle_bootstrap_with_targets(const char *target, const char **pkg_names, int count) {
     return handle_build_toolchain_targets(target, pkg_names, count);
+}
+
+extern "C" int handle_build_toolchain(const char *target) {
+    return handle_bootstrap(target);
+}
+
+extern "C" int handle_build_toolchain_with_targets(const char *target, const char **pkg_names, int count) {
+    return handle_bootstrap_with_targets(target, pkg_names, count);
 }
 
 extern "C" int handle_build_toolchain_engine(const char* target_name) {

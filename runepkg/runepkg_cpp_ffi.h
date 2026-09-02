@@ -94,6 +94,8 @@ int runepkg_source_build_sysroot(const char *dsc_path);
 
 int handle_switch(const char *target);
 void handle_print_profile(void);
+int handle_bootstrap(const char *target);
+int handle_bootstrap_with_targets(const char *target, const char **pkg_names, int count);
 int handle_build_toolchain(const char *target);
 int handle_build_toolchain_with_targets(const char *target, const char **pkg_names, int count);
 int handle_build_toolchain_engine(const char *target_name);

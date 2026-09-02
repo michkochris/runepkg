@@ -62,6 +62,8 @@ int handle_switch(const char *switch_arg);
 void handle_print_profile(void);
 
 /* Toolchain Bootstrap & Cross-Forge Engine */
+int handle_bootstrap(const char *target_name);
+int handle_bootstrap_with_targets(const char *target_name, const char **pkg_names, int count);
 int handle_build_toolchain(const char *target_name);
 int handle_build_toolchain_with_targets(const char *target_name, const char **pkg_names, int count);
 

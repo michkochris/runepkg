@@ -34,7 +34,7 @@ Local-First Resolution: Before fetching from remote repositories, runepkg automa
 
 Debian Source Compilation: An integrated C++ pipeline directly compiles Debian source packages (.dsc format) without requiring external build orchestration. The resulting .deb binaries are fully compatible with Debian repositories and tooling.
 
-Disposable Toolchain Construction: The build-toolchain --target={profile} <pkg> command constructs an isolated, minimal cross-compilation environment containing only the binutils, GCC, kernel headers, and libc required to compile the specified packages. The toolchain is completely independent of the host system and can be discarded after use.
+Disposable Toolchain Construction: The bootstrap <target> [pkgs...] command constructs an isolated, minimal cross-compilation environment containing only the binutils, GCC, kernel headers, and libc required to compile the specified packages. The toolchain is completely independent of the host system and can be discarded after use (build-toolchain option reserved for future development).
 
 Static Linking & Portability: All extended-suite builds produce 100% statically-linked binaries. This ensures deployment to embedded systems without dependency resolution or dynamic loader compatibility concerns.
 
@@ -66,7 +66,7 @@ Multi-Package Building: runepkg buildpkg-split <pkg|dir|.dsc> [target] compiles 
 3: Cross-Compilation Workflows
 runepkg enables rapid construction of cross-compilation environments for embedded targets:
 
-Toolchain Synthesis: build-toolchain --target=<profile> <pkg> constructs a minimal, isolated cross-compilation environment containing only the dependencies necessary to compile the specified packages for the target architecture and libc combination.
+Toolchain Synthesis: bootstrap <target> [pkgs...] constructs a minimal, isolated cross-compilation environment containing only the dependencies necessary to compile the specified packages for the target architecture and libc combination. (The legacy build-toolchain CLI option remains reserved for future development).
 
 Target Profiles: Pre-defined or custom profiles specify target architecture (e.g., arm-linux-musleabihf, riscv64-linux-musl), linking strategy (static/shared), and sysroot location.
 

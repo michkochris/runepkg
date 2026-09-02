@@ -840,6 +840,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "info");
                 } else if (strcmp(tok, "switch") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "switch");
+                } else if (strcmp(tok, "bootstrap") == 0) {
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "bootstrap");
                 } else if (strcmp(tok, "build-toolchain") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "build-toolchain");
                 } else if (strcmp(tok, "resolve-tree") == 0) {
@@ -1006,7 +1008,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             complete_target_profiles(partial);
             return;
         }
-        if (strcmp(inferred_cmd, "build-toolchain") == 0) {
+        if (strcmp(inferred_cmd, "bootstrap") == 0 || strcmp(inferred_cmd, "build-toolchain") == 0) {
             int space_count = 0;
             if (comp_line) {
                 int cp = comp_point_s ? atoi(comp_point_s) : (int)strlen(comp_line);
@@ -1052,9 +1054,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 "info", "download-only", "download-depends", "download-build-depends",
                 "depends", "verify", "update", "upgrade", "source",
                 "source-depends", "source-build-depends", "buildpkg-split", "build",
-                "switch", "build-toolchain", "resolve-tree"
+                "switch", "bootstrap", "build-toolchain", "resolve-tree"
             };
-            for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
+            for (i = 0; i < 23; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
     } else if (partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {

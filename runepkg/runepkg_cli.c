@@ -87,7 +87,8 @@ void usage(void) {
     printf("Destructible Toolchain & Target Package Forge:\n");
     printf("  switch [profile]                        Switch the active target profile or reset to host.\n");
     printf("  --print-profile                         Print detailed info about the active target profile.\n");
-    printf("  build-toolchain <profile> [pkgs...]     Bootstrap toolchain and forge target .debs.\n");
+    printf("  bootstrap <target> [pkgs...]            Bootstrap toolchain and forge target .debs.\n");
+    printf("  build-toolchain                         (Reserved option for future development).\n");
     printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n\n");
 
     printf("Source Building & Fragmenting:\n");
@@ -851,7 +852,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "--print-profile") == 0) {
             handle_print_profile();
-        } else if (strcmp(argv[i], "build-toolchain") == 0) {
+        } else if (strcmp(argv[i], "bootstrap") == 0) {
             const char *target = NULL;
             const char *target_pkgs[1024];
             int target_pkg_count = 0;
@@ -867,16 +868,24 @@ int main(int argc, char *argv[]) {
                     i++;
                 }
             } else {
-                printf("Error: build-toolchain requires a target profile.\n");
+                printf("Error: bootstrap requires a target profile.\n");
                 cli_failed = 1;
             }
 
             if (!cli_failed && target) {
                 if (target_pkg_count > 0) {
-                    handle_build_toolchain_with_targets(target, target_pkgs, target_pkg_count);
+                    handle_bootstrap_with_targets(target, target_pkgs, target_pkg_count);
                 } else {
-                    handle_build_toolchain(target);
+                    handle_bootstrap(target);
                 }
+            }
+        } else if (strcmp(argv[i], "build-toolchain") == 0) {
+            printf("Notice: 'build-toolchain' is reserved for future development.\n");
+            printf("To bootstrap toolchains and forge target packages, please use:\n");
+            printf("  runepkg bootstrap <target> [pkgs...]\n\n");
+            printf("See 'runepkg --help' for details.\n");
+            while (i + 1 < argc && argv[i+1][0] != '-') {
+                i++;
             }
         } else if (strcmp(argv[i], "resolve-tree") == 0 || strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {

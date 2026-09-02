@@ -24,7 +24,7 @@
     - **Compact Extended Footprint**: Professional-grade binary size (**2.5 MB** 100% static) including full networking, compression, and C++ runtime.
     - **Parallel Networking**: High-speed multi-threaded repository synchronization and package downloading using `libcurl`.
     - **Debian Source Building**: High-speed workflow for unearthing and forging source packages. `runepkg source <pkg>` downloads and sets up package, `runepkg build <pkg>` triggers a build, and `runepkg buildpkg-split <pkg>` splits package into multiple debian compatible `.deb` fragments (e.g., bin, dev, doc, ext...).
-    - **Cross-Toolchain Engine**: (`build-toolchain <profile> <pkg's>`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
+    - **Cross-Toolchain Engine**: (`bootstrap <target> [pkgs...]`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
 
 **Lightning-Fast Binary Autocompletion**: Both versions of **runepkg** leverage a high-performance binary completion engine for rapid shell integration. The **Low-Level Core** provides instant suggestions for command-line options and installed packages, while the **High-Level Version** delivers predictive discovery for over **70,000+ Debian Repository Packages** via sophisticated drop-down menus. This includes resolution for **Debian Source Packages** when using `runepkg source <pkg>`, maximizing productivity directly from the shell.
 
@@ -34,7 +34,7 @@
 
 -   **Native Debian Ecosystem Compatibility:** Full fidelity with Debian binary `.deb` archives (control metadata, data payloads, md5sums, trigger scripts) and upstream repository metadata (`Packages.gz`, `Sources.gz`).
 -   **Binary-Serialized Metadata (`pkginfo.bin`):** Replaces flat-file parsing bottlenecks with structured binary records organized in hierarchical `package-version` directories, enabling $O(1)$ lookup speeds.
--   **Deterministic Cross-Toolchain Forge (`build-toolchain`):** Automatically provisions isolated, disposable Stage-1 cross-compilers to build Debian-compatible binaries and runtime dependencies for specific target profiles (e.g., `x86_64-musl-static`, `x86_64-musl-shared`, `aarch64-linux-gnu`) without polluting the host environment.
+-   **Deterministic Cross-Toolchain Forge (`bootstrap`):** Automatically provisions isolated, disposable Stage-1 cross-compilers to build Debian-compatible binaries and runtime dependencies for specific target profiles (e.g., `x86_64-musl-static`, `x86_64-musl-shared`, `aarch64-linux-gnu`) without polluting the host environment (`build-toolchain` option reserved for future development).
 -   **Granular Sub-Package Splitting (`buildpkg-split`):** Compiles Debian source packages directly and segments the resulting tree into discrete Debian fragments (`bin`, `dev`, `doc`, `lib`) or compiles only a targeted sub-package.
 -   **Hardened Memory Safety:** Built on a security-first memory model (`secure_malloc`) featuring automated zero-wiping, buffer protection, and strict path traversal validation.
 
@@ -97,7 +97,7 @@ This vision evolves package management by replacing the sequential, text-heavy b
 - **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in [HOLY_GRAIL.md](./HOLY_GRAIL.md) 🏆
 - **Optional Cryptographic Trust:** A forward-thinking security layer that supports **detached GPG signatures** (`.sig` files). While standard Debian repositories sign at the index level, **runepkg** empowers users to verify individual "runes." This allows for the verification of custom-signed packages and provides a foundation for future secure-repository standards where every `.deb` is cryptographically immutable.
 - **Native Debian Source Building**: An integrated C++ pipeline that streamlines the fetching and compilation of Debian source packages, the produced .deb's are fully compatible with the Debian Ecosystem. Runepkg directly produces "Raw Debian Runes" from single package builds to multi-package splitting and allowing for the optional building of a sub-package. This is all done independently without the overhead of traditional Debian distribution build tools.
-- **Disposable Cross-Compilation Toolchain:** The `build-toolchain --target={profile} <pkg>` command bootstraps a destructible toolchain to cleanly cross-compile isolated, **Debian** compatible .deb's and runtime dependencies for the target packages. This enables rapid deployment of software into embedded **Debian Ecosystems** without contaminating the host environment.
+- **Disposable Cross-Compilation Toolchain:** The `bootstrap <target> [pkgs...]` command bootstraps a destructible toolchain to cleanly cross-compile isolated, **Debian** compatible .deb's and runtime dependencies for the target packages. This enables rapid deployment of software into embedded **Debian Ecosystems** without contaminating the host environment (`build-toolchain` command line option is reserved for future development).
 - **Proven Stability at Scale:** Rigorously stress-tested by successfully installing full desktop environments like **GNOME** and **XFCE**. The engine demonstrated extreme stability while resolving, downloading, and extracting thousands of recursive dependencies simultaneously.
 
 ### 1. Hierarchical Storage & Binary Caching
@@ -329,8 +329,9 @@ Maintenance & Diagnostics:
       --rebuild-autocomplete              Regenerate package name index.
 
 Cross-Compilation:
-  build-toolchain <profile> <pkg's>       Construct isolated cross-compilation toolchain, 
+  bootstrap <target> [pkgs...]            Construct isolated cross-compilation toolchain, 
                                           and forge target packages.
+  build-toolchain                         Reserved command line option for future development.
   depends <pkg>                           Recursive ASCII tree visualization of target depends.
 
 Experimental/Future:
