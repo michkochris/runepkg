@@ -42,7 +42,7 @@ void handle_list(const char *pattern);
 int handle_status(const char *package_name);
 void handle_search(const char *file_pattern);
 void handle_list_files(const char *package_name);
-int handle_unpack(const char *deb_path);
+int handle_unpack(const char *deb_path, const char *dest_dir);
 int handle_md5_check(const char *package_name);
 void handle_verify_package(const char *package_name);
 void handle_version(void);

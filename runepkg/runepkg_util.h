@@ -195,6 +195,14 @@ char *runepkg_util_read_file_content(const char *filepath, size_t *len);
  */
 int runepkg_util_copy_file(const char *source_path, const char *destination_path);
 
+/**
+ * @brief Recursively copies a directory tree from src_dir to dst_dir, preserving file permissions and symlinks.
+ * @param src_dir The source directory path.
+ * @param dst_dir The destination directory path.
+ * @return 0 on success, -1 on failure.
+ */
+int runepkg_util_copy_dir_recursive(const char *src_dir, const char *dst_dir);
+
 /* --- Configuration File Operations --- */
 
 /**

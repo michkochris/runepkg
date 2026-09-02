@@ -58,6 +58,8 @@ void usage(void) {
     printf("  -i, --install <deb|pkg>...              Install .deb files or repository packages.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
+    printf("  -u, --unpack <package.deb> [dest_dir]   Unpack a .deb into control_dir workspace;\n");
+    printf("                                          optionally extract install files to destination directory.\n");
     printf("  -r, --remove <package-name>             Remove an installed package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
     printf("      --remove @file                      Read package names from a list file.\n");
@@ -65,7 +67,6 @@ void usage(void) {
     printf("  -s, --status <package-name>             Show detailed info about an installed package.\n");
     printf("  -L, --list-files <package-name>         List all files owned by an installed package.\n");
     printf("  -S, --search <file-path>                Search installed packages for a specific file.\n");
-    printf("  -u, --unpack <path-to-package.deb>      Unpack a .deb into build_dir.\n");
     printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
     printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
     printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
@@ -256,12 +257,22 @@ int main(int argc, char *argv[]) {
                     handle_install_stdin();
                 }
             }
-        } else if (strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--unpack") == 0) {
+        } else if (strcmp(argv[i], "-u") == 0 || strcmp(argv[i], "--unpack") == 0 || strcmp(argv[i], "unpack") == 0) {
             if (i + 1 < argc) {
-                handle_unpack(argv[i+1]);
-                i++;
+                const char *deb_file = argv[i+1];
+                const char *dest_dir = NULL;
+                if (i + 2 < argc && argv[i+2][0] != '-') {
+                    dest_dir = argv[i+2];
+                    i += 2;
+                } else {
+                    i += 1;
+                }
+                if (handle_unpack(deb_file, dest_dir) != 0) {
+                    cli_failed = 1;
+                }
             } else {
                 printf("Error: --unpack requires a .deb file path.\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "-m") == 0 || strcmp(argv[i], "--md5check") == 0) {
             if (i + 1 < argc) {

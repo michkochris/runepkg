@@ -17,7 +17,7 @@ download_dir=${pwd}/vrunepkg_dir/download_dir
 build_dir=${pwd}/vrunepkg_dir/build_dir
 runepkg_debs=${pwd}/vrunepkg_dir/runepkg_debs
 
-cleanup=no
+cleanup=yes
 md5_checks=yes
 gpg_check=no
 

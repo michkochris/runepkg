@@ -209,47 +209,6 @@ int is_completion_trigger(char *argv[]) {
     return 1;
 }
 
-/* Recursively scan directories starting at `base` and print any .deb
- * files whose relative path matches the `partial` prefix.
- * Depth is limited to 3 for snappy response. */
-static void scan_deb_recursive(const char *base, const char *partial, int depth) {
-    DIR *dir;
-    struct dirent *entry;
-    char path[PATH_MAX];
-
-    if (depth > 3) return;
-    dir = opendir(base);
-    if (!dir) return;
-
-    while ((entry = readdir(dir)) != NULL) {
-        struct stat st;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
-        snprintf(path, sizeof(path), "%.*s/%s", (int)(sizeof(path)-258), base, entry->d_name);
-        if (lstat(path, &st) != 0) continue;
-        if (S_ISDIR(st.st_mode)) {
-            scan_deb_recursive(path, partial, depth + 1);
-        } else if (S_ISREG(st.st_mode)) {
-            size_t len = strlen(entry->d_name);
-            if (len > 4 && strcmp(entry->d_name + len - 4, ".deb") == 0) {
-                /* Normalize relative path for printing */
-                char rel[PATH_MAX];
-                if (strncmp(path, "./", 2) == 0) snprintf(rel, sizeof(rel), "%s", path + 2);
-                else if (strncmp(path, ".\\", 2) == 0) snprintf(rel, sizeof(rel), "%s", path + 2);
-                else snprintf(rel, sizeof(rel), "%s", path);
-                if (strncmp(rel, partial, strlen(partial)) == 0) {
-                    print_candidate(rel);
-                }
-            }
-        }
-    }
-
-    closedir(dir);
-}
-
-void complete_deb_files(const char *partial) {
-    scan_deb_recursive(".", partial, 0);
-}
-
 void complete_file_paths_ext(const char *partial, const char *extra_dir, const char *suffix_filter) {
     const char *prefix;
     bool is_absolute;
@@ -954,13 +913,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 }
             } else if (is_path) {
                 complete_file_paths_ext(partial, g_download_dir, ".deb");
-                /* Only scan current dir recursively if no slash or if it's a relative path prefix */
-                if (partial[0] != '/') complete_deb_files(partial);
             } else {
                 prefix_search_and_print_ext(partial, ":pkg");
                 repo_prefix_search_and_print(partial);
                 if (partial[0] != '\0') {
-                    complete_deb_files(partial);
                     complete_file_paths_ext(partial, g_download_dir, ".deb");
                 }
             }
@@ -995,7 +951,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
         }
         if (strcmp(inferred_cmd, "unpack") == 0) {
             complete_file_paths_ext(partial, g_download_dir, ".deb");
-            complete_deb_files(partial);
             return;
         }
         if (strcmp(inferred_cmd, "build") == 0) {
@@ -1118,18 +1073,16 @@ void handle_binary_completion(const char *partial, const char *prev) {
             print_candidate("--help"); print_candidate("--version"); print_candidate("--verbose"); print_candidate("--force");
         }
         if (prev && prev[0] == '-') {
-            complete_deb_files(partial);
+            complete_file_paths_ext(partial, g_download_dir, ".deb");
             prefix_search_and_print(partial);
         }
     } else if (strcmp(prev, "install") == 0 || strcmp(prev, "-i") == 0 || strcmp(prev, "--install") == 0) {
         if (is_path) {
             complete_file_paths_ext(partial, g_download_dir, ".deb");
-            if (partial[0] != '/') complete_deb_files(partial);
         } else {
             prefix_search_and_print_ext(partial, ":pkg");
             repo_prefix_search_and_print(partial);
             if (partial[0] != '\0') {
-                complete_deb_files(partial);
                 complete_file_paths_ext(partial, g_download_dir, ".deb");
             }
         }
@@ -1163,7 +1116,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
         }
     } else if (strcmp(prev, "unpack") == 0 || strcmp(prev, "-u") == 0 || strcmp(prev, "--unpack") == 0) {
         complete_file_paths_ext(partial, g_download_dir, ".deb");
-        complete_deb_files(partial);
     } else if (strcmp(prev, "build") == 0 || strcmp(prev, "-b") == 0 || strcmp(prev, "--build") == 0) {
         if (is_path) {
             complete_file_paths_ext(partial, g_build_dir, ".dsc");

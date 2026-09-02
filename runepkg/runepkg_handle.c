@@ -916,55 +916,90 @@ void handle_update_pkglist(void) {
     }
 }
 
-int handle_unpack(const char *deb_path) {
+int handle_unpack(const char *deb_path, const char *dest_dir) {
     PkgInfo pkg_info;
-    size_t pkg_ver_len;
-    char *pkg_ver_name;
-    char *target_dir;
+    char *target_dir = NULL;
 
     if (!deb_path) return -1;
-    if (!g_build_dir) {
-        runepkg_util_error("build_dir is not configured. Professional unpacking requires a workspace.\n");
+
+    if (!runepkg_util_file_exists(deb_path)) {
+        fprintf(stderr, "\033[1;31mError:\033[0m File '%s' not found.\n", deb_path);
         return -1;
     }
 
-    runepkg_log_verbose("Unpacking %s to build_dir...\n", deb_path);
+    if (!g_control_dir) {
+        runepkg_util_error("control_dir is not configured in runepkgconfig.\n");
+        return -1;
+    }
+
+    runepkg_log_verbose("Unpacking %s into control_dir (%s)...\n", deb_path, g_control_dir);
 
     runepkg_pack_init_package_info(&pkg_info);
 
     if (runepkg_pack_extract_and_collect_info(deb_path, g_control_dir, &pkg_info) != 0) {
-        runepkg_util_error("Failed to extract metadata from %s\n", deb_path);
+        runepkg_util_error("Failed to extract .deb archive into control_dir for %s\n", deb_path);
         runepkg_pack_free_package_info(&pkg_info);
         return -1;
     }
 
-    pkg_ver_len = strlen(pkg_info.package_name) + strlen(pkg_info.version) + 2;
-    pkg_ver_name = malloc(pkg_ver_len);
-    if (!pkg_ver_name) {
+    if (dest_dir && dest_dir[0] != '\0') {
+        target_dir = strdup(dest_dir);
+    } else {
+        char *pkg_ver_name = NULL;
+        if (pkg_info.package_name && pkg_info.version) {
+            size_t pkg_ver_len = strlen(pkg_info.package_name) + strlen(pkg_info.version) + 2;
+            pkg_ver_name = (char *)malloc(pkg_ver_len);
+            if (pkg_ver_name) {
+                snprintf(pkg_ver_name, pkg_ver_len, "%s-%s", pkg_info.package_name, pkg_info.version);
+            }
+        }
+        if (!pkg_ver_name) {
+            pkg_ver_name = strdup(pkg_info.package_name ? pkg_info.package_name : "unpacked");
+        }
+
+        if (g_build_dir) {
+            target_dir = runepkg_util_concat_path(g_build_dir, pkg_ver_name);
+        } else {
+            target_dir = strdup(pkg_ver_name);
+        }
+        free(pkg_ver_name);
+    }
+
+    if (!target_dir) {
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
         runepkg_pack_free_package_info(&pkg_info);
         return -1;
     }
-    snprintf(pkg_ver_name, pkg_ver_len, "%s-%s", pkg_info.package_name, pkg_info.version);
-
-    target_dir = runepkg_util_concat_path(g_build_dir, pkg_ver_name);
-    free(pkg_ver_name);
-
-    runepkg_pack_cleanup_extraction_workspace(&pkg_info);
-    runepkg_pack_free_package_info(&pkg_info);
 
     if (runepkg_util_create_dir_recursive(target_dir, 0755) != 0) {
+        runepkg_util_error("Failed to create target directory %s\n", target_dir);
+        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+        runepkg_pack_free_package_info(&pkg_info);
         free(target_dir);
         return -1;
     }
 
-    if (runepkg_util_extract_deb_complete(deb_path, target_dir) != 0) {
-        runepkg_util_error("Unpack failed for %s\n", deb_path);
-        free(target_dir);
-        return -1;
+    if (pkg_info.data_dir_path && runepkg_util_file_exists(pkg_info.data_dir_path)) {
+        if (runepkg_util_copy_dir_recursive(pkg_info.data_dir_path, target_dir) != 0) {
+            runepkg_util_error("Failed to copy data payload to %s\n", target_dir);
+            runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+            runepkg_pack_free_package_info(&pkg_info);
+            free(target_dir);
+            return -1;
+        }
     }
 
-    printf("\033[1;32m[unpack]\033[0m Successfully unpacked %s to %s\n", deb_path, target_dir);
+    printf("\033[1;32m[unpack]\033[0m Successfully unpacked %s data content to %s\n", deb_path, target_dir);
+
+    if (g_cleanup_extract_dirs) {
+        runepkg_log_verbose("[unpack] Automatic cleanup enabled: removing workspace in control_dir...\n");
+        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+    } else {
+        printf("\033[1;34m[unpack]\033[0m Control workspace retained in %s\n",
+               pkg_info.extraction_workspace_path ? pkg_info.extraction_workspace_path : g_control_dir);
+    }
+
+    runepkg_pack_free_package_info(&pkg_info);
     free(target_dir);
     return 0;
 }

@@ -599,6 +599,77 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
     return ret;
 }
 
+int runepkg_util_copy_dir_recursive(const char *src_dir, const char *dst_dir) {
+    DIR *dp;
+    struct dirent *entry;
+    struct stat st;
+
+    if (!src_dir || !dst_dir) return -1;
+
+    dp = opendir(src_dir);
+    if (!dp) {
+        runepkg_util_error("Could not open source directory for copying: %s\n", src_dir);
+        return -1;
+    }
+
+    if (runepkg_util_create_dir_recursive(dst_dir, 0755) != 0) {
+        closedir(dp);
+        return -1;
+    }
+
+    while ((entry = readdir(dp)) != NULL) {
+        char *src_path;
+        char *dst_path;
+
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        src_path = runepkg_util_concat_path(src_dir, entry->d_name);
+        dst_path = runepkg_util_concat_path(dst_dir, entry->d_name);
+
+        if (!src_path || !dst_path) {
+            runepkg_util_free_and_null(&src_path);
+            runepkg_util_free_and_null(&dst_path);
+            closedir(dp);
+            return -1;
+        }
+
+        if (lstat(src_path, &st) != 0) {
+            runepkg_util_free_and_null(&src_path);
+            runepkg_util_free_and_null(&dst_path);
+            continue;
+        }
+
+        if (S_ISDIR(st.st_mode)) {
+            if (runepkg_util_copy_dir_recursive(src_path, dst_path) != 0) {
+                runepkg_util_free_and_null(&src_path);
+                runepkg_util_free_and_null(&dst_path);
+                closedir(dp);
+                return -1;
+            }
+        } else if (S_ISLNK(st.st_mode)) {
+            char link_target[PATH_MAX];
+            ssize_t len = readlink(src_path, link_target, sizeof(link_target) - 1);
+            if (len != -1) {
+                link_target[len] = '\0';
+                unlink(dst_path);
+                if (symlink(link_target, dst_path) != 0) {
+                    /* ignore error if symlink creation failed */
+                }
+            }
+        } else if (S_ISREG(st.st_mode)) {
+            runepkg_util_copy_file(src_path, dst_path);
+        }
+
+        runepkg_util_free_and_null(&src_path);
+        runepkg_util_free_and_null(&dst_path);
+    }
+
+    closedir(dp);
+    return 0;
+}
+
 /* --- Configuration File Operations --- */
 
 char *runepkg_util_expand_vars(const char *input) {
