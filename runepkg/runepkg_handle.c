@@ -36,6 +36,7 @@
 #include "runepkg_util.h"
 #include "runepkg_md5sums.h"
 #include "runepkg_crypto.h"
+#include "runepkg_host.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -107,7 +108,10 @@ int runepkg_init(void) {
     runepkg_log_verbose("Initializing runepkg...\n");
     
     runepkg_init_paths();
-    
+    runepkg_host_init();
+    /* We don't call runepkg_host_sync() here automatically to avoid startup lag.
+     * Host sync is a manually triggered operation via 'runepkg sync'. */
+
     if (!runepkg_main_hash_table) {
         runepkg_main_hash_table = runepkg_hash_create_table(INITIAL_HASH_TABLE_SIZE);
         if (!runepkg_main_hash_table) {
@@ -140,7 +144,6 @@ int runepkg_init(void) {
 
     if (g_runepkg_db_dir) {
         DIR *dir;
-        char *host_db_path;
 
         /* 1. Load native runepkg packages from top-level db dir */
         dir = opendir(g_runepkg_db_dir);
@@ -175,44 +178,6 @@ int runepkg_init(void) {
                 }
             }
             closedir(dir);
-        }
-
-        /* 2. Load persistent host-dpkg synced packages from host/ subdirectory */
-        host_db_path = runepkg_util_concat_path(g_runepkg_db_dir, "host");
-        if (host_db_path) {
-            DIR *hdir = opendir(host_db_path);
-            if (hdir) {
-                struct dirent *hentry;
-                while ((hentry = readdir(hdir)) != NULL) {
-                    if ((hentry->d_type == DT_DIR || hentry->d_type == DT_UNKNOWN) && strcmp(hentry->d_name, ".") != 0 && strcmp(hentry->d_name, "..") != 0) {
-                        char pkg_name[PATH_MAX];
-                        char pkg_version[PATH_MAX];
-                        const char *ver_dash = runepkg_util_find_version_separator(hentry->d_name);
-
-                        if (ver_dash && ver_dash != hentry->d_name) {
-                            size_t name_len = (size_t)(ver_dash - hentry->d_name);
-                            runepkg_util_safe_strncpy(pkg_name, hentry->d_name, name_len + 1);
-                            pkg_name[name_len] = '\0';
-                            runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), ver_dash + 1);
-
-                            if (pkg_name[0] && pkg_version[0]) {
-                                PkgInfo pkg_info;
-                                /* We need a way to tell read_package_info to look in host/ */
-                                /* Temporarily override g_runepkg_db_dir or use a new internal API */
-                                char *old_db = g_runepkg_db_dir;
-                                g_runepkg_db_dir = host_db_path;
-                                if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) == 0) {
-                                    runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
-                                    runepkg_pack_free_package_info(&pkg_info);
-                                }
-                                g_runepkg_db_dir = old_db;
-                            }
-                        }
-                    }
-                }
-                closedir(hdir);
-            }
-            free(host_db_path);
         }
     }
     
@@ -452,6 +417,9 @@ int handle_remove(const char *package_name) {
         printf("Warning: failed to remove package metadata for %s-%s\n", pkg_name, pkg_version);
         return -1;
     }
+
+    /* Integration: Notify host layer that a removal occurred for this package name */
+    runepkg_host_unregister_removal(pkg_name);
 
     runepkg_storage_build_autocomplete_index();
     handle_update_pkglist();

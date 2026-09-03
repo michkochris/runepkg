@@ -128,11 +128,12 @@ endif
 TARGET = runepkg
 C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
             runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c \
-            runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c
+            runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c \
+            runepkg_host.c
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
-          runepkg_crypto.h runepkg_cpp_ffi.h
+          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)

@@ -834,6 +834,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "update");
                 } else if (strcmp(tok, "upgrade") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "upgrade");
+                } else if (strcmp(tok, "sync") == 0) {
+                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "sync");
                 } else if (strcmp(tok, "search") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
                 } else if (strcmp(tok, "info") == 0) {
@@ -890,6 +892,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                             break;
                         } else if (strcmp(t2, "search") == 0) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search");
+                            break;
+                        } else if (strcmp(t2, "sync") == 0) {
+                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "sync");
                             break;
                         } else if (strcmp(t2, "-S") == 0 || strcmp(t2, "--search") == 0) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "search-file");
@@ -1050,13 +1055,13 @@ void handle_binary_completion(const char *partial, const char *prev) {
             }
         } else {
             const char *sub_cmds[] = {
-                "install", "remove", "list", "status", "list-files", "search",
+                "sync", "install", "remove", "list", "status", "list-files", "search",
                 "info", "download-only", "download-depends", "download-build-depends",
                 "depends", "verify", "update", "upgrade", "source",
                 "source-depends", "source-build-depends", "buildpkg-split", "build",
                 "switch", "bootstrap", "build-toolchain", "resolve-tree"
             };
-            for (i = 0; i < 23; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
+            for (i = 0; i < 24; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
     } else if (partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {

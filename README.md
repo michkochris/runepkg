@@ -285,6 +285,7 @@ Usage:
   runepkg <COMMAND> [OPTIONS] [ARGUMENTS]
 
 Core Package Management (Local/Low-Level):
+  sync                                    Synchronize host package database with system state.
   -i, --install <deb|pkg>...              Install .deb files or repository packages.
       --install -                         Read .deb paths from standard input.
       --install @file                     Read .deb paths from a list file.

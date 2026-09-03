@@ -32,6 +32,7 @@
 #include "runepkg_util.h"
 #include "runepkg_handle.h"
 #include "runepkg_completion.h"
+#include "runepkg_host.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -55,6 +56,7 @@ void usage(void) {
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
 
     printf("Core Package Management (Local/Low-Level):\n");
+    printf("  sync                                    Synchronize host package database with system state.\n");
     printf("  -i, --install <deb|pkg>...              Install .deb files or repository packages.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
@@ -559,6 +561,13 @@ int main(int argc, char *argv[]) {
             printf("Notice: Repository synchronization requires a C++ build with networking enabled.\n");
             printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
+        } else if (strcmp(argv[i], "sync") == 0) {
+            if (runepkg_host_sync() == 0) {
+                printf("Host synchronization successful.\n");
+            } else {
+                cli_failed = 1;
+                printf("Host synchronization failed.\n");
+            }
         } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();

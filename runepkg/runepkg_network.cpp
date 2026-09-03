@@ -32,6 +32,7 @@
 #include <queue>
 #include <condition_variable>
 #include <functional>
+#include <type_traits>
 
 extern "C" {
     #include "runepkg_util.h"
@@ -41,10 +42,19 @@ extern "C" {
     #include "runepkg_storage.h"
     #include "runepkg_crypto.h"
     #include "runepkg_completion.h"
+    #include "runepkg_host.h"
 }
 
-// Architecture - default to amd64 for now
-const char* G_ARCH = "amd64";
+// Architecture - dynamic lookup from host integration or active profile
+static const char* get_effective_arch() {
+    if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {
+        return g_active_profile->deb_host_arch;
+    }
+    const char* arch = runepkg_host_get_architecture();
+    if (arch && std::strcmp(arch, "unknown") != 0) return arch;
+    return "amd64";
+}
+#define G_ARCH get_effective_arch()
 
 // Parallel Execution Engine
 class ParallelExecutor {
@@ -71,8 +81,8 @@ public:
     }
 
     template<class F, class... Args>
-    auto enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type> {
-        using return_type = typename std::result_of<F(Args...)>::type;
+    auto enqueue(F&& f, Args&&... args) -> std::future<std::invoke_result_t<F, Args...>> {
+        using return_type = std::invoke_result_t<F, Args...>;
         auto task = std::make_shared<std::packaged_task<return_type()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
         std::future<return_type> res = task->get_future();
         {
@@ -696,7 +706,10 @@ extern "C" int runepkg_update(void) {
     return 0;
 }
 
-struct SearchResult { std::string name, version, arch, desc; bool installed = false; };
+struct SearchResult {
+    std::string name, version, arch, desc;
+    bool installed = false;
+};
 
 extern "C" int runepkg_repo_search(const char *query) {
     if (!query || strlen(query) == 0) return -1;
@@ -1434,7 +1447,7 @@ extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int
         }
         runepkg_storage_build_autocomplete_index();
     } else {
-        std::cout << "\033[1;31m[error]\033[0m Failed to download source package files (" << downloaded << "/" << total_files << " ok)." << std::endl;
+        std::cout << std::endl << "\033[1;31m[error]\033[0m Failed to download source package files (" << downloaded << "/" << total_files << " ok)." << std::endl;
         return -1;
     }
     return unpack_success ? 0 : -1;

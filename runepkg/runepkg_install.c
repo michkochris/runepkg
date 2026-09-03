@@ -17,6 +17,7 @@
 #include "runepkg_crypto.h"
 #include "runepkg_handle.h"
 #include "runepkg_md5sums.h"
+#include "runepkg_host.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -1165,6 +1166,9 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             pthread_mutex_destroy(&error_mutex);
             runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
         }
+
+        /* Integration: Notify host layer that a new installation occurred */
+        runepkg_host_register_install(&pkg_info);
 
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
 

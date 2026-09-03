@@ -28,6 +28,17 @@ extern "C" {
     #include "runepkg_config.h"
     #include "runepkg_util.h"
     #include "runepkg_storage.h"
+    #include "runepkg_host.h"
+}
+
+// Architecture - dynamic lookup from host integration or active profile
+static const char* get_effective_arch() {
+    if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {
+        return g_active_profile->deb_host_arch;
+    }
+    const char* arch = runepkg_host_get_architecture();
+    if (arch && std::strcmp(arch, "unknown") != 0) return arch;
+    return "amd64";
 }
 
 namespace fs = std::filesystem;
@@ -443,7 +454,10 @@ private:
 
             if (line.compare(0, 9, "Package: ") == 0) {
                 if (in_entry && !current.package.empty()) {
-                    graph[current.package] = current;
+                    const char* target_arch = get_effective_arch();
+                    if (current.arch == "all" || current.arch == target_arch || current.arch.empty()) {
+                        graph[current.package] = current;
+                    }
                     current = RuneGraphEntry();
                 }
                 in_entry = true;
@@ -482,7 +496,10 @@ private:
             }
         }
         if (in_entry && !current.package.empty()) {
-            graph[current.package] = current;
+            const char* target_arch = get_effective_arch();
+            if (current.arch == "all" || current.arch == target_arch || current.arch.empty()) {
+                graph[current.package] = current;
+            }
         }
     }
 
@@ -554,7 +571,10 @@ private:
         }
 
         if (in_entry && !current.package.empty()) {
-            graph[current.package] = current;
+            const char* target_arch = get_effective_arch();
+            if (current.arch == "all" || current.arch == target_arch || current.arch.empty()) {
+                graph[current.package] = current;
+            }
         }
     }
 
