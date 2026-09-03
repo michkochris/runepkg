@@ -1,1 +1,0 @@
-../rt-extension-nagios/build.txt

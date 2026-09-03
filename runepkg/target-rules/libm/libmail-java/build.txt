@@ -1,1 +1,0 @@
-../../j/javamail/build.txt

@@ -1,1 +1,0 @@
-../../o/owncloud-client-desktop-shell-integration-nautilus/build.txt

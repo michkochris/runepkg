@@ -1,1 +1,0 @@
-../../t/texinfo/build.txt

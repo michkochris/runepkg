@@ -1,1 +1,0 @@
-../rime-luna-pinyin/build.txt

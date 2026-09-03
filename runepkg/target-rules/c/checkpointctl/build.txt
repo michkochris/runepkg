@@ -1,1 +1,0 @@
-../../g/golang-github-checkpoint-restore-checkpointctl/build.txt

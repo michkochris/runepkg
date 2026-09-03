@@ -1,1 +1,0 @@
-../python-automower-ble/build.txt

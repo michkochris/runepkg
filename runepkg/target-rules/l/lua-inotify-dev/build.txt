@@ -1,1 +1,0 @@
-../lua-inotify/build.txt

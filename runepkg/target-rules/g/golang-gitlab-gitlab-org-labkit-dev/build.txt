@@ -1,1 +1,0 @@
-../golang-gitlab-gitlab-org-labkit/build.txt

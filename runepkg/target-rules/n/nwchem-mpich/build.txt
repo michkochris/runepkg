@@ -1,1 +1,0 @@
-../nwchem/build.txt

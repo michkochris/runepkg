@@ -1,1 +1,0 @@
-../librasterlite2/build.txt

@@ -1,1 +1,0 @@
-../golang-github-xyproto-simpleredis/build.txt

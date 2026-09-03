@@ -1,1 +1,0 @@
-../buteo-sync-plugin-carddav/build.txt

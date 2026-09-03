@@ -1,1 +1,0 @@
-../../g/giza/build.txt

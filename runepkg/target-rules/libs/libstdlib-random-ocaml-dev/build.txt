@@ -1,1 +1,0 @@
-../../o/ocaml-stdlib-random/build.txt

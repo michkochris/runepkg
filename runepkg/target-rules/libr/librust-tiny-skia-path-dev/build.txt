@@ -1,1 +1,0 @@
-../../r/rust-tiny-skia-path/build.txt

@@ -1,1 +1,0 @@
-../../g/gobject-introspection/build.txt

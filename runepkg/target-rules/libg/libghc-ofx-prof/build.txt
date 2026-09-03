@@ -1,1 +1,0 @@
-../../h/haskell-ofx/build.txt

@@ -1,1 +1,0 @@
-../../libk/libkmahjongg/build.txt

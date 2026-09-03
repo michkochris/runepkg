@@ -1,1 +1,0 @@
-../python-drf-spectacular/build.txt

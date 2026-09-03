@@ -1,1 +1,0 @@
-../../u/unicode-segmentation-rs/build.txt

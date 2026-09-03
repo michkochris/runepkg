@@ -1,1 +1,0 @@
-../../b/blake3-py/build.txt

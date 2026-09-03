@@ -1,1 +1,0 @@
-../../h/haskell-unicode-collation/build.txt

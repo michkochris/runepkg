@@ -1,1 +1,0 @@
-../../l/livetribe-jsr223/build.txt

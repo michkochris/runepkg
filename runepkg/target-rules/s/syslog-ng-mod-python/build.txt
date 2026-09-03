@@ -1,1 +1,0 @@
-../syslog-ng/build.txt

@@ -1,1 +1,0 @@
-../python-pyrgg/build.txt

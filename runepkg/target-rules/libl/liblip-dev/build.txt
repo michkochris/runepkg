@@ -1,1 +1,0 @@
-../liblip/build.txt

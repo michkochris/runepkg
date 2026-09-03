@@ -1,1 +1,0 @@
-../golang-pault-go-gecos/build.txt

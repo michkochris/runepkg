@@ -1,1 +1,0 @@
-../python-cotengrust/build.txt

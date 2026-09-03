@@ -1,1 +1,0 @@
-../../u/uc-micro-py/build.txt

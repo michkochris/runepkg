@@ -1,1 +1,0 @@
-../../libt/libthumbor/build.txt

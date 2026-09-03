@@ -1,1 +1,0 @@
-../../r/rust-paste-test-suite/build.txt

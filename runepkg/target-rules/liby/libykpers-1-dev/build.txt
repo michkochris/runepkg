@@ -1,1 +1,0 @@
-../../y/yubikey-personalization/build.txt

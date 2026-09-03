@@ -1,1 +1,0 @@
-../golang-github-thales-e-security-pool/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-editor-command/build.txt

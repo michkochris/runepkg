@@ -1,1 +1,0 @@
-../pg-hint-plan-18/build.txt

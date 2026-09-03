@@ -1,1 +1,0 @@
-../python-os-collect-config/build.txt

@@ -1,1 +1,0 @@
-../../a/apache-arrow/build.txt

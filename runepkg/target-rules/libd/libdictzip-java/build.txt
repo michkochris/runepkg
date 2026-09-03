@@ -1,1 +1,0 @@
-../../d/dictzip-java/build.txt

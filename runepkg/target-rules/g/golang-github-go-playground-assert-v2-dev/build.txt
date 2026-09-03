@@ -1,1 +1,0 @@
-../golang-github-go-playground-assert-v2/build.txt

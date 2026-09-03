@@ -1,1 +1,0 @@
-../python-apple-weatherkit/build.txt

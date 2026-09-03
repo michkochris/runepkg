@@ -1,1 +1,0 @@
-../../e/expected-lite/build.txt

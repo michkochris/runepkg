@@ -1,1 +1,0 @@
-../../d/django-qr-code/build.txt

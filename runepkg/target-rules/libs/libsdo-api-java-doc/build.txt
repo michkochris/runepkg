@@ -1,1 +1,0 @@
-../../s/sdo-api-java/build.txt

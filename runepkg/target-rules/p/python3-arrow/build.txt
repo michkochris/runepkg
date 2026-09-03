@@ -1,1 +1,0 @@
-../python-arrow/build.txt

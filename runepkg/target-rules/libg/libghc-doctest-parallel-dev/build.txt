@@ -1,1 +1,0 @@
-../../h/haskell-doctest-parallel/build.txt

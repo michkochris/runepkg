@@ -1,1 +1,0 @@
-../golang-gopkg-eapache-channels.v1/build.txt

@@ -1,1 +1,0 @@
-../../f/fcitx5-gtk/build.txt

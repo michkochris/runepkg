@@ -1,1 +1,0 @@
-../../r/rust-xterm-query/build.txt

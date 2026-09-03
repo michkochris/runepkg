@@ -1,1 +1,0 @@
-../golang-github-chainguard-dev-clog/build.txt

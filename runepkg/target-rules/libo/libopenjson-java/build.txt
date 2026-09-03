@@ -1,1 +1,0 @@
-../../o/openjson/build.txt

@@ -1,1 +1,0 @@
-../../y/yara-python/build.txt

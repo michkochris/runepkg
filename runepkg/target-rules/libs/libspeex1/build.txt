@@ -1,1 +1,0 @@
-../../s/speex/build.txt

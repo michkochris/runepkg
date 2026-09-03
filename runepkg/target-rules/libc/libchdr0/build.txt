@@ -1,1 +1,0 @@
-../libchdr/build.txt

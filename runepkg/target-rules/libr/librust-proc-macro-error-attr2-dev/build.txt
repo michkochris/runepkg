@@ -1,1 +1,0 @@
-../../r/rust-proc-macro-error-attr2/build.txt

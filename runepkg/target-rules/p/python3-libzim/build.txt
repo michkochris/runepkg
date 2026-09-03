@@ -1,1 +1,0 @@
-../python-libzim/build.txt

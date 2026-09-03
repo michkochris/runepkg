@@ -1,1 +1,0 @@
-../php-stomp/build.txt

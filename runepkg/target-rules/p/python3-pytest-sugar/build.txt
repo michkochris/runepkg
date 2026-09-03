@@ -1,1 +1,0 @@
-../pytest-sugar/build.txt

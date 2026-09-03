@@ -1,1 +1,0 @@
-../rime-double-pinyin/build.txt

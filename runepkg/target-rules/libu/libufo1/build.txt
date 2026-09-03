@@ -1,1 +1,0 @@
-../../u/ufo-core/build.txt

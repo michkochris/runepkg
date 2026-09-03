@@ -1,1 +1,0 @@
-../python-sigstore-models/build.txt

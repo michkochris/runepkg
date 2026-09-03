@@ -1,1 +1,0 @@
-../pyrituals/build.txt

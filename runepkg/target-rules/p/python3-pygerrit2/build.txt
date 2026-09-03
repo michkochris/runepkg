@@ -1,1 +1,0 @@
-../python-pygerrit2/build.txt

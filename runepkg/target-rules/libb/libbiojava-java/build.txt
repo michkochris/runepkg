@@ -1,1 +1,0 @@
-../../b/biojava-live/build.txt

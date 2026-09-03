@@ -1,1 +1,0 @@
-../../g/gtk-nocsd/build.txt

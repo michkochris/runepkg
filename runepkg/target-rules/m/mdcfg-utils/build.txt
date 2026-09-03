@@ -1,1 +1,0 @@
-../mdcfg/build.txt

@@ -1,1 +1,0 @@
-../python-shamir-mnemonic/build.txt

@@ -1,1 +1,0 @@
-../pike8.0/build.txt

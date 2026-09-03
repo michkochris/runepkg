@@ -1,1 +1,0 @@
-../golang-k8s-metrics/build.txt

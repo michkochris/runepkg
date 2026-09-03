@@ -1,1 +1,0 @@
-../../g/group-service/build.txt

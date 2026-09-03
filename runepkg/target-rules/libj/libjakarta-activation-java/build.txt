@@ -1,1 +1,0 @@
-../../j/jakarta-activation/build.txt

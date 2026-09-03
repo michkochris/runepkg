@@ -1,1 +1,0 @@
-../../h/haskell-word8/build.txt

@@ -1,1 +1,0 @@
-../libisrt-java/build.txt

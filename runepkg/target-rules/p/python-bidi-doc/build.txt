@@ -1,1 +1,0 @@
-../python-bidi/build.txt

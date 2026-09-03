@@ -1,1 +1,0 @@
-../../n/neo4j-python-driver/build.txt

@@ -1,1 +1,0 @@
-../python-friendly/build.txt

@@ -1,1 +1,0 @@
-../golang-github-bahlo-generic-list-go/build.txt

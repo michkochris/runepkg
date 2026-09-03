@@ -1,1 +1,0 @@
-../../b/bidi-clojure/build.txt

@@ -1,1 +1,0 @@
-../../libc/libcap-ng/build.txt

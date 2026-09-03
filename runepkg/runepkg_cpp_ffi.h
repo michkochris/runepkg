@@ -43,7 +43,6 @@ typedef struct RuneTargetPlan {
 /* -------------------------------------------------------------------------- */
 
 int runepkg_cpp_ffi_available(void);
-int runepkg_host_dpkg_sync(void);
 
 /* -------------------------------------------------------------------------- */
 /* Repository Synchronization & Inspection                                    */
@@ -78,28 +77,6 @@ int runepkg_repo_source_depends_download(const char *pkg_name);
 int runepkg_repo_source_depends_download_multiple(const char **pkg_names, int count);
 int runepkg_repo_source_build_depends_download(const char *pkg_name);
 int runepkg_repo_source_build_depends_download_multiple(const char **pkg_names, int count);
-int runepkg_source_unpack(const char *dsc_path);
-
-/* -------------------------------------------------------------------------- */
-/* Forge Build Engine & Package Assembly                                      */
-/* -------------------------------------------------------------------------- */
-
-int runepkg_source_build(const char *dsc_path);
-int runepkg_source_build_split(const char *dsc_path, const char *target_pkg);
-int runepkg_source_build_sysroot(const char *dsc_path);
-
-/* -------------------------------------------------------------------------- */
-/* Toolchain Bootstrap Engine & Target Profiles                               */
-/* -------------------------------------------------------------------------- */
-
-int handle_switch(const char *target);
-void handle_print_profile(void);
-int handle_bootstrap(const char *target);
-int handle_bootstrap_with_targets(const char *target, const char **pkg_names, int count);
-int handle_build_toolchain(const char *target);
-int handle_build_toolchain_with_targets(const char *target, const char **pkg_names, int count);
-int handle_build_toolchain_engine(const char *target_name);
-int handle_build_toolchain_targets(const char *target_name, const char **pkg_names, int count);
 
 /* -------------------------------------------------------------------------- */
 /* Dependency Graph Harvester & Target Plan Resolver                          */
@@ -113,13 +90,6 @@ int runepkg_resolver_dump_tree(const char *pkg_name);
 
 #ifdef __cplusplus
 }
-#endif
-
-/* -------------------------------------------------------------------------- */
-/* C++ Matrix Engine & Recipe Definitions                                     */
-/* -------------------------------------------------------------------------- */
-#ifdef __cplusplus
-#include "runepkg_matrix.h"
 #endif
 
 #endif /* RUNEPKG_CPP_FFI_H */

@@ -1,1 +1,0 @@
-../golang-github-smacker-go-tree-sitter/build.txt

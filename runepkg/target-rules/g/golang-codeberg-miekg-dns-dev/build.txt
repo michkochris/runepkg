@@ -1,1 +1,0 @@
-../golang-codeberg-miekg-dns/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-spool/build.txt

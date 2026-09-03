@@ -1,1 +1,0 @@
-../../n/nauty/build.txt

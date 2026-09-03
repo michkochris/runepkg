@@ -1,1 +1,0 @@
-../fonts-tibetan-machine/build.txt

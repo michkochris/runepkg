@@ -1,1 +1,0 @@
-../../d/dtk6declarative/build.txt

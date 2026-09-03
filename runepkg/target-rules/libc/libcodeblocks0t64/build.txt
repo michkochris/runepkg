@@ -1,1 +1,0 @@
-../../c/codeblocks/build.txt

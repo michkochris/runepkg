@@ -1,1 +1,0 @@
-../../r/rust-wezterm-dynamic/build.txt

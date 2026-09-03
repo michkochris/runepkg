@@ -1,1 +1,0 @@
-../../r/rust-tiny-bip39/build.txt

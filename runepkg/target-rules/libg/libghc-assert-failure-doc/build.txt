@@ -1,1 +1,0 @@
-../../h/haskell-assert-failure/build.txt

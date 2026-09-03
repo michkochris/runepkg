@@ -1,1 +1,0 @@
-../../r/rust-sponge-cursor/build.txt

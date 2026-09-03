@@ -1,1 +1,0 @@
-../python-pyopen-wakeword/build.txt

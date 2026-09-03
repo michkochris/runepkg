@@ -1,1 +1,0 @@
-../../r/ros2-colcon-core/build.txt

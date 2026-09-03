@@ -1,1 +1,0 @@
-../../s/smbus2/build.txt

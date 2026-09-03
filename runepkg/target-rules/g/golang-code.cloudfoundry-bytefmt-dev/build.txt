@@ -1,1 +1,0 @@
-../golang-code.cloudfoundry-bytefmt/build.txt

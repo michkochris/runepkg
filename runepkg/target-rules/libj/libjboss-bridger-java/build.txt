@@ -1,1 +1,0 @@
-../../j/jboss-bridger/build.txt

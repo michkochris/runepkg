@@ -1,1 +1,0 @@
-../../h/haskell-isomorphism-class/build.txt

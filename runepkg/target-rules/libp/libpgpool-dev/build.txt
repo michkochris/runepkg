@@ -1,1 +1,0 @@
-../../p/pgpool2/build.txt

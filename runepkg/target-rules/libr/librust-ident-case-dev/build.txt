@@ -1,1 +1,0 @@
-../../r/rust-ident-case/build.txt

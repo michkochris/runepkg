@@ -1,1 +1,0 @@
-../../v/virt-firmware/build.txt

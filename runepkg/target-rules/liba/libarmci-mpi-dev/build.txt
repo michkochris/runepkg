@@ -1,1 +1,0 @@
-../../a/armci-mpi/build.txt

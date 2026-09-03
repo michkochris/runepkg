@@ -1,1 +1,0 @@
-../pyimagetool/build.txt

@@ -1,1 +1,0 @@
-../python-testscenarios/build.txt

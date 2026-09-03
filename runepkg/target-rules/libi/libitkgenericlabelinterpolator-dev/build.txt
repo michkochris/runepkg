@@ -1,1 +1,0 @@
-../../i/itkgenericlabelinterpolator/build.txt

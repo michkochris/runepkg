@@ -1,1 +1,0 @@
-../python-cssselect2/build.txt

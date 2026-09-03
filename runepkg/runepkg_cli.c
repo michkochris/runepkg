@@ -80,21 +80,8 @@ void usage(void) {
     printf("  upgrade                                 Download and install all available upgrades.\n");
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
-    printf("  source <pkg>...                         Download source package files into build_dir.\n");
-    printf("  source-depends <pkg>...                 Download source package and its runtime-dependencies.\n");
-    printf("  source-build-depends <pkg>...           Download source package and its build-dependencies.\n\n");
-
-    printf("Destructible Toolchain & Target Package Forge:\n");
-    printf("  switch [profile]                        Switch the active target profile or reset to host.\n");
-    printf("  --print-profile                         Print detailed info about the active target profile.\n");
-    printf("  bootstrap <target> [pkgs...]            Bootstrap toolchain and forge target .debs.\n");
-    printf("  build-toolchain                         (Reserved option for future development).\n");
-    printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n\n");
-
-    printf("Source Building & Fragmenting:\n");
     printf("  info <pkg>...                           Show repository information for a package.\n");
-    printf("  build <pkg|path>...                     Build a source package by name or path (use \".\" for current dir).\n");
-    printf("  buildpkg-split <pkg|path> [target]...   Build and split a source package (optional: targeted package).\n\n");
+    printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n\n");
 
     printf("Download Utilities:\n");
     printf("  download-only <pkg>...                  Download a .deb to download_dir without dependencies.\n");
@@ -470,197 +457,14 @@ int main(int argc, char *argv[]) {
             src = runepkg_util_resolve_build_target(src_arg, g_build_dir);
 
             if (src) {
-                char discovery_path[PATH_MAX];
-                bool found = false;
-
-                if (runepkg_util_file_exists(src)) {
-                    if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
-                        handle_source_build(src);
-                    } else if (runepkg_util_is_directory(src)) {
-                        char *debian_path = runepkg_util_concat_path(src, "debian");
-                        if (runepkg_util_is_directory(debian_path)) {
-                            handle_source_build(src);
-                        } else {
-                            handle_build(src, out);
-                        }
-                        free(debian_path);
-                    } else {
-                        fprintf(stderr, "\033[1;31mError:\033[0m '%s' is a file but not a buildable .dsc rune.\n", src);
-                        cli_failed = 1;
-                    }
-                    found = true;
-                }
-
-                if (!found) {
-                    const char *search_dirs[4];
-                    int j;
-
-                    search_dirs[0] = "sources";
-                    search_dirs[1] = "debs";
-                    search_dirs[2] = g_build_dir;
-                    search_dirs[3] = ".";
-
-                    for (j = 0; j < 4 && !found; j++) {
-                        DIR *dir;
-                        if (!search_dirs[j]) continue;
-
-                        dir = opendir(search_dirs[j]);
-                        if (!dir) continue;
-
-                        {
-                            struct dirent *entry;
-                            while ((entry = readdir(dir)) != NULL) {
-                                char pattern[128];
-                                snprintf(pattern, sizeof(pattern), "%s_", src_arg);
-                                if ((strcmp(entry->d_name, src_arg) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
-                                    printf("\033[1;34m[discovery]\033[0m Found matching rune: %s\n", discovery_path);
-                                    handle_source_build(discovery_path);
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        closedir(dir);
-                    }
-                }
-
-                if (!found) {
-#ifdef ENABLE_CPP_FFI
-                    printf("\033[1;33m[ritual]\033[0m Rune '%s' not found locally. Initiating repo unearthing...\n", src_arg);
-                    {
-                        char *old_build = g_build_dir;
-                        if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
-                        if (runepkg_repo_source_download(src_arg) == 0) {
-                            const char *target = g_build_dir ? g_build_dir : ".";
-                            DIR *dir = opendir(target);
-                            if (dir) {
-                                struct dirent *entry;
-                                while ((entry = readdir(dir)) != NULL) {
-                                    char pattern[128];
-                                    snprintf(pattern, sizeof(pattern), "%s_", src_arg);
-                                    if ((strcmp(entry->d_name, src_arg) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                        snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
-                                        handle_source_build(discovery_path);
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                closedir(dir);
-                            }
-                        }
-                        g_build_dir = old_build;
-                    }
-#endif
-                }
-
-                if (!found) {
-                    fprintf(stderr, "\033[1;31mError:\033[0m Could not find or unearth any buildable runes matching '%s'.\n", src_arg);
+                if (runepkg_util_is_directory(src)) {
+                    handle_build(src, out);
+                } else {
+                    fprintf(stderr, "\033[1;31mError:\033[0m '%s' is not a directory. Local build requires a directory.\n", src);
                     cli_failed = 1;
                 }
             } else {
                 handle_build(NULL, NULL);
-            }
-        } else if (strcmp(argv[i], "buildpkg-split") == 0 || strcmp(argv[i], "--buildpkg-split") == 0) {
-            const char *src_arg = ".";
-            const char *subpkg_filter = NULL;
-
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                src_arg = argv[++i];
-                if (i + 1 < argc && argv[i+1][0] != '-') {
-                    subpkg_filter = argv[++i];
-                }
-            }
-
-            {
-                const char *src = runepkg_util_resolve_build_target(src_arg, g_build_dir);
-                char discovery_path[PATH_MAX];
-                bool found = false;
-
-                if (src && runepkg_util_file_exists(src)) {
-                    if (strlen(src) > 4 && strcmp(src + strlen(src) - 4, ".dsc") == 0) {
-                        handle_source_build_split(src, subpkg_filter);
-                    } else if (runepkg_util_is_directory(src)) {
-                        char *debian_path = runepkg_util_concat_path(src, "debian");
-                        if (runepkg_util_is_directory(debian_path)) {
-                            handle_source_build_split(src, subpkg_filter);
-                        } else {
-                            fprintf(stderr, "\033[1;31mError:\033[0m directory '%s' is not a Debian source tree (no 'debian/' found).\n", src);
-                            cli_failed = 1;
-                        }
-                        free(debian_path);
-                    } else {
-                        fprintf(stderr, "\033[1;31mError:\033[0m '%s' is a file but not a buildable .dsc rune.\n", src);
-                        cli_failed = 1;
-                    }
-                    found = true;
-                }
-
-                if (!found) {
-                    const char *search_dirs[4];
-                    int j;
-
-                    search_dirs[0] = "sources";
-                    search_dirs[1] = "debs";
-                    search_dirs[2] = g_build_dir;
-                    search_dirs[3] = ".";
-
-                    for (j = 0; j < 4 && !found; j++) {
-                        DIR *dir;
-                        if (!search_dirs[j]) continue;
-                        dir = opendir(search_dirs[j]);
-                        if (!dir) continue;
-                        {
-                            struct dirent *entry;
-                            while ((entry = readdir(dir)) != NULL) {
-                                char pattern[128];
-                                snprintf(pattern, sizeof(pattern), "%s_", src_arg);
-                                if ((strcmp(entry->d_name, src_arg) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                    snprintf(discovery_path, sizeof(discovery_path), "%s/%s", search_dirs[j], entry->d_name);
-                                    printf("\033[1;34m[discovery]\033[0m Found matching split-rune: %s\n", discovery_path);
-                                    handle_source_build_split(discovery_path, subpkg_filter);
-                                    found = true;
-                                    break;
-                                }
-                            }
-                        }
-                        closedir(dir);
-                    }
-                }
-
-                if (!found) {
-#ifdef ENABLE_CPP_FFI
-                    printf("\033[1;33m[ritual]\033[0m Split-rune '%s' not found locally. Initiating repo unearthing...\n", src_arg);
-                    {
-                        char *old_build = g_build_dir;
-                        if (runepkg_util_is_directory("sources")) g_build_dir = (char*)"sources";
-                        if (runepkg_repo_source_download(src_arg) == 0) {
-                            const char *target = g_build_dir ? g_build_dir : ".";
-                            DIR *dir = opendir(target);
-                            if (dir) {
-                                struct dirent *entry;
-                                while ((entry = readdir(dir)) != NULL) {
-                                    char pattern[128];
-                                    snprintf(pattern, sizeof(pattern), "%s_", src_arg);
-                                    if ((strcmp(entry->d_name, src_arg) == 0 || strncmp(entry->d_name, pattern, strlen(pattern)) == 0) && strstr(entry->d_name, ".dsc")) {
-                                        snprintf(discovery_path, sizeof(discovery_path), "%s/%s", target, entry->d_name);
-                                        handle_source_build_split(discovery_path, subpkg_filter);
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                                closedir(dir);
-                            }
-                        }
-                        g_build_dir = old_build;
-                    }
-#endif
-                }
-
-                if (!found) {
-                    fprintf(stderr, "\033[1;31mError:\033[0m buildpkg-split requires a .dsc file or source tree. None found matching '%s'.\n", src_arg);
-                    cli_failed = 1;
-                }
             }
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
@@ -762,71 +566,6 @@ int main(int argc, char *argv[]) {
             printf("Notice: Automatic upgrades require a C++ build with networking enabled.\n");
             printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
-        } else if (strcmp(argv[i], "source") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                const char *pkgs[1024]; int pkg_count = 0;
-                while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
-                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
-                    i++;
-                }
-#ifdef ENABLE_CPP_FFI
-                if (pkg_count > 0) {
-                    if (runepkg_repo_source_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
-                }
-#endif
-            } else {
-                printf("Error: source command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "source-depends") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                const char *pkgs[1024]; int pkg_count = 0;
-                while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
-                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
-                    i++;
-                }
-#ifdef ENABLE_CPP_FFI
-                if (pkg_count > 0) {
-                    if (runepkg_repo_source_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
-                }
-#endif
-            } else {
-                printf("Error: source-depends command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "source-build-depends") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                const char *pkgs[1024]; int pkg_count = 0;
-                while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
-                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
-                    i++;
-                }
-#ifdef ENABLE_CPP_FFI
-                if (pkg_count > 0) {
-                    bool old_force = g_force_mode; g_force_mode = true;
-                    if (runepkg_repo_source_build_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
-                    g_force_mode = old_force;
-                }
-#endif
-            } else {
-                printf("Error: source-build-depends command requires a package name.\n");
-            }
         } else if (strcmp(argv[i], "info") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 while (i + 1 < argc && argv[i+1][0] != '-') {
@@ -842,50 +581,6 @@ int main(int argc, char *argv[]) {
                 }
             } else {
                 printf("Error: info command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "switch") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                if (handle_switch(argv[i+1]) != 0) cli_failed = 1;
-                i++;
-            } else {
-                if (handle_switch(NULL) != 0) cli_failed = 1;
-            }
-        } else if (strcmp(argv[i], "--print-profile") == 0) {
-            handle_print_profile();
-        } else if (strcmp(argv[i], "bootstrap") == 0) {
-            const char *target = NULL;
-            const char *target_pkgs[1024];
-            int target_pkg_count = 0;
-
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                target = argv[i+1];
-                if (strncmp(target, "--target=", 9) == 0) target += 9;
-                i++;
-                while (i + 1 < argc && argv[i+1][0] != '-') {
-                    if (target_pkg_count < 1024) {
-                        target_pkgs[target_pkg_count++] = argv[i+1];
-                    }
-                    i++;
-                }
-            } else {
-                printf("Error: bootstrap requires a target profile.\n");
-                cli_failed = 1;
-            }
-
-            if (!cli_failed && target) {
-                if (target_pkg_count > 0) {
-                    handle_bootstrap_with_targets(target, target_pkgs, target_pkg_count);
-                } else {
-                    handle_bootstrap(target);
-                }
-            }
-        } else if (strcmp(argv[i], "build-toolchain") == 0) {
-            printf("Notice: 'build-toolchain' is reserved for future development.\n");
-            printf("To bootstrap toolchains and forge target packages, please use:\n");
-            printf("  runepkg bootstrap <target> [pkgs...]\n\n");
-            printf("See 'runepkg --help' for details.\n");
-            while (i + 1 < argc && argv[i+1][0] != '-') {
-                i++;
             }
         } else if (strcmp(argv[i], "resolve-tree") == 0 || strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {

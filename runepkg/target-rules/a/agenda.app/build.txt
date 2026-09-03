@@ -1,1 +1,0 @@
-../../s/simpleagenda.app/build.txt

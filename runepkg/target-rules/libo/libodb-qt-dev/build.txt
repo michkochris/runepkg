@@ -1,1 +1,0 @@
-../libodb-qt/build.txt

@@ -1,1 +1,0 @@
-../libiscwt-java/build.txt

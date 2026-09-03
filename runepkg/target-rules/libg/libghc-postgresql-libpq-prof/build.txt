@@ -1,1 +1,0 @@
-../../h/haskell-postgresql-libpq/build.txt

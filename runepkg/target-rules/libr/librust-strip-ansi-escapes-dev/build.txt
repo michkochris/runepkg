@@ -1,1 +1,0 @@
-../../r/rust-strip-ansi-escapes/build.txt

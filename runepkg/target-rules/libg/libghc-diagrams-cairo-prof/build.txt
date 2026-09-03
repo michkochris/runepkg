@@ -1,1 +1,0 @@
-../../h/haskell-diagrams-cairo/build.txt

@@ -1,1 +1,0 @@
-../python-ironic-inspector-client/build.txt

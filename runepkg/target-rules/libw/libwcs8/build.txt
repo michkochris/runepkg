@@ -1,1 +1,0 @@
-../../w/wcslib/build.txt

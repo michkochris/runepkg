@@ -1,1 +1,0 @@
-../../q/qtdatavis3d-everywhere-src/build.txt

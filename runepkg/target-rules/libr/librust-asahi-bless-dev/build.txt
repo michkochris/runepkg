@@ -1,1 +1,0 @@
-../../r/rust-asahi-bless/build.txt

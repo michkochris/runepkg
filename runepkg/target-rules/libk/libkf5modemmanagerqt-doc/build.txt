@@ -1,1 +1,0 @@
-../../m/modemmanager-qt/build.txt

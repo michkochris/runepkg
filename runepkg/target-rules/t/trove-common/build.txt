@@ -1,1 +1,0 @@
-../../o/openstack-trove/build.txt

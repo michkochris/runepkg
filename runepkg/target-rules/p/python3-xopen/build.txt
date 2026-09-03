@@ -1,1 +1,0 @@
-../python-xopen/build.txt

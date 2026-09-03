@@ -1,1 +1,0 @@
-../golang-github-sourcegraph-jsonrpc2/build.txt

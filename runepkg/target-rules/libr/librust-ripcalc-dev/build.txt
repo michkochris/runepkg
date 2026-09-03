@@ -1,1 +1,0 @@
-../../r/rust-ripcalc/build.txt

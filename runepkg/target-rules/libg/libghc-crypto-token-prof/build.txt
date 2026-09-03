@@ -1,1 +1,0 @@
-../../h/haskell-crypto-token/build.txt

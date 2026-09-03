@@ -1,1 +1,0 @@
-../golang-github-schachmat-ingo/build.txt

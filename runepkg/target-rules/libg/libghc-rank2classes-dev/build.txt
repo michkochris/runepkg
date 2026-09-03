@@ -1,1 +1,0 @@
-../../h/haskell-rank2classes/build.txt

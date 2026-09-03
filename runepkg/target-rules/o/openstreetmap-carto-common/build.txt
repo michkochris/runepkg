@@ -1,1 +1,0 @@
-../openstreetmap-carto/build.txt

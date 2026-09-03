@@ -1,1 +1,0 @@
-../python-sysv-ipc/build.txt

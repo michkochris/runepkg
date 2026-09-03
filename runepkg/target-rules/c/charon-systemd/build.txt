@@ -1,1 +1,0 @@
-../../s/strongswan/build.txt

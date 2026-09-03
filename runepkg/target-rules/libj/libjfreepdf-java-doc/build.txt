@@ -1,1 +1,0 @@
-../../j/jfreepdf/build.txt

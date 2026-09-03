@@ -1,1 +1,0 @@
-../golang-filippo-edwards25519/build.txt

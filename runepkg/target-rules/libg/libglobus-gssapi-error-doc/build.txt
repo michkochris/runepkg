@@ -1,1 +1,0 @@
-../../g/globus-gssapi-error/build.txt

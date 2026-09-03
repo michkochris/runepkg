@@ -1,1 +1,0 @@
-../../l/linux-board-support-package-rb3gen2/build.txt

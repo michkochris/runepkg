@@ -1,1 +1,0 @@
-../../h/haskell-aeson-diff/build.txt

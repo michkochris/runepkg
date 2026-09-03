@@ -1,1 +1,0 @@
-../libspring-java/build.txt

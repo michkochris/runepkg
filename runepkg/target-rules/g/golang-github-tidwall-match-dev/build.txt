@@ -1,1 +1,0 @@
-../golang-github-tidwall-match/build.txt

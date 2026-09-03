@@ -1,1 +1,0 @@
-../../h/haskell-hxt-curl/build.txt

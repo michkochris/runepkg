@@ -1,1 +1,0 @@
-../../a/assertj-core/build.txt

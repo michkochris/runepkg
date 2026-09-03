@@ -1,1 +1,0 @@
-../python-nxs/build.txt

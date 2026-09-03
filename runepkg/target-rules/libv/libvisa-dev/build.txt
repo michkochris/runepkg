@@ -1,1 +1,0 @@
-../../libr/librevisa/build.txt

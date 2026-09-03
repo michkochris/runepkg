@@ -1,1 +1,0 @@
-../../g/gemrb/build.txt

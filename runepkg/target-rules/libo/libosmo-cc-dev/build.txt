@@ -1,1 +1,0 @@
-../libosmo-cc/build.txt

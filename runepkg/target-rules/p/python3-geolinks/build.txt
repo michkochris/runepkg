@@ -1,1 +1,0 @@
-../../g/geolinks/build.txt

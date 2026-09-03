@@ -1,1 +1,0 @@
-../python-meshzoo/build.txt

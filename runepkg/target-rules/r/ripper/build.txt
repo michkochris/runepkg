@@ -1,1 +1,0 @@
-../../g/golang-github-odeke-em-ripper/build.txt

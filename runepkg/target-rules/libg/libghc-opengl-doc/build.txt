@@ -1,1 +1,0 @@
-../../h/haskell-opengl/build.txt

@@ -1,1 +1,0 @@
-../../l/linuxtv-dvb-apps/build.txt

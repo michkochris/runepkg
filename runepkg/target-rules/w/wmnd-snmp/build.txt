@@ -1,1 +1,0 @@
-../wmnd/build.txt

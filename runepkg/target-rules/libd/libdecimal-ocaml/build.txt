@@ -1,1 +1,0 @@
-../../o/ocaml-decimal/build.txt

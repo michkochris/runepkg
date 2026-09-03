@@ -1,1 +1,0 @@
-../golang-github-docker-go-plugins-helpers/build.txt

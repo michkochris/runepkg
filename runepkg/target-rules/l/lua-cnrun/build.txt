@@ -1,1 +1,0 @@
-../../c/cnrun/build.txt

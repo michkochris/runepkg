@@ -1,1 +1,0 @@
-../golang-github-spiffe-go-spiffe/build.txt

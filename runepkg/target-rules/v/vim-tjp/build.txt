@@ -1,1 +1,0 @@
-../../t/tj3/build.txt

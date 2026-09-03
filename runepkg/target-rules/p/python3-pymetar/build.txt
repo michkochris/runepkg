@@ -1,1 +1,0 @@
-../python-pymetar/build.txt

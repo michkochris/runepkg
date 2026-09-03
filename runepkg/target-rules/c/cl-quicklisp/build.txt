@@ -1,1 +1,0 @@
-../../q/quicklisp/build.txt

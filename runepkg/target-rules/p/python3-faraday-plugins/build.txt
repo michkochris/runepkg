@@ -1,1 +1,0 @@
-../../f/faraday-plugins/build.txt

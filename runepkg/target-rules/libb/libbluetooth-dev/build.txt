@@ -1,1 +1,0 @@
-../../b/bluez/build.txt

@@ -1,1 +1,0 @@
-../python-qemu-qmp/build.txt

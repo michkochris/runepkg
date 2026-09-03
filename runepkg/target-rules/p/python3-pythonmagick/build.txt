@@ -1,1 +1,0 @@
-../pythonmagick/build.txt

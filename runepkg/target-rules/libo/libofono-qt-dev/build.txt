@@ -1,1 +1,0 @@
-../libofono-qt/build.txt

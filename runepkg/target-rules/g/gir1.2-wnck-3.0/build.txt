@@ -1,1 +1,0 @@
-../../libw/libwnck3/build.txt

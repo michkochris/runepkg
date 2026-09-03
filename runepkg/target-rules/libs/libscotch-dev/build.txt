@@ -1,1 +1,0 @@
-../../s/scotch/build.txt

@@ -1,1 +1,0 @@
-../libmmmulti/build.txt

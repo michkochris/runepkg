@@ -1,1 +1,0 @@
-../python-bcbio-gff/build.txt

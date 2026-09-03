@@ -1,1 +1,0 @@
-../golang-github-ant0ine-go-json-rest/build.txt

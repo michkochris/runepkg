@@ -1,1 +1,0 @@
-../../t/template-glib/build.txt

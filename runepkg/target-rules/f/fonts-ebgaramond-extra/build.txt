@@ -1,1 +1,0 @@
-../fonts-ebgaramond/build.txt

@@ -1,1 +1,0 @@
-../../e/eo-spell/build.txt

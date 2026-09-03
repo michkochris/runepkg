@@ -1,1 +1,0 @@
-../python-hidapi/build.txt

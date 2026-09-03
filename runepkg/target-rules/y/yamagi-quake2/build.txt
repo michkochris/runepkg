@@ -1,1 +1,0 @@
-../yquake2/build.txt

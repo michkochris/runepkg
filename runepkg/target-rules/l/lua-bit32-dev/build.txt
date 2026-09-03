@@ -1,1 +1,0 @@
-../lua-bit32/build.txt

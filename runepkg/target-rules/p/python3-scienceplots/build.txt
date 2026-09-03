@@ -1,1 +1,0 @@
-../python-scienceplots/build.txt

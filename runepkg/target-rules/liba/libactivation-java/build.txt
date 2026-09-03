@@ -1,1 +1,0 @@
-../../j/javabeans-activation-framework/build.txt

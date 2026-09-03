@@ -1,1 +1,0 @@
-../../s/social-auth-app-django/build.txt

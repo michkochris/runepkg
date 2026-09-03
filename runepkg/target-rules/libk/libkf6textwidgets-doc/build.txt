@@ -1,1 +1,0 @@
-../../k/kf6-ktextwidgets/build.txt

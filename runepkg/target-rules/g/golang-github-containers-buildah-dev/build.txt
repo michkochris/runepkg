@@ -1,1 +1,0 @@
-../golang-github-containers-buildah/build.txt

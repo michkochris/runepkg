@@ -1,1 +1,0 @@
-../../h/haskell-xml-types/build.txt

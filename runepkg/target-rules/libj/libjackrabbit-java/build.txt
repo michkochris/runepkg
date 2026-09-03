@@ -1,1 +1,0 @@
-../../j/jackrabbit/build.txt

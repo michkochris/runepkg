@@ -1,1 +1,0 @@
-../golang-go4-unsafe-assume-no-moving-gc/build.txt

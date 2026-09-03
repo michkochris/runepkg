@@ -1,1 +1,0 @@
-../python-betterproto/build.txt

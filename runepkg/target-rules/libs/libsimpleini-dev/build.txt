@@ -1,1 +1,0 @@
-../libsimpleini/build.txt

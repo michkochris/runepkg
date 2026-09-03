@@ -1,1 +1,0 @@
-../../r/rust-output-vt100/build.txt

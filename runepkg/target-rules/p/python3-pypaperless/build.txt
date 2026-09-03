@@ -1,1 +1,0 @@
-../pypaperless/build.txt

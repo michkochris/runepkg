@@ -1,1 +1,0 @@
-../python-packageurl/build.txt

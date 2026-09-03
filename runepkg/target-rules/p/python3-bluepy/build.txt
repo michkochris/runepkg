@@ -1,1 +1,0 @@
-../python-bluepy/build.txt

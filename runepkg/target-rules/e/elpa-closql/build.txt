@@ -1,1 +1,0 @@
-../../c/closql-el/build.txt

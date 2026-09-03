@@ -1,1 +1,0 @@
-../../g/google-auth-httplib2/build.txt

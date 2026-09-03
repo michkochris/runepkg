@@ -1,1 +1,0 @@
-../../g/gxr/build.txt

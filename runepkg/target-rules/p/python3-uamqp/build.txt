@@ -1,1 +1,0 @@
-../../a/azure-uamqp-python/build.txt

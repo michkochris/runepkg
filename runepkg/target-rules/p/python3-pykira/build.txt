@@ -1,1 +1,0 @@
-../pykira/build.txt

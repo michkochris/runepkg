@@ -1,1 +1,0 @@
-../../w/writer2latex/build.txt

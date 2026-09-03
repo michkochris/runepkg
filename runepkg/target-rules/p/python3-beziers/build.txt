@@ -1,1 +1,0 @@
-../python-beziers/build.txt

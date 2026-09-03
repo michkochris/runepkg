@@ -1,1 +1,0 @@
-../../r/rust-gettext/build.txt

@@ -1,1 +1,0 @@
-../golang-github-mholt-acmez-v3/build.txt

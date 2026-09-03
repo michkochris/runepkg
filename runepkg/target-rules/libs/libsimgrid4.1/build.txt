@@ -1,1 +1,0 @@
-../../s/simgrid/build.txt

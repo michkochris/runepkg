@@ -1,1 +1,0 @@
-../pytest-doctestplus/build.txt

@@ -1,1 +1,0 @@
-../../s/sdl-mixer1.2/build.txt

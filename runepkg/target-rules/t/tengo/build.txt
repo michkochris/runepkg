@@ -1,1 +1,0 @@
-../../g/golang-github-d5-tengo/build.txt

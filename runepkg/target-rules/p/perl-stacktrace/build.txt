@@ -1,1 +1,0 @@
-../../liba/libapp-stacktrace-perl/build.txt

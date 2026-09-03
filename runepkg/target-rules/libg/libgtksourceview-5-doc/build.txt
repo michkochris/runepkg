@@ -1,1 +1,0 @@
-../../g/gtksourceview5/build.txt

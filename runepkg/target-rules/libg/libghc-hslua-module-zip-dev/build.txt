@@ -1,1 +1,0 @@
-../../h/haskell-hslua-module-zip/build.txt

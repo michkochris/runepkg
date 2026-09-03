@@ -1,1 +1,0 @@
-../lomiri-online-accounts-plugins-carddav/build.txt

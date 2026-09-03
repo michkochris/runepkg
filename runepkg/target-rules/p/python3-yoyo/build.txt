@@ -1,1 +1,0 @@
-../../y/yoyo/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-wai-app-static/build.txt

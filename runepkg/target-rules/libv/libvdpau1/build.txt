@@ -1,1 +1,0 @@
-../libvdpau/build.txt

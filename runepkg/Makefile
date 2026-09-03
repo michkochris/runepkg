@@ -116,7 +116,7 @@ endif
 ifeq ($(WITH_CPP),1)
   override CFLAGS  += -DENABLE_CPP_FFI
   LDFLAGS += $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl") -lz
-  CPP_SOURCES = runepkg_network.cpp runepkg_building.cpp runepkg_bootstrap.cpp runepkg_resolver.cpp runepkg_host_dpkg.cpp runepkg_matrix.cpp runepkg_compiler.cpp
+  CPP_SOURCES = runepkg_resolver.cpp runepkg_network.cpp
   CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
   LINKER = $(CXX)
 else
@@ -132,7 +132,7 @@ C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
-          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_matrix.h
+          runepkg_crypto.h runepkg_cpp_ffi.h
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
@@ -150,7 +150,7 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all runepkg_populate runepkg_scalpel FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all FORCE
 
 build: build-banner $(TARGET)
 
@@ -186,30 +186,9 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 -include $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d)
 
-POPULATE_TARGET = runepkg_populate
-SCALPEL_TARGET  = runepkg_scalpel
-
-$(POPULATE_TARGET): runepkg_populate.cpp runepkg_config.o runepkg_util.o runepkg_defensive.o runepkg_hash.o runepkg_storage.o runepkg_pack.o
-	$(E) "  $(PURPLE)[ritual]$(RESET) Compiling Rule Scaffolder: $<"
-	$(Q)$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-
-runepkg_populate: $(POPULATE_TARGET)
-
-$(SCALPEL_TARGET): runepkg_scalpel.cpp runepkg_config.o runepkg_util.o runepkg_defensive.o runepkg_hash.o runepkg_storage.o runepkg_pack.o
-	$(E) "  $(PURPLE)[ritual]$(RESET) Compiling Surgical Scalpel: $<"
-	$(Q)$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
-
-runepkg_scalpel: $(SCALPEL_TARGET)
-
-populate-rules: $(POPULATE_TARGET)
-	@echo "$(BOLD)$(CYAN)Populating target-rules from runepkg_db...$(RESET)"
-	$(Q)./$(POPULATE_TARGET) --confirm
-
-scalpel: $(SCALPEL_TARGET)
-
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) $(TARGET) $(POPULATE_TARGET) $(SCALPEL_TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp runepkg_compiler.o runepkg_compiler.d runepkg_populate.d runepkg_scalpel.d
+	$(Q)rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:

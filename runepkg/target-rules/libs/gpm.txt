@@ -1,6 +1,0 @@
-package = gpm
-build_system = autotools
-configure_args = --disable-shared --enable-static
-pre_configure = if [ ! -f configure ] && [ -f autogen.sh ]; then chmod 755 autogen.sh && ./autogen.sh; fi && if [ "${STATIC_BUILD}" = "1" ] && [ -f src/Makefile.in ]; then sed -i 's/all:	$(PICS) $(LIBS)/all:	lib\/libgpm.a/g' src/Makefile.in; fi
-libc = any
-arch = any

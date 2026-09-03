@@ -1,1 +1,0 @@
-../python-edam-ontology/build.txt

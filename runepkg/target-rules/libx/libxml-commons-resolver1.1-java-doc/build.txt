@@ -1,1 +1,0 @@
-../libxml-commons-resolver1.1-java/build.txt

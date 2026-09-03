@@ -1,1 +1,0 @@
-../../s/slicerator/build.txt

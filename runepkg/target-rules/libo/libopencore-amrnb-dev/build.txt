@@ -1,1 +1,0 @@
-../../o/opencore-amr/build.txt

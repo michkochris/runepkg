@@ -1,1 +1,0 @@
-../fisicalab.app/build.txt

@@ -1,1 +1,0 @@
-../../s/slick/build.txt

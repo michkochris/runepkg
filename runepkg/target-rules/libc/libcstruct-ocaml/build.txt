@@ -1,1 +1,0 @@
-../../o/ocaml-cstruct/build.txt

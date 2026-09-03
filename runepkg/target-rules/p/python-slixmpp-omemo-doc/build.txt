@@ -1,1 +1,0 @@
-../../s/slixmpp-omemo/build.txt

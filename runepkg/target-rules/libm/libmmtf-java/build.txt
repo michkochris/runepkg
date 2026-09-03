@@ -1,1 +1,0 @@
-../../m/mmtf-java/build.txt

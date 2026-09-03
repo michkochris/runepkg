@@ -1,1 +1,0 @@
-../libsmpp34/build.txt

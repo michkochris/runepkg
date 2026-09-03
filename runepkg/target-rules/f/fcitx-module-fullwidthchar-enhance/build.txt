@@ -1,1 +1,0 @@
-../fcitx-fullwidthchar-enhance/build.txt

@@ -1,1 +1,0 @@
-../../k/kanjidraw/build.txt

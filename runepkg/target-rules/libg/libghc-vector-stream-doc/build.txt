@@ -1,1 +1,0 @@
-../../h/haskell-vector-stream/build.txt

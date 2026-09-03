@@ -1,1 +1,0 @@
-../golang-github-mreiferson-go-snappystream/build.txt

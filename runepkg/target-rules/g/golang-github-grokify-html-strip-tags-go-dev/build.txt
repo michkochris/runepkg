@@ -1,1 +1,0 @@
-../golang-github-grokify-html-strip-tags-go/build.txt

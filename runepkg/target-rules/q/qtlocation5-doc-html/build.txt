@@ -1,1 +1,0 @@
-../qtlocation-opensource-src/build.txt

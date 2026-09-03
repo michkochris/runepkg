@@ -1,1 +1,0 @@
-../../o/opentracing-c-wrapper/build.txt

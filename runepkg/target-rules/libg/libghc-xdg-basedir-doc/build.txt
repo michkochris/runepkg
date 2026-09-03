@@ -1,1 +1,0 @@
-../../h/haskell-xdg-basedir/build.txt

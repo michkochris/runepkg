@@ -1,1 +1,0 @@
-../../r/rust-collection-literals/build.txt

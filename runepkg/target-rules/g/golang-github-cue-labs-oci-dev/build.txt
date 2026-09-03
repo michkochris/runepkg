@@ -1,1 +1,0 @@
-../golang-github-cue-labs-oci/build.txt

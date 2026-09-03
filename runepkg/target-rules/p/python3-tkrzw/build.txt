@@ -1,1 +1,0 @@
-../../t/tkrzw-python/build.txt

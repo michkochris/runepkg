@@ -49,23 +49,12 @@ void handle_version(void);
 
 /* Build & Packaging */
 int handle_build(const char *source_dir, const char *output_name);
-int handle_source_build(const char *dsc_path);
-int handle_source_build_split(const char *dsc_path, const char *target_pkg);
-int handle_source_build_sysroot(const char *dsc_path);
 
-/* Configuration & Profiles */
+/* Configuration & Diagnostics */
 void handle_print_config(void);
 void handle_print_config_file(void);
 void handle_print_pkglist_file(void);
 void handle_update_pkglist(void);
-int handle_switch(const char *switch_arg);
-void handle_print_profile(void);
-
-/* Toolchain Bootstrap & Cross-Forge Engine */
-int handle_bootstrap(const char *target_name);
-int handle_bootstrap_with_targets(const char *target_name, const char **pkg_names, int count);
-int handle_build_toolchain(const char *target_name);
-int handle_build_toolchain_with_targets(const char *target_name, const char **pkg_names, int count);
 
 /* 70k+ Repository Graph Harvester & Target Dependency Resolver */
 int handle_resolve_tree(const char *pkg_name);

@@ -1,1 +1,0 @@
-../golang-github-nlnwa-whatwg-url/build.txt

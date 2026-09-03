@@ -1,1 +1,0 @@
-../../h/haskell-th-abstraction/build.txt

@@ -1,1 +1,0 @@
-../../t/translate-toolkit/build.txt

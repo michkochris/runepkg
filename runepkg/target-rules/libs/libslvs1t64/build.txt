@@ -1,1 +1,0 @@
-../../s/solvespace/build.txt

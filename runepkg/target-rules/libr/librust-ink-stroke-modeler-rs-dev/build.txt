@@ -1,1 +1,0 @@
-../../r/rust-ink-stroke-modeler-rs/build.txt

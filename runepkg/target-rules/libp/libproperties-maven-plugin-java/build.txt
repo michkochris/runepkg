@@ -1,1 +1,0 @@
-../../p/properties-maven-plugin/build.txt

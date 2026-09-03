@@ -1,1 +1,0 @@
-../../b/bluetooth-data-tools/build.txt

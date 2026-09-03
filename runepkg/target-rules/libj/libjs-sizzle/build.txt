@@ -1,1 +1,0 @@
-../../s/sizzle/build.txt

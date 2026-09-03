@@ -1,1 +1,0 @@
-../libisnativec-java/build.txt

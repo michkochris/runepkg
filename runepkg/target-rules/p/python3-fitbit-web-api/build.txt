@@ -1,1 +1,0 @@
-../python-fitbit-web-api/build.txt

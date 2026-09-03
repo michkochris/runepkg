@@ -1,1 +1,0 @@
-../../k/ksanecore/build.txt

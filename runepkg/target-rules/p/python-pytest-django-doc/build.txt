@@ -1,1 +1,0 @@
-../pytest-django/build.txt

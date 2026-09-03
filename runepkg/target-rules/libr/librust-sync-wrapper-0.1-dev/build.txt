@@ -1,1 +1,0 @@
-../../r/rust-sync-wrapper-0.1/build.txt

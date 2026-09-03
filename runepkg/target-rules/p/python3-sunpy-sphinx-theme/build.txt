@@ -1,1 +1,0 @@
-../../s/sunpy-sphinx-theme/build.txt

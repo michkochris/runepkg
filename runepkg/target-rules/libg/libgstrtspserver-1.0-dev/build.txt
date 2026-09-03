@@ -1,1 +1,0 @@
-../../g/gst-rtsp-server1.0/build.txt

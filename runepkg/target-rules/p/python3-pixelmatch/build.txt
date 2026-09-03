@@ -1,1 +1,0 @@
-../pixelmatch-py/build.txt

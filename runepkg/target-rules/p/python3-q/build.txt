@@ -1,1 +1,0 @@
-../python-q/build.txt

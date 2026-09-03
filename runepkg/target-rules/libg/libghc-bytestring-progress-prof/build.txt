@@ -1,1 +1,0 @@
-../../h/haskell-bytestring-progress/build.txt

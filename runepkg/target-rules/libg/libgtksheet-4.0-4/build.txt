@@ -1,1 +1,0 @@
-../../g/gtksheet/build.txt

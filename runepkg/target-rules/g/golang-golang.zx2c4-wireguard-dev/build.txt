@@ -1,1 +1,0 @@
-../../w/wireguard-go/build.txt

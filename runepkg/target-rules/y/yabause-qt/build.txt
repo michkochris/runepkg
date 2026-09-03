@@ -1,1 +1,0 @@
-../yabause/build.txt

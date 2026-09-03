@@ -1,1 +1,0 @@
-../../g/gnokii/build.txt

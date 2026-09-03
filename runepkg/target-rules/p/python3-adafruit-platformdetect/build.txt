@@ -1,1 +1,0 @@
-../python-adafruit-platformdetect/build.txt

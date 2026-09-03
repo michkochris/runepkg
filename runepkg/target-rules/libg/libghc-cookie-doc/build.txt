@@ -1,1 +1,0 @@
-../../h/haskell-cookie/build.txt

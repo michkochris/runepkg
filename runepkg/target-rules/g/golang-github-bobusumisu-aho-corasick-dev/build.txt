@@ -1,1 +1,0 @@
-../golang-github-bobusumisu-aho-corasick/build.txt

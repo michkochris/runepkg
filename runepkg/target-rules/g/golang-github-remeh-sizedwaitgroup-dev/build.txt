@@ -1,1 +1,0 @@
-../golang-github-remeh-sizedwaitgroup/build.txt

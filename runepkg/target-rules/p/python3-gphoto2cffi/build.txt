@@ -1,1 +1,0 @@
-../../g/gphoto2-cffi/build.txt

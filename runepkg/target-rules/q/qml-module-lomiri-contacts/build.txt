@@ -1,1 +1,0 @@
-../../l/lomiri-addressbook-app/build.txt

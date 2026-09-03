@@ -1,1 +1,0 @@
-../../h/haskell-tasty-expected-failure/build.txt

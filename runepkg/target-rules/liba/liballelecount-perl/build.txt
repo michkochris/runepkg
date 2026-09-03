@@ -1,1 +1,0 @@
-../../a/allelecount/build.txt

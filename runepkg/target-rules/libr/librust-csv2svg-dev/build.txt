@@ -1,1 +1,0 @@
-../../r/rust-csv2svg/build.txt

@@ -1,1 +1,0 @@
-../debian-cloud-images/build.txt

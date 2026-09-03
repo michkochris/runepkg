@@ -1,1 +1,0 @@
-../qtgamepad-everywhere-src/build.txt

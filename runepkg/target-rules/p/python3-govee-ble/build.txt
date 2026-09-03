@@ -1,1 +1,0 @@
-../../g/govee-ble/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-encoding-index-tradchinese/build.txt

@@ -1,1 +1,0 @@
-../gst-libav1.0/build.txt

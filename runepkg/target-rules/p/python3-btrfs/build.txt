@@ -1,1 +1,0 @@
-../python-btrfs/build.txt

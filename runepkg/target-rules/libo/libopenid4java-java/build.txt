@@ -1,1 +1,0 @@
-../../o/openid4java/build.txt

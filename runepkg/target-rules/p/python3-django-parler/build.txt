@@ -1,1 +1,0 @@
-../python-django-parler/build.txt

@@ -1,1 +1,0 @@
-../python-pytest-cases/build.txt

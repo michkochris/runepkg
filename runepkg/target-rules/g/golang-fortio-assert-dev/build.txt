@@ -1,1 +1,0 @@
-../golang-fortio-assert/build.txt

@@ -1,1 +1,0 @@
-../pcmciautils/build.txt

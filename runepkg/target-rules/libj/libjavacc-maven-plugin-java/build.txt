@@ -1,1 +1,0 @@
-../../j/javacc-maven-plugin/build.txt

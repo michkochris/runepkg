@@ -1,1 +1,0 @@
-../../libw/libwebcam/build.txt

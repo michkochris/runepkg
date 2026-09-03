@@ -1,1 +1,0 @@
-../../j/joda-convert/build.txt

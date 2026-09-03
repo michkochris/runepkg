@@ -1,1 +1,0 @@
-../golang-github-spdx-tools-golang/build.txt

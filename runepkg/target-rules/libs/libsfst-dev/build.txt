@@ -1,1 +1,0 @@
-../../s/sfst/build.txt

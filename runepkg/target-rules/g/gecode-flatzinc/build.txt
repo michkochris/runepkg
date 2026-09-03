@@ -1,1 +1,0 @@
-../gecode-snapshot/build.txt

@@ -1,1 +1,0 @@
-../../o/osgi-core/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-plotters-bitmap/build.txt

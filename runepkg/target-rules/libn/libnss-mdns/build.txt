@@ -1,1 +1,0 @@
-../../n/nss-mdns/build.txt

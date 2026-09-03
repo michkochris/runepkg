@@ -1,1 +1,0 @@
-../../libh/libhinawa/build.txt

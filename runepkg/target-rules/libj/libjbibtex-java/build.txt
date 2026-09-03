@@ -1,1 +1,0 @@
-../../j/jbibtex/build.txt

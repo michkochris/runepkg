@@ -1,1 +1,0 @@
-../qtxmlpatterns-opensource-src/build.txt

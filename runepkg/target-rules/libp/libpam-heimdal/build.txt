@@ -1,1 +1,0 @@
-../libpam-krb5/build.txt

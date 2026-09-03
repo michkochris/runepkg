@@ -1,1 +1,0 @@
-../pyxdg/build.txt

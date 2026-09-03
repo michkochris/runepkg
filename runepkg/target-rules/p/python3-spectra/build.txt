@@ -1,1 +1,0 @@
-../python-spectra/build.txt

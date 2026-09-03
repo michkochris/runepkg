@@ -1,1 +1,0 @@
-../../d/django-choices-field/build.txt

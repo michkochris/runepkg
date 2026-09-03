@@ -1,1 +1,0 @@
-../../g/gvm-libs/build.txt

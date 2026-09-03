@@ -1,1 +1,0 @@
-../golang-github-dnaeon-go-vcr/build.txt

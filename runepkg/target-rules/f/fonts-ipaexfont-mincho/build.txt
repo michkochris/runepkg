@@ -1,1 +1,0 @@
-../fonts-ipaexfont/build.txt

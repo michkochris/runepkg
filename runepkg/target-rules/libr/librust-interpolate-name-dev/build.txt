@@ -1,1 +1,0 @@
-../../r/rust-interpolate-name/build.txt

@@ -1,1 +1,0 @@
-../rime-wugniu/build.txt

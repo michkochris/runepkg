@@ -1,1 +1,0 @@
-../libnb-platform18-java/build.txt

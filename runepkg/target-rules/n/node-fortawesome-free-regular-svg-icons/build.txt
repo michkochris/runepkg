@@ -1,1 +1,0 @@
-../node-fortawesome-fontawesome-free/build.txt

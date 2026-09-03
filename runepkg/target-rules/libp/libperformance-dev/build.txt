@@ -1,1 +1,0 @@
-../../g/gnustep-performance/build.txt

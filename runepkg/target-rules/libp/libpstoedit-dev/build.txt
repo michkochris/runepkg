@@ -1,1 +1,0 @@
-../../p/pstoedit/build.txt

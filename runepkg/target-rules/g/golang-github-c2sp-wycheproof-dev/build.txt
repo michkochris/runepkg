@@ -1,1 +1,0 @@
-../../w/wycheproof/build.txt

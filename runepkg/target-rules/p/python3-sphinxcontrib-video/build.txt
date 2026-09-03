@@ -1,1 +1,0 @@
-../../s/sphinxcontrib-video/build.txt

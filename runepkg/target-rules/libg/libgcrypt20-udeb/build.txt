@@ -1,1 +1,0 @@
-../libgcrypt20/build.txt

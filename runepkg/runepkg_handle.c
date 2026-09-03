@@ -1069,39 +1069,6 @@ int handle_build(const char *source_dir, const char *output_name) {
     }
 }
 
-int handle_source_build(const char *dsc_path) {
-#ifdef ENABLE_CPP_FFI
-    return runepkg_source_build(dsc_path);
-#else
-    (void)dsc_path;
-    printf("Notice: Source building requires a C++ build with FFI enabled.\n");
-    printf("Rebuild with 'make all' to enable this feature.\n");
-    return -1;
-#endif
-}
-
-int handle_source_build_split(const char *dsc_path, const char *target_pkg) {
-#ifdef ENABLE_CPP_FFI
-    return runepkg_source_build_split(dsc_path, target_pkg);
-#else
-    (void)dsc_path; (void)target_pkg;
-    printf("Notice: Split source building requires a C++ build with FFI enabled.\n");
-    printf("Rebuild with 'make all' to enable this feature.\n");
-    return -1;
-#endif
-}
-
-int handle_source_build_sysroot(const char *dsc_path) {
-#ifdef ENABLE_CPP_FFI
-    return runepkg_source_build_sysroot(dsc_path);
-#else
-    (void)dsc_path;
-    printf("Notice: Sysroot source building requires a C++ build with FFI enabled.\n");
-    printf("Rebuild with 'make all' to enable this feature.\n");
-    return -1;
-#endif
-}
-
 /* -------------------------------------------------------------------------- */
 /* 70k+ Repository Graph Resolver & Harvester Handlers                         */
 /* -------------------------------------------------------------------------- */

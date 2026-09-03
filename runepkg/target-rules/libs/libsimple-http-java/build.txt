@@ -1,1 +1,0 @@
-../../s/simple-http/build.txt

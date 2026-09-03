@@ -1,1 +1,0 @@
-../../k/kdevelop/build.txt

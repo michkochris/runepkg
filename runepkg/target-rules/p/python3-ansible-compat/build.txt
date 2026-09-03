@@ -1,1 +1,0 @@
-../python-ansible-compat/build.txt

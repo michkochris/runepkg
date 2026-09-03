@@ -1,1 +1,0 @@
-../../g/gwyddion/build.txt

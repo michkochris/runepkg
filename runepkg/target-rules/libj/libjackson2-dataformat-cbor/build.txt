@@ -1,1 +1,0 @@
-../../j/jackson-dataformat-cbor/build.txt

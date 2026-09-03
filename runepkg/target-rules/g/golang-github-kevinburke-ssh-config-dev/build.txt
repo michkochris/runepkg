@@ -1,1 +1,0 @@
-../golang-github-kevinburke-ssh-config/build.txt

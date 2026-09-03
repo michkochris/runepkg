@@ -1,1 +1,0 @@
-../../h/haskell-haskell-gi-base/build.txt

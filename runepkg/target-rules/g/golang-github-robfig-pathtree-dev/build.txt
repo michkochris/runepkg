@@ -1,1 +1,0 @@
-../golang-pathtree/build.txt

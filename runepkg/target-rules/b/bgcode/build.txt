@@ -1,1 +1,0 @@
-../../libb/libbgcode/build.txt

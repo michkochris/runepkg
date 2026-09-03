@@ -1,1 +1,0 @@
-../../o/orange-canvas-core/build.txt

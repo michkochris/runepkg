@@ -1,1 +1,0 @@
-../xfonts-100dpi/build.txt

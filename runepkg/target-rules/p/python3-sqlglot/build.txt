@@ -1,1 +1,0 @@
-../../s/sqlglot/build.txt

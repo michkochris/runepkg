@@ -1,1 +1,0 @@
-../golang-testify/build.txt

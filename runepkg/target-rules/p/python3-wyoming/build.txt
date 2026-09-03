@@ -1,1 +1,0 @@
-../python-wyoming/build.txt

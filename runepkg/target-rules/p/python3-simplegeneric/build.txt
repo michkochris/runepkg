@@ -1,1 +1,0 @@
-../../s/simplegeneric/build.txt

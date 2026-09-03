@@ -1,1 +1,0 @@
-../../i/intel-cryptography-primitives/build.txt

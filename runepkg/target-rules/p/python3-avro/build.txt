@@ -1,1 +1,0 @@
-../python-avro/build.txt

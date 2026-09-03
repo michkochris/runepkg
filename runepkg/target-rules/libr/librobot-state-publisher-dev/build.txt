@@ -1,1 +1,0 @@
-../../r/ros-robot-state-publisher/build.txt

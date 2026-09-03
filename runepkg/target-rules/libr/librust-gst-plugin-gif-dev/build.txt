@@ -1,1 +1,0 @@
-../../r/rust-gst-plugin-gif/build.txt

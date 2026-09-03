@@ -1,1 +1,0 @@
-../../f/flake8-cognitive-complexity/build.txt

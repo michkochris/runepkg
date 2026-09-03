@@ -1,1 +1,0 @@
-../../m/mariadb-connector-java/build.txt

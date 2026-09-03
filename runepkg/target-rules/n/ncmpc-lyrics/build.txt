@@ -1,1 +1,0 @@
-../ncmpc/build.txt

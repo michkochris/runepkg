@@ -1,1 +1,0 @@
-../../o/odin/build.txt

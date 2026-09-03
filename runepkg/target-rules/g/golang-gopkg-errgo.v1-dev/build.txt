@@ -1,1 +1,0 @@
-../golang-gopkg-errgo.v1/build.txt

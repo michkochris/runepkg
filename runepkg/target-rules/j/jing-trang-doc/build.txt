@@ -1,1 +1,0 @@
-../jing-trang/build.txt

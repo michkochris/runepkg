@@ -1,1 +1,0 @@
-../gmrender-resurrect/build.txt

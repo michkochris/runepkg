@@ -1,1 +1,0 @@
-../../m/maven-common-artifact-filters/build.txt

@@ -1,1 +1,0 @@
-../golang-petname/build.txt

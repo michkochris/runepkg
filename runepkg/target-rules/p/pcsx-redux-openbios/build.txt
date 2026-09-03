@@ -1,1 +1,0 @@
-../pcsx-redux-mips/build.txt

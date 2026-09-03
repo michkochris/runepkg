@@ -1,1 +1,0 @@
-../../d/dkg-handwriting/build.txt

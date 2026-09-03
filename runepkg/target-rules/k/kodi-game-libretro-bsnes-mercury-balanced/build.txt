@@ -1,1 +1,0 @@
-../../libr/libretro-bsnes-mercury/build.txt

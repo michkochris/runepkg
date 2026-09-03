@@ -1,1 +1,0 @@
-../golang-github-korandiz-v4l/build.txt

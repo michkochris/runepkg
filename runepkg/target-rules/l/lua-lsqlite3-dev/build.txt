@@ -1,1 +1,0 @@
-../lua-lsqlite3/build.txt

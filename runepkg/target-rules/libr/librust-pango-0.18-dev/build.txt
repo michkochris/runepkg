@@ -1,1 +1,0 @@
-../../r/rust-pango-0.18/build.txt

@@ -1,1 +1,0 @@
-../golang-github-avast-apkparser/build.txt

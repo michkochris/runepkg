@@ -1,1 +1,0 @@
-../python-ajsonrpc/build.txt

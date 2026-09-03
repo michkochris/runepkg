@@ -1,1 +1,0 @@
-../../s/sorl-thumbnail/build.txt

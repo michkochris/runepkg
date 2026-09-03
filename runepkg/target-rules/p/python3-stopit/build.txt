@@ -1,1 +1,0 @@
-../python-stopit/build.txt

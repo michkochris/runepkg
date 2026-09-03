@@ -1,1 +1,0 @@
-../../b/barman/build.txt

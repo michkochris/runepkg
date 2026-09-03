@@ -1,1 +1,0 @@
-../python-latexcodec/build.txt

@@ -1,1 +1,0 @@
-../../j/jsonpath-ng/build.txt

@@ -1,1 +1,0 @@
-../../m/microprofile/build.txt

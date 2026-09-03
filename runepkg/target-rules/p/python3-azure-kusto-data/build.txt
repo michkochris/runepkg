@@ -1,1 +1,0 @@
-../../a/azure-kusto-python/build.txt

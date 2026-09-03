@@ -1,1 +1,0 @@
-../../o/opencc/build.txt

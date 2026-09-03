@@ -1,1 +1,0 @@
-../libnbd/build.txt

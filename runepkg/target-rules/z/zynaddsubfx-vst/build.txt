@@ -1,1 +1,0 @@
-../zynaddsubfx/build.txt

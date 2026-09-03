@@ -1,1 +1,0 @@
-../../t/testsweeper/build.txt

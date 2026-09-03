@@ -1,1 +1,0 @@
-../../s/samtools-legacy/build.txt

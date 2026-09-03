@@ -1,1 +1,0 @@
-../../l/lz4-java/build.txt

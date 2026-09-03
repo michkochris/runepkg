@@ -1,1 +1,0 @@
-../python-os-testr/build.txt

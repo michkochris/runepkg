@@ -1,1 +1,0 @@
-../../t/tightvnc/build.txt

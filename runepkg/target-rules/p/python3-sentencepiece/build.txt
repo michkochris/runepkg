@@ -1,1 +1,0 @@
-../../s/sentencepiece/build.txt

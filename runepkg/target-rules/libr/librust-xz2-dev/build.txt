@@ -1,1 +1,0 @@
-../../r/rust-xz2/build.txt

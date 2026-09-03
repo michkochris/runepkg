@@ -1,1 +1,0 @@
-../../r/rust-aya/build.txt

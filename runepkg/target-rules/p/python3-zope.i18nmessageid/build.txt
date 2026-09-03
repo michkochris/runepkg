@@ -1,1 +1,0 @@
-../../z/zope.i18nmessageid/build.txt

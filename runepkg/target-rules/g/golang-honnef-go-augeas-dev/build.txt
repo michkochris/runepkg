@@ -1,1 +1,0 @@
-../golang-honnef-go-augeas/build.txt

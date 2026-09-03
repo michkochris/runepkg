@@ -1,1 +1,0 @@
-../../q/qr-tools/build.txt

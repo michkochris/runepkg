@@ -1,1 +1,0 @@
-../python-httptools/build.txt

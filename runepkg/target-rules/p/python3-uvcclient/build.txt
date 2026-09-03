@@ -1,1 +1,0 @@
-../python-uvcclient/build.txt

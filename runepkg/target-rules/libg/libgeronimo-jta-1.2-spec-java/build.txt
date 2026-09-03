@@ -1,1 +1,0 @@
-../../g/geronimo-jta-1.2-spec/build.txt

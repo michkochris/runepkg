@@ -1,1 +1,0 @@
-../../n/naked/build.txt

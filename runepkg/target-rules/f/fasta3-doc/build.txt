@@ -1,1 +1,0 @@
-../fasta3/build.txt

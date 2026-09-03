@@ -1,1 +1,0 @@
-../mobian-keyring/build.txt

@@ -1,1 +1,0 @@
-../golang-google-appengine/build.txt

@@ -1,1 +1,0 @@
-../../j/jayway-jsonpath/build.txt

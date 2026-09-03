@@ -1,1 +1,0 @@
-../../libb/libburn/build.txt

@@ -1,1 +1,0 @@
-../python-ring-doorbell/build.txt

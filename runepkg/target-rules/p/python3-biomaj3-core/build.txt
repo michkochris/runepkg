@@ -1,1 +1,0 @@
-../../b/biomaj3-core/build.txt

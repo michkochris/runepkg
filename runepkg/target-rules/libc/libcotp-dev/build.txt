@@ -1,1 +1,0 @@
-../libcotp/build.txt

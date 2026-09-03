@@ -1,1 +1,0 @@
-../../g/gnucobol3/build.txt

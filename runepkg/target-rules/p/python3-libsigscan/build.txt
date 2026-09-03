@@ -1,1 +1,0 @@
-../../libs/libsigscan/build.txt

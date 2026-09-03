@@ -1,1 +1,0 @@
-../godot3/build.txt

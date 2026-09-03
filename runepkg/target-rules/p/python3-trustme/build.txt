@@ -1,1 +1,0 @@
-../python-trustme/build.txt

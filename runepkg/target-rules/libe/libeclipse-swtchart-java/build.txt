@@ -1,1 +1,0 @@
-../../e/eclipse-swtchart/build.txt

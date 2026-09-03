@@ -1,1 +1,0 @@
-../../r/rust-svg-metadata/build.txt

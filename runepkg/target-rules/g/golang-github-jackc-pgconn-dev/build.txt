@@ -1,1 +1,0 @@
-../golang-github-jackc-pgconn/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-rw-stream-sink/build.txt

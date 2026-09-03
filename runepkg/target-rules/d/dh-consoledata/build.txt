@@ -1,1 +1,0 @@
-../../c/console-common/build.txt

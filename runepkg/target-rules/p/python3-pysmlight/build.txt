@@ -1,1 +1,0 @@
-../python-pysmlight/build.txt

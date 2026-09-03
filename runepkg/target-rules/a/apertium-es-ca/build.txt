@@ -1,1 +1,0 @@
-../apertium-spa-cat/build.txt

@@ -1,1 +1,0 @@
-../../s/swift-mode/build.txt

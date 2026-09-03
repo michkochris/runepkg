@@ -1,1 +1,0 @@
-../lastz/build.txt

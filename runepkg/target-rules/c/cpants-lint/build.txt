@@ -1,1 +1,0 @@
-../../liba/libapp-cpants-lint-perl/build.txt

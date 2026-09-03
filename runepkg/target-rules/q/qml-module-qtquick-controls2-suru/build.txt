@@ -1,1 +1,0 @@
-../qqc2-suru-style/build.txt

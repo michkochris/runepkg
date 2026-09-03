@@ -1,1 +1,0 @@
-../../r/rust-array-const-fn-init/build.txt

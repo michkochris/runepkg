@@ -1,1 +1,0 @@
-../../n/ndisc6/build.txt

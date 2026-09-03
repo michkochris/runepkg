@@ -1,1 +1,0 @@
-../pgsql-ogr-fdw/build.txt

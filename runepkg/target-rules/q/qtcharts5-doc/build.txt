@@ -1,1 +1,0 @@
-../qtcharts-opensource-src/build.txt

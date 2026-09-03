@@ -1,1 +1,0 @@
-../texworks-manual/build.txt

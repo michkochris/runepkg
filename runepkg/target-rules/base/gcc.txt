@@ -1,5 +1,0 @@
-package = gcc
-build_system = autotools
-configure_args = --host=${TARGET_TRIPLE} --target=${TARGET_TRIPLE} --prefix=/usr --enable-languages=c,c++ --disable-multilib --disable-nls --enable-shared
-libc = any
-arch = any

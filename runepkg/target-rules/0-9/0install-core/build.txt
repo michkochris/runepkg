@@ -1,1 +1,0 @@
-../../z/zeroinstall-injector/build.txt

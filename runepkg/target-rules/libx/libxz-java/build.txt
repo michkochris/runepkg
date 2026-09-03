@@ -1,1 +1,0 @@
-../../x/xz-java/build.txt

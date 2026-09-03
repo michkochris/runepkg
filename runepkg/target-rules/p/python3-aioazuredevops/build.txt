@@ -1,1 +1,0 @@
-../python-aioazuredevops/build.txt

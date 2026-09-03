@@ -1,1 +1,0 @@
-../../c/clalsadrv/build.txt

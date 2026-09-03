@@ -1,1 +1,0 @@
-../../s/sstp-client/build.txt

@@ -1,1 +1,0 @@
-../../k/kpty/build.txt

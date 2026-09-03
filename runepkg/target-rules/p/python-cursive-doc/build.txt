@@ -1,1 +1,0 @@
-../python-cursive/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-ogma-core/build.txt

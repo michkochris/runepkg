@@ -1,1 +1,0 @@
-../../g/golang-github-maxbrunsfeld-counterfeiter/build.txt

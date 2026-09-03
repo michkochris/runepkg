@@ -1,1 +1,0 @@
-../golang-github-maxmind-geoipupdate/build.txt

@@ -1,1 +1,0 @@
-../golang-gopkg-redis.v5/build.txt

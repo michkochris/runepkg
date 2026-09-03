@@ -1,1 +1,0 @@
-../tecnoballz/build.txt

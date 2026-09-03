@@ -1,1 +1,0 @@
-../python-noseofyeti/build.txt

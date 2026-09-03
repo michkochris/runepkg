@@ -1,1 +1,0 @@
-../../h/home-assistant-bluetooth/build.txt

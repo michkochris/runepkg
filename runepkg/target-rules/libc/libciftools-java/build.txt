@@ -1,1 +1,0 @@
-../../c/ciftools-java/build.txt

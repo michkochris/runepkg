@@ -1,1 +1,0 @@
-../../h/haskell-atomic-counter/build.txt

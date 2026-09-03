@@ -1,1 +1,0 @@
-../libhtml5parser-java/build.txt

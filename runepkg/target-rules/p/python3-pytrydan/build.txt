@@ -1,1 +1,0 @@
-../pytrydan/build.txt

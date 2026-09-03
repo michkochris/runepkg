@@ -1,1 +1,0 @@
-../python-temperusb/build.txt

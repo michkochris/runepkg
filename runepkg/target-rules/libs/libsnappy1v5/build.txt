@@ -1,1 +1,0 @@
-../../s/snappy/build.txt

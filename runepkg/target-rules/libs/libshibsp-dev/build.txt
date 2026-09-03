@@ -1,1 +1,0 @@
-../../s/shibboleth-sp/build.txt

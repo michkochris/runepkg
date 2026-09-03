@@ -1,1 +1,0 @@
-../python-rcssmin/build.txt

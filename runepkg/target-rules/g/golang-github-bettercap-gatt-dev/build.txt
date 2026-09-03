@@ -1,1 +1,0 @@
-../golang-github-bettercap-gatt/build.txt

@@ -1,1 +1,0 @@
-../qgnomeplatform/build.txt

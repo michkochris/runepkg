@@ -1,1 +1,0 @@
-../../g/ghostscript/build.txt

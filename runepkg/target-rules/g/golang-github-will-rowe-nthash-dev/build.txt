@@ -1,1 +1,0 @@
-../golang-github-will-rowe-nthash/build.txt

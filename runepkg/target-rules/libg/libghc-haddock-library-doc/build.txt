@@ -1,1 +1,0 @@
-../../h/haskell-haddock-library/build.txt

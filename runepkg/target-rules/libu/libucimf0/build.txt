@@ -1,1 +1,0 @@
-../libucimf/build.txt

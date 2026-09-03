@@ -1,1 +1,0 @@
-../libkysdk-vector-engine-client/build.txt

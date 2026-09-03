@@ -1,1 +1,0 @@
-../libregexp-java/build.txt

@@ -1,1 +1,0 @@
-../../s/snp-sites/build.txt

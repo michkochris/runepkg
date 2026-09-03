@@ -1,1 +1,0 @@
-../../v/vacuum-map-parser-roborock/build.txt

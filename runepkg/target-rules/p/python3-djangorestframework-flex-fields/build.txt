@@ -1,1 +1,0 @@
-../python-djangorestframework-flex-fields/build.txt

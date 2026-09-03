@@ -1,1 +1,0 @@
-../libswe/build.txt

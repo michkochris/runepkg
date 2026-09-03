@@ -1,1 +1,0 @@
-../python-pyghmi/build.txt

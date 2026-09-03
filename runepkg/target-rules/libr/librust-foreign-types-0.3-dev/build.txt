@@ -1,1 +1,0 @@
-../../r/rust-foreign-types-0.3/build.txt

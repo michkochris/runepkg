@@ -1,1 +1,0 @@
-../../h/haskell-hint/build.txt

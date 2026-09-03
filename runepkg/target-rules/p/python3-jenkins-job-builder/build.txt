@@ -1,1 +1,0 @@
-../../j/jenkins-job-builder/build.txt

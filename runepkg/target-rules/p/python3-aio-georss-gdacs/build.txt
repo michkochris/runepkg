@@ -1,1 +1,0 @@
-../python-aio-georss-gdacs/build.txt

@@ -1,1 +1,0 @@
-../python-minijinja/build.txt

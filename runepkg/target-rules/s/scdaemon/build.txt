@@ -1,1 +1,0 @@
-../../g/gnupg2/build.txt

@@ -1,1 +1,0 @@
-../../g/gcc-12-cross/build.txt

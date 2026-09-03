@@ -1,1 +1,0 @@
-../rime-stenotype/build.txt

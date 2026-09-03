@@ -1,1 +1,0 @@
-../golang-golang-x-clipboard/build.txt

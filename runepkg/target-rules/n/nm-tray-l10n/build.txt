@@ -1,1 +1,0 @@
-../nm-tray/build.txt

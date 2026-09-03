@@ -1,1 +1,0 @@
-../libdecentxml-java/build.txt

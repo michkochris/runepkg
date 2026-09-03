@@ -1,1 +1,0 @@
-../../q/qttools-opensource-src/build.txt

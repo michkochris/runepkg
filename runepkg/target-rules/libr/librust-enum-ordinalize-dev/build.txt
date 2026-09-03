@@ -1,1 +1,0 @@
-../../r/rust-enum-ordinalize/build.txt

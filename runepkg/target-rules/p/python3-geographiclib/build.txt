@@ -1,1 +1,0 @@
-../python-geographiclib/build.txt

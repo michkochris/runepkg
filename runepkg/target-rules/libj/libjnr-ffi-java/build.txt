@@ -1,1 +1,0 @@
-../../j/jnr-ffi/build.txt

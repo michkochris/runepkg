@@ -1,1 +1,0 @@
-../../g/golang-github-vincent-petithory-dataurl/build.txt

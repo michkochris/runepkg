@@ -1,1 +1,0 @@
-../python-pyknon/build.txt

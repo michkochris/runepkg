@@ -1,1 +1,0 @@
-../python-vigietools/build.txt

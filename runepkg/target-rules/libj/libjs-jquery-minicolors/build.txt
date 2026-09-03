@@ -1,1 +1,0 @@
-../../j/jquery-minicolors/build.txt

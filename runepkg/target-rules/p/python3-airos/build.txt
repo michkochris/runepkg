@@ -1,1 +1,0 @@
-../python-airos/build.txt

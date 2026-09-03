@@ -1,1 +1,0 @@
-../python-lzstring/build.txt

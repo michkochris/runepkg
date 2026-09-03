@@ -1,1 +1,0 @@
-../../w/wildfly-client-config/build.txt

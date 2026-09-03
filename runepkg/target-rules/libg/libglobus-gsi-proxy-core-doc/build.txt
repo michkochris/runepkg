@@ -1,1 +1,0 @@
-../../g/globus-gsi-proxy-core/build.txt

@@ -1,1 +1,0 @@
-../python-pyrdfa/build.txt

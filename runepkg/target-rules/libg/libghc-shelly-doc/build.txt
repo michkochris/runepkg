@@ -1,1 +1,0 @@
-../../h/haskell-shelly/build.txt

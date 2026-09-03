@@ -1,1 +1,0 @@
-../partconf/build.txt

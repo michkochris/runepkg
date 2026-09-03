@@ -1,1 +1,0 @@
-../../g/golang-mvdan-sh/build.txt

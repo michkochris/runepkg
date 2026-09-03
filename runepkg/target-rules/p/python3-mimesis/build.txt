@@ -1,1 +1,0 @@
-../python-mimesis/build.txt

@@ -1,1 +1,0 @@
-../../c/clojure-maven-plugin/build.txt

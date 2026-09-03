@@ -1,1 +1,0 @@
-../gocr/build.txt

@@ -1,1 +1,0 @@
-../../s/spatialindex/build.txt

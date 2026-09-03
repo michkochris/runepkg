@@ -1,1 +1,0 @@
-../nordugrid-arc/build.txt

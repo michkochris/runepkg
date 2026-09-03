@@ -1,1 +1,0 @@
-../../t/triod-postnaja/build.txt

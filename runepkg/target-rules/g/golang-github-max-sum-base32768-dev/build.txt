@@ -1,1 +1,0 @@
-../golang-github-max-sum-base32768/build.txt

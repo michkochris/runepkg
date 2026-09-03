@@ -1,1 +1,0 @@
-../../d/django-sortedm2m/build.txt

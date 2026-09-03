@@ -1,1 +1,0 @@
-../../s/spread-sheet-widget/build.txt

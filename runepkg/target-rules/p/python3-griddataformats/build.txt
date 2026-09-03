@@ -1,1 +1,0 @@
-../python-griddataformats/build.txt

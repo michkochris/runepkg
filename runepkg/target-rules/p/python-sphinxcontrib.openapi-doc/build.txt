@@ -1,1 +1,0 @@
-../../s/sphinxcontrib-openapi/build.txt

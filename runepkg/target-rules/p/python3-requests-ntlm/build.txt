@@ -1,1 +1,0 @@
-../python-requests-ntlm/build.txt

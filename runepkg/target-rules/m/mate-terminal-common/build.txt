@@ -1,1 +1,0 @@
-../mate-terminal/build.txt

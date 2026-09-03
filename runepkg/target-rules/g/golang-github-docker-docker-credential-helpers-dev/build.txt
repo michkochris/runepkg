@@ -1,1 +1,0 @@
-../golang-github-docker-docker-credential-helpers/build.txt

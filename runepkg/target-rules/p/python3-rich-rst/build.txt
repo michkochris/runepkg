@@ -1,1 +1,0 @@
-../python-rich-rst/build.txt

@@ -1,1 +1,0 @@
-../ispell-czech/build.txt

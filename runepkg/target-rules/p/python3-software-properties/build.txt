@@ -1,1 +1,0 @@
-../../s/software-properties/build.txt

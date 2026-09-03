@@ -1,1 +1,0 @@
-../../d/devolo-home-control-api/build.txt

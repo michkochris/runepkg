@@ -1,1 +1,0 @@
-../libdjconsole/build.txt

@@ -1,1 +1,0 @@
-../python-arris-tg2492lg/build.txt

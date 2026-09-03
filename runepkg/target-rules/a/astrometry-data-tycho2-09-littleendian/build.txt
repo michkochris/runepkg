@@ -1,1 +1,0 @@
-../../t/tycho2/build.txt

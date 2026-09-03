@@ -1,1 +1,0 @@
-../pytraccar/build.txt

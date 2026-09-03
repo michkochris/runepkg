@@ -1,1 +1,0 @@
-../../j/jsbundle-web-interfaces/build.txt

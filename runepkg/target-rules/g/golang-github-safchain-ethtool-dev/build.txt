@@ -1,1 +1,0 @@
-../golang-github-safchain-ethtool/build.txt

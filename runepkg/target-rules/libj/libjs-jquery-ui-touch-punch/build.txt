@@ -1,1 +1,0 @@
-../../j/jquery-ui-touch-punch.js/build.txt

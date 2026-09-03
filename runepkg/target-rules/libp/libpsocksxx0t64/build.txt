@@ -1,1 +1,0 @@
-../../p/psocksxx/build.txt

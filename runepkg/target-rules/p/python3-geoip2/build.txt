@@ -1,1 +1,0 @@
-../python-geoip2/build.txt

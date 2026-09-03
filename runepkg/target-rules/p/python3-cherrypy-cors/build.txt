@@ -1,1 +1,0 @@
-../python-cherrypy-cors/build.txt

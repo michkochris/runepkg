@@ -1,1 +1,0 @@
-../python-sfdutf7/build.txt

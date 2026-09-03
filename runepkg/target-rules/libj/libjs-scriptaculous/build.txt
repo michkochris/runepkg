@@ -1,1 +1,0 @@
-../../s/scriptaculous/build.txt

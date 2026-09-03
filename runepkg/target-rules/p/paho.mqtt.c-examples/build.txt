@@ -1,1 +1,0 @@
-../paho.mqtt.c/build.txt

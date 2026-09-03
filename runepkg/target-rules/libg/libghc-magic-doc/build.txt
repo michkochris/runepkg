@@ -1,1 +1,0 @@
-../../m/magic-haskell/build.txt

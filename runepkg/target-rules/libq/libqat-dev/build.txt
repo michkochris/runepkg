@@ -1,1 +1,0 @@
-../../q/qatlib/build.txt

@@ -1,1 +1,0 @@
-../python-channels-redis/build.txt

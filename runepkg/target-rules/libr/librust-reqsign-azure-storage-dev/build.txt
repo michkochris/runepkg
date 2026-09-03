@@ -1,1 +1,0 @@
-../../r/rust-reqsign-azure-storage/build.txt

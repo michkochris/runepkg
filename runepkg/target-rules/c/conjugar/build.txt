@@ -1,1 +1,0 @@
-../../g/gconjugue/build.txt

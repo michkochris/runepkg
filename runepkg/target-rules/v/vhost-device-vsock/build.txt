@@ -1,1 +1,0 @@
-../../r/rust-vhost-device-vsock/build.txt

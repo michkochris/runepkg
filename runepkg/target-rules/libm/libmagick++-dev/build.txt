@@ -1,1 +1,0 @@
-../../i/imagemagick/build.txt

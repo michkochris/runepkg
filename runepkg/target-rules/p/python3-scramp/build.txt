@@ -1,1 +1,0 @@
-../python-scramp/build.txt

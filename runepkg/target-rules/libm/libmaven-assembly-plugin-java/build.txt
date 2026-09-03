@@ -1,1 +1,0 @@
-../../m/maven-assembly-plugin/build.txt

@@ -1,1 +1,0 @@
-../../s/sqliteodbc/build.txt

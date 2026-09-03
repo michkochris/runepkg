@@ -1,1 +1,0 @@
-../pytest-arraydiff/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-bz2/build.txt

@@ -1,1 +1,0 @@
-../golang-github-azure-azure-pipeline-go/build.txt

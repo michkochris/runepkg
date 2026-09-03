@@ -1,1 +1,0 @@
-../../h/haskell-bytestring-to-vector/build.txt

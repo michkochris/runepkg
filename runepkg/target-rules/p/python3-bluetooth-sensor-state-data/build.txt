@@ -1,1 +1,0 @@
-../../b/bluetooth-sensor-state-data/build.txt

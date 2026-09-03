@@ -1,1 +1,0 @@
-../../w/wimsapi/build.txt

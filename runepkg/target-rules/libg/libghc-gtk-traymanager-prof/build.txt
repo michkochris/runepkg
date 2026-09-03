@@ -1,1 +1,0 @@
-../../h/haskell-gtk-traymanager/build.txt

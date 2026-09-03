@@ -1,1 +1,0 @@
-../python-xstatic-dagre-d3/build.txt

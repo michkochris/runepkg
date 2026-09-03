@@ -1,1 +1,0 @@
-../../h/haskell-cabal-doctest/build.txt

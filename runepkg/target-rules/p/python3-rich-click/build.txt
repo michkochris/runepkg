@@ -1,1 +1,0 @@
-../python-rich-click/build.txt

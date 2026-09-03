@@ -1,1 +1,0 @@
-../../s/spirv-cross/build.txt

@@ -1,1 +1,0 @@
-../pytest-astropy-header/build.txt

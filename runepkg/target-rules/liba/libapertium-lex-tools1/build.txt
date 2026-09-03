@@ -1,1 +1,0 @@
-../../a/apertium-lex-tools/build.txt

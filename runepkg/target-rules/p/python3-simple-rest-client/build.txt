@@ -1,1 +1,0 @@
-../python-simple-rest-client/build.txt

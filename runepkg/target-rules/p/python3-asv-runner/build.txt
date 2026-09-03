@@ -1,1 +1,0 @@
-../python-asv-runner/build.txt

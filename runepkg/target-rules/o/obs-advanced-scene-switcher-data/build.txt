@@ -1,1 +1,0 @@
-../obs-advanced-scene-switcher/build.txt

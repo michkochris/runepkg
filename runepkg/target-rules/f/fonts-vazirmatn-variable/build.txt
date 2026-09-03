@@ -1,1 +1,0 @@
-../fonts-vazirmatn/build.txt

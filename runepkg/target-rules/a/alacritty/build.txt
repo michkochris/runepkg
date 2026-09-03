@@ -1,1 +1,0 @@
-../../r/rust-alacritty/build.txt

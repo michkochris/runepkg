@@ -1,1 +1,0 @@
-../../r/ros-joint-state-publisher/build.txt

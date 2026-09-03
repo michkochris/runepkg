@@ -1,1 +1,0 @@
-../../s/supercollider/build.txt

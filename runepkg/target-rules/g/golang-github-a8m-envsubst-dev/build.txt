@@ -1,1 +1,0 @@
-../golang-github-a8m-envsubst/build.txt

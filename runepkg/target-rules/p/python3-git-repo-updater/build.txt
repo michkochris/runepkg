@@ -1,1 +1,0 @@
-../../g/git-repo-updater/build.txt

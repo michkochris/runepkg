@@ -1,1 +1,0 @@
-../kvirc/build.txt

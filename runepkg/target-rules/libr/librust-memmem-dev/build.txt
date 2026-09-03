@@ -1,1 +1,0 @@
-../../r/rust-memmem/build.txt

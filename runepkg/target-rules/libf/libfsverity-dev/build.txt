@@ -1,1 +1,0 @@
-../../f/fsverity-utils/build.txt

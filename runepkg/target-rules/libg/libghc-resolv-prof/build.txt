@@ -1,1 +1,0 @@
-../../h/haskell-resolv/build.txt

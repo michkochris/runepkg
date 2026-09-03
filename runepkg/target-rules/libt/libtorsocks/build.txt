@@ -1,1 +1,0 @@
-../../t/torsocks/build.txt

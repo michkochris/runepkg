@@ -1,1 +1,0 @@
-../../d/dnsjava/build.txt

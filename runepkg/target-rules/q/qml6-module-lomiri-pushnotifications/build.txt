@@ -1,1 +1,0 @@
-../../l/lomiri-push-qml/build.txt

@@ -1,1 +1,0 @@
-../picolibc/build.txt

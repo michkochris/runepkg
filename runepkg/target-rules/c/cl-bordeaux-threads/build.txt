@@ -1,1 +1,0 @@
-../../b/bordeaux-threads/build.txt

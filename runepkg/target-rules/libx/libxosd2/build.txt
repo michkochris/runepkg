@@ -1,1 +1,0 @@
-../../x/xosd/build.txt

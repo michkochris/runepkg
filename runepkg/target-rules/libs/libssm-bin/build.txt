@@ -1,1 +1,0 @@
-../../s/ssm/build.txt

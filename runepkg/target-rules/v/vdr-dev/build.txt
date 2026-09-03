@@ -1,1 +1,0 @@
-../vdr/build.txt

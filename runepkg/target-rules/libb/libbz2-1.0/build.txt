@@ -1,1 +1,0 @@
-../../b/bzip2/build.txt

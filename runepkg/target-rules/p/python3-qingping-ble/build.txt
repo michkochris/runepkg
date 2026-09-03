@@ -1,1 +1,0 @@
-../../q/qingping-ble/build.txt

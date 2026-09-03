@@ -1,1 +1,0 @@
-../pyausaxs/build.txt

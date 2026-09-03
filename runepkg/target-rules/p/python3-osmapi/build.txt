@@ -1,1 +1,0 @@
-../python-osmapi/build.txt

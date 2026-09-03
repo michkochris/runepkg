@@ -1,1 +1,0 @@
-../python-pymysql/build.txt

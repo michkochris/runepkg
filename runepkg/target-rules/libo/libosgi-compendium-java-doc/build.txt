@@ -1,1 +1,0 @@
-../../o/osgi-compendium/build.txt

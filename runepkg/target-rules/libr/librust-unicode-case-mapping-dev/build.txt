@@ -1,1 +1,0 @@
-../../r/rust-unicode-case-mapping/build.txt

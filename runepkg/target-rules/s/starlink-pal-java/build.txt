@@ -1,1 +1,0 @@
-../starjava-pal/build.txt

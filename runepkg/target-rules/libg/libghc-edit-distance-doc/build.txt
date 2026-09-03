@@ -1,1 +1,0 @@
-../../h/haskell-edit-distance/build.txt

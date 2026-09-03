@@ -1,1 +1,0 @@
-../golang-sslmate-src-go-pkcs12/build.txt

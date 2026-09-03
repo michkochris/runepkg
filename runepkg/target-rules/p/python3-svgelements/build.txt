@@ -1,1 +1,0 @@
-../python-svgelements/build.txt

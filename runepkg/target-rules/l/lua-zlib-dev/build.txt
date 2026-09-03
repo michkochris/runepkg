@@ -1,1 +1,0 @@
-../lua-zlib/build.txt

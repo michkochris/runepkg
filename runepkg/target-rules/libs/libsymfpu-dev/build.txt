@@ -1,1 +1,0 @@
-../../s/symfpu/build.txt

@@ -1,1 +1,0 @@
-../../q/quadrule/build.txt

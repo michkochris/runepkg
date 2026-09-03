@@ -1,1 +1,0 @@
-../calligra/build.txt

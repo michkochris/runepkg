@@ -1,1 +1,0 @@
-../../c/cctools/build.txt

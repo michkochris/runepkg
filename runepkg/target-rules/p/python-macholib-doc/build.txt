@@ -1,1 +1,0 @@
-../python-macholib/build.txt

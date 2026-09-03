@@ -1,1 +1,0 @@
-../rime-bopomofo/build.txt

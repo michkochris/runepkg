@@ -1,1 +1,0 @@
-../../r/rust-simple-asn1/build.txt

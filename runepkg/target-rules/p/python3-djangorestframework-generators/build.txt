@@ -1,1 +1,0 @@
-../../d/drf-generators/build.txt

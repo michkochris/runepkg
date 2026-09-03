@@ -1,1 +1,0 @@
-../../c/canna/build.txt

@@ -1,1 +1,0 @@
-../python-odf/build.txt

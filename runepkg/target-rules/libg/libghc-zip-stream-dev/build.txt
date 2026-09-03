@@ -1,1 +1,0 @@
-../../h/haskell-zip-stream/build.txt

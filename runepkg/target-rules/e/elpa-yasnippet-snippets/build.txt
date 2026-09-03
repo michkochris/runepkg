@@ -1,1 +1,0 @@
-../../y/yasnippet-snippets/build.txt

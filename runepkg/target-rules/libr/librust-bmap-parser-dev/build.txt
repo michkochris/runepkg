@@ -1,1 +1,0 @@
-../../r/rust-bmap-parser/build.txt

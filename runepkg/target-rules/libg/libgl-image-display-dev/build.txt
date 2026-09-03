@@ -1,1 +1,0 @@
-../../g/gl-image-display/build.txt

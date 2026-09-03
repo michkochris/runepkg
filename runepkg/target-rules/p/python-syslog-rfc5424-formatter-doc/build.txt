@@ -1,1 +1,0 @@
-../python-syslog-rfc5424-formatter/build.txt

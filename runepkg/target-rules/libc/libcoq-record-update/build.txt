@@ -1,1 +1,0 @@
-../../c/coq-record-update/build.txt

@@ -1,1 +1,0 @@
-../python-whiteboard/build.txt

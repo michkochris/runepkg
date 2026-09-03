@@ -1,1 +1,0 @@
-../pyvisa-sim/build.txt

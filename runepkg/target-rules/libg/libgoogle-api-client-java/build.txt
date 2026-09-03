@@ -1,1 +1,0 @@
-../../g/google-api-client-java/build.txt

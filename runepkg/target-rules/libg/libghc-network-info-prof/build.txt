@@ -1,1 +1,0 @@
-../../h/haskell-network-info/build.txt

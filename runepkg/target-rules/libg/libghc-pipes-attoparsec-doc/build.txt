@@ -1,1 +1,0 @@
-../../h/haskell-pipes-attoparsec/build.txt

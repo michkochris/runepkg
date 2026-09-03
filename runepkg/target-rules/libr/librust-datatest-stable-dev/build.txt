@@ -1,1 +1,0 @@
-../../r/rust-datatest-stable/build.txt

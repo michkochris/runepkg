@@ -1,1 +1,0 @@
-../../h/haskell-data-default-class/build.txt

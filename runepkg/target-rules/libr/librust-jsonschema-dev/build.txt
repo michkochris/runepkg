@@ -1,1 +1,0 @@
-../../r/rust-jsonschema/build.txt

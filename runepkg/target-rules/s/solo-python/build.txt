@@ -1,1 +1,0 @@
-../solo1-cli/build.txt

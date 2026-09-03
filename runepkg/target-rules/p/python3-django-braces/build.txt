@@ -1,1 +1,0 @@
-../python-django-braces/build.txt

@@ -1,1 +1,0 @@
-../golang-rsc-pdf/build.txt

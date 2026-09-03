@@ -1,1 +1,0 @@
-../../d/dataquay/build.txt

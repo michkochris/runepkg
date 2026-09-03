@@ -1,1 +1,0 @@
-../../a/accel-config/build.txt

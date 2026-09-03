@@ -1,1 +1,0 @@
-../../h/haskell-tasty-th/build.txt

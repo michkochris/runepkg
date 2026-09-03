@@ -1,1 +1,0 @@
-../python-adax-local/build.txt

@@ -1,1 +1,0 @@
-../../g/golang-github-axgle-mahonia/build.txt

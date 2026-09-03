@@ -1,1 +1,0 @@
-../../g/golang-github-influxdata-yarpc/build.txt

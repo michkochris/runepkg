@@ -1,1 +1,0 @@
-../../i/initsplit-el/build.txt

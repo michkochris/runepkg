@@ -1,1 +1,0 @@
-../python-keystoneauth1/build.txt

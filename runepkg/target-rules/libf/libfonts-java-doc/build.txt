@@ -1,1 +1,0 @@
-../libfonts-java/build.txt

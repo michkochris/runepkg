@@ -1,1 +1,0 @@
-../../s/svt-av1/build.txt

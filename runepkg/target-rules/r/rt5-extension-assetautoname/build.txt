@@ -1,1 +1,0 @@
-../rt-extension-assetautoname/build.txt

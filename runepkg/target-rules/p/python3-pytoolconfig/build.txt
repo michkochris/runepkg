@@ -1,1 +1,0 @@
-../pytoolconfig/build.txt

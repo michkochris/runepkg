@@ -1,1 +1,0 @@
-../../h/haskell-neat-interpolation/build.txt

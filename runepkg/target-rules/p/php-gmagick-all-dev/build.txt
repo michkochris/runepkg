@@ -1,1 +1,0 @@
-../php-gmagick/build.txt

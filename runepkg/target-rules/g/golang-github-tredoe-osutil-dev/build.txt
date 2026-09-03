@@ -1,1 +1,0 @@
-../golang-github-tredoe-osutil/build.txt

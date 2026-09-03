@@ -1,1 +1,0 @@
-../../t/typedload/build.txt

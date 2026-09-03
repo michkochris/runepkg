@@ -1,1 +1,0 @@
-../starjava-auth/build.txt

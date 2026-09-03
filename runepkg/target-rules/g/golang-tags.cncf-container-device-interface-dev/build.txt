@@ -1,1 +1,0 @@
-../golang-tags.cncf-container-device-interface/build.txt

@@ -1,1 +1,0 @@
-../../g/geocode-glib/build.txt

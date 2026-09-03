@@ -1,1 +1,0 @@
-../../c/clipper2/build.txt

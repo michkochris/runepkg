@@ -1,1 +1,0 @@
-../../s/startup-notification/build.txt

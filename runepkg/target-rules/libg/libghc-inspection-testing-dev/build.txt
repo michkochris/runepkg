@@ -1,1 +1,0 @@
-../../h/haskell-inspection-testing/build.txt

@@ -1,1 +1,0 @@
-../libpwquality/build.txt

@@ -1,1 +1,0 @@
-../../i/icu4j-4.4/build.txt

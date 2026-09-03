@@ -1,1 +1,0 @@
-../../i/igor2/build.txt

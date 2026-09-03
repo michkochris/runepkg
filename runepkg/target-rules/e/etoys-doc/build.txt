@@ -1,1 +1,0 @@
-../etoys/build.txt

@@ -1,1 +1,0 @@
-../gcompris-qt/build.txt

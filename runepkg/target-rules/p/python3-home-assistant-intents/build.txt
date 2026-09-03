@@ -1,1 +1,0 @@
-../../h/home-assistant-intents/build.txt

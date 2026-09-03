@@ -1,1 +1,0 @@
-../../libh/libheif/build.txt

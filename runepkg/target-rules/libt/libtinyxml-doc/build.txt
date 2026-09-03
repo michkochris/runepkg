@@ -1,1 +1,0 @@
-../../t/tinyxml/build.txt

@@ -1,1 +1,0 @@
-../libimglib2-java/build.txt

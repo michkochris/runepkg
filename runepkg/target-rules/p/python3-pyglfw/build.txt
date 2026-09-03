@@ -1,1 +1,0 @@
-../python-pyglfw/build.txt

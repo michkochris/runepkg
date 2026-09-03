@@ -1,1 +1,0 @@
-../python-memray/build.txt

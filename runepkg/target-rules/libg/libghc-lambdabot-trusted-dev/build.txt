@@ -1,1 +1,0 @@
-../../h/haskell-lambdabot-trusted/build.txt

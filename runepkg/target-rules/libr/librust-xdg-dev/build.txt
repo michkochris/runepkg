@@ -1,1 +1,0 @@
-../../r/rust-xdg/build.txt

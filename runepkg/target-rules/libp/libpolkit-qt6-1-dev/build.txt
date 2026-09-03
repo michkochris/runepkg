@@ -1,1 +1,0 @@
-../../p/polkit-qt-1/build.txt

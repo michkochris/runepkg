@@ -1,1 +1,0 @@
-../../lib2/lib25519/build.txt

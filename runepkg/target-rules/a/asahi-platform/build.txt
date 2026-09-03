@@ -1,1 +1,0 @@
-../../m/meta-asahi-platform/build.txt

@@ -1,1 +1,0 @@
-../rt-extension-assets-import-csv/build.txt

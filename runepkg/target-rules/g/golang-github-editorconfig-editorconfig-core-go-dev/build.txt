@@ -1,1 +1,0 @@
-../golang-github-editorconfig-editorconfig-core-go/build.txt

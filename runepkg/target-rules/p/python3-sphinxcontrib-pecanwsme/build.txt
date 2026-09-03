@@ -1,1 +1,0 @@
-../../s/sphinxcontrib-pecanwsme/build.txt

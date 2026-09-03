@@ -1,1 +1,0 @@
-../python-pika/build.txt

@@ -1,1 +1,0 @@
-../../u/u-msgpack-python/build.txt

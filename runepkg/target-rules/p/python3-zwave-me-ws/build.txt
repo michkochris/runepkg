@@ -1,1 +1,0 @@
-../../z/zwave-me-ws/build.txt

@@ -1,1 +1,0 @@
-../python-pyconify/build.txt

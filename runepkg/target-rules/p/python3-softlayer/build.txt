@@ -1,1 +1,0 @@
-../python-softlayer/build.txt

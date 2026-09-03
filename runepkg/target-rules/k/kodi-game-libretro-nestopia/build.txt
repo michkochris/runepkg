@@ -1,1 +1,0 @@
-../../libr/libretro-nestopia/build.txt

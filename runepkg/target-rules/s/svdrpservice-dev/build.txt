@@ -1,1 +1,0 @@
-../../v/vdr-plugin-svdrpservice/build.txt

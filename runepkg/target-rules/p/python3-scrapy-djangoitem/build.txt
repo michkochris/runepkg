@@ -1,1 +1,0 @@
-../python-scrapy-djangoitem/build.txt

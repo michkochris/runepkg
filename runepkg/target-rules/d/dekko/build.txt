@@ -1,1 +1,0 @@
-../../l/lomiri-dekko-app/build.txt

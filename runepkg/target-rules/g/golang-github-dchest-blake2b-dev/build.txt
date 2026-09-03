@@ -1,1 +1,0 @@
-../golang-github-dchest-blake2b/build.txt

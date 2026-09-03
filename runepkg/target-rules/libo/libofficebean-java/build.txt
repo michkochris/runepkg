@@ -1,1 +1,0 @@
-../../libr/libreoffice/build.txt

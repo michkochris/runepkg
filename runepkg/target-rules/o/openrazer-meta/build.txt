@@ -1,1 +1,0 @@
-../openrazer/build.txt

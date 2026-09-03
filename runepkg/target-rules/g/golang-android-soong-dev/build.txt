@@ -1,1 +1,0 @@
-../golang-android-soong/build.txt

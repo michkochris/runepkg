@@ -1,1 +1,0 @@
-../../n/ncrystal/build.txt

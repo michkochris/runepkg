@@ -1,1 +1,0 @@
-../../r/rust-test-dir/build.txt

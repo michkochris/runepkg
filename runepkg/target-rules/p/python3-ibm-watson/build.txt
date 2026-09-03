@@ -1,1 +1,0 @@
-../python-watson-developer-cloud/build.txt

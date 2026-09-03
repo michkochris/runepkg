@@ -1,1 +1,0 @@
-../lenovolegionlinux/build.txt

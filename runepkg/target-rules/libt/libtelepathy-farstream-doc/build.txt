@@ -1,1 +1,0 @@
-../../t/telepathy-farstream/build.txt

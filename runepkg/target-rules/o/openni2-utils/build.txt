@@ -1,1 +1,0 @@
-../openni2/build.txt

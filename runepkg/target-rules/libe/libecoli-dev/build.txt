@@ -1,1 +1,0 @@
-../libecoli/build.txt

@@ -1,1 +1,0 @@
-../../p/postgresql-18/build.txt

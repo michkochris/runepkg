@@ -1,1 +1,0 @@
-../mecab-ipadic/build.txt

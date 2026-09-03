@@ -1,1 +1,0 @@
-../golang-gopkg-square-go-jose.v2/build.txt

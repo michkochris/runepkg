@@ -1,1 +1,0 @@
-../avro-c/build.txt

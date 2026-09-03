@@ -1,1 +1,0 @@
-../python-pysubs2/build.txt

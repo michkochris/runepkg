@@ -1,1 +1,0 @@
-../golang-github-achannarasappa-term-grid/build.txt

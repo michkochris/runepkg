@@ -1,1 +1,0 @@
-../golang-github-sebdah-goldie/build.txt

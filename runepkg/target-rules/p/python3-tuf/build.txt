@@ -1,1 +1,0 @@
-../python-tuf/build.txt

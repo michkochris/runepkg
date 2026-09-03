@@ -1,1 +1,0 @@
-../../q/qt6-3d/build.txt

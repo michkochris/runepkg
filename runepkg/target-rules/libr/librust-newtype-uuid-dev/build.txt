@@ -1,1 +1,0 @@
-../../r/rust-newtype-uuid/build.txt

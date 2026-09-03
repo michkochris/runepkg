@@ -1,1 +1,0 @@
-../python-getdns/build.txt

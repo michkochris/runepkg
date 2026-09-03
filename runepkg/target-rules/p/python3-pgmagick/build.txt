@@ -1,1 +1,0 @@
-../python-pgmagick/build.txt

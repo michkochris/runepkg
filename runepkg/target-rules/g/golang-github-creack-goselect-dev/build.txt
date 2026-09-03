@@ -1,1 +1,0 @@
-../golang-github-creack-goselect/build.txt

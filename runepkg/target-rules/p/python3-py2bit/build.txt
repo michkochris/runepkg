@@ -1,1 +1,0 @@
-../python-py2bit/build.txt

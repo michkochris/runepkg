@@ -1,1 +1,0 @@
-../../g/globus-xio-udt-driver/build.txt

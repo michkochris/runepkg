@@ -1,1 +1,0 @@
-../../g/geronimo-osgi-support/build.txt

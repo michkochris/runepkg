@@ -1,1 +1,0 @@
-../python-memoized-property/build.txt

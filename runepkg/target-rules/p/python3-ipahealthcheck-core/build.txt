@@ -1,1 +1,0 @@
-../../f/freeipa-healthcheck/build.txt

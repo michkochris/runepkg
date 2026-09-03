@@ -1,1 +1,0 @@
-../sope/build.txt

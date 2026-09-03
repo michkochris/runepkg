@@ -1,1 +1,0 @@
-../glyr/build.txt

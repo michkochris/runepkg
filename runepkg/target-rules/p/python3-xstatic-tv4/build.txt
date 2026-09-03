@@ -1,1 +1,0 @@
-../python-xstatic-tv4/build.txt

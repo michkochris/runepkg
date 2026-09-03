@@ -1,1 +1,0 @@
-../../r/rust-value-bag-sval2/build.txt

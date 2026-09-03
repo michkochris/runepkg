@@ -1,1 +1,0 @@
-../libgetdata/build.txt

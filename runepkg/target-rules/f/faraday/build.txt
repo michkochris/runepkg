@@ -1,1 +1,0 @@
-../../p/python-faraday/build.txt

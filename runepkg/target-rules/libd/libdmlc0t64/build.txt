@@ -1,1 +1,0 @@
-../../d/dmlc-core/build.txt

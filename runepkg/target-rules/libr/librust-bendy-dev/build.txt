@@ -1,1 +1,0 @@
-../../r/rust-bendy/build.txt

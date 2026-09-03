@@ -1,1 +1,0 @@
-../../o/open-iscsi/build.txt

@@ -1,1 +1,0 @@
-../../h/hunspell/build.txt

@@ -1,1 +1,0 @@
-../libalien-sdl-perl/build.txt

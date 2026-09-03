@@ -1,1 +1,0 @@
-../../g/glx-alternatives/build.txt

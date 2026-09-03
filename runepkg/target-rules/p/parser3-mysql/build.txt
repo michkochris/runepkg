@@ -1,1 +1,0 @@
-../parser-mysql/build.txt

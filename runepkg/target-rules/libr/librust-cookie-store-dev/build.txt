@@ -1,1 +1,0 @@
-../../r/rust-cookie-store/build.txt

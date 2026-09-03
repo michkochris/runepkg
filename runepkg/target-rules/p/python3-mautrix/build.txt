@@ -1,1 +1,0 @@
-../../m/mautrix-python/build.txt

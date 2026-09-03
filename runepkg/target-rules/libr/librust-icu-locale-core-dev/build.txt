@@ -1,1 +1,0 @@
-../../r/rust-icu-locale-core/build.txt

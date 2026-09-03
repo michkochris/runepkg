@@ -1,1 +1,0 @@
-../ubertooth/build.txt

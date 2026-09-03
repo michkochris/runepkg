@@ -1,1 +1,0 @@
-../golang-github-jezek-xgb/build.txt

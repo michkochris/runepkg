@@ -1,1 +1,0 @@
-../libjackson-json-java/build.txt

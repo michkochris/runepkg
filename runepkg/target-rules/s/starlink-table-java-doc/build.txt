@@ -1,1 +1,0 @@
-../starjava-table/build.txt

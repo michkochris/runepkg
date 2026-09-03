@@ -1,1 +1,0 @@
-../python-imaplib2/build.txt

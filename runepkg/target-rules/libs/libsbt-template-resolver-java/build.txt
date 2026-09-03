@@ -1,1 +1,0 @@
-../../s/sbt-template-resolver/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-haxr/build.txt

@@ -1,1 +1,0 @@
-../../f/flashrom/build.txt

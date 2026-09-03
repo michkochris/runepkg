@@ -1,1 +1,0 @@
-../libassa/build.txt

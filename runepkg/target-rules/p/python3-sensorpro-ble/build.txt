@@ -1,1 +1,0 @@
-../../s/sensorpro-ble/build.txt

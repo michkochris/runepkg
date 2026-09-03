@@ -1,1 +1,0 @@
-../../g/gcc-sh-elf/build.txt

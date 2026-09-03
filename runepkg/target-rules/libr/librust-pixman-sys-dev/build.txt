@@ -1,1 +1,0 @@
-../../r/rust-pixman-sys/build.txt

@@ -1,1 +1,0 @@
-../python-aioswitcher/build.txt

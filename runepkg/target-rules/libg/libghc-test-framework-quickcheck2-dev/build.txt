@@ -1,1 +1,0 @@
-../../h/haskell-test-framework-quickcheck2/build.txt

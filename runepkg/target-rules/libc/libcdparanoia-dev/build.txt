@@ -1,1 +1,0 @@
-../../c/cdparanoia/build.txt

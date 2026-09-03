@@ -1,1 +1,0 @@
-../../x/xnnpack/build.txt

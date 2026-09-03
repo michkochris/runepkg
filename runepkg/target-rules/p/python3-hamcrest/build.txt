@@ -1,1 +1,0 @@
-../pyhamcrest/build.txt

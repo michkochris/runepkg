@@ -1,1 +1,0 @@
-../../s/spandsp/build.txt

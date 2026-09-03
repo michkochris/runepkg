@@ -1,1 +1,0 @@
-../../h/haskell-hslua-objectorientation/build.txt

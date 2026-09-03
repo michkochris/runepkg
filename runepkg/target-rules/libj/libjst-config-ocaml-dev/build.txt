@@ -1,1 +1,0 @@
-../../j/jst-config/build.txt

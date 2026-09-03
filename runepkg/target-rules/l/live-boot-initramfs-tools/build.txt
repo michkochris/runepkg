@@ -1,1 +1,0 @@
-../live-boot/build.txt

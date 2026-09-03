@@ -1,1 +1,0 @@
-../../p/python-miio/build.txt

@@ -1,1 +1,0 @@
-../python-restructuredtext-lint/build.txt

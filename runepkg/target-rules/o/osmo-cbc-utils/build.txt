@@ -1,1 +1,0 @@
-../osmo-cbc/build.txt

@@ -1,1 +1,0 @@
-../thorvg/build.txt

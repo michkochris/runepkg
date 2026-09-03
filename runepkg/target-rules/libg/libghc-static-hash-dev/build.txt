@@ -1,1 +1,0 @@
-../../h/haskell-static-hash/build.txt

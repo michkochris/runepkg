@@ -1,8 +1,0 @@
-[package]
-name = binutils
-build_system = autotools
-libc = any
-arch = any
-
-[autotools]
-conf_args = --host=${TARGET_TRIPLE} --target=${TARGET_TRIPLE} --prefix=/usr --with-sysroot=/ --disable-werror

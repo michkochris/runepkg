@@ -1,1 +1,0 @@
-../igtf-policy-bundle/build.txt

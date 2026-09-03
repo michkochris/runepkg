@@ -1,1 +1,0 @@
-../../h/haskell-gi-gtk4/build.txt

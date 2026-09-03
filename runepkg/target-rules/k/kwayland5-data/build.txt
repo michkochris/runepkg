@@ -1,1 +1,0 @@
-../kwayland-kf5/build.txt

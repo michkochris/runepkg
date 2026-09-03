@@ -1,1 +1,0 @@
-../../t/telemetry/build.txt

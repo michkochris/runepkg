@@ -1,1 +1,0 @@
-../python-agate-sql/build.txt

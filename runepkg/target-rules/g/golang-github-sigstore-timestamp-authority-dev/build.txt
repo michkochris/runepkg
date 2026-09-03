@@ -1,1 +1,0 @@
-../golang-github-sigstore-timestamp-authority/build.txt

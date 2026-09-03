@@ -1,1 +1,0 @@
-../cinnamon-desktop-environment/build.txt

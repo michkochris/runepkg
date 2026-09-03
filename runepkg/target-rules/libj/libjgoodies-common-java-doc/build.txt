@@ -1,1 +1,0 @@
-../libjgoodies-common-java/build.txt

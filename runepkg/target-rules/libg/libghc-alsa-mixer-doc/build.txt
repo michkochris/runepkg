@@ -1,1 +1,0 @@
-../../h/haskell-alsa-mixer/build.txt

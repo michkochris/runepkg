@@ -1,1 +1,0 @@
-../../h/haskell-ghc-typelits-extra/build.txt

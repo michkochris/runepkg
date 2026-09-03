@@ -1,1 +1,0 @@
-../golang-yaml.v2/build.txt

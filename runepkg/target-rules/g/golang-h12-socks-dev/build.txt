@@ -1,1 +1,0 @@
-../golang-h12-socks/build.txt

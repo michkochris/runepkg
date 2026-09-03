@@ -1,1 +1,0 @@
-../gnupg-pkcs11-scd/build.txt

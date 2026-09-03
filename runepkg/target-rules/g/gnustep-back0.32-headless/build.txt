@@ -1,1 +1,0 @@
-../gnustep-back/build.txt

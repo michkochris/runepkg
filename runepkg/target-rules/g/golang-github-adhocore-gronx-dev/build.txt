@@ -1,1 +1,0 @@
-../golang-github-adhocore-gronx/build.txt

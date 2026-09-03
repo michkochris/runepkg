@@ -1,1 +1,0 @@
-../persepolis-lib/build.txt

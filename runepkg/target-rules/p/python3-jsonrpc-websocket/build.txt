@@ -1,1 +1,0 @@
-../python-jsonrpc-websocket/build.txt

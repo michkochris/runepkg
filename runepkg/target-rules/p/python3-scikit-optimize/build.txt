@@ -1,1 +1,0 @@
-../../s/scikit-optimize/build.txt

@@ -1,1 +1,0 @@
-../pytest-cookies/build.txt

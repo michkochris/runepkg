@@ -1,1 +1,0 @@
-../../k/kali-screensaver/build.txt

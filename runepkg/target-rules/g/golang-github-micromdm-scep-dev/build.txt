@@ -1,1 +1,0 @@
-../golang-github-micromdm-scep/build.txt

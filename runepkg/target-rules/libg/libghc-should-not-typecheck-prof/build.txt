@@ -1,1 +1,0 @@
-../../h/haskell-should-not-typecheck/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-monoid-extras/build.txt

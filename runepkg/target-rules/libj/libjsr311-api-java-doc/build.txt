@@ -1,1 +1,0 @@
-../libjsr311-api-java/build.txt

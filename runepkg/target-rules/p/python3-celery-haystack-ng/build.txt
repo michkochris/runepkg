@@ -1,1 +1,0 @@
-../../c/celery-haystack-ng/build.txt

@@ -1,1 +1,0 @@
-../python-srt/build.txt

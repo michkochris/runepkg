@@ -1,1 +1,0 @@
-../libcdk5/build.txt

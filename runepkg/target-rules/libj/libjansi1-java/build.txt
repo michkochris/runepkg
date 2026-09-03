@@ -1,1 +1,0 @@
-../../j/jansi1/build.txt

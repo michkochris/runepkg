@@ -1,1 +1,0 @@
-../../r/rust-assert-enum-variants/build.txt

@@ -1,1 +1,0 @@
-../../l/lzallright/build.txt

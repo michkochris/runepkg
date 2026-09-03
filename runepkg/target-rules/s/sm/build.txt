@@ -1,1 +1,0 @@
-../screen-message/build.txt

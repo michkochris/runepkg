@@ -1,1 +1,0 @@
-../../h/haskell-uri-bytestring-aeson/build.txt

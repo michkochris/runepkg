@@ -1,1 +1,0 @@
-../golang-github-microsoft-go-winio/build.txt

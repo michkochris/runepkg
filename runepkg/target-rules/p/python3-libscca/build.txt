@@ -1,1 +1,0 @@
-../../libs/libscca/build.txt

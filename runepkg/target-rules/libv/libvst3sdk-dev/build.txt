@@ -1,1 +1,0 @@
-../../v/vst3sdk/build.txt

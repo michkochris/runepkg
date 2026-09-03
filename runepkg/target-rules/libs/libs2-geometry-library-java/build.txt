@@ -1,1 +1,0 @@
-../../s/s2-geometry-library/build.txt

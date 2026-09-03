@@ -1,1 +1,0 @@
-../../g/gtk-layer-shell/build.txt

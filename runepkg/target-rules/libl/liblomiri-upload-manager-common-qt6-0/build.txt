@@ -1,1 +1,0 @@
-../../l/lomiri-download-manager/build.txt

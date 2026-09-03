@@ -1,1 +1,0 @@
-../golang-github-go-git-go-git-fixtures/build.txt

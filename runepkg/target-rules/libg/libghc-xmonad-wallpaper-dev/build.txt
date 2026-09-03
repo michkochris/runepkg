@@ -1,1 +1,0 @@
-../../x/xmonad-wallpaper/build.txt

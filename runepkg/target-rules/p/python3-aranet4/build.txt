@@ -1,1 +1,0 @@
-../python-aranet4/build.txt

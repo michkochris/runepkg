@@ -1,1 +1,0 @@
-../python-aio-georss-client/build.txt

@@ -1,1 +1,0 @@
-../python-authlib/build.txt

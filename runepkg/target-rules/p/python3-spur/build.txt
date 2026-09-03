@@ -1,1 +1,0 @@
-../python-spur/build.txt

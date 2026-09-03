@@ -1,5 +1,0 @@
-package = ncurses
-build_system = autotools
-configure_args = --with-normal --without-shared --without-debug --enable-widec --enable-pc-files --with-pkg-config-libdir=/usr/lib/pkgconfig
-libc = any
-arch = any

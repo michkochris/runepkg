@@ -1,1 +1,0 @@
-../../g/google-compile-testing-java/build.txt

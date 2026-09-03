@@ -1,1 +1,0 @@
-../../d/django-redis/build.txt

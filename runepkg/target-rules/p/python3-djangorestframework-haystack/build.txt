@@ -1,1 +1,0 @@
-../../d/drf-haystack/build.txt

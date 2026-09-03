@@ -1,1 +1,0 @@
-../golang-google-protobuf/build.txt

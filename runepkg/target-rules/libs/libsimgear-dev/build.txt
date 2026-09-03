@@ -1,1 +1,0 @@
-../../s/simgear/build.txt

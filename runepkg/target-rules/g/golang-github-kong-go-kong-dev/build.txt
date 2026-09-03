@@ -1,1 +1,0 @@
-../golang-github-kong-go-kong/build.txt

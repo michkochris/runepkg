@@ -1,1 +1,0 @@
-../hexagon-dsp-binaries/build.txt

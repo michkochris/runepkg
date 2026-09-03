@@ -1,1 +1,0 @@
-../golang-github-golang-protobuf-1-5/build.txt

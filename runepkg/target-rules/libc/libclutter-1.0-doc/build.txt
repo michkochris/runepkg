@@ -1,1 +1,0 @@
-../../c/clutter-1.0/build.txt

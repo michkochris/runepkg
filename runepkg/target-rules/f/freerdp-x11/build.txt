@@ -1,1 +1,0 @@
-../freerdp3/build.txt

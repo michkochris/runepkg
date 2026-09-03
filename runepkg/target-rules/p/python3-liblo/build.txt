@@ -1,1 +1,0 @@
-../pyliblo/build.txt

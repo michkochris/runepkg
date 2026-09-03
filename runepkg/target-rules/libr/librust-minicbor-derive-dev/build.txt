@@ -1,1 +1,0 @@
-../../r/rust-minicbor-derive/build.txt

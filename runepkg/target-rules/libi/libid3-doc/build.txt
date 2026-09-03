@@ -1,1 +1,0 @@
-../../i/id3lib3.8.3/build.txt

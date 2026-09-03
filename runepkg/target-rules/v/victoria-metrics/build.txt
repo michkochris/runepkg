@@ -1,1 +1,0 @@
-../victoriametrics/build.txt

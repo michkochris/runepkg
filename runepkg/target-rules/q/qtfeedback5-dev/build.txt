@@ -1,1 +1,0 @@
-../qtfeedback-opensource-src/build.txt

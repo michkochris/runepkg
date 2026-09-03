@@ -1,1 +1,0 @@
-../../g/gntp-el/build.txt

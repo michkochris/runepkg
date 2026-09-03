@@ -1,1 +1,0 @@
-../../h/haskell-hspec-smallcheck/build.txt

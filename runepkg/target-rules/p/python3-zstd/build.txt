@@ -1,1 +1,0 @@
-../python-zstd/build.txt

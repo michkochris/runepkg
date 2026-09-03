@@ -1,1 +1,0 @@
-../python-diaspy/build.txt

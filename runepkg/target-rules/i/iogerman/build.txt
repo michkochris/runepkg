@@ -1,1 +1,0 @@
-../../h/hkgerman/build.txt

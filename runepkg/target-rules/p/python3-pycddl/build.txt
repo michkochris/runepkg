@@ -1,1 +1,0 @@
-../python-pycddl/build.txt

@@ -1,1 +1,0 @@
-../../s/setcover/build.txt

@@ -1,1 +1,0 @@
-../python-zxcvbn-rs-py/build.txt

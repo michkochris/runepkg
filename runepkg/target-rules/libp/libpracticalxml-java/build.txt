@@ -1,1 +1,0 @@
-../../p/practicalxml-java/build.txt

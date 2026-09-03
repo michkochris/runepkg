@@ -1,1 +1,0 @@
-../../b/barvinok/build.txt

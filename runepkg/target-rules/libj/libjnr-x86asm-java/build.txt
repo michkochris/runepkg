@@ -1,1 +1,0 @@
-../../j/jnr-x86asm/build.txt

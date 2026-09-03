@@ -1,1 +1,0 @@
-../../r/rust-bech32/build.txt

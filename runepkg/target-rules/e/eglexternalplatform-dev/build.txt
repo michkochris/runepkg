@@ -1,1 +1,0 @@
-../eglexternalplatform/build.txt

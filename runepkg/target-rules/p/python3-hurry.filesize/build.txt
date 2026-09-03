@@ -1,1 +1,0 @@
-../python-hurry.filesize/build.txt

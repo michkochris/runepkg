@@ -1,1 +1,0 @@
-../../c/courier-authlib/build.txt

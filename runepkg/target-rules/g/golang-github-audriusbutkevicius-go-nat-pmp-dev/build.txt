@@ -1,1 +1,0 @@
-../golang-github-audriusbutkevicius-go-nat-pmp/build.txt

@@ -1,1 +1,0 @@
-../python-git-os-job/build.txt

@@ -1,1 +1,0 @@
-../python-paho-mqtt/build.txt

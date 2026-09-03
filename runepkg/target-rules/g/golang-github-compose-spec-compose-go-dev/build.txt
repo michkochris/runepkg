@@ -1,1 +1,0 @@
-../golang-github-compose-spec-compose-go/build.txt

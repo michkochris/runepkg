@@ -1,1 +1,0 @@
-../gftl-shared/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-zeromq4-haskell/build.txt

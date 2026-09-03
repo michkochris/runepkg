@@ -1,1 +1,0 @@
-../uqm-content/build.txt

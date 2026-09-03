@@ -1,1 +1,0 @@
-../../s/scout-clojure/build.txt

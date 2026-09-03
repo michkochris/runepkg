@@ -1,1 +1,0 @@
-../../m/mariadb-mysql-kbs/build.txt

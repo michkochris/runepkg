@@ -1,1 +1,0 @@
-../libhinoko/build.txt

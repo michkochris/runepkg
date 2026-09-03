@@ -1,1 +1,0 @@
-../openarena-misc/build.txt

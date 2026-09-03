@@ -1,1 +1,0 @@
-../golang-github-evilsocket-ftrace/build.txt

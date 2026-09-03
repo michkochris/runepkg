@@ -1,1 +1,0 @@
-../../r/rust-ratatui-image/build.txt

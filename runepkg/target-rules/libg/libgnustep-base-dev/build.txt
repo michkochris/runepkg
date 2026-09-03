@@ -1,1 +1,0 @@
-../../g/gnustep-base/build.txt

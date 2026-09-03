@@ -1,1 +1,0 @@
-../../p/pangomm2.48/build.txt

@@ -1,1 +1,0 @@
-../../x/xerial-sqlite-jdbc/build.txt

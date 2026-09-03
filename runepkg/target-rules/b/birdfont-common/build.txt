@@ -1,1 +1,0 @@
-../birdfont/build.txt

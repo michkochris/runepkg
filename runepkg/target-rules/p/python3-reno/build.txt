@@ -1,1 +1,0 @@
-../python-reno/build.txt

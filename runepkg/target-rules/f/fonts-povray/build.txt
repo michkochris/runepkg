@@ -1,1 +1,0 @@
-../../p/povray/build.txt

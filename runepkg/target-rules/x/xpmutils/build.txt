@@ -1,1 +1,0 @@
-../../libx/libxpm/build.txt

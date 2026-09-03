@@ -1,1 +1,0 @@
-../../j/java-atk-wrapper/build.txt

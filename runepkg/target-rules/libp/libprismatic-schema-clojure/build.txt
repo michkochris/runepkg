@@ -1,1 +1,0 @@
-../../p/prismatic-schema-clojure/build.txt

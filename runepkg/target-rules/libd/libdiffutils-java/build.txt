@@ -1,1 +1,0 @@
-../../j/java-diff-utils/build.txt

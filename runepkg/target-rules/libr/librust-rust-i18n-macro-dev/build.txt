@@ -1,1 +1,0 @@
-../../r/rust-rust-i18n-macro/build.txt

@@ -1,1 +1,0 @@
-../golang-gopkg-hlandau-service.v2/build.txt

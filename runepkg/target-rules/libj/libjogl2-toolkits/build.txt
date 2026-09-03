@@ -1,1 +1,0 @@
-../libjogl2-java/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-wezterm-bidi/build.txt

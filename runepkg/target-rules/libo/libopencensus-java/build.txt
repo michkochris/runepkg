@@ -1,1 +1,0 @@
-../../o/opencensus-java/build.txt

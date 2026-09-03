@@ -1,1 +1,0 @@
-../tipa/build.txt

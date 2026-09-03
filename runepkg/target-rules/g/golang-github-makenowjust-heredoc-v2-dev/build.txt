@@ -1,1 +1,0 @@
-../golang-github-makenowjust-heredoc-v2/build.txt

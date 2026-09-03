@@ -1,1 +1,0 @@
-../../d/django-session-security/build.txt

@@ -1,1 +1,0 @@
-../../libx/libxfce4windowing/build.txt

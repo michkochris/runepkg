@@ -1,1 +1,0 @@
-../pytest-dependency/build.txt

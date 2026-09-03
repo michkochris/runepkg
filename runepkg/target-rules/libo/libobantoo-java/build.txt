@@ -1,1 +1,0 @@
-../../o/obantoo/build.txt

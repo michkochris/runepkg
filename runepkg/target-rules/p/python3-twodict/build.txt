@@ -1,1 +1,0 @@
-../../t/twodict/build.txt

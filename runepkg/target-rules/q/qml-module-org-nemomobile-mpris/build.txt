@@ -1,1 +1,0 @@
-../qtmpris/build.txt

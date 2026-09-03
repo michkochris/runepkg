@@ -1,1 +1,0 @@
-../python-applicationinsights/build.txt

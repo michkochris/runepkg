@@ -1,1 +1,0 @@
-../golang-github-dnstap-golang-dnstap/build.txt

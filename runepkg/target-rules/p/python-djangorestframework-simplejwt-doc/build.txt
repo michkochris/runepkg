@@ -1,1 +1,0 @@
-../python-djangorestframework-simplejwt/build.txt

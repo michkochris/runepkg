@@ -1,1 +1,0 @@
-../../h/haskell-uri-encode/build.txt

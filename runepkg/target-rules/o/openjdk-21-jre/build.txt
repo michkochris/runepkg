@@ -1,1 +1,0 @@
-../openjdk-21/build.txt

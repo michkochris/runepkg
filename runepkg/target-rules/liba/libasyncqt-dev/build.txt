@@ -1,1 +1,0 @@
-../../s/svxlink/build.txt

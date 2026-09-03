@@ -1,1 +1,0 @@
-../../c/cogl/build.txt

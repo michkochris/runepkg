@@ -1,1 +1,0 @@
-../../libg/libgpg-error/build.txt

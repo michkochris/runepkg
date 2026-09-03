@@ -1,1 +1,0 @@
-../libodb-mysql/build.txt

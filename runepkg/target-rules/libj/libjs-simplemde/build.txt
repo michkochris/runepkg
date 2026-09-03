@@ -1,1 +1,0 @@
-../../s/simplemde-markdown-editor/build.txt

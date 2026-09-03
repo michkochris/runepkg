@@ -1,1 +1,0 @@
-../../p/pcsc-perl/build.txt

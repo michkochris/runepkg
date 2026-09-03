@@ -1,1 +1,0 @@
-../golang-github-tink-crypto-tink-go-gcpkms/build.txt

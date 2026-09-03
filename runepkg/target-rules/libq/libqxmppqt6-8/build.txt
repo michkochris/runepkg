@@ -1,1 +1,0 @@
-../../q/qxmpp/build.txt

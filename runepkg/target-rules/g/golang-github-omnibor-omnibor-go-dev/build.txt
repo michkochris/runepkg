@@ -1,1 +1,0 @@
-../../o/omnibor-go/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-ring/build.txt

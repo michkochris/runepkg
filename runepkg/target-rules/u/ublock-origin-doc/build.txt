@@ -1,1 +1,0 @@
-../ublock-origin/build.txt

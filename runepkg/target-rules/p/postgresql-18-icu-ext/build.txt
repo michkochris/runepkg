@@ -1,1 +1,0 @@
-../../i/icu-ext/build.txt

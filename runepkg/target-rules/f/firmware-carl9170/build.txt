@@ -1,1 +1,0 @@
-../../c/carl9170fw/build.txt

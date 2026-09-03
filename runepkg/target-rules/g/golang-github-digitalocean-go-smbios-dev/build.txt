@@ -1,1 +1,0 @@
-../golang-github-digitalocean-go-smbios/build.txt

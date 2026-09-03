@@ -1,1 +1,0 @@
-../libodb-sqlite/build.txt

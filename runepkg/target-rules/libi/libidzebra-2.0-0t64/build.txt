@@ -1,1 +1,0 @@
-../../i/idzebra/build.txt

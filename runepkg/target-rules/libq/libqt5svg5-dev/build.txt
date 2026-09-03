@@ -1,1 +1,0 @@
-../../q/qtsvg-opensource-src/build.txt

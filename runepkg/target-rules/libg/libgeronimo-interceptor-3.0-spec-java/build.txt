@@ -1,1 +1,0 @@
-../../g/geronimo-interceptor-3.0-spec/build.txt

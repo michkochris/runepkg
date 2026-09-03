@@ -1,1 +1,0 @@
-../../j/jcsp/build.txt

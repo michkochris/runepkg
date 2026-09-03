@@ -1,1 +1,0 @@
-../../c/copy-rename-maven-plugin/build.txt

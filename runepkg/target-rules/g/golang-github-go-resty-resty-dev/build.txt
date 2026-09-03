@@ -1,1 +1,0 @@
-../golang-github-go-resty-resty/build.txt

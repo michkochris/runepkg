@@ -1,1 +1,0 @@
-../vulkan-caps-viewer/build.txt

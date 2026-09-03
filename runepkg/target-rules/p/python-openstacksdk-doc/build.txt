@@ -1,1 +1,0 @@
-../python-openstacksdk/build.txt

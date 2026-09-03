@@ -1,1 +1,0 @@
-../diceware/build.txt

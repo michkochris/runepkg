@@ -1,1 +1,0 @@
-../../j/jakarta-standard-taglib/build.txt

@@ -1,1 +1,0 @@
-../fonts-farsiweb/build.txt

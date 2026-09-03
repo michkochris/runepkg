@@ -1,1 +1,0 @@
-../supercollider-sc3-plugins/build.txt

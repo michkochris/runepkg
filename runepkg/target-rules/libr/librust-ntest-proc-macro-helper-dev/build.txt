@@ -1,1 +1,0 @@
-../../r/rust-ntest-proc-macro-helper/build.txt

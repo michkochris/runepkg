@@ -1,1 +1,0 @@
-../python-langdetect/build.txt

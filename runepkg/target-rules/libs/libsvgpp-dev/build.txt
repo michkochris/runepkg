@@ -1,1 +1,0 @@
-../../s/svgpp/build.txt

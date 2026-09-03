@@ -1,1 +1,0 @@
-../openvanilla-modules/build.txt

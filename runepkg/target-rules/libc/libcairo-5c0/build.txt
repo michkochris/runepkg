@@ -1,1 +1,0 @@
-../../c/cairo-5c/build.txt

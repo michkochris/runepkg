@@ -1,1 +1,0 @@
-../covtobed/build.txt

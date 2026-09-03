@@ -1,1 +1,0 @@
-../golang-github-antithesishq-antithesis-sdk-go/build.txt

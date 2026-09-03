@@ -1,1 +1,0 @@
-../../n/nautilus-python/build.txt

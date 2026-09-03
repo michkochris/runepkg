@@ -1,1 +1,0 @@
-../../libu/libu2f-host/build.txt

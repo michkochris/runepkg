@@ -1,1 +1,0 @@
-../../t/tinyobjloader/build.txt

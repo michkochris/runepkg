@@ -1,1 +1,0 @@
-../libsmithwaterman/build.txt

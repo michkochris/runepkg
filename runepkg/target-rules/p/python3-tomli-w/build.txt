@@ -1,1 +1,0 @@
-../python-tomli-w/build.txt

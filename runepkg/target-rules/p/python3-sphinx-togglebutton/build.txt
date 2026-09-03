@@ -1,1 +1,0 @@
-../../s/sphinx-togglebutton/build.txt

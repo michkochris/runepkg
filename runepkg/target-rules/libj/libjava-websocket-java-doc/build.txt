@@ -1,1 +1,0 @@
-../../j/java-websocket/build.txt

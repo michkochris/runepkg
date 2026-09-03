@@ -1,5 +1,0 @@
-package = zlib
-build_system = autotools
-configure_args = --static
-libc = any
-arch = any

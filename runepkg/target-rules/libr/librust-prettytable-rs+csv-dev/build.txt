@@ -1,1 +1,0 @@
-../../r/rust-prettytable-rs/build.txt

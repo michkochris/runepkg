@@ -1,1 +1,0 @@
-../khronos-opencl-icd-loader/build.txt

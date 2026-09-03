@@ -1,1 +1,0 @@
-../../h/haskell-fsnotify/build.txt

@@ -1,1 +1,0 @@
-../pycifrw/build.txt

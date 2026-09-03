@@ -1,1 +1,0 @@
-../../h/haskell-cborg/build.txt

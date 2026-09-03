@@ -1,1 +1,0 @@
-../libmirisdr/build.txt

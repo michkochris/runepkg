@@ -1,1 +1,0 @@
-../qtdeclarative-opensource-src/build.txt

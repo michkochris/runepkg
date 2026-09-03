@@ -1,1 +1,0 @@
-../../z/zemberek-ooo/build.txt

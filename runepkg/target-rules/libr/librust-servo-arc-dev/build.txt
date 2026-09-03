@@ -1,1 +1,0 @@
-../../r/rust-servo-arc/build.txt

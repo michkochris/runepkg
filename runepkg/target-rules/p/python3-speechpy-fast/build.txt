@@ -1,1 +1,0 @@
-../../s/speechpy-fast/build.txt

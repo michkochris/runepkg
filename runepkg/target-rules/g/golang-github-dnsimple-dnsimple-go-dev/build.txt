@@ -1,1 +1,0 @@
-../golang-github-dnsimple-dnsimple-go/build.txt

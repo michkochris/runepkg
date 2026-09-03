@@ -1,1 +1,0 @@
-../python-pygal/build.txt

@@ -1,1 +1,0 @@
-../../p/pango1.0/build.txt

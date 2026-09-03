@@ -1,1 +1,0 @@
-../golang-github-foxboron-go-tpm-keyfiles/build.txt

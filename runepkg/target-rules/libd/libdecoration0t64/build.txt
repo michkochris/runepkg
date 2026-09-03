@@ -1,1 +1,0 @@
-../../c/compiz/build.txt

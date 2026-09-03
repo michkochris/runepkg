@@ -1,1 +1,0 @@
-../qtwebsockets-opensource-src/build.txt

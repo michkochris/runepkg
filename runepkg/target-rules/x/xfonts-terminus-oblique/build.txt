@@ -1,1 +1,0 @@
-../xfonts-terminus/build.txt

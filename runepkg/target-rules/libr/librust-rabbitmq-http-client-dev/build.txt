@@ -1,1 +1,0 @@
-../../r/rust-rabbitmq-http-client/build.txt

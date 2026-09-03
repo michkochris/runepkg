@@ -1,1 +1,0 @@
-../../q/qtbase-opensource-src-gles/build.txt

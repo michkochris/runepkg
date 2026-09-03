@@ -1,1 +1,0 @@
-../golang-github-gomodule-redigo/build.txt

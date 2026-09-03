@@ -1,1 +1,0 @@
-../libsynthesis/build.txt

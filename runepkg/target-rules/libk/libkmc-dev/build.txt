@@ -1,1 +1,0 @@
-../../k/kmc/build.txt

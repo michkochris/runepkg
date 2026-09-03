@@ -1,1 +1,0 @@
-../../p/protobuf-c/build.txt

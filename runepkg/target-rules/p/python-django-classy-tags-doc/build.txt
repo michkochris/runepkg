@@ -1,1 +1,0 @@
-../../d/django-classy-tags/build.txt

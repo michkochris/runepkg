@@ -1,1 +1,0 @@
-../golang-gopkg-bufio.v1/build.txt

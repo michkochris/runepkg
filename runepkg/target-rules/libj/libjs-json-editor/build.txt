@@ -1,1 +1,0 @@
-../../j/json-editor.js/build.txt

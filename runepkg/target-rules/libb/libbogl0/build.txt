@@ -1,1 +1,0 @@
-../../b/bogl/build.txt

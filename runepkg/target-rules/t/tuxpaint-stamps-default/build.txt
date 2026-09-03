@@ -1,1 +1,0 @@
-../tuxpaint-stamps/build.txt

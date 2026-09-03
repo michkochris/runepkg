@@ -1,1 +1,0 @@
-../../h/haskell-lazy-csv/build.txt

@@ -1,1 +1,0 @@
-../../s/swt4-gtk/build.txt

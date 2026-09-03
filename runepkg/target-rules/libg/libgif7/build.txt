@@ -1,1 +1,0 @@
-../../g/giflib/build.txt

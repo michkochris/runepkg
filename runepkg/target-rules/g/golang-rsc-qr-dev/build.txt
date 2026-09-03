@@ -1,1 +1,0 @@
-../golang-rsc-qr/build.txt

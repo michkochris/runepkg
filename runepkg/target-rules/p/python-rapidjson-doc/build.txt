@@ -1,1 +1,0 @@
-../python-rapidjson/build.txt

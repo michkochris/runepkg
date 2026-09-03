@@ -1,1 +1,0 @@
-../../d/debian-junior/build.txt

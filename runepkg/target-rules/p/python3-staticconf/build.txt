@@ -1,1 +1,0 @@
-../pystaticconfiguration/build.txt

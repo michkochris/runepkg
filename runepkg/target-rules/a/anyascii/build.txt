@@ -1,1 +1,0 @@
-../../r/rust-any-ascii/build.txt

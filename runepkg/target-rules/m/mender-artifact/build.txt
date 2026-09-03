@@ -1,1 +1,0 @@
-../../g/golang-github-mendersoftware-mender-artifact/build.txt

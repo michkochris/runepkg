@@ -1,1 +1,0 @@
-../../d/debian-hamradio/build.txt

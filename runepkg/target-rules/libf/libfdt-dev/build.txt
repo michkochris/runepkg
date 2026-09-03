@@ -1,1 +1,0 @@
-../../d/device-tree-compiler/build.txt

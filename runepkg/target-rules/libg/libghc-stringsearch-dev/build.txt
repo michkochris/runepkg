@@ -1,1 +1,0 @@
-../../h/haskell-stringsearch/build.txt

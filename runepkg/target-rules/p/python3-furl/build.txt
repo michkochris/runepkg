@@ -1,1 +1,0 @@
-../python-furl/build.txt

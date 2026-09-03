@@ -1,1 +1,0 @@
-../python-freebox-api/build.txt

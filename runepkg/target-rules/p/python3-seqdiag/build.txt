@@ -1,1 +1,0 @@
-../../s/seqdiag/build.txt

@@ -1,1 +1,0 @@
-../../o/obs-studio/build.txt

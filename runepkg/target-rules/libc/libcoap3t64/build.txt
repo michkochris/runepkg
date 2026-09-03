@@ -1,1 +1,0 @@
-../libcoap3/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-ucs2/build.txt

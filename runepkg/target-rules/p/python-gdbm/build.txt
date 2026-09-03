@@ -1,1 +1,0 @@
-../python-stdlib-extensions/build.txt

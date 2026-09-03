@@ -1,1 +1,0 @@
-../../g/google-common-protos-java/build.txt

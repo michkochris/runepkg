@@ -1,1 +1,0 @@
-../golang-github-openzipkin-zipkin-go/build.txt

@@ -1,1 +1,0 @@
-../../i/ido-vertical-mode/build.txt

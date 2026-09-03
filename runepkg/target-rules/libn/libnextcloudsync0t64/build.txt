@@ -1,1 +1,0 @@
-../../n/nextcloud-desktop/build.txt

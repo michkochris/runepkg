@@ -1,1 +1,0 @@
-../../h/haskell-template-haskell-compat-v0208/build.txt

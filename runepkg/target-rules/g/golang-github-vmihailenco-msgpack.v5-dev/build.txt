@@ -1,1 +1,0 @@
-../golang-github-vmihailenco-msgpack.v5/build.txt

@@ -1,1 +1,0 @@
-../slcfitsio/build.txt

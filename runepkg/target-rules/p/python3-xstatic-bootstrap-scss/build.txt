@@ -1,1 +1,0 @@
-../python-xstatic-bootstrap-scss/build.txt

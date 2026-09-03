@@ -1,1 +1,0 @@
-../pybind11-json/build.txt

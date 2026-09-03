@@ -1,1 +1,0 @@
-../osspd/build.txt

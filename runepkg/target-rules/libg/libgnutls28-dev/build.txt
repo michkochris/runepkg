@@ -1,1 +1,0 @@
-../../g/gnutls28/build.txt

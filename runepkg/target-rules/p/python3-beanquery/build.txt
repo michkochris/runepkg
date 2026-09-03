@@ -1,1 +1,0 @@
-../../b/beanquery/build.txt

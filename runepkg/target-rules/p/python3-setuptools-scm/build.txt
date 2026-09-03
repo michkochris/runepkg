@@ -1,1 +1,0 @@
-../../s/setuptools-scm/build.txt

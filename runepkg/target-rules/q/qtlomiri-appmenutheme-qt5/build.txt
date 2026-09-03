@@ -1,1 +1,0 @@
-../qtlomiri-appmenutheme/build.txt

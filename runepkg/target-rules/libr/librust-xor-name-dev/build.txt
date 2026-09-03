@@ -1,1 +1,0 @@
-../../r/rust-xor-name/build.txt

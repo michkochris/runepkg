@@ -1,1 +1,0 @@
-../../b/brisk-menu/build.txt

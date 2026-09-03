@@ -1,1 +1,0 @@
-../../r/rust-wayland-scanner-0.29/build.txt

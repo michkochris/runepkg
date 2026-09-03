@@ -1,1 +1,0 @@
-../../c/coq/build.txt

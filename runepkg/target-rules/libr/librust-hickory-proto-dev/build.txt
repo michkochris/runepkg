@@ -1,1 +1,0 @@
-../../r/rust-hickory-proto/build.txt

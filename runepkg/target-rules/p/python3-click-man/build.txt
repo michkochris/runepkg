@@ -1,1 +1,0 @@
-../../c/click-man/build.txt

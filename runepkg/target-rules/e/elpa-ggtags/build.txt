@@ -1,1 +1,0 @@
-../../g/ggtags/build.txt

@@ -1,1 +1,0 @@
-../python-galaxy-tool-util-models/build.txt

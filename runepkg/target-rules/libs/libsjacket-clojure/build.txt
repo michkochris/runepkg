@@ -1,1 +1,0 @@
-../../s/sjacket-clojure/build.txt

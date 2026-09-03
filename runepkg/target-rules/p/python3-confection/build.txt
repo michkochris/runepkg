@@ -1,1 +1,0 @@
-../python-confection/build.txt

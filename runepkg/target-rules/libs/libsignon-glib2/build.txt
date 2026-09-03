@@ -1,1 +1,0 @@
-../libsignon-glib/build.txt

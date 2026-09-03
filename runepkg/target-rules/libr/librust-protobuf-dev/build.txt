@@ -1,1 +1,0 @@
-../../r/rust-protobuf/build.txt

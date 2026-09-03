@@ -1,1 +1,0 @@
-../../c/coq-mtac2/build.txt

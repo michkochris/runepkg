@@ -1,1 +1,0 @@
-../../h/haskell-pipes-parse/build.txt

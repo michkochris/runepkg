@@ -1,1 +1,0 @@
-../../r/rust-serde-big-array/build.txt

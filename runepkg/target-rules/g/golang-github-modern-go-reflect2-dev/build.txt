@@ -1,1 +1,0 @@
-../golang-github-modern-go-reflect2/build.txt

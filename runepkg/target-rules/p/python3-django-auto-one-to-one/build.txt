@@ -1,1 +1,0 @@
-../../d/django-auto-one-to-one/build.txt

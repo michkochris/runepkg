@@ -1,1 +1,0 @@
-../../i/intel-graphics-compiler2/build.txt

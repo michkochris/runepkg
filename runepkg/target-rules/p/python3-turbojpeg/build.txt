@@ -1,1 +1,0 @@
-../pyturbojpeg/build.txt

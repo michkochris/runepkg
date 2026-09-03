@@ -1,1 +1,0 @@
-../golang-gorm-gorm/build.txt

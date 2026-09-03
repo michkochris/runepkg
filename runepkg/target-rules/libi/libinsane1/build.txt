@@ -1,1 +1,0 @@
-../libinsane/build.txt

@@ -1,1 +1,0 @@
-../../n/netkit-bootparamd/build.txt

@@ -1,1 +1,0 @@
-../python-ibm-cloud-sdk-core/build.txt

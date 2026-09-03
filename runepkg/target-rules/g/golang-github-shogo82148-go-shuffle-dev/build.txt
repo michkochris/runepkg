@@ -1,1 +1,0 @@
-../golang-github-shogo82148-go-shuffle/build.txt

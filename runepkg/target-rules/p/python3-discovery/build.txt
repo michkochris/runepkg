@@ -1,1 +1,0 @@
-../python-discovery/build.txt

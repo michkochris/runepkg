@@ -1,1 +1,0 @@
-../../c/cypari2/build.txt

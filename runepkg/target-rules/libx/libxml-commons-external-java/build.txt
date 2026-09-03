@@ -1,1 +1,0 @@
-../../x/xml-commons-external/build.txt

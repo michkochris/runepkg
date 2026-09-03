@@ -1,1 +1,0 @@
-../starjava-fits/build.txt

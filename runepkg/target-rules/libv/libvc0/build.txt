@@ -1,1 +1,0 @@
-../libvc/build.txt

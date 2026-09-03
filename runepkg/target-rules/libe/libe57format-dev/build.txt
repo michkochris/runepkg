@@ -1,1 +1,0 @@
-../libe57format/build.txt

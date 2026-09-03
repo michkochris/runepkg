@@ -1,1 +1,0 @@
-../../n/nss-pam-ldapd/build.txt

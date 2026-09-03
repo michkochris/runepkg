@@ -1,1 +1,0 @@
-../../s/snowflake/build.txt

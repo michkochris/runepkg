@@ -1,1 +1,0 @@
-../../s/sdl-sound1.2/build.txt

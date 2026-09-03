@@ -1,1 +1,0 @@
-../../libt/libtext-bibtex-perl/build.txt

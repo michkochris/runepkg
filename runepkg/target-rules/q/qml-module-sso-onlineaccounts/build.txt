@@ -1,1 +1,0 @@
-../../a/accounts-qml-module/build.txt

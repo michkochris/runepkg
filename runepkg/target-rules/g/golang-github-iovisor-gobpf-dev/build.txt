@@ -1,1 +1,0 @@
-../golang-github-iovisor-gobpf/build.txt

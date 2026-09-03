@@ -1,1 +1,0 @@
-../../h/hatch-jupyter-builder/build.txt

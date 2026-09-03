@@ -1,1 +1,0 @@
-../libqxp/build.txt

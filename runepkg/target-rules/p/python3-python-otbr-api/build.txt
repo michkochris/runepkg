@@ -1,1 +1,0 @@
-../python-otbr-api/build.txt

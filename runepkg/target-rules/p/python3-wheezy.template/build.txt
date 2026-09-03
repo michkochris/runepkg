@@ -1,1 +1,0 @@
-../python-wheezy.template/build.txt

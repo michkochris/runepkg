@@ -1,1 +1,0 @@
-../../c/cc-cedict/build.txt

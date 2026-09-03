@@ -1,1 +1,0 @@
-../liboglappth/build.txt

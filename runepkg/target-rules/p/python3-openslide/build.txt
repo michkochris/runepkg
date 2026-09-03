@@ -1,1 +1,0 @@
-../../o/openslide-python/build.txt

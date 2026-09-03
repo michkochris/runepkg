@@ -1,1 +1,0 @@
-../bomberclone/build.txt

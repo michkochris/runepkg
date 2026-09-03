@@ -1,1 +1,0 @@
-../../p/python-csb/build.txt

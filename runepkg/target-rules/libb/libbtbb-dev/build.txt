@@ -1,1 +1,0 @@
-../libbtbb/build.txt

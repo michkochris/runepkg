@@ -1,1 +1,0 @@
-../../s/starlink-pal/build.txt

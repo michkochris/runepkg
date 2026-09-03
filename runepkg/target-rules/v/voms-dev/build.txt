@@ -1,1 +1,0 @@
-../voms/build.txt

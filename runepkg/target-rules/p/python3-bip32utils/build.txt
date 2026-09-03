@@ -1,1 +1,0 @@
-../python-bip32utils/build.txt

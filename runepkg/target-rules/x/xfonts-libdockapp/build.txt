@@ -1,1 +1,0 @@
-../../libd/libdockapp/build.txt

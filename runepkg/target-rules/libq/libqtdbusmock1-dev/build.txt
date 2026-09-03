@@ -1,1 +1,0 @@
-../libqtdbusmock/build.txt

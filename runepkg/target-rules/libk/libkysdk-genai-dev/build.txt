@@ -1,1 +1,0 @@
-../libkysdk-genai/build.txt

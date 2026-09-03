@@ -1,1 +1,0 @@
-../../r/rust-unic-ucd-segment/build.txt

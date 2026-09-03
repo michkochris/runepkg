@@ -1,1 +1,0 @@
-../../g/goocanvas-2.0/build.txt

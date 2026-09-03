@@ -1,1 +1,0 @@
-../../j/jakarta-annotation-api/build.txt

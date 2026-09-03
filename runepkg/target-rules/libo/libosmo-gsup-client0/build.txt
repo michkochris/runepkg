@@ -1,1 +1,0 @@
-../../o/osmo-hlr/build.txt

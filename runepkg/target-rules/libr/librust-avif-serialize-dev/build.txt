@@ -1,1 +1,0 @@
-../../r/rust-avif-serialize/build.txt

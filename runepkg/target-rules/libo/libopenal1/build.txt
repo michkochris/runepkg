@@ -1,1 +1,0 @@
-../../o/openal-soft/build.txt

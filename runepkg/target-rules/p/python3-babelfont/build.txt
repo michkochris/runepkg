@@ -1,1 +1,0 @@
-../python-babelfont/build.txt

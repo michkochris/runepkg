@@ -1,1 +1,0 @@
-../../h/haskell-vty-unix/build.txt

@@ -1,1 +1,0 @@
-../nordugrid-arc-nagios-plugins/build.txt

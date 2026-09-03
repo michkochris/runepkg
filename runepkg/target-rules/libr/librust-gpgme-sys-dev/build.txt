@@ -1,1 +1,0 @@
-../../r/rust-gpgme-sys/build.txt

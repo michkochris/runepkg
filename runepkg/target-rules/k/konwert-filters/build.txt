@@ -1,1 +1,0 @@
-../konwert/build.txt

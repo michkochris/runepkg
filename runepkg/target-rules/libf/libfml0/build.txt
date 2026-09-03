@@ -1,1 +1,0 @@
-../../f/fermi-lite/build.txt

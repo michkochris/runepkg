@@ -1,1 +1,0 @@
-../../s/skimage/build.txt

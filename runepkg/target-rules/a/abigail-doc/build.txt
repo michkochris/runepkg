@@ -1,1 +1,0 @@
-../../liba/libabigail/build.txt

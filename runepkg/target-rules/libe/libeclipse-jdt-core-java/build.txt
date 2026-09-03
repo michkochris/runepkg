@@ -1,1 +1,0 @@
-../../e/eclipse-jdt-core/build.txt

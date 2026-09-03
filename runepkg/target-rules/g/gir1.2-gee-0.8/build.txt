@@ -1,1 +1,0 @@
-../../libg/libgee-0.8/build.txt

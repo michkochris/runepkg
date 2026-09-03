@@ -1,1 +1,0 @@
-../libjsyntaxpane-java/build.txt

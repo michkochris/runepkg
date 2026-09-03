@@ -1,1 +1,0 @@
-../golang-github-anchore-go-version/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-show/build.txt

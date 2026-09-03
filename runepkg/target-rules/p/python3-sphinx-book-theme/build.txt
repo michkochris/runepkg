@@ -1,1 +1,0 @@
-../../s/sphinx-book-theme/build.txt

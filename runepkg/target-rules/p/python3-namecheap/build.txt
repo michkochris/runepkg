@@ -1,1 +1,0 @@
-../../n/namecheap/build.txt

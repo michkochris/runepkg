@@ -1,1 +1,0 @@
-../../s/starjava-ttools/build.txt

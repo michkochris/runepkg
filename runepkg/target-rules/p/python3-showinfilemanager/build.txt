@@ -1,1 +1,0 @@
-../../s/show-in-file-manager/build.txt

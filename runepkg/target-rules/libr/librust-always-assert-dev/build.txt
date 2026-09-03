@@ -1,1 +1,0 @@
-../../r/rust-always-assert/build.txt

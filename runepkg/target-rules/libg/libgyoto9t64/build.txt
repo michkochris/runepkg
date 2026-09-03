@@ -1,1 +1,0 @@
-../../g/gyoto/build.txt

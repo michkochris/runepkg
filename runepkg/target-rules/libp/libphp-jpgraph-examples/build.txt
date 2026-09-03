@@ -1,1 +1,0 @@
-../libphp-jpgraph/build.txt

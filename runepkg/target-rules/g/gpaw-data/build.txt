@@ -1,1 +1,0 @@
-../gpaw-setups/build.txt

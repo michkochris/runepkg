@@ -1,1 +1,0 @@
-../../k/kivy/build.txt

@@ -1,1 +1,0 @@
-../libjstun-java/build.txt

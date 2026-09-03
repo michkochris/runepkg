@@ -1,1 +1,0 @@
-../python-distro/build.txt

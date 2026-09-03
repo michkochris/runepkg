@@ -1,1 +1,0 @@
-../golang-github-gdamore-tcell.v3/build.txt

@@ -1,1 +1,0 @@
-../golang-github-azure-azure-storage-blob-go/build.txt

@@ -1,1 +1,0 @@
-../libsmacker/build.txt

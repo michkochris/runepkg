@@ -1,1 +1,0 @@
-../../e/editorconfig-core-py/build.txt

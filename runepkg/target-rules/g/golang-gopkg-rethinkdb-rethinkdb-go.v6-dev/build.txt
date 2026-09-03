@@ -1,1 +1,0 @@
-../golang-gopkg-rethinkdb-rethinkdb-go.v6/build.txt

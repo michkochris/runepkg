@@ -1,1 +1,0 @@
-../../r/rust-libhandy-0.11/build.txt

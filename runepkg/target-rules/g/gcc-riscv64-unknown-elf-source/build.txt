@@ -1,1 +1,0 @@
-../gcc-riscv64-unknown-elf/build.txt

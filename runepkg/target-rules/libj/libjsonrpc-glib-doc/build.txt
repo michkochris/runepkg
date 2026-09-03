@@ -1,1 +1,0 @@
-../../j/jsonrpc-glib/build.txt

@@ -1,1 +1,0 @@
-../../s/sphinx-sqlalchemy/build.txt

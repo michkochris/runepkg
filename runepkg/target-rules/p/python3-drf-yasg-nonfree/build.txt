@@ -1,1 +1,0 @@
-../../d/drf-yasg-nonfree/build.txt

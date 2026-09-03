@@ -1,1 +1,0 @@
-../../r/ruuvitag-ble/build.txt

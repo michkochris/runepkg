@@ -1,1 +1,0 @@
-../librem-ec-acpi/build.txt

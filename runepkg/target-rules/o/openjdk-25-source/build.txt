@@ -1,1 +1,0 @@
-../openjdk-25/build.txt

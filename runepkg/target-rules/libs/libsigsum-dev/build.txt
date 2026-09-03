@@ -1,1 +1,0 @@
-../../s/sigsum-c/build.txt

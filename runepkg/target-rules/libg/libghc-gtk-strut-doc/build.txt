@@ -1,1 +1,0 @@
-../../h/haskell-gtk-strut/build.txt

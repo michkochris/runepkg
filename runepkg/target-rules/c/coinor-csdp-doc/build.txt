@@ -1,1 +1,0 @@
-../coinor-csdp/build.txt

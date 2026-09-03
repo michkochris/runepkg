@@ -1,1 +1,0 @@
-../python-sigmavirus24-urltemplate/build.txt

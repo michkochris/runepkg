@@ -1,1 +1,0 @@
-../../p/phosh-mobile-settings/build.txt

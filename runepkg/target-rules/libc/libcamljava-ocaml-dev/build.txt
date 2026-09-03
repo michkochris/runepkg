@@ -1,1 +1,0 @@
-../../c/camljava/build.txt

@@ -1,1 +1,0 @@
-../golang-github-kotakanbe-logrus-prefixed-formatter/build.txt

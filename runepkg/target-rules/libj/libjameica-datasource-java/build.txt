@@ -1,1 +1,0 @@
-../../j/jameica-datasource/build.txt

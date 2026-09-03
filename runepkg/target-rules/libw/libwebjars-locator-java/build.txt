@@ -1,1 +1,0 @@
-../../w/webjars-locator/build.txt

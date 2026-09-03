@@ -1,1 +1,0 @@
-../../s/strophejs/build.txt

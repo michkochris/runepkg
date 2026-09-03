@@ -1,1 +1,0 @@
-../golang-github-tjfoc-gmsm/build.txt

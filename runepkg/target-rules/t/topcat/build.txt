@@ -1,1 +1,0 @@
-../../s/starjava-topcat/build.txt

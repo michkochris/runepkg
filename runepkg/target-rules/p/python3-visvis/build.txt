@@ -1,1 +1,0 @@
-../python-visvis/build.txt

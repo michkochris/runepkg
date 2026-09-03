@@ -1,1 +1,0 @@
-../../r/rust-libwebp-sys/build.txt

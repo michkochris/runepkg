@@ -1,1 +1,0 @@
-../python-gnuplot/build.txt

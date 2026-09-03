@@ -1,1 +1,0 @@
-../../n/numpy-rms/build.txt

@@ -1,1 +1,0 @@
-../../o/okteta/build.txt

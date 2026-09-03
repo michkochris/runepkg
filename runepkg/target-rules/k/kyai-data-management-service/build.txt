@@ -1,1 +1,0 @@
-../kylin-ai-data-management-service/build.txt

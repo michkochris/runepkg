@@ -1,1 +1,0 @@
-../../n/nemo-qml-plugin-contacts/build.txt

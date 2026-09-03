@@ -1,1 +1,0 @@
-../../g/glib2.0/build.txt

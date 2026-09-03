@@ -1,1 +1,0 @@
-../../e/eclipse-wtp/build.txt

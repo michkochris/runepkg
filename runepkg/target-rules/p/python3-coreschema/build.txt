@@ -1,1 +1,0 @@
-../../c/coreschema/build.txt

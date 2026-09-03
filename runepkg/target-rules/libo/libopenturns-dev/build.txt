@@ -1,1 +1,0 @@
-../../o/openturns/build.txt

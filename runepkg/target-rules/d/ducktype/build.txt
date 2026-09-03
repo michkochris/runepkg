@@ -1,1 +1,0 @@
-../../m/mallard-ducktype/build.txt

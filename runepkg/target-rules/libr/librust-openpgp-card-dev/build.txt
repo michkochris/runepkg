@@ -1,1 +1,0 @@
-../../r/rust-openpgp-card/build.txt

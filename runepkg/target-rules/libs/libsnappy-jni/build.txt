@@ -1,1 +1,0 @@
-../../s/snappy-java/build.txt

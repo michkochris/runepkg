@@ -1,1 +1,0 @@
-../../s/spatialite/build.txt

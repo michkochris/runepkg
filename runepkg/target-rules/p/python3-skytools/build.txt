@@ -1,1 +1,0 @@
-../python-skytools/build.txt

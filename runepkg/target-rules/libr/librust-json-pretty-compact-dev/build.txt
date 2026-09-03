@@ -1,1 +1,0 @@
-../../r/rust-json-pretty-compact/build.txt

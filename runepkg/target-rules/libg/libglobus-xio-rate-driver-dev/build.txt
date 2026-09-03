@@ -1,1 +1,0 @@
-../../g/globus-xio-rate-driver/build.txt

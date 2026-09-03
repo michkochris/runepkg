@@ -1,1 +1,0 @@
-../pynx584/build.txt

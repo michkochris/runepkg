@@ -1,1 +1,0 @@
-../ukui-sni/build.txt

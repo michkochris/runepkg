@@ -1,1 +1,0 @@
-../../m/maven-remote-resources-plugin/build.txt

@@ -1,1 +1,0 @@
-../python-num2words/build.txt

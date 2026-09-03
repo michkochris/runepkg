@@ -1,1 +1,0 @@
-../../s/spyne/build.txt

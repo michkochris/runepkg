@@ -1,1 +1,0 @@
-../python-mt940/build.txt

@@ -1,1 +1,0 @@
-../../g/gatk-fermilite/build.txt

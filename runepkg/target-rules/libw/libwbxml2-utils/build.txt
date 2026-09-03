@@ -1,1 +1,0 @@
-../../w/wbxml2/build.txt

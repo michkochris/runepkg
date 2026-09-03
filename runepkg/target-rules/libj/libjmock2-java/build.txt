@@ -1,1 +1,0 @@
-../../j/jmock2/build.txt

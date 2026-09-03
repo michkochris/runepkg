@@ -1,1 +1,0 @@
-../openarena-players-mature/build.txt

@@ -1,1 +1,0 @@
-../ros-image-transport-plugins/build.txt

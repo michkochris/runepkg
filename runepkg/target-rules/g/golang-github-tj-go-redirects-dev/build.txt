@@ -1,1 +1,0 @@
-../golang-github-tj-go-redirects/build.txt

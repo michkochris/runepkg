@@ -1,1 +1,0 @@
-../../j/json-c/build.txt

@@ -1,1 +1,0 @@
-../osc-plugins-dput/build.txt

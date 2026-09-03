@@ -1,1 +1,0 @@
-../../r/rust-derive-getters/build.txt

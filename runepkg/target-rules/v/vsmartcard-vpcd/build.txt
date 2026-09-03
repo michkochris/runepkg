@@ -1,1 +1,0 @@
-../vsmartcard/build.txt

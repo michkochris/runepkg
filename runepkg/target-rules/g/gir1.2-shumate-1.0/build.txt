@@ -1,1 +1,0 @@
-../../libs/libshumate/build.txt

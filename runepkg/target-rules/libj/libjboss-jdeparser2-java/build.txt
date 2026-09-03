@@ -1,1 +1,0 @@
-../../j/jboss-jdeparser2/build.txt

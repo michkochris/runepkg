@@ -1,1 +1,0 @@
-../../r/rust-icu-provider/build.txt

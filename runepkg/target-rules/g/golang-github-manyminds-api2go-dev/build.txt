@@ -1,1 +1,0 @@
-../golang-github-manyminds-api2go/build.txt

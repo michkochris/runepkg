@@ -1,1 +1,0 @@
-../python-aiomelcloudhome/build.txt

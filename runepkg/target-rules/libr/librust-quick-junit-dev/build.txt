@@ -1,1 +1,0 @@
-../../r/rust-quick-junit/build.txt

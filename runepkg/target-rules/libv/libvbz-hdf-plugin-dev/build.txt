@@ -1,1 +1,0 @@
-../libvbz-hdf-plugin/build.txt

@@ -1,1 +1,0 @@
-../lintian/build.txt

@@ -1,1 +1,0 @@
-../libkylin-ai-system-private/build.txt

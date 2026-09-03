@@ -1,1 +1,0 @@
-../python-apricot-select/build.txt

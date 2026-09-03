@@ -1,1 +1,0 @@
-../../r/rust-critical-section/build.txt

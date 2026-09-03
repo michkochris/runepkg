@@ -1,1 +1,0 @@
-../py-madvr2/build.txt

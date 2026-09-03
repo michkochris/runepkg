@@ -1,1 +1,0 @@
-../pytest-salt/build.txt

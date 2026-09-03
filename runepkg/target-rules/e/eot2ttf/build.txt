@@ -1,1 +1,0 @@
-../../libe/libeot/build.txt

@@ -1,1 +1,0 @@
-../pydiscovergy/build.txt

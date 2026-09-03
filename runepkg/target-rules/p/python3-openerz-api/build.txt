@@ -1,1 +1,0 @@
-../python-openerz-api/build.txt

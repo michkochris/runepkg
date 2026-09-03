@@ -1,1 +1,0 @@
-../golang-goji/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-uuid-macro-internal/build.txt

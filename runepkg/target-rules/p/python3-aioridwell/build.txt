@@ -1,1 +1,0 @@
-../python-aioridwell/build.txt

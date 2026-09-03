@@ -1,1 +1,0 @@
-../golang-protobuf-extensions/build.txt

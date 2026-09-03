@@ -1,1 +1,0 @@
-../kvazaar/build.txt

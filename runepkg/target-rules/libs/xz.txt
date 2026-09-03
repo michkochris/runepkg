@@ -1,5 +1,0 @@
-package = xz-utils
-build_system = autotools
-configure_args = --disable-doc --disable-nls
-libc = any
-arch = any

@@ -1,1 +1,0 @@
-../golang-gitlab-jonas.jasas-condchan/build.txt

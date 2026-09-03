@@ -1,1 +1,0 @@
-../../g/gettext-maven-plugin/build.txt

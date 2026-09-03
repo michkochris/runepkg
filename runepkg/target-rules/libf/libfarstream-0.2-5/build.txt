@@ -1,1 +1,0 @@
-../../f/farstream-0.2/build.txt

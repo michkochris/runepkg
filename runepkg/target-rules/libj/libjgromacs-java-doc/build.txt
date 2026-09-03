@@ -1,1 +1,0 @@
-../../j/jgromacs/build.txt

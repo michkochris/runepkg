@@ -1,1 +1,0 @@
-../go-rpmdb/build.txt

@@ -1,1 +1,0 @@
-../../j/javaproperties/build.txt

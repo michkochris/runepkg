@@ -1,1 +1,0 @@
-../../g/guava-mini/build.txt

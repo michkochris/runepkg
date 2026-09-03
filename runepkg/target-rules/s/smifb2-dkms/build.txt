@@ -1,1 +1,0 @@
-../smifb2/build.txt

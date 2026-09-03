@@ -1,1 +1,0 @@
-../pychurchtools/build.txt

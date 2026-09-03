@@ -1,1 +1,0 @@
-../../s/skia-pathops/build.txt

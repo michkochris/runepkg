@@ -1,1 +1,0 @@
-../golang-github-twin-health/build.txt

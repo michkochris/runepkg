@@ -1,1 +1,0 @@
-../../g/gpt/build.txt

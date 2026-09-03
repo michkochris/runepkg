@@ -1,1 +1,0 @@
-../../s/stopt/build.txt

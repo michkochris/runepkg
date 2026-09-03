@@ -1,1 +1,0 @@
-../soapyosmo/build.txt

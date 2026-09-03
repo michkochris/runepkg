@@ -1,1 +1,0 @@
-../../r/rust-ed25519-2/build.txt

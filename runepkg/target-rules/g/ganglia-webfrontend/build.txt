@@ -1,1 +1,0 @@
-../ganglia-web/build.txt

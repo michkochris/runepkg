@@ -1,1 +1,0 @@
-../python-plaster-pastedeploy/build.txt

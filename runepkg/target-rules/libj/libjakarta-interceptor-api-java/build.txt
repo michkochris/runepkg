@@ -1,1 +1,0 @@
-../../j/jakarta-interceptor-api/build.txt

@@ -1,1 +1,0 @@
-../globus-gridftp-server/build.txt

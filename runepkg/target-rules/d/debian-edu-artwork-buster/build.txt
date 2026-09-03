@@ -1,1 +1,0 @@
-../debian-edu-artwork/build.txt

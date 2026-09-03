@@ -1,1 +1,0 @@
-../../j/jakarta-inject-api/build.txt

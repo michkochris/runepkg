@@ -1,1 +1,0 @@
-../../r/rust-thin-vec/build.txt

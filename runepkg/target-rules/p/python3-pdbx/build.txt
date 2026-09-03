@@ -1,1 +1,0 @@
-../python-mmcif-pdbx/build.txt

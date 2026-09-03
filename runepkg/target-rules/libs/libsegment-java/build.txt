@@ -1,1 +1,0 @@
-../../s/segment/build.txt

@@ -1,1 +1,0 @@
-../../t/templating-maven-plugin/build.txt

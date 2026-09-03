@@ -1,1 +1,0 @@
-../../b/bin-prot/build.txt

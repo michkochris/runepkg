@@ -1,1 +1,0 @@
-../../h/hbci4java/build.txt

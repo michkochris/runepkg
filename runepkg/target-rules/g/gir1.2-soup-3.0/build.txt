@@ -1,1 +1,0 @@
-../../libs/libsoup3/build.txt

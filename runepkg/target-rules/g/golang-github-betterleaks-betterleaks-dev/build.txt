@@ -1,1 +1,0 @@
-../golang-github-betterleaks-betterleaks/build.txt

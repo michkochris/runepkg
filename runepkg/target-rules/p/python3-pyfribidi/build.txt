@@ -1,1 +1,0 @@
-../pyfribidi/build.txt

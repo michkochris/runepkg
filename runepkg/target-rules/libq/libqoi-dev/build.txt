@@ -1,1 +1,0 @@
-../../q/qoi/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-jiff-static/build.txt

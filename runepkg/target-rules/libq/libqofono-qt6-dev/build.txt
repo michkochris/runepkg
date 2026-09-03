@@ -1,1 +1,0 @@
-../libqofono/build.txt

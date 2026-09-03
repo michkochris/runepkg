@@ -1,1 +1,0 @@
-../../d/dicomscope/build.txt

@@ -1,1 +1,0 @@
-../../o/openipmi/build.txt

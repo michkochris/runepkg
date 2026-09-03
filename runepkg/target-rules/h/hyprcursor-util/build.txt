@@ -1,1 +1,0 @@
-../hyprcursor/build.txt

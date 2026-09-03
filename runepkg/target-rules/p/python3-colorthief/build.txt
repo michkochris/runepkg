@@ -1,1 +1,0 @@
-../../c/colorthief/build.txt

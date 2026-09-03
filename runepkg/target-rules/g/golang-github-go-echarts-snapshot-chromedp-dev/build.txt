@@ -1,1 +1,0 @@
-../golang-github-go-echarts-snapshot-chromedp/build.txt

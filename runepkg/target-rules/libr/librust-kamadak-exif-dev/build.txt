@@ -1,1 +1,0 @@
-../../r/rust-kamadak-exif/build.txt

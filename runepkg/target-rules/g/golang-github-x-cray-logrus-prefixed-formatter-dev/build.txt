@@ -1,1 +1,0 @@
-../golang-github-x-cray-logrus-prefixed-formatter/build.txt

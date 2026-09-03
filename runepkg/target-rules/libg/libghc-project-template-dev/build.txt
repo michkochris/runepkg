@@ -1,1 +1,0 @@
-../../h/haskell-project-template/build.txt

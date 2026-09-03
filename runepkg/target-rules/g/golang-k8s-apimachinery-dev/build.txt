@@ -1,1 +1,0 @@
-../golang-k8s-apimachinery/build.txt

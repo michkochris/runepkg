@@ -1,1 +1,0 @@
-../../c/coq-math-classes/build.txt

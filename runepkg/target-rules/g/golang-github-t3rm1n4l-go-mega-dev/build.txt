@@ -1,1 +1,0 @@
-../golang-github-t3rm1n4l-go-mega/build.txt

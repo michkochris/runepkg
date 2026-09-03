@@ -1,1 +1,0 @@
-../../r/ruby-asciidoctor-pdf/build.txt

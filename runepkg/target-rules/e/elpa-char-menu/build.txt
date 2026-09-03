@@ -1,1 +1,0 @@
-../../c/char-menu-el/build.txt

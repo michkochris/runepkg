@@ -1,1 +1,0 @@
-../../r/rust-is-executable/build.txt

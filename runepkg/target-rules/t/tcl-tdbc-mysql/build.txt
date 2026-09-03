@@ -1,1 +1,0 @@
-../tdbcmysql/build.txt

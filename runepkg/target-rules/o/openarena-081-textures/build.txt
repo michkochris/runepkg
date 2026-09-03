@@ -1,1 +1,0 @@
-../openarena-textures/build.txt

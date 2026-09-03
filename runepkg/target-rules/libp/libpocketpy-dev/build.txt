@@ -1,1 +1,0 @@
-../../p/pocketpy/build.txt

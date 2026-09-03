@@ -1,1 +1,0 @@
-../../r/rust-pkg-version/build.txt

@@ -1,1 +1,0 @@
-../../m/mpdecimal/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-regex-automata/build.txt

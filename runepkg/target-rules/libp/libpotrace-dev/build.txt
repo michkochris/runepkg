@@ -1,1 +1,0 @@
-../../p/potrace/build.txt

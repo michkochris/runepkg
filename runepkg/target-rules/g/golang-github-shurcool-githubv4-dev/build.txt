@@ -1,1 +1,0 @@
-../golang-github-shurcool-githubv4/build.txt

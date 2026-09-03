@@ -1,1 +1,0 @@
-../golang-github-minio-minio-go-v7/build.txt

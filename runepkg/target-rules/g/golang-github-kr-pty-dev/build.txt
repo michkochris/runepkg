@@ -1,1 +1,0 @@
-../golang-pty/build.txt

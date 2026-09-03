@@ -1,1 +1,0 @@
-../../l/leaone-ble/build.txt

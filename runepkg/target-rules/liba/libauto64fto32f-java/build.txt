@@ -1,1 +1,0 @@
-../../a/auto64fto32f/build.txt

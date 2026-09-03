@@ -1,1 +1,0 @@
-../../r/ros-resource-retriever/build.txt

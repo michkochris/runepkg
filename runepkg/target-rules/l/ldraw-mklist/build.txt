@@ -1,1 +1,0 @@
-../ldraw-parts-free/build.txt

@@ -1,1 +1,0 @@
-../../s/send2trash/build.txt

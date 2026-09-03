@@ -1,1 +1,0 @@
-../python-xxhash/build.txt

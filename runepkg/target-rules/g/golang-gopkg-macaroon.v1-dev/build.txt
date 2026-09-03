@@ -1,1 +1,0 @@
-../golang-gopkg-macaroon.v1/build.txt

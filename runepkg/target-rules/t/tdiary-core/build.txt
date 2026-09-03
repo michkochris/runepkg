@@ -1,1 +1,0 @@
-../tdiary/build.txt

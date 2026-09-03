@@ -1,1 +1,0 @@
-../golang-github-stefanhaller-git-todo-parser/build.txt

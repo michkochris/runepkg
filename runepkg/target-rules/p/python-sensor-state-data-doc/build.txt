@@ -1,1 +1,0 @@
-../../s/sensor-state-data/build.txt

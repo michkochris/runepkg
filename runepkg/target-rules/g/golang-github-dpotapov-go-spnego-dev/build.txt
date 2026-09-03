@@ -1,1 +1,0 @@
-../golang-github-dpotapov-go-spnego/build.txt

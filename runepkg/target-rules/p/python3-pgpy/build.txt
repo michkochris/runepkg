@@ -1,1 +1,0 @@
-../python-pgpy/build.txt

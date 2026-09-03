@@ -1,1 +1,0 @@
-../python-barbicanclient/build.txt

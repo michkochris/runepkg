@@ -1,1 +1,0 @@
-../wsdd/build.txt

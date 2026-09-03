@@ -1,1 +1,0 @@
-../../h/haskell-decimal/build.txt

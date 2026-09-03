@@ -1,1 +1,0 @@
-../python-semantic-version/build.txt

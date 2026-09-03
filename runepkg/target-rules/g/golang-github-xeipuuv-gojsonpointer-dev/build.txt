@@ -1,1 +1,0 @@
-../golang-github-xeipuuv-gojsonpointer/build.txt

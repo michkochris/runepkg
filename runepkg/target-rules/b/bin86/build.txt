@@ -1,1 +1,0 @@
-../../l/linux86/build.txt

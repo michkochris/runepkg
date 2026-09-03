@@ -1,1 +1,0 @@
-../../s/simulate-event.js/build.txt

@@ -1,1 +1,0 @@
-../powerdevil/build.txt

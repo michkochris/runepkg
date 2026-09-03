@@ -1,1 +1,0 @@
-../python-msoffcrypto-tool/build.txt

@@ -1,1 +1,0 @@
-../../t/trove-classifiers/build.txt

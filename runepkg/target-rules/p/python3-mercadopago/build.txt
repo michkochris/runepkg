@@ -1,1 +1,0 @@
-../python-mercadopago/build.txt

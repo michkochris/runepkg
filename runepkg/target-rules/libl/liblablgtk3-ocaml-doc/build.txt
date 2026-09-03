@@ -1,1 +1,0 @@
-../../l/lablgtk3/build.txt

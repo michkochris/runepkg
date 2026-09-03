@@ -1,1 +1,0 @@
-../../liba/libaqbanking/build.txt

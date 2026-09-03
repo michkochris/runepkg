@@ -1,1 +1,0 @@
-../../libs/libsmraw/build.txt

@@ -1,1 +1,0 @@
-../../j/jsonld-java/build.txt

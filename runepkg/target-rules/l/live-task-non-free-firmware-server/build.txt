@@ -1,1 +1,0 @@
-../live-tasks-non-free-firmware/build.txt

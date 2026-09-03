@@ -1,1 +1,0 @@
-../../i/intellij-java-compatibility/build.txt

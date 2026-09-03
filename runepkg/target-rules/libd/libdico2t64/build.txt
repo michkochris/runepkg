@@ -1,1 +1,0 @@
-../../d/dico/build.txt

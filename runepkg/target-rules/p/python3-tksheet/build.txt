@@ -1,1 +1,0 @@
-../python-tksheet/build.txt

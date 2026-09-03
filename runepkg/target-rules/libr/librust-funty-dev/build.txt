@@ -1,1 +1,0 @@
-../../r/rust-funty/build.txt

@@ -1,1 +1,0 @@
-../../j/jni-inchi/build.txt

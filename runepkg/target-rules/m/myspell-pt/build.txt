@@ -1,1 +1,0 @@
-../myspell.pt/build.txt

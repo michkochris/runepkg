@@ -1,1 +1,0 @@
-../../liby/libytnef/build.txt

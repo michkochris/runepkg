@@ -1,1 +1,0 @@
-../libjcommon-java/build.txt

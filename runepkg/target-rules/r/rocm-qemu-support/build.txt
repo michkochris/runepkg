@@ -1,1 +1,0 @@
-../../p/pkg-rocm-tools/build.txt

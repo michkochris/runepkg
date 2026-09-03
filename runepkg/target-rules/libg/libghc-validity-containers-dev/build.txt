@@ -1,1 +1,0 @@
-../../h/haskell-validity-containers/build.txt

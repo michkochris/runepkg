@@ -1,1 +1,0 @@
-../pyserial/build.txt

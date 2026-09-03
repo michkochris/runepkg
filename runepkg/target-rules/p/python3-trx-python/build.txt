@@ -1,1 +1,0 @@
-../python-trx-python/build.txt

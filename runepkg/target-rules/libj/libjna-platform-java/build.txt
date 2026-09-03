@@ -1,1 +1,0 @@
-../libjna-java/build.txt

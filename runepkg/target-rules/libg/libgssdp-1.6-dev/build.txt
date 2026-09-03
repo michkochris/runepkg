@@ -1,1 +1,0 @@
-../../g/gssdp/build.txt

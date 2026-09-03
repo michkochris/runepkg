@@ -1,1 +1,0 @@
-../pylibrespot-java/build.txt

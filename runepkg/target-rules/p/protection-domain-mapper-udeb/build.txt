@@ -1,1 +1,0 @@
-../protection-domain-mapper/build.txt

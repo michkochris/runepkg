@@ -1,1 +1,0 @@
-../../k/khronos-opengl-man4/build.txt

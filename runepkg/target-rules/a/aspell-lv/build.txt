@@ -1,1 +1,0 @@
-../../m/myspell-lv/build.txt

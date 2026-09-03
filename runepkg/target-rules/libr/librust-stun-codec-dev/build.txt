@@ -1,1 +1,0 @@
-../../r/rust-stun-codec/build.txt

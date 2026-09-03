@@ -1,1 +1,0 @@
-../golang-github-knadh-go-pop3/build.txt

@@ -1,1 +1,0 @@
-../../s/stan-math/build.txt

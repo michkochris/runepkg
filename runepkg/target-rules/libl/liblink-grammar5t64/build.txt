@@ -1,1 +1,0 @@
-../../l/link-grammar/build.txt

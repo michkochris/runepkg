@@ -1,1 +1,0 @@
-../../libg/libgudev/build.txt

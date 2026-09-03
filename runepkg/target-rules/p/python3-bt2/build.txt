@@ -1,1 +1,0 @@
-../../b/babeltrace2/build.txt

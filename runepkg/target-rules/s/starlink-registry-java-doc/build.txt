@@ -1,1 +1,0 @@
-../starjava-registry/build.txt

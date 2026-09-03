@@ -1,1 +1,0 @@
-../../r/rust-syntect-no-panic/build.txt

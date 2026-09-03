@@ -1,1 +1,0 @@
-../../h/haskell-attoparsec-iso8601/build.txt

@@ -1,1 +1,0 @@
-../../d/django-sass-processor/build.txt

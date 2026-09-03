@@ -1,1 +1,0 @@
-../../h/haskell-storable-record/build.txt

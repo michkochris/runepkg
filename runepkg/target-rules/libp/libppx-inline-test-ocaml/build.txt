@@ -1,1 +1,0 @@
-../../p/ppx-inline-test/build.txt

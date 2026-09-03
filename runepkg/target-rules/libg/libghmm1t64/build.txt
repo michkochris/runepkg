@@ -1,1 +1,0 @@
-../../g/ghmm/build.txt

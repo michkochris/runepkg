@@ -1,1 +1,0 @@
-../qtquickcontrols-opensource-src/build.txt

@@ -1,1 +1,0 @@
-../../z/zope.schema/build.txt

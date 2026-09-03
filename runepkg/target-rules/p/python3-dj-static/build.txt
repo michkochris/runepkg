@@ -1,1 +1,0 @@
-../../d/dj-static/build.txt

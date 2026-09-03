@@ -1,1 +1,0 @@
-../../j/jbig2enc/build.txt

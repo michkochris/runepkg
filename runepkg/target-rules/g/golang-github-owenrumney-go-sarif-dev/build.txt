@@ -1,1 +1,0 @@
-../golang-github-owenrumney-go-sarif/build.txt

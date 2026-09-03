@@ -1,1 +1,0 @@
-../../r/rust-value-bag-serde1/build.txt

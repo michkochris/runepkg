@@ -1,1 +1,0 @@
-../libgringotts/build.txt

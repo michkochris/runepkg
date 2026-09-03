@@ -1,1 +1,0 @@
-../tdbcodbc/build.txt

@@ -1,1 +1,0 @@
-../golang-github-vimeo-go-magic/build.txt

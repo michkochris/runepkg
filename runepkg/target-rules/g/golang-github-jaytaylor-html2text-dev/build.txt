@@ -1,1 +1,0 @@
-../golang-github-jaytaylor-html2text/build.txt

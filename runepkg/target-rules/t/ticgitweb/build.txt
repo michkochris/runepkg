@@ -1,1 +1,0 @@
-../ticgit/build.txt

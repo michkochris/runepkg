@@ -1,1 +1,0 @@
-../../m/mongo-c-driver/build.txt

@@ -1,1 +1,0 @@
-../fonts-yozvox-yozfont/build.txt

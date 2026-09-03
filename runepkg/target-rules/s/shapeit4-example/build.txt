@@ -1,1 +1,0 @@
-../shapeit4/build.txt

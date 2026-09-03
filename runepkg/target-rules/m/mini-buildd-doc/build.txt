@@ -1,1 +1,0 @@
-../mini-buildd/build.txt

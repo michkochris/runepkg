@@ -1,1 +1,0 @@
-../../k/kanzi-cpp/build.txt

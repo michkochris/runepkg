@@ -1,1 +1,0 @@
-../../r/rust-const-str/build.txt

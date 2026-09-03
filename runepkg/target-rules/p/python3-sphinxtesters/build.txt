@@ -1,1 +1,0 @@
-../../s/sphinxtesters/build.txt

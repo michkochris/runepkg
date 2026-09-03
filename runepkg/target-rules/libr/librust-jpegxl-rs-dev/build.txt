@@ -1,1 +1,0 @@
-../../r/rust-jpegxl-rs/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-microspec/build.txt

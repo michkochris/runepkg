@@ -1,1 +1,0 @@
-../libosmosdr/build.txt

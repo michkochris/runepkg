@@ -1,1 +1,0 @@
-../../r/rust-codspeed-divan-compat/build.txt

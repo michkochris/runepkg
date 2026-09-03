@@ -1,1 +1,0 @@
-../python-logi-circle/build.txt

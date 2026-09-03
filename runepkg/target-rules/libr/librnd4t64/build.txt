@@ -1,1 +1,0 @@
-../librnd/build.txt

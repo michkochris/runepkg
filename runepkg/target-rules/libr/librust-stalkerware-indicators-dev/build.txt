@@ -1,1 +1,0 @@
-../../r/rust-stalkerware-indicators/build.txt

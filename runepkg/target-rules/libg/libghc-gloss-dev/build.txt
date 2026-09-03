@@ -1,1 +1,0 @@
-../../h/haskell-gloss/build.txt

@@ -1,1 +1,0 @@
-../golang-github-shenwei356-stable/build.txt

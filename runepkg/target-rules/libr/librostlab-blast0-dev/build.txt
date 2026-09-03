@@ -1,1 +1,0 @@
-../librostlab-blast/build.txt

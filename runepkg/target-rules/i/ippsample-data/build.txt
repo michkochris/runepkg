@@ -1,1 +1,0 @@
-../ippsample/build.txt

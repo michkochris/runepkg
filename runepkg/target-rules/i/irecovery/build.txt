@@ -1,1 +1,0 @@
-../../libi/libirecovery/build.txt

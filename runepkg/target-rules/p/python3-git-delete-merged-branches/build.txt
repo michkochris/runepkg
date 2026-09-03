@@ -1,1 +1,0 @@
-../../g/git-delete-merged-branches/build.txt

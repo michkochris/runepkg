@@ -1,1 +1,0 @@
-../python-aws-requests-auth/build.txt

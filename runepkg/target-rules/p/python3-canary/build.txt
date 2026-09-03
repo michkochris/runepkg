@@ -1,1 +1,0 @@
-../py-canary/build.txt

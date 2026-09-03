@@ -1,1 +1,0 @@
-../python-aio-geojson-generic-client/build.txt

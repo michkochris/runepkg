@@ -1,1 +1,0 @@
-../pyramid-jinja2/build.txt

@@ -1,1 +1,0 @@
-../pysolid/build.txt

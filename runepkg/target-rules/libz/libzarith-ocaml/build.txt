@@ -1,1 +1,0 @@
-../../o/ocaml-zarith/build.txt

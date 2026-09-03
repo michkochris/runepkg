@@ -1,1 +1,0 @@
-../pysvn/build.txt

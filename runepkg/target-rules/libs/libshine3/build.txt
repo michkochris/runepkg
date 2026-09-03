@@ -1,1 +1,0 @@
-../../s/shine/build.txt

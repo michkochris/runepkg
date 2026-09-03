@@ -1,1 +1,0 @@
-../../h/haskell-generic-lens-core/build.txt

@@ -1,1 +1,0 @@
-../../s/smiles-scripts/build.txt

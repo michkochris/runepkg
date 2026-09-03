@@ -1,1 +1,0 @@
-../directx-headers/build.txt

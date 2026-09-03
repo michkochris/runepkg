@@ -1,1 +1,0 @@
-../golang-github-txthinking-socks5/build.txt

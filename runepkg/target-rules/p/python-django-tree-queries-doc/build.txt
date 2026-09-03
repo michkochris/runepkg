@@ -1,1 +1,0 @@
-../python-django-tree-queries/build.txt

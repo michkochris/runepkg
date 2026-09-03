@@ -1,1 +1,0 @@
-../squid-deb-proxy/build.txt

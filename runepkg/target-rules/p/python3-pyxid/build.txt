@@ -1,1 +1,0 @@
-../pyxid/build.txt

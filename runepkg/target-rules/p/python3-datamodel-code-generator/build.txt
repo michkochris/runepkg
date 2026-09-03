@@ -1,1 +1,0 @@
-../python-datamodel-code-generator/build.txt

@@ -1,1 +1,0 @@
-../golang-github-hlandau-xlog/build.txt

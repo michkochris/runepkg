@@ -1,1 +1,0 @@
-../postgresql-q3c/build.txt

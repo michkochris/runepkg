@@ -1,1 +1,0 @@
-../golang-codeberg-git-pages-go-slog-syslog/build.txt

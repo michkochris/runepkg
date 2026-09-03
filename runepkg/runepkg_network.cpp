@@ -7,7 +7,6 @@
  ******************************************************************************/
 
 #include "runepkg_cpp_ffi.h"
-#include "runepkg_matrix.h"
 #include "runepkg_config.h"
 #include <iostream>
 #include <vector>
@@ -682,11 +681,8 @@ extern "C" int runepkg_update(void) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     std::cout << "\033[1;32mUpdate complete!\033[0m Binary/Source indexes updated. " << upgradable_count << " upgradable. Time: " << duration.count() / 1000.0 << "s" << std::endl;
 
-    RuneMatrixEngine::recompile_binary();
-
     runepkg_storage_build_autocomplete_index();
     runepkg_resolver_harvest_graph(nullptr, nullptr);
-    runepkg_host_dpkg_sync();
 
     if (g_runepkg_db_dir) {
         std::string host_db_root = std::string(g_runepkg_db_dir) + "/host";
@@ -1433,10 +1429,7 @@ extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int
                 }
             }
             if (!dsc_path.empty()) {
-                if (runepkg_source_unpack(dsc_path.c_str()) != 0) {
-                    std::cerr << "\033[1;31m[error]\033[0m Failed to unpack " << dsc_path << std::endl;
-                    unpack_success = false;
-                }
+                printf("\033[1;34m[notice]\033[0m Source unpacking is currently disabled for stability.\n");
             }
         }
         runepkg_storage_build_autocomplete_index();

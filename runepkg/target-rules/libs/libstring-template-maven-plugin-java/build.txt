@@ -1,1 +1,0 @@
-../../s/string-template-maven-plugin/build.txt

@@ -1,1 +1,0 @@
-../python-libdiscid/build.txt

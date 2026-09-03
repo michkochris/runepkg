@@ -1,1 +1,0 @@
-../python-django-postgres-extra/build.txt

@@ -1,1 +1,0 @@
-../../g/glibmm2.4/build.txt

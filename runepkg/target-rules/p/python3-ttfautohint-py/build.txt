@@ -1,1 +1,0 @@
-../python-ttfautohint-py/build.txt

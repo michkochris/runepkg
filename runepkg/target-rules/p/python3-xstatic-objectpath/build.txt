@@ -1,1 +1,0 @@
-../python-xstatic-objectpath/build.txt

@@ -1,1 +1,0 @@
-../golang-github-landlock-lsm-go-landlock/build.txt

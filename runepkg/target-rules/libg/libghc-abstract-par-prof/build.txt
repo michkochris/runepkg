@@ -1,1 +1,0 @@
-../../h/haskell-abstract-par/build.txt

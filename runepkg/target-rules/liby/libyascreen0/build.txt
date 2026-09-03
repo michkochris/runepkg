@@ -1,1 +1,0 @@
-../../y/yascreen/build.txt

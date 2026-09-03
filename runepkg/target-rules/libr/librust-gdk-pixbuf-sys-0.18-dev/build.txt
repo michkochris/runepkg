@@ -1,1 +1,0 @@
-../../r/rust-gdk-pixbuf-sys-0.18/build.txt

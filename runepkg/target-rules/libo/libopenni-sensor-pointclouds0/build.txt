@@ -1,1 +1,0 @@
-../../o/openni-sensor-pointclouds/build.txt

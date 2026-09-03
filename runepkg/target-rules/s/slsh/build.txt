@@ -1,1 +1,0 @@
-../slang2/build.txt

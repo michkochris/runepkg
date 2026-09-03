@@ -1,1 +1,0 @@
-../../r/rust-socket2-0.5/build.txt

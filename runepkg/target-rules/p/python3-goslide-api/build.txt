@@ -1,1 +1,0 @@
-../../g/goslide-api/build.txt

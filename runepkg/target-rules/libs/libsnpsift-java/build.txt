@@ -1,1 +1,0 @@
-../../s/snpsift/build.txt

@@ -1,1 +1,0 @@
-../../f/freehep-chartableconverter-plugin/build.txt

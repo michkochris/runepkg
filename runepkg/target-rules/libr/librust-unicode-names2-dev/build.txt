@@ -1,1 +1,0 @@
-../../r/rust-unicode-names2/build.txt

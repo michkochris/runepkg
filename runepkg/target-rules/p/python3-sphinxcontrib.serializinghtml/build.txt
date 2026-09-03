@@ -1,1 +1,0 @@
-../../s/sphinxcontrib-serializinghtml/build.txt

@@ -1,1 +1,0 @@
-../../g/geneagrapher-core/build.txt

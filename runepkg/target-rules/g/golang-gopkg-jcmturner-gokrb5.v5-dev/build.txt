@@ -1,1 +1,0 @@
-../golang-gopkg-jcmturner-gokrb5.v5/build.txt

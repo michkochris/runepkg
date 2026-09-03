@@ -1,1 +1,0 @@
-../golang-github-mimuret-golang-iij-dpf/build.txt

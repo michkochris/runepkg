@@ -1,1 +1,0 @@
-../lomiri-indicator-network/build.txt

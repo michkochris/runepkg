@@ -1,1 +1,0 @@
-../manpages-posix/build.txt

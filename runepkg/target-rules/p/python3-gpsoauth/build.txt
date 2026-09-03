@@ -1,1 +1,0 @@
-../python-gpsoauth/build.txt

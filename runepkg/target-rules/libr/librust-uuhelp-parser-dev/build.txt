@@ -1,1 +1,0 @@
-../../r/rust-uuhelp-parser/build.txt

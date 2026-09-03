@@ -1,1 +1,0 @@
-../libnetconf2/build.txt

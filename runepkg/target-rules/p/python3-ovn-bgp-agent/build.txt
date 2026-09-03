@@ -1,1 +1,0 @@
-../../o/ovn-bgp-agent/build.txt

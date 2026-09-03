@@ -1,1 +1,0 @@
-../../s/slimit/build.txt

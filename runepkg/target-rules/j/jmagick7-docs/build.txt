@@ -1,1 +1,0 @@
-../jmagick/build.txt

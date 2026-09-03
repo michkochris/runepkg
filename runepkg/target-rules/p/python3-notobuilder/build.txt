@@ -1,1 +1,0 @@
-../python-notobuilder/build.txt

@@ -1,1 +1,0 @@
-../golang-gopkg-gorp.v1/build.txt

@@ -1,1 +1,0 @@
-../../b/barectf/build.txt

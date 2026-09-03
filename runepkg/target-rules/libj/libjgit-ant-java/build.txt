@@ -1,1 +1,0 @@
-../../j/jgit/build.txt

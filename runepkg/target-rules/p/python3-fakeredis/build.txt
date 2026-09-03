@@ -1,1 +1,0 @@
-../python-fakeredis/build.txt

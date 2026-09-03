@@ -1,1 +1,0 @@
-../../s/srpc/build.txt

@@ -1,1 +1,0 @@
-../python-setuptools-protobuf/build.txt

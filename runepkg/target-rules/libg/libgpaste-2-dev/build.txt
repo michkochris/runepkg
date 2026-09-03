@@ -1,1 +1,0 @@
-../../g/gpaste/build.txt

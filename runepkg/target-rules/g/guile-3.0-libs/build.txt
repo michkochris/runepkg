@@ -1,1 +1,0 @@
-../guile-3.0/build.txt

@@ -1,1 +1,0 @@
-../../s/sdl-net1.2/build.txt

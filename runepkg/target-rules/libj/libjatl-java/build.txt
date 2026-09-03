@@ -1,1 +1,0 @@
-../../j/jatl/build.txt

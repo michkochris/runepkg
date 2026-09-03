@@ -1,1 +1,0 @@
-../mecab-jumandic/build.txt

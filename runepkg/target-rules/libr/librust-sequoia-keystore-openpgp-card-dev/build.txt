@@ -1,1 +1,0 @@
-../../r/rust-sequoia-keystore-openpgp-card/build.txt

@@ -1,1 +1,0 @@
-../golang-github-xuanwo-go-locale/build.txt

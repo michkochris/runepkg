@@ -1,1 +1,0 @@
-../iso-flags-svg/build.txt

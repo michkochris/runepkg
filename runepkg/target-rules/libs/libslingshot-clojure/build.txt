@@ -1,1 +1,0 @@
-../../s/slingshot-clojure/build.txt

@@ -1,1 +1,0 @@
-../../r/rust-czkawka-core/build.txt

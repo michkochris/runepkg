@@ -1,1 +1,0 @@
-../../r/rust-numbat-exchange-rates/build.txt

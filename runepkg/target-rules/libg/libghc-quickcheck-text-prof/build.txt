@@ -1,1 +1,0 @@
-../../h/haskell-quickcheck-text/build.txt

@@ -1,1 +1,0 @@
-../../b/bingo/build.txt

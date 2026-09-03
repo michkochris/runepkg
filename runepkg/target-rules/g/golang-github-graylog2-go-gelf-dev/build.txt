@@ -1,1 +1,0 @@
-../golang-github-graylog2-go-gelf/build.txt

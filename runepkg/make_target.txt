@@ -1,5 +1,0 @@
-Automated Tests
-•
-make populate-rules: Verify it correctly identifies the new /srv/lib/runepkg_dir if configured.
-•
-make scalpel: Verify the binary compiles and respects the config-driven paths.

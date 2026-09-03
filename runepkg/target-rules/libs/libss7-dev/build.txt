@@ -1,1 +1,0 @@
-../libss7/build.txt

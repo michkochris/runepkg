@@ -1,1 +1,0 @@
-../libdicom/build.txt

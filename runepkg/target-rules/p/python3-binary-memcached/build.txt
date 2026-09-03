@@ -1,1 +1,0 @@
-../python-binary-memcached/build.txt

@@ -1,1 +1,0 @@
-../../h/haskell-pointed/build.txt

@@ -1,1 +1,0 @@
-../golang-github-howeyc-crc16/build.txt

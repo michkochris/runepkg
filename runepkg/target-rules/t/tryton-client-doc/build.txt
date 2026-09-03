@@ -1,1 +1,0 @@
-../tryton-client/build.txt

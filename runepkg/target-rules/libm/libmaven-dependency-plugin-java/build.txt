@@ -1,1 +1,0 @@
-../../m/maven-dependency-plugin/build.txt

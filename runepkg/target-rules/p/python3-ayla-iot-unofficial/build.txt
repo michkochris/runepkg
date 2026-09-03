@@ -1,1 +1,0 @@
-../python-ayla-iot-unofficial/build.txt

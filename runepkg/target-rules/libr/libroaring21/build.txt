@@ -1,1 +1,0 @@
-../../c/croaring/build.txt

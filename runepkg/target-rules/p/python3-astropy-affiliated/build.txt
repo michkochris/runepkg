@@ -1,1 +1,0 @@
-../python-astropy-affiliated/build.txt

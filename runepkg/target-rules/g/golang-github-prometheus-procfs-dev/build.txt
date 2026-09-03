@@ -1,1 +1,0 @@
-../golang-github-prometheus-procfs/build.txt

@@ -1,1 +1,0 @@
-../golang-google-cloud/build.txt

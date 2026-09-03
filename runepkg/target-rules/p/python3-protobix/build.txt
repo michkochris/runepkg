@@ -1,1 +1,0 @@
-../python-protobix/build.txt

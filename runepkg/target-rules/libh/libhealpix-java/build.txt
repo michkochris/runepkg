@@ -1,1 +1,0 @@
-../../h/healpix-java/build.txt

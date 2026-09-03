@@ -1,1 +1,0 @@
-../../r/resolv-wrapper/build.txt

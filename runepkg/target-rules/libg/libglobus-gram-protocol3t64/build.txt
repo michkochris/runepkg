@@ -1,1 +1,0 @@
-../../g/globus-gram-protocol/build.txt

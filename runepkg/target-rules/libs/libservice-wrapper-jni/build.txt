@@ -1,1 +1,0 @@
-../../s/service-wrapper-java/build.txt

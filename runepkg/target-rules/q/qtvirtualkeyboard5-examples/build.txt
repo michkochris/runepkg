@@ -1,1 +1,0 @@
-../qtvirtualkeyboard-opensource-src/build.txt

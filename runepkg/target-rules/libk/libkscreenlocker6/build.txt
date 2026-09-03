@@ -1,1 +1,0 @@
-../../k/kscreenlocker/build.txt

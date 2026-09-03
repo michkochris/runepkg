@@ -1,1 +1,0 @@
-../golang-github-coredns-caddy/build.txt

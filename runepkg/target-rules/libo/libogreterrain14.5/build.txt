@@ -1,1 +1,0 @@
-../../o/ogre-14/build.txt

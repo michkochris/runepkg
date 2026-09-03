@@ -1,1 +1,0 @@
-../pg-failover-slots/build.txt

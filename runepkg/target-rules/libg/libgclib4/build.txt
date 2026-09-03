@@ -1,1 +1,0 @@
-../libgclib/build.txt

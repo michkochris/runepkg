@@ -1,1 +1,0 @@
-../../g/gmobile/build.txt

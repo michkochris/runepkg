@@ -1,1 +1,0 @@
-../../m/maven-shade-plugin/build.txt

@@ -1,1 +1,0 @@
-../../t/tpm2-tss/build.txt

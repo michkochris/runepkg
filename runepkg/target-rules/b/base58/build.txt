@@ -1,1 +1,0 @@
-../../p/python-base58/build.txt

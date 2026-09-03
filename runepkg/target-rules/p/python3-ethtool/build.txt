@@ -1,1 +1,0 @@
-../python-ethtool/build.txt

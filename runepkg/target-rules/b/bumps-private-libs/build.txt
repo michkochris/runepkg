@@ -1,1 +1,0 @@
-../../p/python-bumps/build.txt

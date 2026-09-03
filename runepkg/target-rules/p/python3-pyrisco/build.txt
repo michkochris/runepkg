@@ -1,1 +1,0 @@
-../pyrisco/build.txt

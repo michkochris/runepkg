@@ -1,1 +1,0 @@
-../fonts-ukij-uyghur/build.txt

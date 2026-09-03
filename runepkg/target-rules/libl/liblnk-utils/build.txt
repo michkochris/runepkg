@@ -1,1 +1,0 @@
-../liblnk/build.txt

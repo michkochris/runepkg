@@ -1,1 +1,0 @@
-../lomiri-indicator-transfer/build.txt

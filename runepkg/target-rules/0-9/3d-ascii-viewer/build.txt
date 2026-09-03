@@ -1,1 +1,0 @@
-../3d-ascii-viewer-c/build.txt

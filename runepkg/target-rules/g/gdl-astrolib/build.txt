@@ -1,1 +1,0 @@
-../../i/idlastro/build.txt

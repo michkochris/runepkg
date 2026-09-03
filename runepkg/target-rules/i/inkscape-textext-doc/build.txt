@@ -1,1 +1,0 @@
-../inkscape-textext/build.txt

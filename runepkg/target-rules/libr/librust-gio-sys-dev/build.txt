@@ -1,1 +1,0 @@
-../../r/rust-gio-sys/build.txt

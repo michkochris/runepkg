@@ -1,1 +1,0 @@
-../../a/android-platform-libcore/build.txt

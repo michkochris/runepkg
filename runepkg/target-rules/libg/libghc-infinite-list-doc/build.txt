@@ -1,1 +1,0 @@
-../../h/haskell-infinite-list/build.txt

@@ -1,1 +1,0 @@
-../python-py-ecc/build.txt

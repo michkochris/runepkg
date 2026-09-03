@@ -1,1 +1,0 @@
-../../v/vdeplug-slirp/build.txt

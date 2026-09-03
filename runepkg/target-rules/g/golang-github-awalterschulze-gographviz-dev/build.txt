@@ -1,1 +1,0 @@
-../golang-github-awalterschulze-gographviz/build.txt

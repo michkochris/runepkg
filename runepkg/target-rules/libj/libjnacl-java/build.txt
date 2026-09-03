@@ -1,1 +1,0 @@
-../../j/jnacl/build.txt

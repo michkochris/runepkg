@@ -1,1 +1,0 @@
-../../s/sireader/build.txt

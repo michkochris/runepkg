@@ -1,1 +1,0 @@
-../starjava-vo/build.txt

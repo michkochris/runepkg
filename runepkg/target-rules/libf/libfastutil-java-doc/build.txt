@@ -1,1 +1,0 @@
-../libfastutil-java/build.txt

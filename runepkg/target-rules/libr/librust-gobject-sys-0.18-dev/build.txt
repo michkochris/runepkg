@@ -1,1 +1,0 @@
-../../r/rust-gobject-sys-0.18/build.txt

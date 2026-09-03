@@ -1,1 +1,0 @@
-../../s/strophejs-plugin-chatstates/build.txt

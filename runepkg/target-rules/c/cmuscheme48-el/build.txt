@@ -1,1 +1,0 @@
-../../s/scheme48/build.txt

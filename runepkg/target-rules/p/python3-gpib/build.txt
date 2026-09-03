@@ -1,1 +1,0 @@
-../../l/linux-gpib-user/build.txt

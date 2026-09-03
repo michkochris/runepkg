@@ -1,1 +1,0 @@
-../libdumbtts/build.txt

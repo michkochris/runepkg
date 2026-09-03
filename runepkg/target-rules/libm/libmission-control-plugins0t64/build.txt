@@ -1,1 +1,0 @@
-../../t/telepathy-mission-control-5/build.txt

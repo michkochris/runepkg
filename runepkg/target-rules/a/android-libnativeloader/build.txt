@@ -1,1 +1,0 @@
-../android-platform-art/build.txt

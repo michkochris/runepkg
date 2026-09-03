@@ -1,1 +1,0 @@
-../../i/ifstat/build.txt

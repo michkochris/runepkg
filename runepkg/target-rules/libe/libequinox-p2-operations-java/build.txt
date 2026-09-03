@@ -1,1 +1,0 @@
-../../e/equinox-p2/build.txt

@@ -1,1 +1,0 @@
-../golang-barcode/build.txt

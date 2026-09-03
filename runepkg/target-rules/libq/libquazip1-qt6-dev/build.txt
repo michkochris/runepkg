@@ -1,1 +1,0 @@
-../libquazip1/build.txt

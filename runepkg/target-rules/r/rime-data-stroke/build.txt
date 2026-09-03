@@ -1,1 +1,0 @@
-../rime-stroke/build.txt

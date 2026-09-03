@@ -1,1 +1,0 @@
-../../o/openhft-chronicle-threads/build.txt

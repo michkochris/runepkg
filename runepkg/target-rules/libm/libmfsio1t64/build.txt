@@ -1,1 +1,0 @@
-../../m/moosefs/build.txt

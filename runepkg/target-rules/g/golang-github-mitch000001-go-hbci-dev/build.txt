@@ -1,1 +1,0 @@
-../golang-github-mitch000001-go-hbci/build.txt

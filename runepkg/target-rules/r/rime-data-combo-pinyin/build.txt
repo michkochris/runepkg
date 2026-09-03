@@ -1,1 +1,0 @@
-../rime-combo-pinyin/build.txt

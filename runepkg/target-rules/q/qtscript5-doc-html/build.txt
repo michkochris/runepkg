@@ -1,1 +1,0 @@
-../qtscript-opensource-src/build.txt

@@ -1,1 +1,0 @@
-../../g/gtkmm4.0/build.txt

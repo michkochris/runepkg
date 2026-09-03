@@ -1,1 +1,0 @@
-../python-x2go/build.txt

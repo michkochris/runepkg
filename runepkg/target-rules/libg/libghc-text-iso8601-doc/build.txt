@@ -1,1 +1,0 @@
-../../h/haskell-text-iso8601/build.txt

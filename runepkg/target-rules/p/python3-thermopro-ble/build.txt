@@ -1,1 +1,0 @@
-../../t/thermopro-ble/build.txt

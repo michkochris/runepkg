@@ -1,1 +1,0 @@
-../../r/rust-vec-strings/build.txt

@@ -1,1 +1,0 @@
-../python-aristaproto/build.txt
