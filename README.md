@@ -358,6 +358,10 @@ Developed from years of experience with Custom Cross Linux From Scratch (LFS), *
 ---
 An independent architectural assessment of the codebase's structural soundness and systems programming standards can be found in [COPILOT.md](./COPILOT.md) 🤖
 
+## Security Audit
+---
+A comprehensive security assessment was conducted by **GitHub Copilot Security Review** on **runepkg v1.0.4** (Status: 🟢 **LOW Risk / Production-Hardened**). The audit evaluated ANSI C core memory safety, C++ FFI exception boundary isolation, OpenPGP signature verification, path traversal sanitization, POSIX `rlimit` extraction caps, and sandboxed privilege dropping (`_apt`). Full security threat modeling and audit details can be found in [SEC.md](./SEC.md) 🛡️
+
 ## Contact
 ---
 🍆 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
