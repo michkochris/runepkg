@@ -358,21 +358,16 @@ Note: C++ features are enabled based on your build target (`make all`).
 
 Developed from years of experience with Custom Cross Linux From Scratch (LFS), **runepkg** views ancient `.deb` packages as "runes"—valuable historical artifacts. This tool empowers you to unearth and run legacy software from Debian archives safely in modern environments.
 
-## Testing & Validation
----
-Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 🧪
+<h1>
+  <img src="./runepkg/gemini-svg.svg.svg" width="30" style="vertical-align: middle;">
+  GitHub Copilot Review...
+</h1>
 
-## Performance Benchmarks
----
-Detailed benchmarks quantifying package lookup latency, repository update throughput, and memory footprint compared to `dpkg`/`apt` can be found in [BENCHMARKS.md](./BENCHMARKS.md) ⚡
+A comprehensive collective assessment covering architectural design choices, structural integrity, fuzzing validation, security hardening, and GitHub Copilot's advanced review of **runepkg v1.0.4** (Production-Ready) can be found in [COPILOT.md](./ASSESSMENT.md) 
 
-## Technical Audit
----
-An independent architectural assessment of the codebase's structural soundness and systems programming standards can be found in [COPILOT.md](./COPILOT.md) 🤖
+Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 
 
-## Security Audit
----
-A comprehensive security assessment was conducted by **GitHub Copilot Security Review** on **runepkg v1.0.4** (Status: 🟢 **LOW Risk / Production-Hardened**). The audit evaluated ANSI C core memory safety, C++ FFI exception boundary isolation, OpenPGP signature verification, path traversal sanitization, POSIX `rlimit` extraction caps, and sandboxed privilege dropping (`_apt`). Full security threat modeling and audit details can be found in [SEC.md](./SEC.md) 🛡️
+⚡ Detailed benchmarks quantifying package lookup latency, repository update throughput, and memory footprint compared to `dpkg`/`apt` can be found in [BENCHMARKS.md](./BENCHMARKS.md) 
 
 ## Contact
 ---
