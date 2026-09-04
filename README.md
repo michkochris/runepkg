@@ -331,7 +331,7 @@ Developed from years of experience with Custom Cross Linux From Scratch (LFS), *
   Further Information
 </h1>
 
-GitHub Copilot has provided an advanced review, opinion and comprehensive assessment covering architectural design choices, structural integrity, testing, security hardening of **runepkg v1.0.4** [COPILOT.md](./ASSESSMENT.md). 
+GitHub Copilot has provided an advanced review, opinion and comprehensive assessment covering architectural design choices, structural integrity, testing, security hardening of **runepkg v1.0.4** [COPILOT.md](./COPILOT.md). 
 
 Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 
 
