@@ -568,3 +568,80 @@ int runepkg_fsm_recover_orphaned_transactions(void)
 
     return recovered_count;
 }
+
+int runepkg_fsm_list_transactions(void)
+{
+    const char *base_dir = g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log";
+    DIR *dir;
+    struct dirent *entry;
+    int count = 0;
+
+    if (!runepkg_util_is_directory(base_dir)) {
+        printf("No transaction logs found (log directory does not exist: %s)\n", base_dir);
+        return 0;
+    }
+
+    dir = opendir(base_dir);
+    if (!dir) return -1;
+
+    printf("Historical Transaction Logs (%s):\n", base_dir);
+    printf("========================================================================\n");
+
+    while ((entry = readdir(dir)) != NULL) {
+        if (strncmp(entry->d_name, "transaction-", 12) == 0 && strstr(entry->d_name, ".log")) {
+            char full_path[PATH_MAX];
+            struct stat st;
+            runepkg_secure_snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, entry->d_name);
+            if (stat(full_path, &st) == 0) {
+                printf("  [log] %-35s (%ld bytes)\n", entry->d_name, (long)st.st_size);
+                count++;
+            }
+        }
+    }
+
+    closedir(dir);
+
+    if (count == 0) {
+        printf("  (No transaction execution logs present)\n");
+    }
+    printf("\n");
+    return count;
+}
+
+int runepkg_fsm_inspect_transaction(const char *target)
+{
+    const char *base_dir = g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log";
+    char log_path[PATH_MAX];
+    FILE *fp;
+    char line[PATH_MAX * 2];
+
+    if (!target || target[0] == '\0') {
+        printf("Error: inspect requires a timestamp or log filename.\n");
+        return -1;
+    }
+
+    if (target[0] == '/') {
+        runepkg_secure_strcpy(log_path, sizeof(log_path), target);
+    } else if (strncmp(target, "transaction-", 12) == 0) {
+        runepkg_secure_snprintf(log_path, sizeof(log_path), "%s/%s", base_dir, target);
+    } else {
+        runepkg_secure_snprintf(log_path, sizeof(log_path), "%s/transaction-%s.log", base_dir, target);
+    }
+
+    fp = fopen(log_path, "r");
+    if (!fp) {
+        printf("Error: Transaction log file not found: %s\n", log_path);
+        return -1;
+    }
+
+    printf("Inspecting Transaction Log: %s\n", log_path);
+    printf("========================================================================\n");
+
+    while (fgets(line, sizeof(line), fp)) {
+        printf("%s", line);
+    }
+
+    fclose(fp);
+    printf("========================================================================\n\n");
+    return 0;
+}

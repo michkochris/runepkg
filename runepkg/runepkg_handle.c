@@ -925,6 +925,7 @@ void handle_update_pkglist(void) {
 int handle_unpack(const char *deb_path, const char *dest_dir) {
     PkgInfo pkg_info;
     char *target_dir = NULL;
+    TransactionContext tx_ctx;
 
     if (!deb_path) return -1;
 
@@ -938,6 +939,11 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
         return -1;
     }
 
+    if (runepkg_fsm_init(&tx_ctx, deb_path, "unpack") == 0) {
+        step_prepare(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_STAGING);
+    }
+
     runepkg_log_verbose("Unpacking %s into control_dir (%s)...\n", deb_path, g_control_dir);
 
     runepkg_pack_init_package_info(&pkg_info);
@@ -945,6 +951,9 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
     if (runepkg_pack_extract_and_collect_info(deb_path, g_control_dir, &pkg_info) != 0) {
         runepkg_util_error("Failed to extract .deb archive into control_dir for %s\n", deb_path);
         runepkg_pack_free_package_info(&pkg_info);
+        runepkg_log_fail("Failed to extract .deb archive", tx_ctx.log_dir);
+        step_rollback(&tx_ctx);
+        step_cleanup(&tx_ctx);
         return -1;
     }
 
@@ -974,6 +983,8 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
     if (!target_dir) {
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
         runepkg_pack_free_package_info(&pkg_info);
+        step_rollback(&tx_ctx);
+        step_cleanup(&tx_ctx);
         return -1;
     }
 
@@ -982,6 +993,8 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
         runepkg_pack_free_package_info(&pkg_info);
         free(target_dir);
+        step_rollback(&tx_ctx);
+        step_cleanup(&tx_ctx);
         return -1;
     }
 
@@ -991,6 +1004,8 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
             runepkg_pack_cleanup_extraction_workspace(&pkg_info);
             runepkg_pack_free_package_info(&pkg_info);
             free(target_dir);
+            step_rollback(&tx_ctx);
+            step_cleanup(&tx_ctx);
             return -1;
         }
     }
@@ -1007,6 +1022,10 @@ int handle_unpack(const char *deb_path, const char *dest_dir) {
 
     runepkg_pack_free_package_info(&pkg_info);
     free(target_dir);
+
+    step_commit(&tx_ctx);
+    runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
+    step_cleanup(&tx_ctx);
     return 0;
 }
 
@@ -1014,11 +1033,17 @@ int handle_build(const char *source_dir, const char *output_name) {
     const char *src = source_dir;
     char *out_allocated = NULL;
     const char *out = output_name;
+    TransactionContext tx_ctx;
 
     if (!src) src = g_build_dir;
     if (!src) {
         runepkg_util_error("No source directory specified and build_dir not configured.\n");
         return -1;
+    }
+
+    if (runepkg_fsm_init(&tx_ctx, output_name ? output_name : "build", "1.0") == 0) {
+        step_prepare(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_STAGING);
     }
 
     if (!out) {
@@ -1062,12 +1087,23 @@ int handle_build(const char *source_dir, const char *output_name) {
         }
     }
 
-    if (!out) return -1;
+    if (!out) {
+        step_rollback(&tx_ctx);
+        step_cleanup(&tx_ctx);
+        return -1;
+    }
 
     {
         int ret = runepkg_util_create_deb(src, out);
         if (ret == 0) {
             printf("\033[1;32m[build]\033[0m Successfully built package: %s\n", out);
+            step_commit(&tx_ctx);
+            runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
+            step_cleanup(&tx_ctx);
+        } else {
+            runepkg_log_fail("Failed to assemble .deb package", tx_ctx.log_dir);
+            step_rollback(&tx_ctx);
+            step_cleanup(&tx_ctx);
         }
 
         free(out_allocated);

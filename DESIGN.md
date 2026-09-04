@@ -93,7 +93,29 @@ The configuration system (`runepkg_config.c`) is designed for extreme portabilit
 
 ---
 
-## 9. Future Roadmap & Next Steps
+## 9. Finite State Machine (FSM) & Transactional Engine Architecture
+
+`runepkg` incorporates a 6-tier transactional lifecycle to guarantee atomic state transitions, signal-safe rollbacks, and complete execution auditing across both C89 core and C++ extended build modes.
+
+### Dual-Tier State Engine
+*   **Low-Level C89 Core (`runepkg_state.c/.h`):** Provides a portable, zero-dependency state dispatch engine. States move strictly through `IDLE` $\rightarrow$ `PREPARING` $\rightarrow$ `FETCHING` $\rightarrow$ `VALIDATING` $\rightarrow$ `STAGING` $\rightarrow$ `COMMITTING` $\rightarrow$ `CLEANUP`.
+*   **High-Level C++ RAII Guard (`runepkg_guard.hpp/.cpp`):** Wraps C transaction contexts in an RAII `RunepkgTransactionGuard`. If an exception or early return unwinds the stack prior to `.commit()`, the destructor triggers `step_rollback()` and writes post-mortem logs automatically.
+
+### Async-Signal-Safe Self-Pipe (`sig_pipe`)
+To avoid executing non-async-safe functions (`malloc`, file I/O, `unlink`) inside signal handlers, `runepkg` installs a non-blocking `sig_pipe`. On `SIGINT`, `SIGTERM`, `SIGSEGV`, or `SIGQUIT`, the signal handler performs a 1-byte write over `sig_pipe[1]`. State checkpoints poll `sig_pipe[0]` non-blocking and trigger `step_rollback()` safely in user thread context.
+
+### Process-Global Concurrency Locking
+`step_prepare()` acquires an exclusive `fcntl` write-lock on `/srv/lib/runepkg_dir/log_dir/transaction.lock` (`ctx->lock_fd`), preventing parallel `runepkg` processes from racing on database stanzas or file mutations.
+
+### Pre-Mutation Backups & Journaling
+Before any file is overwritten or unlinked, `perform_file_install()` creates a pre-mutation backup in `ctx->staging_dir/backups/`. Every file operation registers a journal entry (`runepkg_journal_record_create`, `runepkg_journal_record_overwrite`, `runepkg_journal_record_delete`) and writes human-readable `[JOURNAL]` lines directly into the active `transaction-YYYYMMDD-HHMMSS.log`.
+
+### Automated Startup Crash Recovery
+On startup (`runepkg_init()`), `runepkg_fsm_recover_orphaned_transactions()` scans `g_log_dir` for abandoned `staging_<pid>` workspaces left by crashed processes. It verifies PID liveness via `kill(pid, 0)` and automatically purges orphaned staging files. Operators can audit logs using `runepkg transactions`, `runepkg transactions list`, and `runepkg transactions inspect <timestamp>`.
+
+---
+
+## 10. Future Roadmap & Next Steps
 
 *   **Standard Rules Library:** Expand `target-rules/` to cover standard utilities (`coreutils`, `openssl`, `sed`, `grep`).
 *   **Automated Test Suite:** Implement end-to-end integration tests (Host $\rightarrow$ Stage 1 $\rightarrow$ Forge).

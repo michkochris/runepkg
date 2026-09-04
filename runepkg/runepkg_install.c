@@ -205,6 +205,7 @@ typedef struct {
     char *dst;
     int *error_count;
     pthread_mutex_t *mutex;
+    TransactionContext *tx;
 } FileInstallArgs;
 
 /* Internal function to perform the actual file system operation for a single file/dir/link
@@ -244,7 +245,8 @@ static int perform_file_install(const char *src, const char *dst) {
                     if (runepkg_util_copy_file(dst, backup_path) == 0) {
                         runepkg_journal_record_overwrite(ctx, dst, backup_path);
                     } else {
-                        runepkg_journal_record_overwrite(ctx, dst, "");
+                        fprintf(stderr, "\033[1;31m[backup error]\033[0m Failed to create backup for %s\n", dst);
+                        return -1;
                     }
                 }
             } else {
@@ -317,6 +319,18 @@ void* install_single_file(void *arg) {
     char *dst = args->dst;
     int *error_count = args->error_count;
     pthread_mutex_t *mutex = args->mutex;
+
+    if (args->tx) {
+        runepkg_set_current_tx(args->tx);
+        if (args->tx->abort_requested) {
+            pthread_mutex_lock(mutex);
+            (*error_count)++;
+            pthread_mutex_unlock(mutex);
+            free(src);
+            free(dst);
+            return NULL;
+        }
+    }
 
     if (perform_file_install(src, dst) != 0) {
         pthread_mutex_lock(mutex);
@@ -1104,35 +1118,6 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                    pkg_info.version ? pkg_info.version : "(unknown)");
         }
 
-        if (pkg_info.package_name && pkg_info.version) {
-            if (runepkg_storage_create_package_directory(pkg_info.package_name, pkg_info.version) == 0) {
-                if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
-                    if (runepkg_main_hash_table) {
-                        runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
-                    }
-
-                    {
-                        char *src_md5 = runepkg_util_concat_path(pkg_info.control_dir_path, "md5sums");
-                        if (runepkg_util_file_exists(src_md5)) {
-                            char pkg_db_path[PATH_MAX];
-                            runepkg_storage_get_package_path(pkg_info.package_name, pkg_info.version, pkg_db_path);
-                            {
-                                char *dst_md5 = runepkg_util_concat_path(pkg_db_path, "md5sums");
-                                if (runepkg_util_copy_file(src_md5, dst_md5) == 0) {
-                                    runepkg_log_verbose("MD5 sums persisted to %s\n", dst_md5);
-                                }
-                                free(dst_md5);
-                            }
-                        }
-                        free(src_md5);
-                    }
-                }
-            }
-        }
-
-        runepkg_storage_build_autocomplete_index();
-        handle_update_pkglist();
-
         if (g_system_install_root && pkg_info.data_dir_path && pkg_info.file_count > 0 && pkg_info.file_list) {
             int install_errors = 0;
             pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -1193,6 +1178,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 thread_args[thread_idx].dst = dst;
                 thread_args[thread_idx].error_count = &install_errors;
                 thread_args[thread_idx].mutex = &error_mutex;
+                thread_args[thread_idx].tx = runepkg_get_current_tx();
 
                 if (pthread_create(&threads[thread_idx], NULL, install_single_file, &thread_args[thread_idx]) == 0) {
                     active_threads++;
@@ -1208,8 +1194,46 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
 
             pthread_mutex_destroy(&error_mutex);
+
+            if (install_errors > 0) {
+                runepkg_util_error("Failed to install package payload cleanly (%d errors)\n", install_errors);
+                runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                runepkg_pack_free_package_info(&pkg_info);
+                return -1;
+            }
+
             runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
         }
+
+        /* Register package info in storage AFTER successful file installation */
+        if (pkg_info.package_name && pkg_info.version) {
+            if (runepkg_storage_create_package_directory(pkg_info.package_name, pkg_info.version) == 0) {
+                if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
+                    if (runepkg_main_hash_table) {
+                        runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
+                    }
+
+                    {
+                        char *src_md5 = runepkg_util_concat_path(pkg_info.control_dir_path, "md5sums");
+                        if (runepkg_util_file_exists(src_md5)) {
+                            char pkg_db_path[PATH_MAX];
+                            runepkg_storage_get_package_path(pkg_info.package_name, pkg_info.version, pkg_db_path);
+                            {
+                                char *dst_md5 = runepkg_util_concat_path(pkg_db_path, "md5sums");
+                                if (runepkg_util_copy_file(src_md5, dst_md5) == 0) {
+                                    runepkg_log_verbose("MD5 sums persisted to %s\n", dst_md5);
+                                }
+                                free(dst_md5);
+                            }
+                        }
+                        free(src_md5);
+                    }
+                }
+            }
+        }
+
+        runepkg_storage_build_autocomplete_index();
+        handle_update_pkglist();
 
         /* Integration: Notify host layer that a new installation occurred */
         runepkg_host_register_install(&pkg_info);

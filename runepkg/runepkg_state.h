@@ -129,5 +129,7 @@ TransactionContext *runepkg_get_current_tx(void);
 
 /* --- Startup Crash Recovery & Audit --- */
 int runepkg_fsm_recover_orphaned_transactions(void);
+int runepkg_fsm_list_transactions(void);
+int runepkg_fsm_inspect_transaction(const char *target);
 
 #endif /* RUNEPKG_STATE_H */

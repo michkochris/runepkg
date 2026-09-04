@@ -97,12 +97,15 @@ void usage(void) {
     printf("  source-build-depends <pkg>...           Download source package files and build-dependency .debs.\n\n");
 
     printf("Maintenance & Diagnostics:\n");
-    printf("  transactions                            Audit transaction logs and run crash recovery scan.\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
     printf("      --print-autopool                    Print the contents of the consolidated autocomplete pool.\n");
     printf("      --rebuild-autocomplete              Rebuild the local package name index.\n");
+    printf("  transactions [list|inspect <ts|log>]   Audit FSM execution logs, inspect journals, or recover crashed runs.\n");
+    printf("                                          Accepts a timestamp or absolute path to a .log file.\n");
+    printf("                                          Guarantees atomic state and system integrity by tracking\n");
+    printf("                                          transactional boundaries from start to finish.\n");
     printf("  verify <pkg>                            Cryptographic package verification using GPG.\n\n");
 
     handle_version();
@@ -642,12 +645,26 @@ int main(int argc, char *argv[]) {
             }
             step_cleanup(&tx_ctx);
         } else if (strcmp(argv[i], "transactions") == 0) {
-            int rec = runepkg_fsm_recover_orphaned_transactions();
-            printf("Transaction log directory: %s\n", g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log");
-            if (rec > 0) {
-                printf("Audit complete: Recovered and cleaned %d orphaned transaction workspaces.\n", rec);
+            if (i + 1 < argc && strcmp(argv[i+1], "list") == 0) {
+                runepkg_fsm_list_transactions();
+                i++;
+            } else if (i + 1 < argc && strcmp(argv[i+1], "inspect") == 0) {
+                if (i + 2 < argc) {
+                    runepkg_fsm_inspect_transaction(argv[i+2]);
+                    i += 2;
+                } else {
+                    printf("Error: transactions inspect requires a log filename or timestamp.\n");
+                    cli_failed = 1;
+                    i++;
+                }
             } else {
-                printf("Audit complete: System transaction state is clean.\n");
+                int rec = runepkg_fsm_recover_orphaned_transactions();
+                printf("Transaction log directory: %s\n", g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log");
+                if (rec > 0) {
+                    printf("Audit complete: Recovered and cleaned %d orphaned transaction workspaces.\n", rec);
+                } else {
+                    printf("Audit complete: System transaction state is clean.\n");
+                }
             }
         } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI

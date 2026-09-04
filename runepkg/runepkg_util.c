@@ -14,6 +14,7 @@
 
 #include "runepkg_portable.h"
 #include "runepkg_util.h"
+#include "runepkg_state.h"
 #include "runepkg_config.h"
 #include "runepkg_defensive.h"
 #include "runepkg_cpp_ffi.h"
@@ -1569,6 +1570,13 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
 
     if (chdir(cwd) != 0) perror("chdir rollback failed");
     runepkg_util_log_verbose(".deb package built successfully: %s\n", abs_output);
+
+    {
+        TransactionContext *ctx = runepkg_get_current_tx();
+        if (ctx && abs_output) {
+            runepkg_journal_record_create(ctx, abs_output);
+        }
+    }
 
     free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
     return 0;

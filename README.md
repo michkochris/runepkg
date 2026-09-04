@@ -324,12 +324,15 @@ Advanced Repository Management (Network/FFI):
   download-build-depends <pkg>            Download binary .debs required to compile a source package.
 
 Maintenance & Diagnostics:
-  transactions                            Audit transaction logs and run crash recovery scan.
-      --print-config                      Display active paths and repository settings.
-      --print-config-file                 Show the active configuration file path.
-      --print-pkglist-file                Display autocompletion index file paths.
-      --print-autopool                    Display consolidated autocompletion pool contents.
-      --rebuild-autocomplete              Regenerate package name index.
+      --print-config                      Print all active path and repository settings.
+      --print-config-file                 Show the path to the runepkgconfig file in use.
+      --print-pkglist-file                Show paths to the autocomplete index files.
+      --print-autopool                    Print the contents of the consolidated autocomplete pool.
+      --rebuild-autocomplete              Rebuild the local package name index.
+  transactions [list|inspect <ts|log>]   Audit FSM execution logs, inspect journals, or recover crashed runs.
+                                          Accepts a timestamp or absolute path to a .log file.
+                                          Guarantees atomic state and system integrity by tracking 
+                                          transactional boundaries from start to finish.
 
 Cross-Compilation:
   bootstrap <target> [pkgs...]            Construct isolated cross-compilation toolchain, 

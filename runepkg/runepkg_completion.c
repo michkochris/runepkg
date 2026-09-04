@@ -1095,6 +1095,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
         }
     } else if (strcmp(prev, "remove") == 0 || strcmp(prev, "-r") == 0 || strcmp(prev, "--remove") == 0) {
         prefix_search_and_print_ext(partial, ":pkg");
+    } else if (strcmp(prev, "transactions") == 0) {
+        if (strncmp("list", partial, strlen(partial)) == 0) print_candidate("list");
+        if (strncmp("inspect", partial, strlen(partial)) == 0) print_candidate("inspect");
     } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 || strcmp(prev, "-L") == 0 || strcmp(prev, "--list") == 0 || strcmp(prev, "--list-files") == 0) {
         prefix_search_and_print_ext(partial, ":pkg");
     } else if (strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0 || strcmp(prev, "--status") == 0) {
