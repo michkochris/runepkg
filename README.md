@@ -23,7 +23,7 @@
 - **High-Level Version**: The extended C++ FFI suite transforms **runepkg** into a lightning fast **Debian** repository package manager but with a sophisticated toolchain and **Debian** compatible source package builder suited for rapid embedded systems deployment.
     - **Compact Extended Footprint**: Professional-grade binary size (**2.5 MB** 100% static) including full networking, compression, and C++ runtime.
     - **Parallel Networking**: High-speed multi-threaded repository synchronization and package downloading using `libcurl`.
-    - **Enhanced C++ Security Foundation**: Hardened perimeter featuring automatic OpenPGP repository `InRelease` signature verification, streaming SHA256/SHA512 hash validation, path sanitization/jail traversal defense (`..`), POSIX `rlimit` extraction bounds, sandboxed privilege dropping (`_apt`), and 100% exception-safe C FFI bridge. Detailed technical background can be found in [CPP.md](./CPP.md).
+    - **Enhanced C++ Security Foundation**: Hardened perimeter featuring automatic OpenPGP repository `InRelease` signature verification, streaming SHA256/SHA512 hash validation, path sanitization/jail traversal defense (`..`), POSIX `rlimit` extraction bounds, sandboxed privilege dropping (`_apt`), and 100% exception-safe C FFI bridge. Detailed technical background can be found in 💻 [CPP.md](./CPP.md).
     - **Debian Source Building**: High-speed workflow for unearthing and forging source packages. `runepkg source <pkg>` downloads and sets up package, `runepkg build <pkg>` triggers a build, and `runepkg buildpkg-split <pkg>` splits package into multiple debian compatible `.deb` fragments (e.g., bin, dev, doc, ext...).
     - **Cross-Toolchain Engine**: (`bootstrap <target> [pkgs...]`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
 
@@ -95,45 +95,13 @@ This vision evolves package management by replacing the sequential, text-heavy b
 - **Intelligent Local-First Resolution:** A smart logic layer that automatically detects and resolves dependencies using sibling `.deb` files found in the local directory or download cache before reaching for the network.
 - **Security-Hardened Plumbing:** The core engine is built on a **security-first memory model** (`secure_malloc`) featuring automatic zero-wiping and strict **path traversal protection**. These defenses were refined through AI-driven security auditing to mitigate memory corruption risks and unauthorized filesystem access.
 - **Comprehensive musl libc Support:** Provides full compatibility for both the **Minimal C Core** and the **Extended C++ FFI Suite** when targeting **musl libc**.
-- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in [HOLY_GRAIL.md](./HOLY_GRAIL.md) 🏆
-- **Enhanced Cryptographic Trust & Security Perimeter:** A comprehensive security layer supporting OpenPGP repository `InRelease` signature verification against system keyrings (`/etc/apt/trusted.gpg.d/`), streaming SHA256/SHA512 hash validation, POSIX `rlimit` extraction bounds (preventing zip bombs), sandboxed worker privilege dropping (`_apt`), and detached GPG signatures (`.sig`). Complete C++ architecture specifications can be found in [CPP.md](./CPP.md).
+- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in 🏆 [HOLY_GRAIL.md](./HOLY_GRAIL.md) 
+- **Enhanced Cryptographic Trust & Security Perimeter:** A comprehensive security layer supporting OpenPGP repository `InRelease` signature verification against system keyrings (`/etc/apt/trusted.gpg.d/`), streaming SHA256/SHA512 hash validation, POSIX `rlimit` extraction bounds (preventing zip bombs), sandboxed worker privilege dropping (`_apt`), and detached GPG signatures (`.sig`).
 - **Native Debian Source Building**: An integrated C++ pipeline that streamlines the fetching and compilation of Debian source packages, the produced .deb's are fully compatible with the Debian Ecosystem. Runepkg directly produces "Raw Debian Runes" from single package builds to multi-package splitting and allowing for the optional building of a sub-package. This is all done independently without the overhead of traditional Debian distribution build tools.
 - **Disposable Cross-Compilation Toolchain:** The `bootstrap <target> [pkgs...]` command bootstraps a destructible toolchain to cleanly cross-compile isolated, **Debian** compatible .deb's and runtime dependencies for the target packages. This enables rapid deployment of software into embedded **Debian Ecosystems** without contaminating the host environment (`build-toolchain` command line option is reserved for future development).
 - **Proven Stability at Scale:** Rigorously stress-tested by successfully installing full desktop environments like **GNOME** and **XFCE**. The engine demonstrated extreme stability while resolving, downloading, and extracting thousands of recursive dependencies simultaneously.
 
-### 1. Hierarchical Storage & Binary Caching
-Traditional Debian tooling relies on scanning monolithic, text-heavy status files. **runepkg** implements isolated `package-version` subdirectories paired with binary-serialized metadata (`pkginfo.bin`). Lookups utilize dynamic, prime-resizing FNV-1a hash tables for deterministic high-performance query speeds.
-
-### 2. Streamlined Debian Source Forging
-Traditional Debian source compilation requires extensive distribution tooling (`dpkg-buildpackage`, `debhelper`, `fakeroot`, `quilt`). **runepkg** directly unpacks `.dsc` stanzas and patches, normalizes Autotools timestamp cascades, and compiles the source tree directly using target-profile toolchains.
-
-### 3. Isolated Target Sysroot & Target <PKG'S>
-When cross-compiling for embedded targets (such as `x86_64-musl-static`), **runepkg** evaluates dependencies independently:
--   **Host Tools:** Automatically satisfied via the host system to avoid rebuilding the compiler.
--   **Target Libraries:** Automatically cross-compiled and staged into the isolated profile sysroot (`/mnt/runepkg/<profile>/sysroot`).
--   **Target Runes:** Linked, stripped, assembled into `.deb` archives, and exported directly to `runepkg_debs/`.
-
-🎩 Technical details on the genius architectural design choices can be found in [DESIGN.md](./DESIGN.md).
-
-### 4: Workflows for the Enthusiast
-For the hobbyist and system builder, **runepkg** excels at the "low-level" process of package creation. You don't need complex build harnesses or distribution-specific policies to forge a `.deb`.
-
-- **Direct Build**: `runepkg build <dir> [output.deb]` builds a `.deb` instantly. It intelligently detects if the directory is an eligible "debian pkg based directory structure."
-- **Manual Staging:** Use your own custom bash scripts to fetch and compile source code, then use `make install DESTDIR=/path/to/staging` to prepare your "debian pkg based directory structure" exactly how you want it.
-- **Direct Forging:** Once your staging area is ready, a single command—`runepkg -b /path/to/staging`—wraps your work into a high-performance `.deb` package instantly.
-- **FHS Initialization**: The engine can bootstrap a full Filesystem Hierarchy Standard (FHS) skeleton in seconds. This triggers automatically if **runepkg** detects you are installing to an alternate root (non-`/`)—creating necessary directories like `/usr/bin`, `/etc`, and `/lib` to prepare a fresh environment for software deployment.
-- **Freedom from Bloat:** This workflow is ideal for **Linux From Scratch (LFS)** enthusiasts who want to maintain their own binary packages without the overhead of `debhelper`, `dpkg-dev`, or mandatory system-wide policies.
-
-### 5: Surgical Precision
-Unlike `apt-get source`, which may pull in massive build-dependency trees, `runepkg source` downloads only the "raw runes" (upstream source + Debian patches). This allows for direct inspection and modification of the `rules` build script or `control` metadata. **runepkg** remains independent of standard Debian tools; its **Native Build Fallback** can forge packages even when `debhelper` or `dpkg-dev` are missing.
-
-### 6: The "Hacker" Build Loop
-**runepkg** enables a streamlined "fetch-edit-build" workflow:
-- **Fetch**: Use `runepkg source` to unearth a source package into your build directory.
-- **Dependency Management**: Use `source-depends` to download a source package along with its runtime-dependencies, or `source-build-depends` to automate the retrieval of all binary packages required for a successful build.
-- **Edit**: Modify `debian/rules`, `control`, or the source code itself.
-- **Build**: Use `runepkg build <pkg|dir|.dsc>` to trigger a build. **runepkg** attempts the build without the strict dependency gatekeeping of mainstream tools. It automatically handles package names (auto-fetching), extracted directories, or `.dsc` files.
-- **Multi-Package Builds**: `runepkg buildpkg-split <pkg|dir|.dsc> [target]` builds a source package and splits it into multiple `.deb` fragments (e.g., `bin`, `dev`, `doc`). You can optionally specify a `[target]` package name to forge only that specific fragment from the split list.
+Technical details on the genius architectural design choices can be found in 🎩 [DESIGN.md](./DESIGN.md).
 
 ---
 
@@ -360,14 +328,12 @@ Developed from years of experience with Custom Cross Linux From Scratch (LFS), *
 
 <h1>
   <img src="./runepkg/gemini-svg.svg.svg" width="30" style="vertical-align: middle;">
-  GitHub Copilot Review...
+  Further Information
 </h1>
 
-A comprehensive collective assessment covering architectural design choices, structural integrity, fuzzing validation, security hardening, and GitHub Copilot's advanced review of **runepkg v1.0.4** (Production-Ready) can be found in [COPILOT.md](./ASSESSMENT.md) 
+GitHub Copilot has provided an advanced review, opinion and comprehensive assessment covering architectural design choices, structural integrity, testing, security hardening of **runepkg v1.0.4** [COPILOT.md](./ASSESSMENT.md). 
 
 Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 
-
-⚡ Detailed benchmarks quantifying package lookup latency, repository update throughput, and memory footprint compared to `dpkg`/`apt` can be found in [BENCHMARKS.md](./BENCHMARKS.md) 
 
 ## Contact
 ---
