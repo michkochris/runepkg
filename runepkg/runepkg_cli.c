@@ -90,6 +90,11 @@ void usage(void) {
     printf("  download-depends <pkg>...               Download a .deb and its binary dependencies.\n");
     printf("  download-build-depends <pkg>...         Download binary .debs required to build a source package.\n\n");
 
+    printf("Source Package Operations (Network/FFI):\n");
+    printf("  source <pkg>...                         Download and extract source package files into build_dir.\n");
+    printf("  source-depends <pkg>...                 Download source package files and runtime dependencies.\n");
+    printf("  source-build-depends <pkg>...           Download source package files and build-dependency .debs.\n\n");
+
     printf("Maintenance & Diagnostics:\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
@@ -536,6 +541,75 @@ int main(int argc, char *argv[]) {
 #endif
             } else {
                 printf("Error: Download-depends command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "source") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                const char *pkgs[1024]; int pkg_count = 0;
+                while (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
+#else
+                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                    printf("Rebuild with 'make all' to enable this feature.\n");
+                    i++; break;
+#endif
+                    i++;
+                }
+#ifdef ENABLE_CPP_FFI
+                if (pkg_count > 0) {
+                    bool old_force = g_force_mode; g_force_mode = true;
+                    if (runepkg_repo_source_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
+                    g_force_mode = old_force;
+                }
+#endif
+            } else {
+                printf("Error: source command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "source-depends") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                const char *pkgs[1024]; int pkg_count = 0;
+                while (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
+#else
+                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                    printf("Rebuild with 'make all' to enable this feature.\n");
+                    i++; break;
+#endif
+                    i++;
+                }
+#ifdef ENABLE_CPP_FFI
+                if (pkg_count > 0) {
+                    bool old_force = g_force_mode; g_force_mode = true;
+                    if (runepkg_repo_source_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
+                    g_force_mode = old_force;
+                }
+#endif
+            } else {
+                printf("Error: source-depends command requires a package name.\n");
+            }
+        } else if (strcmp(argv[i], "source-build-depends") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                const char *pkgs[1024]; int pkg_count = 0;
+                while (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
+                    if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
+#else
+                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                    printf("Rebuild with 'make all' to enable this feature.\n");
+                    i++; break;
+#endif
+                    i++;
+                }
+#ifdef ENABLE_CPP_FFI
+                if (pkg_count > 0) {
+                    bool old_force = g_force_mode; g_force_mode = true;
+                    if (runepkg_repo_source_build_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
+                    g_force_mode = old_force;
+                }
+#endif
+            } else {
+                printf("Error: source-build-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
