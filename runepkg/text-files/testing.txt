@@ -1,3 +1,14 @@
+[ zypherus /home/michko/runepkg/runepkg ]# ls
+bashrc               runepkg_completion.c  runepkg_defensive.h  runepkg_install.h     runepkg_security.cpp  runepkg_util.hpp
+copy_makefile.sh     runepkg_completion.h  runepkg_handle.c     runepkg_logo.svg      runepkg_security.hpp  target-runes
+currupted_cpp        runepkgconfig         runepkg_handle.h     runepkg_md5sums.c     runepkg_storage.c     targets
+debian-depends.sh    runepkg_config.c      runepkg_hash.c       runepkg_md5sums.h     runepkg_storage.h     text-files
+forge-musl-all.sh    runepkg_config.h      runepkg_hash.h       runepkg_network.cpp   runepkg_util.c        version-check.sh
+gemini-svg.svg       runepkg_cpp_ffi.h     runepkg_host.c       runepkg_pack.c        runepkg_util.cpp      vrunepkg_config
+Makefile             runepkg_crypto.c      runepkg_host.h       runepkg_pack.h        runepkg_util_cpp.cpp
+make_runepkg_deb.sh  runepkg_crypto.h      runepkg_icon.svg     runepkg_portable.h    runepkg_util_cpp.hpp
+runepkg_cli.c        runepkg_defensive.c   runepkg_install.c    runepkg_resolver.cpp  runepkg_util.h
+[ zypherus /home/michko/runepkg/runepkg ]# nano security_assesment.txt
 [ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
 Cleaning up build artifacts and unearthed runes...
 🧹 Clean complete. The forge is reset.
@@ -73,9 +84,9 @@ Files installed: 0
 Downloading 8 package lists...
   -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
@@ -296,10 +307,10 @@ Checking for upgradable packages...
   [upgradable] libncurses-dev: 6.6+20251231-1+b1 -> 6.6+20260608-2
   [upgradable] libsemanage2: 3.10-1 -> 3.11-1
   [upgradable] libctf-nobfd0: 2.46-3 -> 2.47-2
-Update complete! Binary/Source indexes updated. 213 upgradable. Time: 9.6s
+Update complete! Binary/Source indexes updated. 213 upgradable. Time: 7.2s
 [harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
   -> Found 16 index partitions to analyze.
-[success] Processed 112374 source rune stanzas in 547ms.
+[success] Processed 112374 source rune stanzas in 526ms.
   -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26472 KB)
 [ zypherus /home/michko/runepkg/runepkg ]# runepkg -i libc6
 libc6                          libc6-dev-arc-cross            libc6-dev-ppc64-cross          libc6-i386
@@ -337,8 +348,6 @@ libc6-dev-amd64-x32-dcv1       libc6-dev-powerpc-ppc64-dcv1   libc6-hppa-dcv1
 [success] Downloaded 1 packages to /srv/lib/runepkg_dir/download_dir
 [md5sums] Passed for libc6-arm64-cross
 [runepkg] Installing libc6-arm64-cross-2.43-3cross8
-[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/usr/
-aarch64-linux-gnu/ share/
 [ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/usr/aarch64-linux-gnu/lib/
 ld-linux-aarch64.so.1   libc.so.6       libmvec.so.1        libnss_files.so.2   libresolv.so.2
 libanl.so.1             libdl.so.2      libnsl.so.1         libnss_hesiod.so.2  librt.so.1

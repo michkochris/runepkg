@@ -70,6 +70,19 @@ std::vector<std::string> find_system_keyring_paths() {
     return keyrings;
 }
 
+static std::string escape_shell_arg(const std::string& arg) {
+    std::string escaped = "'";
+    for (char c : arg) {
+        if (c == '\'') {
+            escaped += "'\\''";
+        } else {
+            escaped += c;
+        }
+    }
+    escaped += "'";
+    return escaped;
+}
+
 bool verify_gpg_signature(const std::string& filepath, const std::string& keyring_path) {
     if (!fs::exists(filepath)) {
         return false;
@@ -84,10 +97,10 @@ bool verify_gpg_signature(const std::string& filepath, const std::string& keyrin
 
     std::string keyrings_arg;
     for (const auto& kr : keyrings) {
-        keyrings_arg += " --keyring " + kr;
+        keyrings_arg += " --keyring " + escape_shell_arg(kr);
     }
 
-    std::string cmd = "gpgv --quiet" + keyrings_arg + " " + filepath;
+    std::string cmd = "gpgv --quiet" + keyrings_arg + " " + escape_shell_arg(filepath);
     std::string output;
     int exit_code = -1;
     bool ok = util::exec_command(cmd, output, exit_code);
@@ -156,6 +169,15 @@ static std::string compute_hash_evp(const std::string& filepath, const char* dig
 #endif
 }
 
+static bool constant_time_compare(const std::string& a, const std::string& b) {
+    if (a.size() != b.size()) return false;
+    volatile unsigned char result = 0;
+    for (size_t i = 0; i < a.size(); ++i) {
+        result |= (static_cast<unsigned char>(a[i]) ^ static_cast<unsigned char>(b[i]));
+    }
+    return result == 0;
+}
+
 bool verify_sha256_checksum(const std::string& filepath, const std::string& expected_hex_hash) {
     if (filepath.empty() || expected_hex_hash.empty()) {
         return false;
@@ -164,7 +186,7 @@ bool verify_sha256_checksum(const std::string& filepath, const std::string& expe
     if (calculated.empty()) {
         return false;
     }
-    return util::to_lower(calculated) == util::to_lower(expected_hex_hash);
+    return constant_time_compare(util::to_lower(calculated), util::to_lower(expected_hex_hash));
 }
 
 bool verify_sha512_checksum(const std::string& filepath, const std::string& expected_hex_hash) {
@@ -175,7 +197,7 @@ bool verify_sha512_checksum(const std::string& filepath, const std::string& expe
     if (calculated.empty()) {
         return false;
     }
-    return util::to_lower(calculated) == util::to_lower(expected_hex_hash);
+    return constant_time_compare(util::to_lower(calculated), util::to_lower(expected_hex_hash));
 }
 
 /* --- Archive Sanitization & Path Traversal Defense --- */
@@ -288,24 +310,20 @@ bool drop_privileges(const std::string& username) {
         }
     }
 
-    if (initgroups(pw->pw_name, pw->pw_gid) != 0) {
-        return false;
+    sigset_t oldset, newset;
+    sigfillset(&newset);
+    sigprocmask(SIG_BLOCK, &newset, &oldset);
+
+    bool ok = false;
+    if (initgroups(pw->pw_name, pw->pw_gid) == 0 &&
+        setgid(pw->pw_gid) == 0 &&
+        setuid(pw->pw_uid) == 0 &&
+        setuid(0) == -1) { /* Verify privilege drop */
+        ok = true;
     }
 
-    if (setgid(pw->pw_gid) != 0) {
-        return false;
-    }
-
-    if (setuid(pw->pw_uid) != 0) {
-        return false;
-    }
-
-    /* Verify privileges dropped */
-    if (setuid(0) != -1) {
-        return false; /* Security failure: privilege drop failed */
-    }
-
-    return true;
+    sigprocmask(SIG_SETMASK, &oldset, nullptr);
+    return ok;
 }
 
 int SandboxWorker::execute(const std::function<int()>& worker_func, const std::string& username) {
@@ -363,10 +381,14 @@ void* secure_ffi_buffer_alloc(size_t size) {
 void secure_ffi_buffer_free(void* ptr, size_t size) {
     if (!ptr) return;
     if (size > 0) {
+#if defined(HAVE_OPENSSL_EVP)
+        OPENSSL_cleanse(ptr, size);
+#else
         volatile unsigned char* p = static_cast<volatile unsigned char*>(ptr);
         for (size_t i = 0; i < size; ++i) {
             p[i] = 0;
         }
+#endif
     }
     std::free(ptr);
 }
@@ -409,6 +431,9 @@ int runepkg_security_verify_gpg(const char* filepath, const char* keyring_path) 
 
 int runepkg_security_sanitize_path(const char* base_dir, const char* entry_path, char* out_buf, size_t max_len) {
     try {
+        if (out_buf && max_len > 0) {
+            std::memset(out_buf, 0, max_len);
+        }
         if (!base_dir || !entry_path || !out_buf || max_len == 0) return 0;
         std::string resolved;
         if (!runepkg::security::sanitize_extract_path(base_dir, entry_path, resolved)) {
@@ -421,6 +446,9 @@ int runepkg_security_sanitize_path(const char* base_dir, const char* entry_path,
         out_buf[max_len - 1] = '\0';
         return 1;
     } catch (...) {
+        if (out_buf && max_len > 0) {
+            std::memset(out_buf, 0, max_len);
+        }
         return 0;
     }
 }
