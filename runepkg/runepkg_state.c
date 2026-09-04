@@ -120,6 +120,9 @@ int runepkg_fsm_acquire_lock(TransactionContext *ctx)
     char lock_path[PATH_MAX];
     struct flock fl;
     const char *base_dir;
+    int attempts = 0;
+    int max_attempts = 6;
+    useconds_t delay_us = 50000; /* 50ms initial delay */
 
     if (!ctx) return -1;
     if (ctx->lock_fd > 0) return 0;
@@ -140,15 +143,33 @@ int runepkg_fsm_acquire_lock(TransactionContext *ctx)
     fl.l_start = 0;
     fl.l_len = 0;
 
-    if (fcntl(ctx->lock_fd, F_SETLK, &fl) < 0) {
-        runepkg_log_write("ERROR", "Failed to acquire exclusive transaction lock on %s: %s", lock_path, strerror(errno));
-        close(ctx->lock_fd);
-        ctx->lock_fd = -1;
-        return -1;
+    while (attempts < max_attempts) {
+        if (fcntl(ctx->lock_fd, F_SETLK, &fl) == 0) {
+            runepkg_log_write("INFO", "Acquired process-global transaction lock on %s (attempt %d)", lock_path, attempts + 1);
+            return 0;
+        }
+
+        if (errno == EACCES || errno == EAGAIN) {
+            attempts++;
+            if (attempts >= max_attempts) {
+                break;
+            }
+            runepkg_log_write("WARN", "Transaction lock busy on %s, retrying in %u ms (attempt %d/%d)...",
+                lock_path, (unsigned int)(delay_us / 1000), attempts, max_attempts);
+            usleep(delay_us);
+            if (delay_us < 400000) {
+                delay_us *= 2;
+            }
+        } else {
+            break;
+        }
     }
 
-    runepkg_log_write("INFO", "Acquired process-global transaction lock on %s", lock_path);
-    return 0;
+    runepkg_log_write("ERROR", "Failed to acquire exclusive transaction lock on %s after %d attempts: %s",
+        lock_path, attempts, strerror(errno));
+    close(ctx->lock_fd);
+    ctx->lock_fd = -1;
+    return -1;
 }
 
 void runepkg_fsm_release_lock(TransactionContext *ctx)

@@ -54,13 +54,14 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
     char line[16384];
     int found_installed = 0;
     int has_content = 0;
-    char *current_field = NULL;
     char **field_ptr = NULL;
+    size_t len;
 
     runepkg_pack_init_package_info(info);
 
-    while (fgets(line, sizeof(line), fp)) {
-        size_t len = strlen(line);
+    while (!feof(fp) && !ferror(fp)) {
+        if (!fgets(line, sizeof(line), fp)) break;
+        len = strlen(line);
         if (len > 0 && line[len-1] == '\n') line[--len] = '\0';
         if (len > 0 && line[len-1] == '\r') line[--len] = '\0';
 
@@ -76,7 +77,7 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
 
         if (line[0] == ' ') {
             /* Continuation line for description */
-            if (current_field && field_ptr) {
+            if (field_ptr == &info->description) {
                 size_t old_len = *field_ptr ? strlen(*field_ptr) : 0;
                 size_t new_len = old_len + strlen(line) + 2;
                 char *tmp = realloc(*field_ptr, new_len);
@@ -90,37 +91,46 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
         }
 
         if (strncmp(line, "Package: ", 9) == 0) {
+            if (info->package_name) free(info->package_name);
             info->package_name = strdup(line + 9);
-            current_field = "Package";
             field_ptr = &info->package_name;
         } else if (strncmp(line, "Status: ", 8) == 0) {
             if (strstr(line, "installed")) found_installed = 1;
         } else if (strncmp(line, "Version: ", 9) == 0) {
+            if (info->version) free(info->version);
             info->version = strdup(line + 9);
         } else if (strncmp(line, "Architecture: ", 14) == 0) {
+            if (info->architecture) free(info->architecture);
             info->architecture = strdup(line + 14);
         } else if (strncmp(line, "Maintainer: ", 12) == 0) {
+            if (info->maintainer) free(info->maintainer);
             info->maintainer = strdup(line + 12);
         } else if (strncmp(line, "Depends: ", 9) == 0) {
+            if (info->depends) free(info->depends);
             info->depends = strdup(line + 9);
         } else if (strncmp(line, "Pre-Depends: ", 13) == 0) {
+            if (info->pre_depends) free(info->pre_depends);
             info->pre_depends = strdup(line + 13);
         } else if (strncmp(line, "Provides: ", 10) == 0) {
+            if (info->provides) free(info->provides);
             info->provides = strdup(line + 10);
         } else if (strncmp(line, "Description: ", 13) == 0) {
+            if (info->description) free(info->description);
             info->description = strdup(line + 13);
-            current_field = "Description";
             field_ptr = &info->description;
         } else if (strncmp(line, "Section: ", 9) == 0) {
+            if (info->section) free(info->section);
             info->section = strdup(line + 9);
         } else if (strncmp(line, "Priority: ", 10) == 0) {
+            if (info->priority) free(info->priority);
             info->priority = strdup(line + 10);
         } else if (strncmp(line, "Homepage: ", 10) == 0) {
+            if (info->homepage) free(info->homepage);
             info->homepage = strdup(line + 10);
         } else if (strncmp(line, "Installed-Size: ", 16) == 0) {
+            if (info->installed_size) free(info->installed_size);
             info->installed_size = strdup(line + 16);
         } else {
-            current_field = NULL;
             field_ptr = NULL;
         }
     }
@@ -294,8 +304,8 @@ int runepkg_host_unregister_removal(const char *pkg_name) {
 }
 
 int runepkg_host_query_package(const char *pkg_name, HostPackageInfo *out_info) {
-    HostPackageInfo **list;
-    int count;
+    HostPackageInfo **list = NULL;
+    int count = 0;
     int found = 0;
     int i;
 

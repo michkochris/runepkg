@@ -97,6 +97,30 @@ The configuration system (`runepkg_config.c`) is designed for extreme portabilit
 
 `runepkg` incorporates a 6-tier transactional lifecycle to guarantee atomic state transitions, signal-safe rollbacks, and complete execution auditing across both C89 core and C++ extended build modes.
 
+### FSM State Transition Lifecycle
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> PREPARING : runepkg_fsm_init()
+    PREPARING --> FETCHING : Lock acquired & sysroot ready
+    FETCHING --> VALIDATING : Package downloaded / unpacked
+    VALIDATING --> STAGING : SHA256/GPG verified
+    STAGING --> COMMITTING : Staging extraction successful
+    COMMITTING --> CLEANUP : Atomic swap & DB update complete
+    CLEANUP --> IDLE : Transaction committed successfully
+
+    PREPARING --> ROLLBACK : Error / Lock contention timeout
+    FETCHING --> ROLLBACK : Network / download failure
+    VALIDATING --> ROLLBACK : Checksum / GPG failure
+    STAGING --> ROLLBACK : Quota / disk full / sanitization error
+    COMMITTING --> ROLLBACK : Atomic rename failure
+    
+    ROLLBACK --> FAILED : Rollback error
+    ROLLBACK --> CLEANUP : Rollback completed
+    FAILED --> [*]
+    CLEANUP --> [*]
+```
+
 ### Dual-Tier State Engine
 *   **Low-Level C89 Core (`runepkg_state.c/.h`):** Provides a portable, zero-dependency state dispatch engine. States move strictly through `IDLE` $\rightarrow$ `PREPARING` $\rightarrow$ `FETCHING` $\rightarrow$ `VALIDATING` $\rightarrow$ `STAGING` $\rightarrow$ `COMMITTING` $\rightarrow$ `CLEANUP`.
 *   **High-Level C++ RAII Guard (`runepkg_guard.hpp/.cpp`):** Wraps C transaction contexts in an RAII `RunepkgTransactionGuard`. If an exception or early return unwinds the stack prior to `.commit()`, the destructor triggers `step_rollback()` and writes post-mortem logs automatically.

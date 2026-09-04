@@ -780,6 +780,8 @@ void handle_binary_completion(const char *partial, const char *prev) {
     char *buf;
     char *full_line_copy;
 
+    if (!partial) partial = "";
+
     /* Reset completion counters for each new trigger */
     g_completion_printed_count = 0;
     g_completion_seen_count = 0;
@@ -1036,7 +1038,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
     }
 
     if (strcmp(prev, "runepkg") == 0) {
-        if (partial[0] == '-') {
+        if (partial && partial[0] == '-') {
             if (strncmp(partial, "--", 2) == 0) {
                 const char *long_opts[] = {
                     "--install", "--remove", "--list", "--status", "--list-files",
@@ -1063,7 +1065,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             };
             for (i = 0; i < 25; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
-    } else if (partial[0] == '-') {
+    } else if (partial && partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {
             if (strcmp(inferred_cmd, "install") == 0) {
                 short_opts2[0] = "-f"; short_opts2[1] = "-v";

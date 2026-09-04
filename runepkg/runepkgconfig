@@ -64,7 +64,7 @@ runepkg_debs=/srv/lib/runepkg_dir/runepkg_debs
 
 # [cleanup]
 # Automatically delete extraction workspace after installation (yes/no).
-cleanup=yes
+cleanup=no
 
 # [md5_checks]
 # Enable MD5 integrity verification during installation (yes/no).

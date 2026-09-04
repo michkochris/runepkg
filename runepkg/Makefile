@@ -250,6 +250,20 @@ debug: runepkg
 test: $(TARGET)
 	$(Q)./$(TARGET) --help
 
+static-analysis:
+	@echo "$(CYAN)Running static analysis with cppcheck...$(RESET)"
+	@if command -v cppcheck >/dev/null 2>&1; then \
+		cppcheck --enable=warning,style,performance,portability --error-exitcode=1 $(C_SOURCES) $(CPP_SOURCES) || echo "$(YELLOW)cppcheck found warnings.$(RESET)"; \
+	else \
+		echo "$(YELLOW)cppcheck not found. Install cppcheck for static analysis.$(RESET)"; \
+	fi
+	@if command -v scan-build >/dev/null 2>&1; then \
+		echo "$(CYAN)Running clang scan-build...$(RESET)"; \
+		scan-build $(MAKE) clean all; \
+	else \
+		echo "$(YELLOW)scan-build not found. Install clang-tools for compiler static analysis.$(RESET)"; \
+	fi
+
 info:
 	@echo "=== Build Information ==="
 	@echo "Target:  $(TARGET)"

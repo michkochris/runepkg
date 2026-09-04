@@ -631,7 +631,11 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                 }
                 *entries = temp;
             }
-            (*entries)[(*count)++] = to_add;
+            if (*entries) {
+                (*entries)[(*count)++] = to_add;
+            } else {
+                free(to_add);
+            }
         }
 
         /* SPECIAL: For database directories, also add the package name WITHOUT the version */
@@ -649,10 +653,20 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                          temp = realloc(*entries, *capacity * sizeof(char *));
                          if (temp) {
                              *entries = temp;
-                             (*entries)[(*count)++] = name_only;
-                         } else free(name_only);
+                             if (*entries) {
+                                 (*entries)[(*count)++] = name_only;
+                             } else {
+                                 free(name_only);
+                             }
+                         } else {
+                             free(name_only);
+                         }
                      } else {
-                         (*entries)[(*count)++] = name_only;
+                         if (*entries) {
+                             (*entries)[(*count)++] = name_only;
+                         } else {
+                             free(name_only);
+                         }
                      }
                  }
              }

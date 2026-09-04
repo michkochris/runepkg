@@ -405,7 +405,11 @@ int runepkg_security_verify_sha256(const char* filepath, const char* expected_ha
     try {
         if (!filepath || !expected_hash) return 0;
         return runepkg::security::verify_sha256_checksum(filepath, expected_hash) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in verify_sha256: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
+        std::cerr << "[runepkg_security] Unknown FFI exception in verify_sha256" << std::endl;
         return 0;
     }
 }
@@ -414,7 +418,11 @@ int runepkg_security_verify_sha512(const char* filepath, const char* expected_ha
     try {
         if (!filepath || !expected_hash) return 0;
         return runepkg::security::verify_sha512_checksum(filepath, expected_hash) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in verify_sha512: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
+        std::cerr << "[runepkg_security] Unknown FFI exception in verify_sha512" << std::endl;
         return 0;
     }
 }
@@ -424,7 +432,11 @@ int runepkg_security_verify_gpg(const char* filepath, const char* keyring_path) 
         if (!filepath) return 0;
         std::string keyring = keyring_path ? keyring_path : "";
         return runepkg::security::verify_gpg_signature(filepath, keyring) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in verify_gpg: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
+        std::cerr << "[runepkg_security] Unknown FFI exception in verify_gpg" << std::endl;
         return 0;
     }
 }
@@ -445,7 +457,14 @@ int runepkg_security_sanitize_path(const char* base_dir, const char* entry_path,
         std::strncpy(out_buf, resolved.c_str(), max_len - 1);
         out_buf[max_len - 1] = '\0';
         return 1;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in sanitize_path: " << e.what() << std::endl;
+        if (out_buf && max_len > 0) {
+            std::memset(out_buf, 0, max_len);
+        }
+        return 0;
     } catch (...) {
+        std::cerr << "[runepkg_security] Unknown FFI exception in sanitize_path" << std::endl;
         if (out_buf && max_len > 0) {
             std::memset(out_buf, 0, max_len);
         }
@@ -456,6 +475,9 @@ int runepkg_security_sanitize_path(const char* base_dir, const char* entry_path,
 int runepkg_security_apply_rlimits(size_t max_bytes, size_t max_files) {
     try {
         return runepkg::security::apply_extraction_resource_limits(max_bytes, max_files) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in apply_rlimits: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
         return 0;
     }
@@ -465,6 +487,9 @@ int runepkg_security_drop_privileges(const char* username) {
     try {
         std::string user = username ? username : "";
         return runepkg::security::drop_privileges(user) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in drop_privileges: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
         return 0;
     }
@@ -474,6 +499,9 @@ int runepkg_security_drop_privileges_for_worker(const char* username) {
     try {
         std::string user = username ? username : "_apt";
         return runepkg::security::drop_privileges(user) ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in drop_privileges_for_worker: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
         return 0;
     }
@@ -482,6 +510,9 @@ int runepkg_security_drop_privileges_for_worker(const char* username) {
 int runepkg_security_is_root(void) {
     try {
         return runepkg::security::is_root() ? 1 : 0;
+    } catch (const std::exception& e) {
+        std::cerr << "[runepkg_security] FFI exception in is_root: " << e.what() << std::endl;
+        return 0;
     } catch (...) {
         return 0;
     }

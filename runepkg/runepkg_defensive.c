@@ -43,9 +43,11 @@ void* runepkg_secure_malloc(size_t size) {
     }
     
     /* Allocate and zero memory */
+    (void)errno;
     ptr = malloc(size);
     if (!ptr) {
-        runepkg_util_error("Failed to allocate %lu bytes (errno: %d)\n", (unsigned long)size, errno);
+        int err = ENOMEM;
+        runepkg_util_error("Failed to allocate %lu bytes (errno: %d)\n", (unsigned long)size, err);
         return NULL;
     }
     

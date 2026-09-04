@@ -230,8 +230,11 @@ int runepkg_md5_file(const char *path, char output[33]) {
 
     runepkg_md5_init(&ctx);
 
-    while ((bytes = fread(buffer, 1, sizeof(buffer), f)) != 0)
+    while (!feof(f) && !ferror(f)) {
+        bytes = fread(buffer, 1, sizeof(buffer), f);
+        if (bytes == 0) break;
         runepkg_md5_update(&ctx, buffer, bytes);
+    }
 
     runepkg_md5_final(&ctx, hash);
     fclose(f);

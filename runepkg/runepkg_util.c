@@ -576,7 +576,9 @@ int runepkg_util_copy_file(const char *source_path, const char *destination_path
         return -1;
     }
 
-    while ((bytes = fread(buffer, 1, sizeof(buffer), src)) > 0) {
+    while (!feof(src) && !ferror(src)) {
+        bytes = fread(buffer, 1, sizeof(buffer), src);
+        if (bytes == 0) break;
         if (fwrite(buffer, 1, bytes, dest) != bytes) {
             perror("Error writing to destination file during copy");
             ret = -1;

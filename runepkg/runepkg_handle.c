@@ -836,6 +836,8 @@ void handle_update_pkglist(void) {
     FILE *txt_file = fopen(g_pkglist_txt_path, "w");
     char **packages = NULL;
     int count = 0;
+    char *dup;
+    char **temp;
 
     if (!txt_file) {
         fprintf(stderr, "Error: Cannot open runepkg_autocomplete.txt for writing: %s\n", g_pkglist_txt_path);
@@ -850,9 +852,15 @@ void handle_update_pkglist(void) {
                 if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
                 if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-                packages = realloc(packages, (count + 1) * sizeof(char *));
-                if (packages) {
-                    packages[count++] = strdup(entry->d_name);
+                dup = strdup(entry->d_name);
+                if (dup) {
+                    temp = realloc(packages, (count + 1) * sizeof(char *));
+                    if (temp) {
+                        packages = temp;
+                        packages[count++] = dup;
+                    } else {
+                        free(dup);
+                    }
                 }
             }
             closedir(dir);
@@ -867,23 +875,30 @@ void handle_update_pkglist(void) {
                 if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
                 if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
 
-                packages = realloc(packages, (count + 1) * sizeof(char *));
-                if (packages) {
-                    packages[count++] = strdup(entry->d_name);
+                dup = strdup(entry->d_name);
+                if (dup) {
+                    temp = realloc(packages, (count + 1) * sizeof(char *));
+                    if (temp) {
+                        packages = temp;
+                        packages[count++] = dup;
+                    } else {
+                        free(dup);
+                    }
                 }
             }
             closedir(dir);
         }
     }
 
-    if (count > 0) {
+    if (count > 0 && packages) {
         int i;
         int unique_count = 0;
 
         qsort(packages, count, sizeof(char *), compare_pkgs);
 
         for (i = 0; i < count; i++) {
-            if (i == 0 || strcmp(packages[i], packages[i-1]) != 0) {
+            if (!packages[i]) continue;
+            if (unique_count == 0 || strcmp(packages[i], packages[unique_count - 1]) != 0) {
                 packages[unique_count++] = packages[i];
             } else {
                 free(packages[i]);
@@ -892,6 +907,7 @@ void handle_update_pkglist(void) {
         count = unique_count;
 
         for (i = 0; i < count; i++) {
+            if (!packages[i]) continue;
             if (g_build_dir) {
                 char *full = runepkg_util_concat_path(g_build_dir, packages[i]);
                 if (full) {
@@ -908,6 +924,8 @@ void handle_update_pkglist(void) {
             fprintf(txt_file, "%s\n", packages[i]);
             free(packages[i]);
         }
+        free(packages);
+    } else if (packages) {
         free(packages);
     }
 
