@@ -358,6 +358,14 @@ Note: C++ features are enabled based on your build target (`make all`).
 
 Developed from years of experience with Custom Cross Linux From Scratch (LFS), **runepkg** views ancient `.deb` packages as "runes"—valuable historical artifacts. This tool empowers you to unearth and run legacy software from Debian archives safely in modern environments.
 
+## Testing & Validation
+---
+Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 🧪
+
+## Performance Benchmarks
+---
+Detailed benchmarks quantifying package lookup latency, repository update throughput, and memory footprint compared to `dpkg`/`apt` can be found in [BENCHMARKS.md](./BENCHMARKS.md) ⚡
+
 ## Technical Audit
 ---
 An independent architectural assessment of the codebase's structural soundness and systems programming standards can be found in [COPILOT.md](./COPILOT.md) 🤖
