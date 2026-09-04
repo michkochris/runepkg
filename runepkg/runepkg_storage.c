@@ -89,6 +89,7 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
                                       const PkgInfo *pkg_info) {
     char pkg_dir_path[PATH_MAX];
     char *binary_file_path;
+    char tmp_file_path[PATH_MAX];
     FILE *bin_file;
     PkgHeader header;
     size_t slen;
@@ -102,12 +103,13 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     }
 
     binary_file_path = runepkg_util_concat_path(pkg_dir_path, RUNEPKG_STORAGE_BINARY_FILE);
+    runepkg_secure_snprintf(tmp_file_path, sizeof(tmp_file_path), "%s.tmp", binary_file_path);
 
-    runepkg_log_verbose("Writing package info to: %s\n", binary_file_path);
+    runepkg_log_verbose("Writing package info atomically via temp file: %s\n", tmp_file_path);
 
-    bin_file = fopen(binary_file_path, "wb");
+    bin_file = fopen(tmp_file_path, "wb");
     if (!bin_file) {
-        runepkg_log_verbose("Failed to open binary file for writing: %s\n", binary_file_path);
+        runepkg_log_verbose("Failed to open binary file for writing: %s\n", tmp_file_path);
         free(binary_file_path);
         return -1;
     }
@@ -156,9 +158,10 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     fflush(bin_file);
     fsync(fileno(bin_file));
     fclose(bin_file);
-    free(binary_file_path);
 
-    runepkg_log_verbose("Package info written successfully to persistent storage\n");
+    rename(tmp_file_path, binary_file_path);
+    free(binary_file_path);
+    runepkg_log_verbose("Package info committed atomically: %s\n", pkg_name);
     return 0;
 }
 
@@ -266,6 +269,10 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
         }
     }
 
+    if (pkg_info->file_count == 0 || pkg_info->file_list == NULL) {
+        runepkg_storage_load_host_file_list(pkg_info->package_name ? pkg_info->package_name : pkg_name, pkg_info);
+    }
+
     free(buffer);
     runepkg_log_verbose("Package info read successfully from persistent storage\n");
     return 0;
@@ -277,6 +284,67 @@ parse_error:
     runepkg_pack_free_package_info(pkg_info);
     printf("Error: Failed to parse package info from binary buffer\n");
     return -1;
+}
+
+int runepkg_storage_load_host_file_list(const char *pkg_name, PkgInfo *pkg_info) {
+    char list_path[PATH_MAX];
+    FILE *fp;
+    char line[PATH_MAX];
+    char **files = NULL;
+    int count = 0;
+    int capacity = 64;
+
+    if (!pkg_name || !pkg_info) return -1;
+
+    /* 1. Check /var/lib/dpkg/info/<pkg_name>.list */
+    snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s.list", pkg_name);
+    if (!runepkg_util_file_exists(list_path)) {
+        /* 2. Check /var/lib/dpkg/info/<pkg_name>:amd64.list or similar */
+        snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s:amd64.list", pkg_name);
+        if (!runepkg_util_file_exists(list_path)) {
+            snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s:arm64.list", pkg_name);
+            if (!runepkg_util_file_exists(list_path)) {
+                return -1;
+            }
+        }
+    }
+
+    fp = fopen(list_path, "r");
+    if (!fp) return -1;
+
+    files = malloc(capacity * sizeof(char *));
+    if (!files) { fclose(fp); return -1; }
+
+    while (fgets(line, sizeof(line), fp)) {
+        char *trimmed = runepkg_util_trim_whitespace(line);
+        struct stat st;
+        if (!trimmed || trimmed[0] == '\0') continue;
+
+        /* Skip directories, only collect regular files and symlinks */
+        if (lstat(trimmed, &st) == 0 && S_ISDIR(st.st_mode)) continue;
+
+        if (count >= capacity) {
+            int new_cap = capacity * 2;
+            char **new_files = realloc(files, new_cap * sizeof(char *));
+            if (!new_files) break;
+            files = new_files;
+            capacity = new_cap;
+        }
+
+        files[count] = strdup(trimmed);
+        if (files[count]) count++;
+    }
+
+    fclose(fp);
+
+    if (count > 0) {
+        pkg_info->file_list = files;
+        pkg_info->file_count = count;
+        return 0;
+    } else {
+        free(files);
+        return -1;
+    }
 }
 
 /**

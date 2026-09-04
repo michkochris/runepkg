@@ -324,6 +324,7 @@ Advanced Repository Management (Network/FFI):
   download-build-depends <pkg>            Download binary .debs required to compile a source package.
 
 Maintenance & Diagnostics:
+  transactions                            Audit transaction logs and run crash recovery scan.
       --print-config                      Display active paths and repository settings.
       --print-config-file                 Show the active configuration file path.
       --print-pkglist-file                Display autocompletion index file paths.

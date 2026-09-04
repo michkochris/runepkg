@@ -97,6 +97,7 @@ void usage(void) {
     printf("  source-build-depends <pkg>...           Download source package files and build-dependency .debs.\n\n");
 
     printf("Maintenance & Diagnostics:\n");
+    printf("  transactions                            Audit transaction logs and run crash recovery scan.\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
@@ -640,6 +641,14 @@ int main(int argc, char *argv[]) {
                 runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_ROLLBACK);
             }
             step_cleanup(&tx_ctx);
+        } else if (strcmp(argv[i], "transactions") == 0) {
+            int rec = runepkg_fsm_recover_orphaned_transactions();
+            printf("Transaction log directory: %s\n", g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log");
+            if (rec > 0) {
+                printf("Audit complete: Recovered and cleaned %d orphaned transaction workspaces.\n", rec);
+            } else {
+                printf("Audit complete: System transaction state is clean.\n");
+            }
         } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();

@@ -1059,9 +1059,9 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 "info", "download-only", "download-depends", "download-build-depends",
                 "depends", "verify", "update", "upgrade", "source",
                 "source-depends", "source-build-depends", "buildpkg-split", "build",
-                "switch", "bootstrap", "build-toolchain", "resolve-tree"
+                "switch", "bootstrap", "build-toolchain", "resolve-tree", "transactions"
             };
-            for (i = 0; i < 24; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
+            for (i = 0; i < 25; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
     } else if (partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {

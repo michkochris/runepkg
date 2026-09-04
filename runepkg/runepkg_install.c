@@ -230,7 +230,29 @@ static int perform_file_install(const char *src, const char *dst) {
             return -1;
         }
     } else if (S_ISREG(st.st_mode)) {
-        char *dst_copy = strdup(dst);
+        char *dst_copy;
+        TransactionContext *ctx = runepkg_get_current_tx();
+        if (ctx) {
+            struct stat dst_st;
+            if (lstat(dst, &dst_st) == 0) {
+                if (!S_ISDIR(dst_st.st_mode)) {
+                    char backup_path[PATH_MAX];
+                    const char *base_name = strrchr(dst, '/');
+                    base_name = base_name ? base_name + 1 : dst;
+                    runepkg_secure_snprintf(backup_path, sizeof(backup_path),
+                        "%s/%s.%ld.bak", ctx->staging_dir, base_name, (long)time(NULL));
+                    if (runepkg_util_copy_file(dst, backup_path) == 0) {
+                        runepkg_journal_record_overwrite(ctx, dst, backup_path);
+                    } else {
+                        runepkg_journal_record_overwrite(ctx, dst, "");
+                    }
+                }
+            } else {
+                runepkg_journal_record_create(ctx, dst);
+            }
+        }
+
+        dst_copy = strdup(dst);
         if (dst_copy) {
             char *parent = dirname(dst_copy);
             if (parent) runepkg_util_create_dir_recursive(parent, 0755);

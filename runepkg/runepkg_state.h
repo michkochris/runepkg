@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 4096
@@ -57,10 +58,11 @@ typedef struct TransactionContext {
     char install_dir[PATH_MAX];
     char log_dir[PATH_MAX];
     char timestamp[32];
-    FILE *log_fp;
     RunepkgJournalEntry *journal_head;
     int journal_count;
     int lock_fd;
+    int sig_pipe[2];
+    volatile sig_atomic_t abort_requested;
     bool committed;
     bool cleanup_enabled;
 } TransactionContext;
@@ -109,10 +111,23 @@ int step_cleanup(TransactionContext *ctx);
 /* --- Journal Helpers --- */
 int runepkg_journal_record_create(TransactionContext *ctx, const char *target_path);
 int runepkg_journal_record_overwrite(TransactionContext *ctx, const char *target_path, const char *backup_path);
+int runepkg_journal_record_delete(TransactionContext *ctx, const char *target_path, const char *backup_path);
 void runepkg_journal_free(TransactionContext *ctx);
 
-/* --- Signal Trap Management --- */
+/* --- Signal Trap & Self-Pipe Management --- */
 void runepkg_fsm_install_signal_handlers(TransactionContext *ctx);
 void runepkg_fsm_restore_signal_handlers(void);
+void runepkg_fsm_check_signals(TransactionContext *ctx);
+
+/* --- Process Locking --- */
+int runepkg_fsm_acquire_lock(TransactionContext *ctx);
+void runepkg_fsm_release_lock(TransactionContext *ctx);
+
+/* --- Thread Local Context Accessors --- */
+void runepkg_set_current_tx(TransactionContext *ctx);
+TransactionContext *runepkg_get_current_tx(void);
+
+/* --- Startup Crash Recovery & Audit --- */
+int runepkg_fsm_recover_orphaned_transactions(void);
 
 #endif /* RUNEPKG_STATE_H */

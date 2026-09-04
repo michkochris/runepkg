@@ -110,6 +110,7 @@ int runepkg_init(void) {
     
     runepkg_init_paths();
     runepkg_host_init();
+    runepkg_fsm_recover_orphaned_transactions();
     /* We don't call runepkg_host_sync() here automatically to avoid startup lag.
      * Host sync is a manually triggered operation via 'runepkg sync'. */
 
@@ -411,12 +412,32 @@ int handle_remove(const char *package_name) {
 
         for (i = 0; i < pkg_info.file_count; i++) {
             const char *rel = pkg_info.file_list[i];
-            char *dst;
+            char *dst = NULL;
             if (!rel || rel[0] == '\0') continue;
-            dst = runepkg_util_concat_path(g_system_install_root, rel);
+
+            if (rel[0] == '/') {
+                dst = strdup(rel);
+            } else {
+                dst = runepkg_util_concat_path(g_system_install_root, rel);
+            }
             if (!dst) continue;
-            if (unlink(dst) != 0) {
-                runepkg_log_verbose("Remove: failed to delete %s\n", dst);
+
+            if (runepkg_util_file_exists(dst)) {
+                char backup_path[PATH_MAX];
+                const char *base_name = strrchr(dst, '/');
+                base_name = base_name ? base_name + 1 : dst;
+                runepkg_secure_snprintf(backup_path, sizeof(backup_path),
+                    "%s/%s.%ld.bak", tx_ctx.staging_dir, base_name, (long)time(NULL));
+
+                if (runepkg_util_copy_file(dst, backup_path) == 0) {
+                    runepkg_journal_record_delete(&tx_ctx, dst, backup_path);
+                } else {
+                    runepkg_journal_record_delete(&tx_ctx, dst, "");
+                }
+
+                if (unlink(dst) != 0) {
+                    runepkg_log_verbose("Remove: failed to delete %s\n", dst);
+                }
             }
             runepkg_util_free_and_null(&dst);
         }

@@ -80,6 +80,14 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
                                      PkgInfo *pkg_info);
 
 /**
+ * @brief Resolves installed file list from dpkg info files for host-synced packages
+ * @param pkg_name The package name
+ * @param pkg_info Pointer to PkgInfo struct to populate with file_list and file_count
+ * @return 0 on success, -1 on failure
+ */
+int runepkg_storage_load_host_file_list(const char *pkg_name, PkgInfo *pkg_info);
+
+/**
  * @brief Removes a package from persistent storage
  * @param pkg_name The package name
  * @param pkg_version The package version
