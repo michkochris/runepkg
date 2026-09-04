@@ -348,4 +348,35 @@ float runepkg_util_get_load_factor(void);
  */
 int runepkg_util_get_elf_dependencies(const char *elf_path, const char *readelf_bin, char ***out_deps, int *out_count);
 
+/* --- FSM Transaction Logging Functions --- */
+
+/**
+ * @brief Initializes the active transaction log file (transaction-YYYYMMDD-HHMMSS.log)
+ * @param log_dir Directory where logs are stored
+ * @param timestamp Timestamp string formatted as YYYYMMDD-HHMMSS (or NULL to auto-generate)
+ * @return 0 on success, -1 on failure
+ */
+int runepkg_log_init(const char *log_dir, const char *timestamp);
+
+/**
+ * @brief Writes a formatted entry to the active transaction log
+ * @param level Log level prefix (e.g., "INFO", "WARN", "ERROR", "FSM")
+ * @param fmt Format string
+ * @param ... Format arguments
+ */
+void runepkg_log_write(const char *level, const char *fmt, ...);
+
+/**
+ * @brief Writes a post-mortem failure snapshot to transaction_failure.log
+ * @param err_msg Error description message
+ * @param log_dir Directory where logs are stored
+ */
+void runepkg_log_fail(const char *err_msg, const char *log_dir);
+
+/**
+ * @brief Closes the transaction log and unlinks it if clean_up is enabled
+ * @param clean_up_enabled If true, unlinks the timestamped transaction log on success
+ */
+void runepkg_log_close(int clean_up_enabled);
+
 #endif /* RUNEPKG_UTIL_H */

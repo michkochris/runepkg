@@ -8,6 +8,10 @@
 
 #include "runepkg_util_cpp.hpp"
 
+extern "C" {
+#include "runepkg_util.h"
+}
+
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -265,6 +269,19 @@ void free_c_array(char** arr, int count) {
         }
     }
     std::free(arr);
+}
+
+void log_info(const std::string& msg) {
+    runepkg_log_write("INFO", "%s", msg.c_str());
+}
+
+void log_warn(const std::string& msg) {
+    runepkg_log_write("WARN", "%s", msg.c_str());
+}
+
+void log_error(const std::string& msg, const std::string& log_dir) {
+    runepkg_log_write("ERROR", "%s", msg.c_str());
+    runepkg_log_fail(msg.c_str(), log_dir.c_str());
 }
 
 } // namespace runepkg::util

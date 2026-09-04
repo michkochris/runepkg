@@ -9,6 +9,7 @@
 #include "runepkg_cpp_ffi.h"
 #include "runepkg_security.hpp"
 #include "runepkg_util_cpp.hpp"
+#include "runepkg_guard.hpp"
 #include "runepkg_config.h"
 #include <iostream>
 #include <vector>
@@ -590,8 +591,11 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
 }
 
 extern "C" int runepkg_update(void) {
+    TransactionContext tx_ctx;
+    runepkg::RunepkgTransactionGuard guard(&tx_ctx, "update", "1.0");
     try {
         std::cout << "\033[1;32m[runepkg]\033[0m Starting parallel repository update..." << std::endl;
+        runepkg::util::log_info("Starting parallel repository update");
         auto start_time = std::chrono::high_resolution_clock::now();
         if (!g_sources || g_sources_count == 0) { std::cerr << "Error: No sources configured in runepkgconfig." << std::endl; return -1; }
         curl_global_init(CURL_GLOBAL_ALL);
@@ -751,6 +755,7 @@ extern "C" int runepkg_update(void) {
         }
 
         curl_global_cleanup();
+        guard.commit();
         return 0;
     } catch (...) {
         std::cerr << "\033[1;31m[error]\033[0m Repository update encountered an internal exception." << std::endl;
@@ -1181,6 +1186,10 @@ extern "C" int runepkg_repo_package_exists(const char *pkg_name) {
 
 extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count, bool recursive) {
     if (!pkg_names || count <= 0) return -1;
+    TransactionContext tx_ctx;
+    runepkg::RunepkgTransactionGuard guard(&tx_ctx, pkg_names[0] ? pkg_names[0] : "download", "1.0");
+    runepkg::util::log_info("Starting repository download for " + std::to_string(count) + " packages");
+
     std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         std::cerr << "\033[1;31m[error]\033[0m Dependency graph not found. Please run 'runepkg update' first." << std::endl;
@@ -1269,8 +1278,13 @@ extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count,
     int fail_count = 0;
     for (size_t idx = 0; idx < tasks.size(); idx++) if (!futures[idx].get()) fail_count++;
 
-    if (fail_count == 0) std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << tasks.size() << " packages to " << (g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") << std::endl;
-    else std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
+    if (fail_count == 0) {
+        std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << tasks.size() << " packages to " << (g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") << std::endl;
+        guard.commit();
+    } else {
+        std::cout << std::endl << "\033[1;31m[error]\033[0m " << fail_count << " downloads failed." << std::endl;
+        runepkg::util::log_error(std::to_string(fail_count) + " package downloads failed", tx_ctx.log_dir);
+    }
 
     for (auto p : plans) runepkg_resolver_free_plan(p);
     curl_global_cleanup();

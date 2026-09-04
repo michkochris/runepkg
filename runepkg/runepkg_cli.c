@@ -26,6 +26,7 @@
 
 #include "runepkg_portable.h"
 #include "runepkg_config.h"
+#include "runepkg_state.h"
 #include "runepkg_pack.h"
 #include "runepkg_hash.h"
 #include "runepkg_storage.h"
@@ -475,138 +476,126 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_download_multiple(pkgs, pkg_count, false) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: Download-only command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "download-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_build_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: Download-build-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "download-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_download_multiple(pkgs, pkg_count, true) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Repository downloads require a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: Download-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "source") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_source_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: source command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "source-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_source_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: source-depends command requires a package name.\n");
             }
         } else if (strcmp(argv[i], "source-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
+#ifdef ENABLE_CPP_FFI
                 const char *pkgs[1024]; int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-#ifdef ENABLE_CPP_FFI
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
-#else
-                    printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
-                    printf("Rebuild with 'make all' to enable this feature.\n");
-                    i++; break;
-#endif
                     i++;
                 }
-#ifdef ENABLE_CPP_FFI
                 if (pkg_count > 0) {
                     bool old_force = g_force_mode; g_force_mode = true;
                     if (runepkg_repo_source_build_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
+#else
+                printf("Notice: Source package downloading requires a C++ build with networking enabled.\n");
+                printf("Rebuild with 'make all' to enable this feature.\n");
+                while (i + 1 < argc && argv[i+1][0] != '-') i++;
 #endif
             } else {
                 printf("Error: source-build-depends command requires a package name.\n");
@@ -636,12 +625,21 @@ int main(int argc, char *argv[]) {
             printf("Rebuild with 'make all' to enable this feature.\n");
 #endif
         } else if (strcmp(argv[i], "sync") == 0) {
+            TransactionContext tx_ctx;
+            if (runepkg_fsm_init(&tx_ctx, "sync", "1.0") == 0) {
+                step_prepare(&tx_ctx);
+                runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_COMMITTING);
+            }
             if (runepkg_host_sync() == 0) {
                 printf("Host synchronization successful.\n");
+                step_commit(&tx_ctx);
+                runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
             } else {
                 cli_failed = 1;
                 printf("Host synchronization failed.\n");
+                runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_ROLLBACK);
             }
+            step_cleanup(&tx_ctx);
         } else if (strcmp(argv[i], "upgrade") == 0) {
 #ifdef ENABLE_CPP_FFI
             runepkg_upgrade();

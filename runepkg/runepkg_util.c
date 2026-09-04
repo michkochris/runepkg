@@ -1882,3 +1882,108 @@ const char *runepkg_util_resolve_build_target(const char *arg, const char *build
 
     return NULL; /* Not found */
 }
+
+/* --- FSM Transaction Logging Implementation --- */
+
+static FILE *g_tx_log_fp = NULL;
+static char g_tx_log_path[PATH_MAX] = {0};
+
+int runepkg_log_init(const char *log_dir, const char *timestamp)
+{
+    char ts_buf[64];
+
+    if (!log_dir || log_dir[0] == '\0') {
+        log_dir = g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log";
+    }
+
+    if (runepkg_util_create_dir_recursive(log_dir, 0755) != 0) {
+        return -1;
+    }
+
+    if (!timestamp || timestamp[0] == '\0') {
+        time_t now = time(NULL);
+        struct tm *t = localtime(&now);
+        strftime(ts_buf, sizeof(ts_buf), "%Y%m%d-%H%M%S", t);
+        timestamp = ts_buf;
+    }
+
+    runepkg_secure_snprintf(g_tx_log_path, sizeof(g_tx_log_path),
+        "%s/transaction-%s.log", log_dir, timestamp);
+
+    g_tx_log_fp = fopen(g_tx_log_path, "w");
+    if (!g_tx_log_fp) {
+        return -1;
+    }
+
+    fprintf(g_tx_log_fp, "[INIT] Transaction log initialized at %s\n", timestamp);
+    fflush(g_tx_log_fp);
+    return 0;
+}
+
+void runepkg_log_write(const char *level, const char *fmt, ...)
+{
+    va_list args;
+    time_t now;
+    struct tm *t;
+    char time_str[32];
+
+    if (!g_tx_log_fp) return;
+
+    now = time(NULL);
+    t = localtime(&now);
+    strftime(time_str, sizeof(time_str), "%H:%M:%S", t);
+
+    fprintf(g_tx_log_fp, "[%s] [%s] ", time_str, level ? level : "INFO");
+
+    va_start(args, fmt);
+    vfprintf(g_tx_log_fp, fmt, args);
+    va_end(args);
+
+    fprintf(g_tx_log_fp, "\n");
+    fflush(g_tx_log_fp);
+}
+
+void runepkg_log_fail(const char *err_msg, const char *log_dir)
+{
+    char fail_path[PATH_MAX];
+    FILE *fail_fp;
+    time_t now;
+    struct tm *t;
+    char time_str[64];
+
+    if (g_tx_log_fp) {
+        runepkg_log_write("FATAL", "Transaction abort: %s", err_msg ? err_msg : "Unknown error");
+    }
+
+    if (!log_dir || log_dir[0] == '\0') {
+        log_dir = g_log_dir ? g_log_dir : "/var/lib/runepkg_dir/log";
+    }
+
+    runepkg_util_create_dir_recursive(log_dir, 0755);
+    runepkg_secure_snprintf(fail_path, sizeof(fail_path), "%s/transaction_failure.log", log_dir);
+
+    fail_fp = fopen(fail_path, "a");
+    if (fail_fp) {
+        now = time(NULL);
+        t = localtime(&now);
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", t);
+
+        fprintf(fail_fp, "[%s] TRANSACTION FAILURE: %s (Detailed log: %s)\n",
+            time_str, err_msg ? err_msg : "Unknown failure",
+            g_tx_log_path[0] != '\0' ? g_tx_log_path : "N/A");
+        fclose(fail_fp);
+    }
+}
+
+void runepkg_log_close(int clean_up_enabled)
+{
+    if (g_tx_log_fp) {
+        fclose(g_tx_log_fp);
+        g_tx_log_fp = NULL;
+    }
+
+    if (clean_up_enabled && g_tx_log_path[0] != '\0') {
+        unlink(g_tx_log_path);
+        g_tx_log_path[0] = '\0';
+    }
+}

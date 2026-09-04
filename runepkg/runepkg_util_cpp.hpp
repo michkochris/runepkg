@@ -86,6 +86,17 @@ char** vector_to_c_array(const std::vector<std::string>& vec, int* out_count);
 /** Frees a C string array allocated by vector_to_c_array. */
 void free_c_array(char** arr, int count);
 
+/* --- FSM Transaction Logging Helpers --- */
+
+/** Writes an INFO level log entry to the active transaction log. */
+void log_info(const std::string& msg);
+
+/** Writes a WARN level log entry to the active transaction log. */
+void log_warn(const std::string& msg);
+
+/** Writes an ERROR entry and appends post-mortem snapshot to transaction_failure.log. */
+void log_error(const std::string& msg, const std::string& log_dir = "");
+
 } // namespace runepkg::util
 
 /* -------------------------------------------------------------------------- */

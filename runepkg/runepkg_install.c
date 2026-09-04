@@ -8,6 +8,7 @@
 
 #include "runepkg_portable.h"
 #include "runepkg_defensive.h"
+#include "runepkg_state.h"
 #include "runepkg_install.h"
 #include "runepkg_config.h"
 #include "runepkg_util.h"
@@ -307,7 +308,28 @@ void* install_single_file(void *arg) {
 }
 
 int handle_install(const char *deb_file_path) {
-    int ret = handle_install_internal(deb_file_path, 1);
+    TransactionContext tx_ctx;
+    int ret;
+
+    if (runepkg_fsm_init(&tx_ctx, deb_file_path ? deb_file_path : "unknown", "1.0") == 0) {
+        step_prepare(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_STAGING);
+    }
+
+    ret = handle_install_internal(deb_file_path, 1);
+
+    if (ret == 0) {
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_COMMITTING);
+        step_commit(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
+        step_cleanup(&tx_ctx);
+    } else {
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_ROLLBACK);
+        runepkg_log_fail("Package installation failed", tx_ctx.log_dir);
+        step_rollback(&tx_ctx);
+        step_cleanup(&tx_ctx);
+    }
+
     g_auto_confirm_deps = false;
     g_auto_confirm_siblings = false;
     g_asked_siblings = false;

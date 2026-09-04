@@ -28,6 +28,7 @@
 
 #include "runepkg_portable.h"
 #include "runepkg_defensive.h"
+#include "runepkg_state.h"
 #include "runepkg_handle.h"
 #include "runepkg_config.h"
 #include "runepkg_pack.h"
@@ -256,10 +257,16 @@ int handle_remove(const char *package_name) {
     char pkg_version[PATH_MAX];
     const char *last_dash;
     PkgInfo pkg_info;
+    TransactionContext tx_ctx;
 
     if (!package_name || package_name[0] == '\0') {
         printf("Error: remove requires a package name.\n");
         return -1;
+    }
+
+    if (runepkg_fsm_init(&tx_ctx, package_name, "remove") == 0) {
+        step_prepare(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_COMMITTING);
     }
 
     runepkg_util_safe_strncpy(name_buf, package_name, sizeof(name_buf));
@@ -367,9 +374,13 @@ int handle_remove(const char *package_name) {
                     items[i] = suggestions[i];
                 }
                 runepkg_util_print_columns(items, suggestion_count, "    ");
+                runepkg_log_fail("Package not found or ambiguous name", tx_ctx.log_dir);
+                step_cleanup(&tx_ctx);
                 return -2;
             } else {
                 printf("'%s' not installed... did you mean?\n\n", package_name);
+                runepkg_log_fail("Package not installed", tx_ctx.log_dir);
+                step_cleanup(&tx_ctx);
                 return -1;
             }
         }
@@ -377,6 +388,8 @@ int handle_remove(const char *package_name) {
 
     if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) != 0) {
         printf("Error: package not installed: %s-%s\n", pkg_name, pkg_version);
+        runepkg_log_fail("Failed to read package control info", tx_ctx.log_dir);
+        step_cleanup(&tx_ctx);
         return -1;
     }
 
@@ -423,6 +436,10 @@ int handle_remove(const char *package_name) {
 
     runepkg_storage_build_autocomplete_index();
     handle_update_pkglist();
+
+    step_commit(&tx_ctx);
+    runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
+    step_cleanup(&tx_ctx);
 
     return 0;
 }
