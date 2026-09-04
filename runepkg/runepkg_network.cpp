@@ -7,6 +7,8 @@
  ******************************************************************************/
 
 #include "runepkg_cpp_ffi.h"
+#include "runepkg_security.hpp"
+#include "runepkg_util_cpp.hpp"
 #include "runepkg_config.h"
 #include <iostream>
 #include <vector>
@@ -204,17 +206,33 @@ int curl_progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_o
     return 0;
 }
 
-bool download_file(const std::string& url, const std::string& dest_path, size_t expected_size = 0, std::string pkg_name = "", bool force_refresh = false) {
+bool download_file(const std::string& url, const std::string& dest_path, size_t expected_size = 0, std::string pkg_name = "", bool force_refresh = false, std::string expected_sha256 = "") {
     if (!force_refresh && runepkg_util_file_exists(dest_path.c_str())) {
-        {
-            std::lock_guard<std::mutex> lock(g_progress_mutex);
-            if (g_completed_names.find(pkg_name) == g_completed_names.end()) {
-                g_completed_names.insert(pkg_name);
-                g_finished_count++;
-                print_multi_progress();
+        if (!expected_sha256.empty()) {
+            if (!runepkg::security::verify_sha256_checksum(dest_path, expected_sha256)) {
+                unlink(dest_path.c_str());
+            } else {
+                {
+                    std::lock_guard<std::mutex> lock(g_progress_mutex);
+                    if (g_completed_names.find(pkg_name) == g_completed_names.end()) {
+                        g_completed_names.insert(pkg_name);
+                        g_finished_count++;
+                        print_multi_progress();
+                    }
+                }
+                return true;
             }
+        } else {
+            {
+                std::lock_guard<std::mutex> lock(g_progress_mutex);
+                if (g_completed_names.find(pkg_name) == g_completed_names.end()) {
+                    g_completed_names.insert(pkg_name);
+                    g_finished_count++;
+                    print_multi_progress();
+                }
+            }
+            return true;
         }
-        return true;
     }
 
     if (pkg_name.empty()) {
@@ -263,6 +281,16 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
                         continue;
                     }
                     unlink(dest_path.c_str());
+                    return false;
+                }
+            }
+            if (!expected_sha256.empty()) {
+                if (!runepkg::security::verify_sha256_checksum(dest_path, expected_sha256)) {
+                    unlink(dest_path.c_str());
+                    if (attempt < MAX_RETRIES) {
+                        usleep(500000 * attempt);
+                        continue;
+                    }
                     return false;
                 }
             }
@@ -391,7 +419,7 @@ static void ensure_index_loaded(bool is_source) {
     idx_cache.loaded = true;
 }
 
-static void ensure_repo_mapping_loaded() {
+static inline void ensure_repo_mapping_loaded() {
     if (g_repo_mapping.loaded) return;
     std::string mapping_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_url_mapping.txt";
     std::ifstream mapping(mapping_path);
@@ -426,7 +454,11 @@ struct SourceMetadata {
 };
 
 extern "C" int runepkg_cpp_ffi_available(void) {
-    return 1;
+    try {
+        return 1;
+    } catch (...) {
+        return 0;
+    }
 }
 
 std::unordered_map<std::string, std::string> get_latest_versions() {
@@ -558,152 +590,172 @@ void build_index(const std::vector<std::string>& pkg_files, const std::string& i
 }
 
 extern "C" int runepkg_update(void) {
-    std::cout << "\033[1;32m[runepkg]\033[0m Starting parallel repository update..." << std::endl;
-    auto start_time = std::chrono::high_resolution_clock::now();
-    if (!g_sources || g_sources_count == 0) { std::cerr << "Error: No sources configured in runepkgconfig." << std::endl; return -1; }
-    curl_global_init(CURL_GLOBAL_ALL);
+    try {
+        std::cout << "\033[1;32m[runepkg]\033[0m Starting parallel repository update..." << std::endl;
+        auto start_time = std::chrono::high_resolution_clock::now();
+        if (!g_sources || g_sources_count == 0) { std::cerr << "Error: No sources configured in runepkgconfig." << std::endl; return -1; }
+        curl_global_init(CURL_GLOBAL_ALL);
 
-    g_pkg_index.loaded = false;
-    g_src_index.loaded = false;
-    g_repo_mapping.loaded = false;
-    g_pkg_index.entries.clear(); g_pkg_index.file_list.clear();
-    g_src_index.entries.clear(); g_src_index.file_list.clear();
-    g_repo_mapping.mapping.clear();
-    {
-        std::lock_guard<std::mutex> lock(g_metadata_cache_mutex);
-        g_metadata_cache.clear();
-    }
-    std::vector<DownloadTask> bin_tasks, src_tasks;
-    std::vector<std::string> bin_pkg_files, src_pkg_files;
-    for (int i = 0; i < g_sources_count; i++) {
-        std::string base_url = g_sources[i]->url;
-        if (base_url.back() != '/') base_url += '/';
-        std::string suite = g_sources[i]->suite;
-        std::stringstream ss(g_sources[i]->components);
-        std::string component;
-        while (ss >> component) {
-            std::string url, dest_path;
-            if (std::string(g_sources[i]->type) == "deb") {
-                url = base_url + "dists/" + suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
-                std::string safe_url = normalize_url(url);
-                dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
-                bin_tasks.push_back({url, dest_path, "", 0, false});
-            } else if (std::string(g_sources[i]->type) == "deb-src") {
-                url = base_url + "dists/" + suite + "/" + component + "/source/Sources.gz";
-                std::string safe_url = normalize_url(url);
-                dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
-                src_tasks.push_back({url, dest_path, "", 0, false});
-            }
+        g_pkg_index.loaded = false;
+        g_src_index.loaded = false;
+        g_repo_mapping.loaded = false;
+        g_pkg_index.entries.clear(); g_pkg_index.file_list.clear();
+        g_src_index.entries.clear(); g_src_index.file_list.clear();
+        g_repo_mapping.mapping.clear();
+        {
+            std::lock_guard<std::mutex> lock(g_metadata_cache_mutex);
+            g_metadata_cache.clear();
         }
-    }
-    std::cout << "Downloading " << bin_tasks.size() + src_tasks.size() << " package lists..." << std::endl;
-    std::vector<std::future<bool>> futures;
-    std::vector<DownloadTask*> all_tasks_ptrs;
-    for (auto& t : bin_tasks) all_tasks_ptrs.push_back(&t);
-    for (auto& t : src_tasks) all_tasks_ptrs.push_back(&t);
-    { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = all_tasks_ptrs.size(); }
-    for (auto* task : all_tasks_ptrs) {
-        if (runepkg_util_file_exists(task->dest_path.c_str())) {
-            unlink(task->dest_path.c_str());
-        }
-    }
-
-    ParallelExecutor pool(8);
-    for (auto* task : all_tasks_ptrs) {
-        std::string display_name; size_t dists_pos = task->url.find("/dists/");
-        if (dists_pos != std::string::npos) { display_name = task->url.substr(dists_pos + 7); size_t last_slash = display_name.find_last_of('/'); if (last_slash != std::string::npos) display_name = display_name.substr(0, last_slash); }
-        else display_name = task->url;
-
-        futures.push_back(pool.enqueue([task, display_name]() {
-            return download_file(task->url, task->dest_path, task->size, display_name, true);
-        }));
-    }
-    for (size_t i = 0; i < all_tasks_ptrs.size(); i++) {
-        all_tasks_ptrs[i]->success = futures[i].get();
-        if (all_tasks_ptrs[i]->success) {
-            std::string decompressed = all_tasks_ptrs[i]->dest_path;
-            if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") {
-                decompressed = decompressed.substr(0, decompressed.size() - 3);
-            } else {
-                decompressed += ".unpacked";
-            }
-            if (decompress_gz(all_tasks_ptrs[i]->dest_path, decompressed)) {
-                bool is_bin = false;
-                for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
-                if(is_bin) bin_pkg_files.push_back(decompressed);
-                else src_pkg_files.push_back(decompressed);
-            }
-        }
-    }
-    std::cout << std::endl << "Building Hybrid Binary and Source Indexes..." << std::endl;
-    std::string db_dir_str = g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db";
-    build_index(bin_pkg_files, db_dir_str + "/repo_index.bin", db_dir_str + "/repo_files.txt");
-    build_index(src_pkg_files, db_dir_str + "/repo_src_index.bin", db_dir_str + "/repo_src_files.txt");
-
-    std::ofstream out_mapping(db_dir_str + "/repo_url_mapping.txt");
-    if (out_mapping.is_open()) {
+        std::vector<DownloadTask> bin_tasks, src_tasks;
+        std::vector<std::string> bin_pkg_files, src_pkg_files;
         for (int i = 0; i < g_sources_count; i++) {
             std::string base_url = g_sources[i]->url;
             if (base_url.back() != '/') base_url += '/';
+            std::string suite = g_sources[i]->suite;
             std::stringstream ss(g_sources[i]->components);
             std::string component;
             while (ss >> component) {
+                std::string url, dest_path;
                 if (std::string(g_sources[i]->type) == "deb") {
-                    std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
+                    url = base_url + "dists/" + suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
                     std::string safe_url = normalize_url(url);
-                    std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
-                    if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
-                    out_mapping << "deb\t" << base_url << "\t" << decompressed << "\n";
+                    dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                    bin_tasks.push_back({url, dest_path, "", 0, false});
                 } else if (std::string(g_sources[i]->type) == "deb-src") {
-                    std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/source/Sources.gz";
+                    url = base_url + "dists/" + suite + "/" + component + "/source/Sources.gz";
                     std::string safe_url = normalize_url(url);
-                    std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
-                    if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
-                    out_mapping << "deb-src\t" << base_url << "\t" << decompressed << "\n";
+                    dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                    src_tasks.push_back({url, dest_path, "", 0, false});
                 }
             }
         }
-        out_mapping.close();
-        std::string mapping_path = db_dir_str + "/repo_url_mapping.txt";
-        int fd = open(mapping_path.c_str(), O_WRONLY);
-        if (fd != -1) { fsync(fd); close(fd); }
-    }
+        std::cout << "Downloading " << bin_tasks.size() + src_tasks.size() << " package lists..." << std::endl;
 
-    auto latest_versions = get_latest_versions();
-    std::cout << "Checking for upgradable packages..." << std::endl;
-    int upgradable_count = 0;
-    if (runepkg_main_hash_table) {
-        for (size_t i = 0; i < runepkg_main_hash_table->size; i++) {
-            runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
-            while (node) {
-                std::string name = node->data.package_name;
-                if (latest_versions.count(name)) {
-                    if (runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) {
-                        std::cout << "  \033[1;33m[upgradable]\033[0m " << name << ": " << node->data.version << " -> " << latest_versions[name] << std::endl;
-                        upgradable_count++;
+        /* Security Perimeter: Verify GPG signatures on InRelease index files */
+        for (int i = 0; i < g_sources_count; i++) {
+            std::string base_url = g_sources[i]->url;
+            if (base_url.back() != '/') base_url += '/';
+            std::string release_url = base_url + "dists/" + g_sources[i]->suite + "/InRelease";
+            std::string safe_release = normalize_url(release_url);
+            std::string release_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_release;
+            if (download_file(release_url, release_path, 0, "InRelease (" + std::string(g_sources[i]->suite) + ")", true)) {
+                if (runepkg::security::verify_gpg_signature(release_path)) {
+                    std::cout << "  \033[1;32m[gpg]\033[0m Verified OpenPGP signature for " << g_sources[i]->suite << std::endl;
+                }
+            }
+        }
+
+        std::vector<std::future<bool>> futures;
+        std::vector<DownloadTask*> all_tasks_ptrs;
+        for (auto& t : bin_tasks) all_tasks_ptrs.push_back(&t);
+        for (auto& t : src_tasks) all_tasks_ptrs.push_back(&t);
+        { std::lock_guard<std::mutex> lock(g_progress_mutex); g_finished_count = 0; g_completed_names.clear(); g_active_downloads.clear(); g_total_to_download = all_tasks_ptrs.size(); }
+        for (auto* task : all_tasks_ptrs) {
+            if (runepkg_util_file_exists(task->dest_path.c_str())) {
+                unlink(task->dest_path.c_str());
+            }
+        }
+
+        ParallelExecutor pool(8);
+        for (auto* task : all_tasks_ptrs) {
+            std::string display_name; size_t dists_pos = task->url.find("/dists/");
+            if (dists_pos != std::string::npos) { display_name = task->url.substr(dists_pos + 7); size_t last_slash = display_name.find_last_of('/'); if (last_slash != std::string::npos) display_name = display_name.substr(0, last_slash); }
+            else display_name = task->url;
+
+            futures.push_back(pool.enqueue([task, display_name]() {
+                return download_file(task->url, task->dest_path, task->size, display_name, true);
+            }));
+        }
+        for (size_t i = 0; i < all_tasks_ptrs.size(); i++) {
+            all_tasks_ptrs[i]->success = futures[i].get();
+            if (all_tasks_ptrs[i]->success) {
+                std::string decompressed = all_tasks_ptrs[i]->dest_path;
+                if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") {
+                    decompressed = decompressed.substr(0, decompressed.size() - 3);
+                } else {
+                    decompressed += ".unpacked";
+                }
+                if (decompress_gz(all_tasks_ptrs[i]->dest_path, decompressed)) {
+                    bool is_bin = false;
+                    for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
+                    if(is_bin) bin_pkg_files.push_back(decompressed);
+                    else src_pkg_files.push_back(decompressed);
+                }
+            }
+        }
+        std::cout << std::endl << "Building Hybrid Binary and Source Indexes..." << std::endl;
+        std::string db_dir_str = g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db";
+        build_index(bin_pkg_files, db_dir_str + "/repo_index.bin", db_dir_str + "/repo_files.txt");
+        build_index(src_pkg_files, db_dir_str + "/repo_src_index.bin", db_dir_str + "/repo_src_files.txt");
+
+        std::ofstream out_mapping(db_dir_str + "/repo_url_mapping.txt");
+        if (out_mapping.is_open()) {
+            for (int i = 0; i < g_sources_count; i++) {
+                std::string base_url = g_sources[i]->url;
+                if (base_url.back() != '/') base_url += '/';
+                std::stringstream ss(g_sources[i]->components);
+                std::string component;
+                while (ss >> component) {
+                    if (std::string(g_sources[i]->type) == "deb") {
+                        std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
+                        std::string safe_url = normalize_url(url);
+                        std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                        if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
+                        out_mapping << "deb\t" << base_url << "\t" << decompressed << "\n";
+                    } else if (std::string(g_sources[i]->type) == "deb-src") {
+                        std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/source/Sources.gz";
+                        std::string safe_url = normalize_url(url);
+                        std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                        if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
+                        out_mapping << "deb-src\t" << base_url << "\t" << decompressed << "\n";
                     }
                 }
-                node = node->next;
+            }
+            out_mapping.close();
+            std::string mapping_path = db_dir_str + "/repo_url_mapping.txt";
+            int fd = open(mapping_path.c_str(), O_WRONLY);
+            if (fd != -1) { fsync(fd); close(fd); }
+        }
+
+        auto latest_versions = get_latest_versions();
+        std::cout << "Checking for upgradable packages..." << std::endl;
+        int upgradable_count = 0;
+        if (runepkg_main_hash_table) {
+            for (size_t i = 0; i < runepkg_main_hash_table->size; i++) {
+                runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
+                while (node) {
+                    std::string name = node->data.package_name;
+                    if (latest_versions.count(name)) {
+                        if (runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) {
+                            std::cout << "  \033[1;33m[upgradable]\033[0m " << name << ": " << node->data.version << " -> " << latest_versions[name] << std::endl;
+                            upgradable_count++;
+                        }
+                    }
+                    node = node->next;
+                }
             }
         }
-    }
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
-    std::cout << "\033[1;32mUpdate complete!\033[0m Binary/Source indexes updated. " << upgradable_count << " upgradable. Time: " << duration.count() / 1000.0 << "s" << std::endl;
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+        std::cout << "\033[1;32mUpdate complete!\033[0m Binary/Source indexes updated. " << upgradable_count << " upgradable. Time: " << duration.count() / 1000.0 << "s" << std::endl;
 
-    runepkg_storage_build_autocomplete_index();
-    runepkg_resolver_harvest_graph(nullptr, nullptr);
+        runepkg_storage_build_autocomplete_index();
+        runepkg_resolver_harvest_graph(nullptr, nullptr);
 
-    if (g_runepkg_db_dir) {
-        std::string host_db_root = std::string(g_runepkg_db_dir) + "/host";
-        std::string host_bin_graph = std::string(g_runepkg_db_dir) + "/runes_host.bin";
-        if (runepkg_util_is_directory(host_db_root.c_str())) {
-            runepkg_resolver_harvest_graph(host_db_root.c_str(), host_bin_graph.c_str());
+        if (g_runepkg_db_dir) {
+            std::string host_db_root = std::string(g_runepkg_db_dir) + "/host";
+            std::string host_bin_graph = std::string(g_runepkg_db_dir) + "/runes_host.bin";
+            if (runepkg_util_is_directory(host_db_root.c_str())) {
+                runepkg_resolver_harvest_graph(host_db_root.c_str(), host_bin_graph.c_str());
+            }
         }
-    }
 
-    curl_global_cleanup();
-    return 0;
+        curl_global_cleanup();
+        return 0;
+    } catch (...) {
+        std::cerr << "\033[1;31m[error]\033[0m Repository update encountered an internal exception." << std::endl;
+        return -1;
+    }
 }
 
 struct SearchResult {
@@ -712,69 +764,73 @@ struct SearchResult {
 };
 
 extern "C" int runepkg_repo_search(const char *query) {
-    if (!query || strlen(query) == 0) return -1;
-    ensure_index_loaded(false);
+    try {
+        if (!query || strlen(query) == 0) return -1;
+        ensure_index_loaded(false);
 
-    std::string q = query; std::transform(q.begin(), q.end(), q.begin(), ::tolower);
-    std::cout << "Searching repository metadata..." << std::endl;
-    std::map<std::string, SearchResult> results;
+        std::string q = query; std::transform(q.begin(), q.end(), q.begin(), ::tolower);
+        std::cout << "Searching repository metadata..." << std::endl;
+        std::map<std::string, SearchResult> results;
 
-    for (const auto& filename : g_pkg_index.file_list) {
-        std::ifstream infile(filename);
-        if (!infile.is_open()) continue;
-        std::string pkg_name, pkg_version, pkg_arch, pkg_desc, pkg_provides, line;
-        while (std::getline(infile, line)) {
-            if (line.empty() || line == "\r") {
-                if (!pkg_name.empty()) {
-                    std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides;
-                    std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
-                    if (combined.find(q) != std::string::npos) {
-                        SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
-                        if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) res.installed = true;
-                        if (results.find(pkg_name) == results.end() || runepkg_util_compare_versions(pkg_version.c_str(), results[pkg_name].version.c_str()) > 0) results[pkg_name] = res;
+        for (const auto& filename : g_pkg_index.file_list) {
+            std::ifstream infile(filename);
+            if (!infile.is_open()) continue;
+            std::string pkg_name, pkg_version, pkg_arch, pkg_desc, pkg_provides, line;
+            while (std::getline(infile, line)) {
+                if (line.empty() || line == "\r") {
+                    if (!pkg_name.empty()) {
+                        std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides;
+                        std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
+                        if (combined.find(q) != std::string::npos) {
+                            SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
+                            if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) res.installed = true;
+                            if (results.find(pkg_name) == results.end() || runepkg_util_compare_versions(pkg_version.c_str(), results[pkg_name].version.c_str()) > 0) results[pkg_name] = res;
+                        }
+                        pkg_name.clear(); pkg_version.clear(); pkg_arch.clear(); pkg_desc.clear(); pkg_provides.clear();
                     }
-                    pkg_name.clear(); pkg_version.clear(); pkg_arch.clear(); pkg_desc.clear(); pkg_provides.clear();
+                    continue;
                 }
-                continue;
+                if (line.compare(0, 9, "Package: ") == 0) {
+                    pkg_name = line.substr(9);
+                    if (!pkg_name.empty() && pkg_name.back() == '\r') pkg_name.pop_back();
+                } else if (line.compare(0, 9, "Version: ") == 0) {
+                    pkg_version = line.substr(9);
+                    if (!pkg_version.empty() && pkg_version.back() == '\r') pkg_version.pop_back();
+                } else if (line.compare(0, 14, "Architecture: ") == 0) {
+                    pkg_arch = line.substr(14);
+                    if (!pkg_arch.empty() && pkg_arch.back() == '\r') pkg_arch.pop_back();
+                } else if (line.compare(0, 13, "Description: ") == 0) {
+                    pkg_desc = line.substr(13);
+                    if (!pkg_desc.empty() && pkg_desc.back() == '\r') pkg_desc.pop_back();
+                } else if (line.compare(0, 10, "Provides: ") == 0) {
+                    pkg_provides = line.substr(10);
+                    if (!pkg_provides.empty() && pkg_provides.back() == '\r') pkg_provides.pop_back();
+                }
             }
-            if (line.compare(0, 9, "Package: ") == 0) {
-                pkg_name = line.substr(9);
-                if (!pkg_name.empty() && pkg_name.back() == '\r') pkg_name.pop_back();
-            } else if (line.compare(0, 9, "Version: ") == 0) {
-                pkg_version = line.substr(9);
-                if (!pkg_version.empty() && pkg_version.back() == '\r') pkg_version.pop_back();
-            } else if (line.compare(0, 14, "Architecture: ") == 0) {
-                pkg_arch = line.substr(14);
-                if (!pkg_arch.empty() && pkg_arch.back() == '\r') pkg_arch.pop_back();
-            } else if (line.compare(0, 13, "Description: ") == 0) {
-                pkg_desc = line.substr(13);
-                if (!pkg_desc.empty() && pkg_desc.back() == '\r') pkg_desc.pop_back();
-            } else if (line.compare(0, 10, "Provides: ") == 0) {
-                pkg_provides = line.substr(10);
-                if (!pkg_provides.empty() && pkg_provides.back() == '\r') pkg_provides.pop_back();
+            if (!pkg_name.empty()) {
+                std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides; std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
+                if (combined.find(q) != std::string::npos) {
+                    SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
+                    if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) res.installed = true;
+                    if (results.find(pkg_name) == results.end() || runepkg_util_compare_versions(pkg_version.c_str(), results[pkg_name].version.c_str()) > 0) results[pkg_name] = res;
+                }
             }
         }
-        if (!pkg_name.empty()) {
-            std::string combined = pkg_name + " " + pkg_desc + " " + pkg_provides; std::transform(combined.begin(), combined.end(), combined.begin(), ::tolower);
-            if (combined.find(q) != std::string::npos) {
-                SearchResult res = {pkg_name, pkg_version, pkg_arch, pkg_desc, false};
-                if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, pkg_name.c_str())) res.installed = true;
-                if (results.find(pkg_name) == results.end() || runepkg_util_compare_versions(pkg_version.c_str(), results[pkg_name].version.c_str()) > 0) results[pkg_name] = res;
-            }
+        for (const auto& pair : results) {
+            const auto& res = pair.second;
+            std::cout << "\033[1;32m" << res.name << "\033[0m/" << "repo";
+            if (res.installed) std::cout << " [\033[1;33minstalled\033[0m]";
+            std::cout << " \033[1;33m" << res.version << "\033[0m " << res.arch << std::endl << "  " << res.desc << std::endl << std::endl;
         }
+        if (results.empty()) {
+            std::cout << "No matches found for '" << query << "'." << std::endl;
+        } else {
+            std::cout << "Found " << results.size() << " matches." << std::endl;
+        }
+        return 0;
+    } catch (...) {
+        return -1;
     }
-    for (const auto& pair : results) {
-        const auto& res = pair.second;
-        std::cout << "\033[1;32m" << res.name << "\033[0m/" << "repo";
-        if (res.installed) std::cout << " [\033[1;33minstalled\033[0m]";
-        std::cout << " \033[1;33m" << res.version << "\033[0m " << res.arch << std::endl << "  " << res.desc << std::endl << std::endl;
-    }
-    if (results.empty()) {
-        std::cout << "No matches found for '" << query << "'." << std::endl;
-    } else {
-        std::cout << "Found " << results.size() << " matches." << std::endl;
-    }
-    return 0;
 }
 
 std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_offset, std::string *out_metafile) {

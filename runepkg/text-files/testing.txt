@@ -1,0 +1,347 @@
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_util_cpp.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+Installation complete. (Run 'make install-target-rules' to sync the rules tree)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg sync
+Host synchronization successful.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -s nano
+Reading package data: 432 packages, 1.1 GB used, 954.0 GB available
+Package: nano
+Version: 9.0-1
+Architecture: amd64
+Maintainer: Jordi Mallach <jordi@debian.org>
+Description: small, friendly text editor inspired by Pico
+GNU nano is an easy-to-use text editor originally designed as a replacement
+for Pico, the ncurses-based editor from the non-free mailer package Pine
+(itself now available under the Apache License as Alpine).
+.
+However, GNU nano also implements many features missing in Pico, including:
+ - undo/redo
+ - line numbering
+ - syntax coloring
+ - soft-wrapping of overlong lines
+ - selecting text by holding Shift
+ - interactive search and replace (with regular expression support)
+ - a go-to line (and column) command
+ - support for multiple file buffers
+ - auto-indentation
+ - tab completion of filenames and search terms
+ - toggling features while running
+ - and full internationalization support
+Depends: libc6 (>= 2.38), libncursesw6 (>= 6), libtinfo6 (>= 6)
+Installed-Size: 2998
+Section: editors
+Priority: important
+Homepage: https://www.nano-editor.org/
+Files installed: 0
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] libpam0g: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] libldap-common: 2.6.10+dfsg-1 -> 2.6.14+dfsg-1
+  [upgradable] libpam-modules: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] base-files: 1:2026.2.0 -> 1:2026.3.0
+  [upgradable] krb5-multidev: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] kali-linux-wsl: 2026.2.12 -> 2026.3.3
+  [upgradable] bsdextrautils: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libssl3t64: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libgprofng0: 2.46-3 -> 2.47-2
+  [upgradable] vim: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] gcc-15-base: 15.2.0-17 -> 15.3.0-2
+  [upgradable] sqv: 1.3.0-5+b2 -> 1.4.0-1
+  [upgradable] distro-info-data: 0.69 -> 2026.08.20-1
+  [upgradable] libsmartcols1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] gcc-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libudev1: 260.1-1 -> 261.2-1
+  [upgradable] libtext-iconv-perl: 1.7-9 -> 1.7-9+b1
+  [upgradable] libffi8: 3.5.2-4 -> 3.7.1-2
+  [upgradable] udev: 260.1-1 -> 261.2-1
+  [upgradable] libhttp-cookies-perl: 6.11-1 -> 6.12-2
+  [upgradable] cpp-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libngtcp2-crypto-ossl-dev: 1.22.1-1 -> 1.24.0-1
+  [upgradable] locales-all: 2.42-16 -> 2.42-17
+  [upgradable] bsdutils: 1:2.42.1-3 -> 1:2.42.2-2
+  [upgradable] linux-libc-dev: 6.19.14-1+kali1 -> 7.1.5-1kali1
+  [upgradable] libevent-2.1-7t64: 2.1.12-stable-10+b2 -> 2.1.13-stable-1
+  [upgradable] libcurl3t64-gnutls: 8.20.0-5 -> 8.21.0-2
+  [upgradable] gzip: 1.13-1 -> 1.14-1
+  [upgradable] vim-tiny: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] zsh: 5.9-8+b40 -> 5.9.2-1+b1
+  [upgradable] libhttp-message-perl: 7.01-1 -> 7.04-1
+  [upgradable] libkadm5clnt-mit12: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] bash: 5.3-3 -> 5.3-3+b1
+  [upgradable] libcc1-0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libc-l10n: 2.42-16 -> 2.42-17
+  [upgradable] libcbor0.10: 0.10.2-2.1+b1 -> 0.10.2-2.2
+  [upgradable] systemd-sysv: 260.1-1 -> 261.2-1
+  [upgradable] libnet-ssleay-perl: 1.96-1 -> 1.96-1+b1
+  [upgradable] libpcap0.8t64: 1.10.6-1 -> 1.10.6-2
+  [upgradable] libkrb5-3: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] perl: 5.40.1-7+b1 -> 5.42.2-3
+  [upgradable] liburi-perl: 5.34-2 -> 5.35-1
+  [upgradable] libtinfo6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libxml-parser-perl: 2.47-2 -> 2.47-2+b1
+  [upgradable] runit-helper: 2.16.6 -> 2.16.7
+  [upgradable] libldap-dev: 2.6.10+dfsg-1+b2 -> 2.6.14+dfsg-1
+  [upgradable] libbinutils: 2.46-3 -> 2.47-2
+  [upgradable] libncursesw6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] iproute2: 7.0.0-1 -> 7.1.0-1
+  [upgradable] libsemanage-common: 3.10-1 -> 3.11-1
+  [upgradable] libjson-c5: 0.18+ds-3 -> 0.19+ds-1
+  [upgradable] gcc-16-base: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libio-socket-ssl-perl: 2.098-1 -> 2.099-1
+  [upgradable] libpsl-dev: 0.21.5-1 -> 0.23.3-1
+  [upgradable] libsystemd-shared: 260.1-1 -> 261.2-1
+  [upgradable] kali-system-cli: 2026.2.12 -> 2026.3.3
+  [upgradable] libhtml-parser-perl: 3.83-2 -> 3.83-2+b1
+  [upgradable] bind9-host: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] libssl-dev: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libselinux1: 3.10-1 -> 3.11-2
+  [upgradable] openssh-client-gssapi: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] libtsan2: 16.1.0-1 -> 16.2.0-1
+  [upgradable] cpp-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] dhcpcd-base: 1:10.3.2-3 -> 1:10.3.2-6
+  [upgradable] libstdc++6: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libxml2-16: 2.15.3+dfsg-1 -> 2.15.3+dfsg-1+b1
+  [upgradable] libevent-core-2.1-7t64: 2.1.12-stable-10+b2 -> 2.1.13-stable-1
+  [upgradable] binutils-x86-64-linux-gnu: 2.46-3 -> 2.47-2
+  [upgradable] libuuid1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] binutils: 2.46-3 -> 2.47-2
+  [upgradable] liburing2: 2.14-1 -> 2.15-1
+  [upgradable] libp11-kit0: 0.26.2-2 -> 0.26.5-1
+  [upgradable] libcurl4-openssl-dev: 8.20.0-5 -> 8.21.0-2
+  [upgradable] libmount1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libgomp1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] laptop-detect: 0.16+nmu1 -> 0.17
+  [upgradable] libzstd1: 1.5.7+dfsg-3+b2 -> 1.5.7+dfsg-4
+  [upgradable] systemd: 260.1-1 -> 261.2-1
+  [upgradable] nfs-common: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] libcrypt-urandom-perl: 0.55-1 -> 0.55-1+b1
+  [upgradable] libcrypt1: 1:4.5.1-1+b1 -> 1:4.5.2+20251210-1
+  [upgradable] libnfsidmap1: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] libngtcp2-crypto-gnutls8: 1.22.1-1 -> 1.24.0-1
+  [upgradable] libpython3.13-stdlib: 3.13.12-1 -> 3.13.14-1
+  [upgradable] dbus: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libcurl4t64: 8.20.0-5 -> 8.21.0-2
+  [upgradable] libctf0: 2.46-3 -> 2.47-2
+  [upgradable] util-linux: 2.42.1-3 -> 2.42.2-2
+  [upgradable] ncurses-bin: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] apt-utils: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] kali-defaults: 2026.2.12 -> 2026.3.2
+  [upgradable] bind9-libs: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] liblmdb0: 0.9.31-1+b3 -> 0.9.35-1
+  [upgradable] dbus-user-session: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libkrb5-dev: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] openssh-client: 1:10.3p1-4 -> 1:10.4p1-4
+  [upgradable] libsqlite3-0: 3.46.1-9+b1 -> 3.53.4-2
+  [upgradable] libc-gconv-modules-extra: 2.42-16 -> 2.42-17
+  [upgradable] libclone-perl: 0.50-1 -> 0.50-1+b1
+  [upgradable] openssh-server: 1:10.3p1-4 -> 1:10.4p1-4
+  [upgradable] login: 1:4.16.0-2+really2.42.1-3 -> 1:4.16.0-2+really2.42.2-2
+  [upgradable] libpython3-stdlib: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] libc6-dev: 2.42-16 -> 2.42-17
+  [upgradable] tasksel: 3.88+kali2 -> 3.89+kali1
+  [upgradable] libnghttp3-dev: 1.15.0-1 -> 1.17.0-1
+  [upgradable] gcc-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] python3: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] libunbound8: 1.25.1-1 -> 1.26.0-1
+  [upgradable] libpam-systemd: 260.1-1 -> 261.2-1
+  [upgradable] tar: 1.35+dfsg-4 -> 1.35+dfsg-5
+  [upgradable] libbrotli1: 1.2.0-3 -> 1.2.0-4+b1
+  [upgradable] texinfo-lib: 7.3-2 -> 7.3-2+b1
+  [upgradable] libapt-pkg-perl: 0.1.43 -> 0.1.43+b1
+  [upgradable] vim-runtime: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] openssh-sftp-server: 1:10.3p1-4 -> 1:10.4p1-4
+  [upgradable] wget: 1.25.0-2 -> 1.25.0-3
+  [upgradable] ifupdown: 0.8.45 -> 0.8.45+nmu1
+  [upgradable] libc-bin: 2.42-16 -> 2.42-17
+  [upgradable] libubsan1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libintl-xs-perl: 1.37-1 -> 1.37-1+b1
+  [upgradable] libisl23: 0.27-2 -> 0.28-1
+  [upgradable] libpam-runtime: 1.7.0-5 -> 1.7.0-8
+  [upgradable] openssl: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libio-compress-brotli-perl: 0.019000-1 -> 0.019000-1+b1
+  [upgradable] libtext-charwidth-perl: 0.04-12 -> 0.04-12+b1
+  [upgradable] libstdc++-15-dev: 15.2.0-17 -> 15.3.0-2
+  [upgradable] python3.13: 3.13.12-1 -> 3.13.14-1
+  [upgradable] libcap-ng0: 0.9.3-1 -> 0.9.3-1+b1
+  [upgradable] libkadm5srv-mit12: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] libxml-libxml-perl: 2.0207+dfsg+really+2.0134-8 -> 2.0207+dfsg+really+2.0134-8+b1
+  [upgradable] ucf: 3.0053 -> 3.0056
+  [upgradable] linux-sysctl-defaults: 4.15 -> 4.16
+  [upgradable] libcurl4-gnutls: 8.20.0-5 -> 8.21.0-2
+  [upgradable] adduser: 3.156 -> 3.158
+  [upgradable] libacl1: 2.3.2-3 -> 2.4.0-1
+  [upgradable] libkdb5-10t64: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] libpython3.13-minimal: 3.13.12-1 -> 3.13.14-1
+  [upgradable] libhwasan0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] fdisk: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libatomic1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] python3.13-minimal: 3.13.12-1 -> 3.13.14-1
+  [upgradable] apt: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] libzstd-dev: 1.5.7+dfsg-3+b2 -> 1.5.7+dfsg-4
+  [upgradable] libblkid1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libgssrpc4t64: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] libapparmor1: 4.1.7-4 -> 4.1.8-1
+  [upgradable] libitm1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libngtcp2-crypto-ossl0: 1.22.1-1 -> 1.24.0-1
+  [upgradable] perl-base: 5.40.1-7+b1 -> 5.42.2-3
+  [upgradable] libquadmath0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] python3-minimal: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] ncurses-term: 6.6+20251231-1 -> 6.6+20260608-2
+  [upgradable] libgssapi-krb5-2: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] binutils-common: 2.46-3 -> 2.47-2
+  [upgradable] libhttp-date-perl: 6.06-1 -> 6.08-1
+  [upgradable] libfido2-1: 1.17.0-1 -> 1.17.0-2
+  [upgradable] libssh2-1-dev: 1.11.1-3 -> 1.11.1-6
+  [upgradable] libngtcp2-16: 1.22.1-1 -> 1.24.0-1
+  [upgradable] ncurses-base: 6.6+20251231-1 -> 6.6+20260608-2
+  [upgradable] libgcc-15-dev: 15.2.0-17 -> 15.3.0-2
+  [upgradable] gettext-base: 0.26-1 -> 1.0-3
+  [upgradable] libngtcp2-dev: 1.22.1-1 -> 1.24.0-1
+  [upgradable] libc6: 2.42-16 -> 2.42-17
+  [upgradable] procps: 2:4.0.4-9+b2 -> 2:4.0.6-3
+  [upgradable] libncurses6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libwww-robotrules-perl: 6.02-1 -> 6.03-1
+  [upgradable] libsystemd0: 260.1-1 -> 261.2-1
+  [upgradable] libdbus-1-3: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libc-dev-bin: 2.42-16 -> 2.42-17
+  [upgradable] g++-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] vim-common: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] tasksel-data: 3.88+kali2 -> 3.89+kali1
+  [upgradable] libattr1: 1:2.5.2-4 -> 1:2.6.0-1
+  [upgradable] libp11-kit-dev: 0.26.2-2 -> 0.26.5-1
+  [upgradable] gettext: 0.26-1 -> 1.0-3
+  [upgradable] libfdisk1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libbrotli-dev: 1.2.0-3 -> 1.2.0-4+b1
+  [upgradable] publicsuffix: 20260428.1050-1 -> 20260725.1419-1
+  [upgradable] curl: 8.20.0-5 -> 8.21.0-2
+  [upgradable] tmux: 3.6b-1 -> 3.7b-1
+  [upgradable] bind9-dnsutils: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] zsh-common: 5.9-8 -> 5.9.2-1
+  [upgradable] libnghttp3-9: 1.15.0-1 -> 1.17.0-1
+  [upgradable] libasan8: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libseccomp2: 2.6.0-2+b1 -> 2.6.1-1
+  [upgradable] libnghttp2-dev: 1.69.0-1 -> 1.70.0-1
+  [upgradable] libapt-pkg7.0: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] liblsan0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] openssl-provider-legacy: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libldap2: 2.6.10+dfsg-1+b2 -> 2.6.14+dfsg-1
+  [upgradable] mount: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libexpat1: 2.8.1-1 -> 2.8.3-1
+  [upgradable] kali-linux-core: 2026.2.12 -> 2026.3.3
+  [upgradable] libjansson4: 2.14-2+b4 -> 2.15.1-1
+  [upgradable] libk5crypto3: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] liblocale-gettext-perl: 1.07-10 -> 1.07-10+b1
+  [upgradable] libkrb5support0: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] g++-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libsepol2: 3.10-1 -> 3.11-1
+  [upgradable] libssh2-1t64: 1.11.1-3 -> 1.11.1-6
+  [upgradable] libgcc-s1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libpsl5t64: 0.21.5-1 -> 0.23.3-1
+  [upgradable] libnghttp2-14: 1.69.0-1 -> 1.70.0-1
+  [upgradable] libsframe3: 2.46-3 -> 2.47-2
+  [upgradable] dbus-daemon: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libpam-modules-bin: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] dbus-bin: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] kali-system-core: 2026.2.12 -> 2026.3.3
+  [upgradable] findutils: 4.10.0-4 -> 4.11.0-2
+  [upgradable] nano: 9.0-1 -> 9.2-1
+  [upgradable] libncurses-dev: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libsemanage2: 3.10-1 -> 3.11-1
+  [upgradable] libctf-nobfd0: 2.46-3 -> 2.47-2
+Update complete! Binary/Source indexes updated. 213 upgradable. Time: 9.6s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 112374 source rune stanzas in 547ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26472 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i libc6
+libc6                          libc6-dev-arc-cross            libc6-dev-ppc64-cross          libc6-i386
+libc6-amd64-cross              libc6-dev-arc-dcv1             libc6-dev-ppc64-dcv1           libc6-i386-amd64-cross
+libc6-amd64-dcv1               libc6-dev-arm64-cross          libc6-dev-ppc64el-cross        libc6-i386-amd64-dcv1
+libc6-amd64-i386-cross         libc6-dev-arm64-dcv1           libc6-dev-ppc64el-dcv1         libc6-i386-cross
+libc6-amd64-i386-dcv1          libc6-dev-armel-cross          libc6-dev-ppc64-powerpc-cross  libc6-i386-dcv1
+libc6-amd64-x32-cross          libc6-dev-armel-dcv1           libc6-dev-ppc64-powerpc-dcv1   libc6-i386-x32-cross
+libc6-amd64-x32-dcv1           libc6-dev-armhf-cross          libc6-dev-riscv64-cross        libc6-i386-x32-dcv1
+libc6-arc-cross                libc6-dev-armhf-dcv1           libc6-dev-riscv64-dcv1         libc6-i686-i386-cross
+libc6-arc-dcv1                 libc6-dev-hppa-cross           libc6-dev-s390x-cross          libc6-loong64-cross
+libc6-arm64-cross              libc6-dev-hppa-dcv1            libc6-dev-s390x-dcv1           libc6-loong64-dcv1
+libc6-arm64-dcv1               libc6-dev-i386                 libc6-dev-sh4-cross            libc6-m68k-cross
+libc6-armel-cross              libc6-dev-i386-amd64-cross     libc6-dev-sh4-dcv1             libc6-m68k-dcv1
+libc6-armel-dcv1               libc6-dev-i386-amd64-dcv1      libc6-dev-sparc64-cross        libc6-powerpc-cross
+libc6-armhf-cross              libc6-dev-i386-cross           libc6-dev-sparc64-dcv1         libc6-powerpc-dcv1
+libc6-armhf-dcv1               libc6-dev-i386-dcv1            libc6-dev-sparc-sparc64-cross  libc6-powerpc-ppc64-cross
+libc6-dbg                      libc6-dev-i386-x32-cross       libc6-dev-sparc-sparc64-dcv1   libc6-powerpc-ppc64-dcv1
+libc6-dbgsym                   libc6-dev-i386-x32-dcv1        libc6-dev-x32                  libc6-ppc64-cross
+libc6-dev                      libc6-dev-loong64-cross        libc6-dev-x32-amd64-cross      libc6-ppc64-dcv1
+libc6-dev-alpha-cross          libc6-dev-loong64-dcv1         libc6-dev-x32-amd64-dcv1       libc6-ppc64el-cross
+libc6-dev-amd64-cross          libc6-dev-m68k-cross           libc6-dev-x32-cross            libc6-ppc64el-dcv1
+libc6-dev-amd64-dcv1           libc6-dev-m68k-dcv1            libc6-dev-x32-dcv1             libc6-ppc64-powerpc-cross
+libc6-dev-amd64-i386-cross     libc6-dev-powerpc-cross        libc6-dev-x32-i386-cross       libc6-ppc64-powerpc-dcv1
+libc6-dev-amd64-i386-dcv1      libc6-dev-powerpc-dcv1         libc6-dev-x32-i386-dcv1        libc6-riscv64-cross
+libc6-dev-amd64-x32-cross      libc6-dev-powerpc-ppc64-cross  libc6-hppa-cross               libc6-riscv64-dcv1
+libc6-dev-amd64-x32-dcv1       libc6-dev-powerpc-ppc64-dcv1   libc6-hppa-dcv1
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i libc6-arm64-cross
+[runepkg] Planning installation for 1 package(s)...
+  libc6-arm64-cross
+
+1 packages (1.2 MB) will be installed. Continue? [y/N] y
+  -> libc6-arm64-cross         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 1 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for libc6-arm64-cross
+[runepkg] Installing libc6-arm64-cross-2.43-3cross8
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/usr/
+aarch64-linux-gnu/ share/
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/usr/aarch64-linux-gnu/lib/
+ld-linux-aarch64.so.1   libc.so.6       libmvec.so.1        libnss_files.so.2   libresolv.so.2
+libanl.so.1             libdl.so.2      libnsl.so.1         libnss_hesiod.so.2  librt.so.1
+libBrokenLocale.so.1    libmemusage.so  libnss_compat.so.2  libpcprofile.so     libthread_db.so.1
+libc_malloc_debug.so.0  libm.so.6       libnss_dns.so.2     libpthread.so.0     libutil.so.1
+[ zypherus /home/michko/runepkg/runepkg ]#

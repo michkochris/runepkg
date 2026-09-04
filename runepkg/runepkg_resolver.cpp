@@ -23,6 +23,8 @@
 #include <libgen.h>
 
 #include "runepkg_cpp_ffi.h"
+#include "runepkg_util_cpp.hpp"
+#include "runepkg_security.hpp"
 
 extern "C" {
     #include "runepkg_config.h"
@@ -794,55 +796,77 @@ private:
 };
 
 extern "C" int runepkg_resolver_harvest_graph(const char *sources_dir, const char *out_db_path) {
-    std::string s_dir = sources_dir ? sources_dir : (g_runepkg_lists_dir ? g_runepkg_lists_dir : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/lists" : "/var/lib/runepkg_dir/runepkg_db/lists"));
-    std::string o_path = out_db_path ? out_db_path : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/runes_graph.bin" : "/var/lib/runepkg_dir/runepkg_db/runes_graph.bin");
+    try {
+        std::string s_dir = sources_dir ? sources_dir : (g_runepkg_lists_dir ? g_runepkg_lists_dir : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/lists" : "/var/lib/runepkg_dir/runepkg_db/lists"));
+        std::string o_path = out_db_path ? out_db_path : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/runes_graph.bin" : "/var/lib/runepkg_dir/runepkg_db/runes_graph.bin");
 
-    RuneResolverEngine engine;
-    return engine.harvest(s_dir, o_path);
+        RuneResolverEngine engine;
+        return engine.harvest(s_dir, o_path);
+    } catch (...) {
+        return -1;
+    }
 }
 
 extern "C" int runepkg_resolver_resolve_target(const char *pkg_name, RuneTargetPlan **out_plan) {
-    if (!pkg_name || !out_plan) return -1;
-    RuneResolverEngine engine;
-    return engine.resolve_tree(pkg_name, ResolveMode::MODE_BUILD, out_plan);
+    try {
+        if (!pkg_name || !out_plan) return -1;
+        RuneResolverEngine engine;
+        return engine.resolve_tree(pkg_name, ResolveMode::MODE_BUILD, out_plan);
+    } catch (...) {
+        if (out_plan) *out_plan = NULL;
+        return -1;
+    }
 }
 
 extern "C" int runepkg_resolver_get_install_plan(const char *pkg_name, RuneTargetPlan **out_plan) {
-    if (!pkg_name || !out_plan) return -1;
-    RuneResolverEngine engine;
-    return engine.resolve_tree(pkg_name, ResolveMode::MODE_HOST_DEPS, out_plan);
+    try {
+        if (!pkg_name || !out_plan) return -1;
+        RuneResolverEngine engine;
+        return engine.resolve_tree(pkg_name, ResolveMode::MODE_HOST_DEPS, out_plan);
+    } catch (...) {
+        if (out_plan) *out_plan = NULL;
+        return -1;
+    }
 }
 
 extern "C" void runepkg_resolver_free_plan(RuneTargetPlan *plan) {
-    if (!plan) return;
-    for (int i = 0; i < plan->node_count; i++) {
-        free(plan->nodes[i].package_name);
-        free(plan->nodes[i].version);
-        if (plan->nodes[i].arch) free(plan->nodes[i].arch);
-        free(plan->nodes[i].source_name);
-        if (plan->nodes[i].binary_filename) free(plan->nodes[i].binary_filename);
+    try {
+        if (!plan) return;
+        for (int i = 0; i < plan->node_count; i++) {
+            free(plan->nodes[i].package_name);
+            free(plan->nodes[i].version);
+            if (plan->nodes[i].arch) free(plan->nodes[i].arch);
+            free(plan->nodes[i].source_name);
+            if (plan->nodes[i].binary_filename) free(plan->nodes[i].binary_filename);
 
-        if (plan->nodes[i].target_build_depends) {
-            for (int j = 0; j < plan->nodes[i].target_build_depends_count; j++) {
-                free(plan->nodes[i].target_build_depends[j]);
+            if (plan->nodes[i].target_build_depends) {
+                for (int j = 0; j < plan->nodes[i].target_build_depends_count; j++) {
+                    free(plan->nodes[i].target_build_depends[j]);
+                }
+                free(plan->nodes[i].target_build_depends);
             }
-            free(plan->nodes[i].target_build_depends);
-        }
 
-        if (plan->nodes[i].host_tools_required) {
-            for (int j = 0; j < plan->nodes[i].host_tools_count; j++) {
-                free(plan->nodes[i].host_tools_required[j]);
+            if (plan->nodes[i].host_tools_required) {
+                for (int j = 0; j < plan->nodes[i].host_tools_count; j++) {
+                    free(plan->nodes[i].host_tools_required[j]);
+                }
+                free(plan->nodes[i].host_tools_required);
             }
-            free(plan->nodes[i].host_tools_required);
         }
+        free(plan->nodes);
+        free(plan);
+    } catch (...) {
+        /* No-op on exception */
     }
-    free(plan->nodes);
-    free(plan);
 }
 
 extern "C" int runepkg_resolver_dump_tree(const char *pkg_name) {
-    if (!pkg_name) return -1;
-    RuneResolverEngine engine;
-    engine.dump_tree_view(pkg_name);
-    return 0;
+    try {
+        if (!pkg_name) return -1;
+        RuneResolverEngine engine;
+        engine.dump_tree_view(pkg_name);
+        return 0;
+    } catch (...) {
+        return -1;
+    }
 }

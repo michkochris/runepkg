@@ -1,0 +1,59 @@
+==============================================================================
+RUNEPKG C++ FOUNDATION ARCHITECTURE BLUEPRINT
+==============================================================================
+
+1. OVERVIEW & FOUNDATIONAL PILLARS
+----------------------------------
+runepkg bridges a C89/C90 minimal core engine with an extended C++17 system engine.
+To ensure high performance, strict maintainability, and total system security, all
+extended C++ modules follow a strict dependency hierarchy and header isolation model.
+
+2. FOUNDATIONAL MODULE HIERARCHY & COMPILATION ORDER
+---------------------------------------------------
+In Makefile, C++ sources are ordered strictly by dependency build-up:
+
+   1. runepkg_security.cpp
+      - Security perimeter & trust anchor foundation
+      - OpenPGP GPG keyring discovery & signature verification
+      - Streaming SHA256 / SHA512 checksum validation
+      - Extraction path sanitization & jail traversal defense
+      - POSIX rlimit extraction resource limits (2GB max file size, 1024 FDs)
+      - SandboxWorker process isolation & privilege dropping (_apt / nobody)
+
+   2. runepkg_util_cpp.cpp
+      - Modern C++17 string manipulation (trim, split, join, case conversion)
+      - Atomic file writing (write-to-tmp then rename) and directory creation
+      - Subprocess execution wrapper (exec_command with pipe capture)
+      - Debian control file parser (parse_deb_control_fields)
+      - Safe FFI C-array <-> std::vector<std::string> converters
+
+   3. runepkg_resolver.cpp
+      - 70k+ Repository dependency graph harvester & resolver engine
+      - Relies natively on runepkg_util_cpp and runepkg_security
+
+   4. runepkg_network.cpp
+      - Parallel multi-threaded CURL fetch engine
+      - Relies natively on runepkg_security for OpenPGP/SHA256 verification and runepkg_util_cpp for string/I/O processing
+
+3. HEADER ISOLATION & C FFI BOUNDARY ARCHITECTURE
+-------------------------------------------------
+- C++ Internal Headers (.hpp):
+  `runepkg_security.hpp` and `runepkg_util_cpp.hpp` hold clean C++17 interfaces (STL, std::filesystem, std::function, templates, classes).
+  Included EXCLUSIVELY by C++ translation units (.cpp).
+
+- Master C FFI Bridge Header (runepkg_cpp_ffi.h):
+  Pure C-compatible header (`extern "C"`) containing POD structs and C function prototypes.
+  Included by C89/C90 files (runepkg_cli.c, runepkg_handle.c, etc.) when ENABLE_CPP_FFI is defined.
+
+- Exception Boundary Guarantee:
+  EVERY `extern "C"` export across C++ files is wrapped in a `try { ... } catch (...)` guard block.
+  C++ exceptions are guaranteed NEVER to leak into C89 caller frames.
+
+4. EXEXTRACTION SECURITY & PRIVILEGE DROPPING
+----------------------------------------------
+- Path Sanitization:
+  All package extraction directories are validated via `runepkg_security_sanitize_path` before unpacking archives.
+- Resource Caps:
+  `runepkg_security_apply_rlimits` caps max file size and open file descriptors during `.deb` unpacking.
+- Child Isolation:
+  When runepkg executes as root, child command execution (tar, ar) automatically drops privileges to unprivileged credentials (`_apt`) via `runepkg_security_drop_privileges_for_worker` prior to execvp.

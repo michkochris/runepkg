@@ -16,6 +16,7 @@
 #include "runepkg_util.h"
 #include "runepkg_config.h"
 #include "runepkg_defensive.h"
+#include "runepkg_cpp_ffi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +33,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <signal.h>
+#include <pwd.h>
+#include <grp.h>
 
 /* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
@@ -993,6 +996,11 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
+#ifdef ENABLE_CPP_FFI
+        if (runepkg_security_is_root()) {
+            runepkg_security_drop_privileges_for_worker("_apt");
+        }
+#endif
         execvp(argv[0], argv);
         perror("Failed to execute command");
         _exit(1);
@@ -1044,7 +1052,13 @@ int runepkg_util_execute_command_to_file(const char *command_path, char *const a
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
-        int fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        int fd;
+#ifdef ENABLE_CPP_FFI
+        if (runepkg_security_is_root()) {
+            runepkg_security_drop_privileges_for_worker("_apt");
+        }
+#endif
+        fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
         if (fd != -1) {
             dup2(fd, STDOUT_FILENO);
             dup2(fd, STDERR_FILENO);
@@ -1136,10 +1150,22 @@ static int extract_deb_archive(const char *deb_path, const char *destination_dir
 
     runepkg_util_log_verbose("Extracting .deb file '%s' to '%s'...\n", deb_path, destination_dir);
 
-    if (runepkg_util_create_dir_recursive(destination_dir, 0755) != 0) {
+    if (runepkg_util_create_dir_recursive(destination_dir, 0777) != 0) {
         runepkg_util_error("Failed to create destination directory for .deb extraction.\n");
         return -1;
     }
+    chmod(destination_dir, 0777);
+#ifdef ENABLE_CPP_FFI
+    if (runepkg_security_is_root()) {
+        struct passwd *pw = getpwnam("_apt");
+        if (!pw) pw = getpwnam("nobody");
+        if (pw) {
+            if (chown(destination_dir, pw->pw_uid, pw->pw_gid) != 0) {
+                /* Ignored */
+            }
+        }
+    }
+#endif
 
     absolute_deb_path = realpath(deb_path, NULL);
     if (!absolute_deb_path) {
@@ -1237,11 +1263,21 @@ static int extract_tar_archive(const char *archive_path, const char *destination
     char *tar_path;
     char *argv_tar[8];
     int result;
+#ifdef ENABLE_CPP_FFI
+    char sanitized_dest[PATH_MAX];
+#endif
 
     if (!archive_path || !destination_dir) {
         runepkg_util_error("extract_tar_archive: NULL archive_path or destination_dir.\n");
         return -1;
     }
+
+#ifdef ENABLE_CPP_FFI
+    if (!runepkg_security_sanitize_path(destination_dir, ".", sanitized_dest, sizeof(sanitized_dest))) {
+        runepkg_util_security_blocked("Target extraction directory fails security path sanitization: %s\n", destination_dir);
+        return -1;
+    }
+#endif
 
     archive_name = basename((char*)archive_path);
     runepkg_util_log_verbose("Extracting tar archive '%s' to '%s'...\n", archive_name, destination_dir);
@@ -1251,10 +1287,22 @@ static int extract_tar_archive(const char *archive_path, const char *destination
         return -1;
     }
 
-    if (runepkg_util_create_dir_recursive(destination_dir, 0755) != 0) {
+    if (runepkg_util_create_dir_recursive(destination_dir, 0777) != 0) {
         runepkg_util_error("Failed to create destination directory for tar extraction.\n");
         return -1;
     }
+    chmod(destination_dir, 0777);
+#ifdef ENABLE_CPP_FFI
+    if (runepkg_security_is_root()) {
+        struct passwd *pw = getpwnam("_apt");
+        if (!pw) pw = getpwnam("nobody");
+        if (pw) {
+            if (chown(destination_dir, pw->pw_uid, pw->pw_gid) != 0) {
+                /* Ignored */
+            }
+        }
+    }
+#endif
 
     tar_path = "/usr/bin/tar";
 
@@ -1283,13 +1331,38 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
     char *data_archive_path = NULL;
     char *control_extract_dir;
     char *data_extract_dir;
+#ifdef ENABLE_CPP_FFI
+    char sanitized_extract[PATH_MAX];
+#endif
 
     if (!deb_path || !extract_dir) {
         runepkg_util_error("extract_deb_complete: NULL deb_path or extract_dir.\n");
         return -1;
     }
 
+#ifdef ENABLE_CPP_FFI
+    if (!runepkg_security_sanitize_path(extract_dir, ".", sanitized_extract, sizeof(sanitized_extract))) {
+        runepkg_util_security_blocked("Top-level extraction directory fails security path sanitization: %s\n", extract_dir);
+        return -1;
+    }
+    runepkg_security_apply_rlimits((size_t)2048 * 1024 * 1024, 1024);
+#endif
+
     runepkg_util_log_verbose("Starting complete .deb extraction of '%s' to '%s'\n", deb_path, extract_dir);
+
+    runepkg_util_create_dir_recursive(extract_dir, 0777);
+    chmod(extract_dir, 0777);
+#ifdef ENABLE_CPP_FFI
+    if (runepkg_security_is_root()) {
+        struct passwd *pw = getpwnam("_apt");
+        if (!pw) pw = getpwnam("nobody");
+        if (pw) {
+            if (chown(extract_dir, pw->pw_uid, pw->pw_gid) != 0) {
+                /* Ignored */
+            }
+        }
+    }
+#endif
 
     if (!runepkg_util_file_exists(deb_path)) {
         runepkg_util_error(".deb file not found: %s\n", deb_path);

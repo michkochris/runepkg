@@ -17,6 +17,28 @@ extern "C" {
 #endif
 
 /* -------------------------------------------------------------------------- */
+/* Security Perimeter & Cryptographic Trust Declarations                       */
+/* -------------------------------------------------------------------------- */
+
+int runepkg_security_verify_sha256(const char *filepath, const char *expected_hash);
+int runepkg_security_verify_sha512(const char *filepath, const char *expected_hash);
+int runepkg_security_verify_gpg(const char *filepath, const char *keyring_path);
+int runepkg_security_sanitize_path(const char *base_dir, const char *entry_path, char *out_buf, size_t max_len);
+int runepkg_security_apply_rlimits(size_t max_bytes, size_t max_files);
+int runepkg_security_drop_privileges(const char *username);
+int runepkg_security_drop_privileges_for_worker(const char *username);
+int runepkg_security_is_root(void);
+
+/* -------------------------------------------------------------------------- */
+/* Extended C++ Utility Bridge Declarations                                   */
+/* -------------------------------------------------------------------------- */
+
+char** runepkg_util_cpp_split_string(const char *str, char delim, int *count_out);
+void runepkg_util_cpp_free_string_array(char **arr, int count);
+char* runepkg_util_cpp_read_file(const char *filepath);
+int runepkg_util_cpp_exec_cmd(const char *cmd, char **output_out);
+
+/* -------------------------------------------------------------------------- */
 /* Rune Dependency Resolver & Graph Harvester Types                           */
 /* -------------------------------------------------------------------------- */
 

@@ -15,6 +15,7 @@
 #include "runepkg_util.h"
 #include "runepkg_config.h"
 #include "runepkg_storage.h"
+#include "runepkg_cpp_ffi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -235,6 +236,9 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
     char *deb_copy_for_basename;
     char *package_extract_dir;
     char *control_file_path;
+#ifdef ENABLE_CPP_FFI
+    char sanitized_pkg_dir[PATH_MAX];
+#endif
 
     if (!deb_path || !control_dir || !pkg_info) {
         runepkg_util_error("extract_and_collect_info: NULL parameter provided.\n");
@@ -269,7 +273,16 @@ int runepkg_pack_extract_and_collect_info(const char *deb_path, const char *cont
         runepkg_pack_free_package_info(pkg_info);
         return -1;
     }
-    
+
+#ifdef ENABLE_CPP_FFI
+    if (!runepkg_security_sanitize_path(control_dir, package_extract_dir, sanitized_pkg_dir, sizeof(sanitized_pkg_dir))) {
+        runepkg_util_security_blocked("Package extraction workspace path fails security sanitization: %s\n", package_extract_dir);
+        runepkg_util_free_and_null(&package_extract_dir);
+        runepkg_pack_free_package_info(pkg_info);
+        return -1;
+    }
+#endif
+
     runepkg_util_log_verbose("Extracting to directory: %s\n", package_extract_dir);
     
     if (runepkg_util_extract_deb_complete(deb_path, package_extract_dir) != 0) {

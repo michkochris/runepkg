@@ -1,0 +1,36 @@
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+runepkg_util.c: In function ‘runepkg_util_extract_deb_complete’:
+runepkg_util.c:1356:13: error: ignoring return value of ‘chown’ declared with attribute ‘warn_unused_result’ [-Werror=unused-result]
+ 1356 |             chown(extract_dir, pw->pw_uid, pw->pw_gid);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+runepkg_util.c: In function ‘extract_deb_archive’:
+runepkg_util.c:1163:13: error: ignoring return value of ‘chown’ declared with attribute ‘warn_unused_result’ [-Werror=unused-result]
+ 1163 |             chown(destination_dir, pw->pw_uid, pw->pw_gid);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+runepkg_util.c: In function ‘extract_tar_archive’:
+runepkg_util.c:1298:13: error: ignoring return value of ‘chown’ declared with attribute ‘warn_unused_result’ [-Werror=unused-result]
+ 1298 |             chown(destination_dir, pw->pw_uid, pw->pw_gid);
+      |             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cc1: all warnings being treated as errors
+make[1]: *** [Makefile:183: runepkg_util.o] Error 1
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+make: *** [Makefile:174: with-all] Error 2
+[ zypherus /home/michko/runepkg/runepkg ]#
+

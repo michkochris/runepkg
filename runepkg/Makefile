@@ -115,8 +115,8 @@ endif
 # --- Apply Configuration ---
 ifeq ($(WITH_CPP),1)
   override CFLAGS  += -DENABLE_CPP_FFI
-  LDFLAGS += $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl") -lz
-  CPP_SOURCES = runepkg_resolver.cpp runepkg_network.cpp
+  LDFLAGS += $(shell pkg-config --libs libcurl openssl libcrypto 2>/dev/null || echo "-lcurl -lcrypto") -lz
+  CPP_SOURCES = runepkg_security.cpp runepkg_util_cpp.cpp runepkg_resolver.cpp runepkg_network.cpp
   CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
   LINKER = $(CXX)
 else
@@ -133,7 +133,8 @@ C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
-          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h
+          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h \
+          runepkg_security.hpp runepkg_util_cpp.hpp
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
