@@ -185,7 +185,7 @@ chmod +x make_runepkg_deb.sh
 ./make_runepkg_deb.sh
 ```
 
-### Lightning Fast Autocomplete
+### ⚡ Lightning Fast Binary Autocomplion
 To enable the advanced binary-driven autocompletion engine, run command in terminal and add this to your `~/.bashrc` for persistence...
 
 To enable predictive binary autocompletion across CLI flags, installed packages, and 70,000+ repository packages, add the following to your `~/.bashrc`:
@@ -327,7 +327,7 @@ Note: C++ features are enabled based on your build target (`make all`).
 Developed from years of experience with Custom Cross Linux From Scratch (LFS), **runepkg** views ancient `.deb` packages as "runes"—valuable historical artifacts. This tool empowers you to unearth and run legacy software from Debian archives safely in modern environments.
 
 <h1>
-  <img src="./runepkg/gemini-svg.svg.svg" width="30" style="vertical-align: middle;">
+  <img src="./runepkg/gemini-svg.svg" width="30" height="30" style="vertical-align: middle;" alt="Gemini Logo">
   Further Information
 </h1>
 
@@ -336,5 +336,5 @@ GitHub Copilot has provided an advanced review, opinion and comprehensive assess
 Comprehensive testing documentation, integration test suites, and fuzzing campaign methodologies can be found in [TESTING.md](./TESTING.md) 
 
 ## Contact
----
+
 🍆 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
