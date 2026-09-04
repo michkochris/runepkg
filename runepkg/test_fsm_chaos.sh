@@ -17,6 +17,12 @@ echo -e "${YELLOW}=== Starting runepkg FSM Chaos & Recovery Test ===${RESET}"
 
 TARGET_BIN="./runepkg"
 if [ ! -f "$TARGET_BIN" ]; then
+    TARGET_BIN="../runepkg"
+fi
+if [ ! -f "$TARGET_BIN" ]; then
+    TARGET_BIN="../../runepkg"
+fi
+if [ ! -f "$TARGET_BIN" ]; then
     echo -e "${RED}Error: runepkg binary not found. Please run 'make' first.${RESET}"
     exit 1
 fi

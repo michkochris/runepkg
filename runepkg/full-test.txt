@@ -1,0 +1,384 @@
+[ zypherus /home/michko/runepkg/runepkg/tests/integration ]# cd /home/michko/runepkg/runepkg && \
+echo "=== 1. BUILD & STATIC ANALYSIS ===" > runepkg_verification_output.txt && \
+make clean && make && make static-analysis >> runepkg_verification_output.txt 2>&1 && \
+echo -e "\n=== 2. INTEGRATION & CHAOS TESTS ===" >> runepkg_verification_output.txt && \
+cd /home/michko/runepkg/runepkg/tests/integration && make >> /home/michko/runepkg/runepkg/runepkg_verification_output.txt 2>&1 && \
+echo -e "\n=== 3. FUZZING CAMPAIGN (1000 runs) ===" >> runepkg_verification_output.txt && \
+cd /home/michko/runepkg/runepkg/tests/fuzz && make && ./fuzz_sanitize_path -runs=1000 >> /home/michko/runepkg/runepkg/runepkg_verification_output.txt 2>&1 && \
+echo "=== ALL VERIFICATIONS PASSED ===" >> runepkg_verification_output.txt && \
+cat /home/michko/runepkg/runepkg/runepkg_verification_output.txt
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Core (C Minimal)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make: Nothing to be done for 'all'.
+=== 1. BUILD & STATIC ANALYSIS ===
+Running static analysis with cppcheck...
+cppcheck not found. Install cppcheck for static analysis.
+Running clang scan-build...
+scan-build: Using '/usr/lib/llvm-21/bin/clang' for static analysis
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+make[2]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_util_cpp.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make[2]: Leaving directory '/home/michko/runepkg/runepkg'
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+scan-build: Analysis run complete.
+scan-build: Removing directory '/tmp/scan-build-2026-09-04-165052-68618-1' because it contains no reports.
+scan-build: No bugs found.
+
+=== 2. INTEGRATION & CHAOS TESTS ===
+Running integration test suite...
+./test_fsm_signal_injection.sh
+=== Running FSM Signal Injection Test (SIGINT / SIGTERM) ===
+Sending SIGINT to PID 69412...
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] libpam0g: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] libldap-common: 2.6.10+dfsg-1 -> 2.6.14+dfsg-1
+  [upgradable] libpam-modules: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] base-files: 1:2026.2.0 -> 1:2026.3.0
+  [upgradable] krb5-multidev: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] kali-linux-wsl: 2026.2.12 -> 2026.3.3
+  [upgradable] llvm-21-dev: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] bsdextrautils: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libssl3t64: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libgprofng0: 2.46-3 -> 2.47-2
+  [upgradable] vim: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] gcc-15-base: 15.2.0-17 -> 15.3.0-2
+  [upgradable] sqv: 1.3.0-5+b2 -> 1.4.0-1
+  [upgradable] distro-info-data: 0.69 -> 2026.08.20-1
+  [upgradable] libsmartcols1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] gcc-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libudev1: 260.1-1 -> 261.2-1
+  [upgradable] libtext-iconv-perl: 1.7-9 -> 1.7-9+b1
+  [upgradable] libffi8: 3.5.2-4 -> 3.7.1-2
+  [upgradable] udev: 260.1-1 -> 261.2-1
+  [upgradable] libhttp-cookies-perl: 6.11-1 -> 6.12-2
+  [upgradable] cpp-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libngtcp2-crypto-ossl-dev: 1.22.1-1 -> 1.24.0-1
+  [upgradable] locales-all: 2.42-16 -> 2.43-4
+  [upgradable] bsdutils: 1:2.42.1-3 -> 1:2.42.2-2
+  [upgradable] linux-libc-dev: 6.19.14-1+kali1 -> 7.1.5-1kali1
+  [upgradable] libext2fs2t64: 1.47.4-1 -> 1.47.4-1+b1
+  [upgradable] libevent-2.1-7t64: 2.1.12-stable-10+b2 -> 2.1.13-stable-1
+  [upgradable] libcurl3t64-gnutls: 8.20.0-5 -> 8.21.0-2
+  [upgradable] gzip: 1.13-1 -> 1.14-1
+  [upgradable] vim-tiny: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] zsh: 5.9-8+b40 -> 5.9.2-1+b1
+  [upgradable] libhttp-message-perl: 7.01-1 -> 7.04-1
+  [upgradable] libkadm5clnt-mit12: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] bash: 5.3-3 -> 5.3-3+b1
+  [upgradable] libcc1-0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libc-l10n: 2.42-16 -> 2.43-4
+  [upgradable] libcbor0.10: 0.10.2-2.1+b1 -> 0.10.2-2.2
+  [upgradable] systemd-sysv: 260.1-1 -> 261.2-1
+  [upgradable] libnet-ssleay-perl: 1.96-1 -> 1.96-1+b1
+  [upgradable] libpcap0.8t64: 1.10.6-1 -> 1.10.6-2
+  [upgradable] libkrb5-3: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] perl: 5.40.1-7+b1 -> 5.42.2-3
+  [upgradable] liburi-perl: 5.34-2 -> 5.35-1
+  [upgradable] libtinfo6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libxml-parser-perl: 2.47-2 -> 2.47-2+b1
+  [upgradable] runit-helper: 2.16.6 -> 2.16.7
+  [upgradable] libldap-dev: 2.6.10+dfsg-1+b2 -> 2.6.14+dfsg-1
+  [upgradable] libbinutils: 2.46-3 -> 2.47-2
+  [upgradable] libncursesw6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] iproute2: 7.0.0-1 -> 7.1.0-1
+  [upgradable] libsemanage-common: 3.10-1 -> 3.11-1
+  [upgradable] libjson-c5: 0.18+ds-3 -> 0.19+ds-1
+  [upgradable] gcc-16-base: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libio-socket-ssl-perl: 2.098-1 -> 2.099-1
+  [upgradable] libpsl-dev: 0.21.5-1 -> 0.23.3-1
+  [upgradable] libsystemd-shared: 260.1-1 -> 261.2-1
+  [upgradable] libcap2-bin: 1:2.78-1 -> 1:2.78-1+b1
+  [upgradable] kali-system-cli: 2026.2.12 -> 2026.3.3
+  [upgradable] libhtml-parser-perl: 3.83-2 -> 3.83-2+b1
+  [upgradable] bind9-host: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] libssl-dev: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libselinux1: 3.10-1 -> 3.11-2
+  [upgradable] openssh-client-gssapi: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] libtsan2: 16.1.0-1 -> 16.2.0-1
+  [upgradable] cpp-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] dhcpcd-base: 1:10.3.2-3 -> 1:10.5.2-1
+  [upgradable] libstdc++6: 16.1.0-1 -> 16.2.0-1
+  [upgradable] llvm-21-runtime: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libxml2-16: 2.15.3+dfsg-1 -> 2.15.3+dfsg-1+b1
+  [upgradable] libevent-core-2.1-7t64: 2.1.12-stable-10+b2 -> 2.1.13-stable-1
+  [upgradable] binutils-x86-64-linux-gnu: 2.46-3 -> 2.47-2
+  [upgradable] libuuid1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] binutils: 2.46-3 -> 2.47-2
+  [upgradable] liburing2: 2.14-1 -> 2.15-1
+  [upgradable] libp11-kit0: 0.26.2-2 -> 0.26.5-1
+  [upgradable] libcurl4-openssl-dev: 8.20.0-5 -> 8.21.0-2
+  [upgradable] libmount1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libgomp1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] laptop-detect: 0.16+nmu1 -> 0.17
+  [upgradable] libffi-dev: 3.5.2-4 -> 3.7.1-2
+  [upgradable] libzstd1: 1.5.7+dfsg-3+b2 -> 1.5.7+dfsg-4
+  [upgradable] systemd: 260.1-1 -> 261.2-1
+  [upgradable] nfs-common: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] libcrypt-urandom-perl: 0.55-1 -> 0.55-1+b1
+  [upgradable] libcrypt1: 1:4.5.1-1+b1 -> 1:4.5.2+20251210-1
+  [upgradable] libnfsidmap1: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] libngtcp2-crypto-gnutls8: 1.22.1-1 -> 1.24.0-1
+  [upgradable] libpython3.13-stdlib: 3.13.12-1 -> 3.13.15-1
+  [upgradable] dbus: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libcurl4t64: 8.20.0-5 -> 8.21.0-2
+  [upgradable] libctf0: 2.46-3 -> 2.47-2
+  [upgradable] util-linux: 2.42.1-3 -> 2.42.2-2
+  [upgradable] ncurses-bin: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] apt-utils: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] kali-defaults: 2026.2.12 -> 2026.3.2
+  [upgradable] clang-21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libclang1-21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] bind9-libs: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] liblmdb0: 0.9.31-1+b3 -> 0.9.35-1
+  [upgradable] dbus-user-session: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libkrb5-dev: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] openssh-client: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] libsqlite3-0: 3.46.1-9+b1 -> 3.53.4-2
+  [upgradable] libc-gconv-modules-extra: 2.42-16 -> 2.43-4
+  [upgradable] libcap2: 1:2.78-1 -> 1:2.78-1+b1
+  [upgradable] libclone-perl: 0.50-1 -> 0.50-1+b1
+  [upgradable] openssh-server: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] libclang-rt-21-dev: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libcom-err2: 1.47.4-1 -> 1.47.4-1+b1
+  [upgradable] login: 1:4.16.0-2+really2.42.1-3 -> 1:4.16.0-2+really2.42.2-2
+  [upgradable] libpython3-stdlib: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] libclang-cpp21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libc6-dev: 2.42-16 -> 2.43-4
+  [upgradable] tasksel: 3.88+kali2 -> 3.89+kali1
+  [upgradable] libnghttp3-dev: 1.15.0-1 -> 1.17.0-1
+  [upgradable] gcc-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] python3: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] libunbound8: 1.25.1-1 -> 1.26.0-1
+  [upgradable] libpam-systemd: 260.1-1 -> 261.2-1
+  [upgradable] tar: 1.35+dfsg-4 -> 1.35+dfsg-5
+  [upgradable] libbrotli1: 1.2.0-3 -> 1.2.0-4+b1
+  [upgradable] texinfo-lib: 7.3-2 -> 7.3-2+b1
+  [upgradable] libapt-pkg-perl: 0.1.43 -> 0.1.43+b1
+  [upgradable] vim-runtime: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] openssh-sftp-server: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] wget: 1.25.0-2 -> 1.25.0-3
+  [upgradable] ifupdown: 0.8.45 -> 0.8.45+nmu1
+  [upgradable] libc-bin: 2.42-16 -> 2.43-4
+  [upgradable] libubsan1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libintl-xs-perl: 1.37-1 -> 1.37-1+b1
+  [upgradable] libobjc4: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libisl23: 0.27-2 -> 0.28-1
+  [upgradable] libpam-runtime: 1.7.0-5 -> 1.7.0-8
+  [upgradable] openssl: 3.6.2-1 -> 3.6.3-1
+  [upgradable] libio-compress-brotli-perl: 0.019000-1 -> 0.019000-1+b1
+  [upgradable] libtext-charwidth-perl: 0.04-12 -> 0.04-12+b1
+  [upgradable] libstdc++-15-dev: 15.2.0-17 -> 15.3.0-2
+  [upgradable] python3.13: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libcap-ng0: 0.9.3-1 -> 0.9.3-1+b1
+  [upgradable] libkadm5srv-mit12: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] clang-tools-21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libxml-libxml-perl: 2.0207+dfsg+really+2.0134-8 -> 2.0207+dfsg+really+2.0134-8+b1
+  [upgradable] ucf: 3.0053 -> 3.0056
+  [upgradable] linux-sysctl-defaults: 4.15 -> 4.16
+  [upgradable] libcurl4-gnutls: 8.20.0-5 -> 8.21.0-2
+  [upgradable] adduser: 3.156 -> 3.158
+  [upgradable] libacl1: 2.3.2-3 -> 2.4.0-1
+  [upgradable] libkdb5-10t64: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] libpython3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] llvm-21-tools: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libhwasan0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] fdisk: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libatomic1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] python3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] apt: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] libzstd-dev: 1.5.7+dfsg-3+b2 -> 1.5.7+dfsg-4
+  [upgradable] libblkid1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libgssrpc4t64: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] libapparmor1: 4.1.7-4 -> 4.1.8-1
+  [upgradable] libitm1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libngtcp2-crypto-ossl0: 1.22.1-1 -> 1.24.0-1
+  [upgradable] llvm-21-linker-tools: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] perl-base: 5.40.1-7+b1 -> 5.42.2-3
+  [upgradable] libquadmath0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] python3-minimal: 3.13.9-3+b1 -> 3.14.6-1
+  [upgradable] ncurses-term: 6.6+20251231-1 -> 6.6+20260608-2
+  [upgradable] libgssapi-krb5-2: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] binutils-common: 2.46-3 -> 2.47-2
+  [upgradable] libhttp-date-perl: 6.06-1 -> 6.08-1
+  [upgradable] python3-pygments: 2.19.2+dfsg-1 -> 2.20.0+dfsg-2
+  [upgradable] libllvm21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libfido2-1: 1.17.0-1 -> 1.17.0-2
+  [upgradable] libobjc-15-dev: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libssh2-1-dev: 1.11.1-3 -> 1.11.1-6
+  [upgradable] libngtcp2-16: 1.22.1-1 -> 1.24.0-1
+  [upgradable] ncurses-base: 6.6+20251231-1 -> 6.6+20260608-2
+  [upgradable] libgcc-15-dev: 15.2.0-17 -> 15.3.0-2
+  [upgradable] gettext-base: 0.26-1 -> 1.0-3
+  [upgradable] libngtcp2-dev: 1.22.1-1 -> 1.24.0-1
+  [upgradable] libc6: 2.42-16 -> 2.43-4
+  [upgradable] libxml2-dev: 2.15.3+dfsg-1 -> 2.15.3+dfsg-1+b1
+  [upgradable] procps: 2:4.0.4-9+b2 -> 2:4.0.6-3
+  [upgradable] libncurses6: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libwww-robotrules-perl: 6.02-1 -> 6.03-1
+  [upgradable] libsystemd0: 260.1-1 -> 261.2-1
+  [upgradable] libdbus-1-3: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libc-dev-bin: 2.42-16 -> 2.43-4
+  [upgradable] g++-15: 15.2.0-17 -> 15.3.0-2
+  [upgradable] lib32gcc-s1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] vim-common: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] tasksel-data: 3.88+kali2 -> 3.89+kali1
+  [upgradable] libattr1: 1:2.5.2-4 -> 1:2.6.0-1
+  [upgradable] libp11-kit-dev: 0.26.2-2 -> 0.26.5-1
+  [upgradable] gettext: 0.26-1 -> 1.0-3
+  [upgradable] libc6-i386: 2.42-16 -> 2.43-4
+  [upgradable] libfdisk1: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libbrotli-dev: 1.2.0-3 -> 1.2.0-4+b1
+  [upgradable] libss2: 1.47.4-1 -> 1.47.4-1+b1
+  [upgradable] publicsuffix: 20260428.1050-1 -> 20260725.1419-1
+  [upgradable] curl: 8.20.0-5 -> 8.21.0-2
+  [upgradable] logsave: 1.47.4-1 -> 1.47.4-1+b1
+  [upgradable] tmux: 3.6b-1 -> 3.7b-1
+  [upgradable] bind9-dnsutils: 1:9.20.23-1 -> 1:9.20.27-1
+  [upgradable] zsh-common: 5.9-8 -> 5.9.2-1
+  [upgradable] libnghttp3-9: 1.15.0-1 -> 1.17.0-1
+  [upgradable] libasan8: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libseccomp2: 2.6.0-2+b1 -> 2.6.1-1
+  [upgradable] libnghttp2-dev: 1.69.0-1 -> 1.70.0-1
+  [upgradable] libapt-pkg7.0: 3.2.0+kali1 -> 3.3.2+kali1
+  [upgradable] liblsan0: 16.1.0-1 -> 16.2.0-1
+  [upgradable] openssl-provider-legacy: 3.6.2-1 -> 3.6.3-1
+  [upgradable] llvm-21: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] libldap2: 2.6.10+dfsg-1+b2 -> 2.6.14+dfsg-1
+  [upgradable] mount: 2.42.1-3 -> 2.42.2-2
+  [upgradable] libexpat1: 2.8.1-1 -> 2.8.3-1
+  [upgradable] libclang-common-21-dev: 1:21.1.8-7+b1 -> 1:21.1.8-10
+  [upgradable] kali-linux-core: 2026.2.12 -> 2026.3.3
+  [upgradable] libjansson4: 2.14-2+b4 -> 2.15.1-1
+  [upgradable] libk5crypto3: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] liblocale-gettext-perl: 1.07-10 -> 1.07-10+b1
+  [upgradable] libkrb5support0: 1.22.1-2.1 -> 1.22.1-3
+  [upgradable] g++-15-x86-64-linux-gnu: 15.2.0-17 -> 15.3.0-2
+  [upgradable] libsepol2: 3.10-1 -> 3.11-1
+  [upgradable] libssh2-1t64: 1.11.1-3 -> 1.11.1-6
+  [upgradable] lib32stdc++6: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libgcc-s1: 16.1.0-1 -> 16.2.0-1
+  [upgradable] libpsl5t64: 0.21.5-1 -> 0.23.3-1
+  [upgradable] libnghttp2-14: 1.69.0-1 -> 1.70.0-1
+  [upgradable] libsframe3: 2.46-3 -> 2.47-2
+  [upgradable] e2fsprogs: 1.47.4-1 -> 1.47.4-1+b1
+  [upgradable] dbus-daemon: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libpam-modules-bin: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] dbus-bin: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] kali-system-core: 2026.2.12 -> 2026.3.3
+  [upgradable] comerr-dev: 2.1-1.47.4-1 -> 2.1-1.47.4-1+b1
+  [upgradable] zstd: 1.5.7+dfsg-3+b2 -> 1.5.7+dfsg-4
+  [upgradable] findutils: 4.10.0-4 -> 4.11.0-2
+  [upgradable] nano: 9.0-1 -> 9.2-1
+  [upgradable] libncurses-dev: 6.6+20251231-1+b1 -> 6.6+20260608-2
+  [upgradable] libsemanage2: 3.10-1 -> 3.11-1
+  [upgradable] libctf-nobfd0: 2.46-3 -> 2.47-2
+Update complete! Binary/Source indexes updated. 242 upgradable. Time: 6.4s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 112499 source rune stanzas in 544ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26503 KB)
+FSM handled SIGINT gracefully without workspace corruption.
+=== FSM Signal Injection Test Passed ===
+./test_concurrent_ops.sh
+=== Running Concurrent Operations Stress Test ===
+Concurrent parallel invocations completed successfully without lock deadlocks.
+=== Concurrent Operations Stress Test Passed ===
+../../test_fsm_chaos.sh
+=== Starting runepkg FSM Chaos & Recovery Test ===
+[1] Testing lock acquisition contention...
+[2] Simulating orphaned transaction workspace recovery...
+Orphaned workspace simulated at ./test_chaos_workspace/log/staging_999999
+=== FSM Chaos & Recovery Test Passed Successfully ===
+All integration tests passed successfully!
+INFO: Running with entropic power schedule (0xFF, 100).
+INFO: Seed: 4069534563
+INFO: Loaded 1 modules   (1770 inline 8-bit counters): 1770 [0x5e13fdfda050, 0x5e13fdfda73a),
+INFO: Loaded 1 PC tables (1770 PCs): 1770 [0x5e13fdfda740,0x5e13fdfe15e0),
+INFO: -max_len is not provided; libFuzzer will not generate inputs larger than 4096 bytes
+INFO: A corpus is not provided, starting from an empty corpus
+#2      INITED cov: 59 ft: 60 corp: 1/1b exec/s: 0 rss: 34Mb
+#4      NEW    cov: 59 ft: 63 corp: 2/3b lim: 4 exec/s: 0 rss: 35Mb L: 2/2 MS: 2 ChangeByte-CrossOver-
+#6      NEW    cov: 59 ft: 65 corp: 3/6b lim: 4 exec/s: 0 rss: 35Mb L: 3/3 MS: 2 ChangeByte-InsertByte-
+#12     NEW    cov: 59 ft: 67 corp: 4/10b lim: 4 exec/s: 0 rss: 35Mb L: 4/4 MS: 1 CrossOver-
+#19     NEW    cov: 61 ft: 69 corp: 5/14b lim: 4 exec/s: 0 rss: 35Mb L: 4/4 MS: 2 CopyPart-CMP- DE: "\001\000\000\000"-
+#38     NEW    cov: 64 ft: 73 corp: 6/18b lim: 4 exec/s: 0 rss: 35Mb L: 4/4 MS: 4 ChangeByte-PersAutoDict-ChangeBinInt-ChangeBinInt- DE: "\001\000\000\000"-
+#73     REDUCE cov: 64 ft: 73 corp: 6/17b lim: 4 exec/s: 0 rss: 36Mb L: 3/4 MS: 5 ChangeByte-PersAutoDict-CrossOver-PersAutoDict-CrossOver- DE: "\001\000\000\000"-"\001\000\000\000"-
+#143    REDUCE cov: 64 ft: 73 corp: 6/16b lim: 4 exec/s: 0 rss: 38Mb L: 2/4 MS: 5 InsertByte-ShuffleBytes-ChangeByte-EraseBytes-EraseBytes-
+#194    REDUCE cov: 64 ft: 73 corp: 6/15b lim: 4 exec/s: 0 rss: 39Mb L: 1/4 MS: 1 EraseBytes-
+#375    REDUCE cov: 64 ft: 73 corp: 6/14b lim: 4 exec/s: 0 rss: 42Mb L: 3/4 MS: 1 EraseBytes-
+        NEW_FUNC[1/1]: 0x5e13fdf7e7d0 in std::filesystem::__cxx11::path::path<char [3], std::filesystem::__cxx11::path>(char const (&) [3], std::filesystem::__cxx11::path::format) /usr/lib/gcc/x86_64-linux-gnu/15/../../../../include/c++/15/bits/fs_path.h:332
+#407    NEW    cov: 80 ft: 89 corp: 7/16b lim: 4 exec/s: 0 rss: 43Mb L: 2/4 MS: 2 InsertByte-CMP- DE: ".."-
+#434    NEW    cov: 83 ft: 98 corp: 8/20b lim: 4 exec/s: 0 rss: 44Mb L: 4/4 MS: 2 ChangeBit-PersAutoDict- DE: ".."-
+#531    REDUCE cov: 83 ft: 98 corp: 8/19b lim: 4 exec/s: 0 rss: 46Mb L: 2/4 MS: 2 ChangeBit-EraseBytes-
+#551    REDUCE cov: 88 ft: 110 corp: 9/23b lim: 4 exec/s: 0 rss: 46Mb L: 4/4 MS: 5 ChangeByte-InsertByte-ChangeBit-ChangeByte-PersAutoDict- DE: ".."-
+#666    REDUCE cov: 88 ft: 110 corp: 9/22b lim: 4 exec/s: 0 rss: 48Mb L: 3/4 MS: 5 CMP-ChangeByte-CrossOver-EraseBytes-PersAutoDict- DE: "\244\000"-".."-
+#995    REDUCE cov: 88 ft: 110 corp: 9/21b lim: 6 exec/s: 0 rss: 54Mb L: 1/4 MS: 4 CopyPart-ShuffleBytes-ShuffleBytes-EraseBytes-
+#1000   DONE   cov: 88 ft: 110 corp: 9/21b lim: 6 exec/s: 0 rss: 54Mb
+###### Recommended dictionary. ######
+"\001\000\000\000" # Uses: 20
+".." # Uses: 24
+"\244\000" # Uses: 16
+###### End of recommended dictionary. ######
+Done 1000 runs in 0 second(s)
+[ zypherus /home/michko/runepkg/runepkg/tests/fuzz ]#
