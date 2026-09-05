@@ -27,15 +27,15 @@ TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 # --- Power User Shortcut: MUSL ---
 ifeq ($(MUSL),1)
   # Check for the Grand Forge toolchain from 'make musl-all'
-  FORGE_BIN := $(CURDIR)/.forge_musl/toolchain/bin
+  FORGE_BIN := $(CURDIR)/forge_musl/toolchain/bin
   ifneq ($(wildcard $(FORGE_BIN)/x86_64-linux-musl-gcc),)
     CC  := $(FORGE_BIN)/x86_64-linux-musl-gcc
     CXX := $(FORGE_BIN)/x86_64-linux-musl-g++
     # Automatically include forge dependencies if present
-    ifneq ($(wildcard $(CURDIR)/.forge_musl/deps/include),)
-      override CFLAGS   += -I$(CURDIR)/.forge_musl/deps/include
-      override CXXFLAGS += -I$(CURDIR)/.forge_musl/deps/include
-      LDFLAGS  += -L$(CURDIR)/.forge_musl/deps/lib
+    ifneq ($(wildcard $(CURDIR)/forge_musl/deps/include),)
+      override CFLAGS   += -I$(CURDIR)/forge_musl/deps/include
+      override CXXFLAGS += -I$(CURDIR)/forge_musl/deps/include
+      LDFLAGS  += -L$(CURDIR)/forge_musl/deps/lib
     endif
   else
     CC  := musl-gcc
@@ -189,7 +189,7 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) $(TARGET) $(C_SOURCES:.c=.d) $(CPP_SOURCES:.cpp=.d) *.deb .config_with_cpp
+	$(Q)rm -f $(OBJS) *.o *.d $(TARGET) *.deb .config_with_cpp .config_with_cpp.tmp
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:
@@ -197,8 +197,8 @@ clean-extended:
 	$(Q)rm -rf debs sources temp_install staging* vrunepkg_dir
 
 clean-forge:
-	@echo "$(RED)Dismantling the Grand Forge (.forge_musl)...$(RESET)"
-	$(Q)rm -rf .forge_musl
+	@echo "$(RED)Dismantling the Grand Forge (forge_musl)...$(RESET)"
+	$(Q)rm -rf forge_musl
 	@echo "$(GREEN)Done.$(RESET)"
 
 clean-all: clean clean-extended clean-forge

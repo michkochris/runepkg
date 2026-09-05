@@ -14,7 +14,7 @@ PURPLE='\033[1;35m'
 set -e
 
 START_DIR="$(pwd)"
-FORGE_DIR="$START_DIR/.forge_musl"
+FORGE_DIR="$START_DIR/forge_musl"
 TOOLCHAIN_DIR="$FORGE_DIR/toolchain"
 DEPS_DIR="$FORGE_DIR/deps"
 BUILD_DIR="$FORGE_DIR/build"
