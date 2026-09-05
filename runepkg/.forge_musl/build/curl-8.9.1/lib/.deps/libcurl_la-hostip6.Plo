@@ -1,0 +1,157 @@
+libcurl_la-hostip6.lo: hostip6.c \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdc-predef.h \
+ curl_setup.h curl_config.h ../include/curl/system.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/types.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/features.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/alltypes.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/endian.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/select.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/socket.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/socket.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdio.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/assert.h \
+ curl_setup_once.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdlib.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/alloca.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/string.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/strings.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdarg.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/time.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/errno.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/errno.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/stat.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/stat.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/time.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdbool.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/unistd.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/posix.h \
+ functypes.h curl_ctype.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/netinet/in.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/inttypes.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdint.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/stdint.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/netdb.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/arpa/inet.h \
+ urldata.h cookie.h ../include/curl/curl.h ../include/curl/curlver.h \
+ ../include/curl/system.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/limits.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/limits.h \
+ ../include/curl/easy.h ../include/curl/multi.h ../include/curl/curl.h \
+ ../include/curl/urlapi.h ../include/curl/options.h \
+ ../include/curl/header.h ../include/curl/websockets.h \
+ ../include/curl/mprintf.h ../include/curl/typecheck-gcc.h psl.h \
+ formdata.h timeval.h timediff.h http_chunks.h dynbuf.h hostip.h hash.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stddef.h \
+ llist.h curl_addrinfo.h asyn.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/setjmp.h \
+ /home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/setjmp.h \
+ splay.h dynhds.h request.h bufq.h mime.h imap.h pingpong.h curl_sasl.h \
+ bufref.h pop3.h smtp.h ftp.h file.h vssh/ssh.h ../lib/curl_setup.h \
+ http.h ws.h rtsp.h smb.h mqtt.h ftplistparser.h multihandle.h \
+ conncache.h socketpair.h c-hyper.h cf-socket.h nonblock.h sockaddr.h \
+ sendf.h curl_trc.h share.h url.h inet_pton.h connect.h curl_printf.h \
+ ../include/curl/mprintf.h curl_memory.h memdebug.h
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdc-predef.h:
+curl_setup.h:
+curl_config.h:
+../include/curl/system.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/types.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/features.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/alltypes.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/endian.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/select.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/socket.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/socket.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdio.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/assert.h:
+curl_setup_once.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdlib.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/alloca.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/string.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/strings.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdarg.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/time.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/errno.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/errno.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/stat.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/stat.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/sys/time.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdbool.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/unistd.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/posix.h:
+functypes.h:
+curl_ctype.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/netinet/in.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/inttypes.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stdint.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/stdint.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/netdb.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/arpa/inet.h:
+urldata.h:
+cookie.h:
+../include/curl/curl.h:
+../include/curl/curlver.h:
+../include/curl/system.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/limits.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/limits.h:
+../include/curl/easy.h:
+../include/curl/multi.h:
+../include/curl/curl.h:
+../include/curl/urlapi.h:
+../include/curl/options.h:
+../include/curl/header.h:
+../include/curl/websockets.h:
+../include/curl/mprintf.h:
+../include/curl/typecheck-gcc.h:
+psl.h:
+formdata.h:
+timeval.h:
+timediff.h:
+http_chunks.h:
+dynbuf.h:
+hostip.h:
+hash.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/stddef.h:
+llist.h:
+curl_addrinfo.h:
+asyn.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/setjmp.h:
+/home/michko/runepkg/runepkg/.forge_musl/toolchain/x86_64-linux-musl/include/bits/setjmp.h:
+splay.h:
+dynhds.h:
+request.h:
+bufq.h:
+mime.h:
+imap.h:
+pingpong.h:
+curl_sasl.h:
+bufref.h:
+pop3.h:
+smtp.h:
+ftp.h:
+file.h:
+vssh/ssh.h:
+../lib/curl_setup.h:
+http.h:
+ws.h:
+rtsp.h:
+smb.h:
+mqtt.h:
+ftplistparser.h:
+multihandle.h:
+conncache.h:
+socketpair.h:
+c-hyper.h:
+cf-socket.h:
+nonblock.h:
+sockaddr.h:
+sendf.h:
+curl_trc.h:
+share.h:
+url.h:
+inet_pton.h:
+connect.h:
+curl_printf.h:
+../include/curl/mprintf.h:
+curl_memory.h:
+memdebug.h:

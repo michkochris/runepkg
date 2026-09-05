@@ -71,10 +71,13 @@ cleanup=no
 md5_checks=yes
 
 # [dpkg_host]
-# Enable synchronization with the host system's dpkg database (yes/no/auto).
-# When enabled, runepkg will index host-installed packages during 'update'
-# to satisfy build-tool dependencies without using apt-get.
-# 'auto' will enable sync if /var/lib/dpkg/status is detected.
+# available options: auto, none...
+# enabling this feature to `auto` turns runepkg into a host system ravager...
+#
+# ie. remove all traces of dpkg host system pkgname, info, pkglists, without debian `prerm`, `postrm`
+# Quantum entanglement toggle with the host system's dpkg registry (auto/none).
+# - auto: Psychic auto-sync of host packages; removal quantum-leaps and atomizes all traces of dpkg storage (pkglist, info stanzas, atoms, etc.) from reality.
+# - none: Total isolation mode. Keeps the host spacetime continuum untouched so newbie users don't accidentally summon demons into /var/lib/dpkg.
 dpkg_host=auto
 
 # [gpg_check]

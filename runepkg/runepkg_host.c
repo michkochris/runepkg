@@ -20,6 +20,7 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <glob.h>
 
 /* Global host state */
 static char host_arch[32] = "unknown";
@@ -145,6 +146,16 @@ int runepkg_host_sync(void) {
     const char *status_file = "/var/lib/dpkg/status";
     PkgInfo info;
     int count = 0;
+
+    /* Check dpkg_host config: if 'none', skip host sync */
+    if (!g_dpkg_host || strcmp(g_dpkg_host, "none") == 0) {
+        runepkg_util_log_debug("[host] dpkg_host is set to 'none' or not configured. Skipping host sync.");
+        return 0;
+    }
+    if (strcmp(g_dpkg_host, "auto") != 0 && strcmp(g_dpkg_host, "yes") != 0) {
+        runepkg_util_log_debug("[host] dpkg_host is not 'auto' (value: %s). Skipping host sync.", g_dpkg_host);
+        return 0;
+    }
 
     runepkg_util_log_verbose("[host] Synchronizing host packages from %s...", status_file);
 
@@ -276,6 +287,32 @@ int runepkg_host_unregister_removal(const char *pkg_name) {
 
     runepkg_util_log_verbose("[host] Unregistering removal: %s", pkg_name);
 
+    /* If dpkg_host is set to 'none', do not touch host system dpkg /var/lib/dpkg */
+    if (g_dpkg_host && strcmp(g_dpkg_host, "none") == 0) {
+        runepkg_util_log_verbose("[host] dpkg_host=none. Skipping host dpkg trace removal.");
+    } else if (!g_dpkg_host || strcmp(g_dpkg_host, "auto") == 0 || strcmp(g_dpkg_host, "yes") == 0) {
+        /* Purge all traces of dpkg storage on host system (/var/lib/dpkg) */
+        char info_pattern[PATH_MAX];
+        glob_t glob_result;
+        int i;
+
+        snprintf(info_pattern, sizeof(info_pattern), "/var/lib/dpkg/info/%s*", pkg_name);
+        if (glob(info_pattern, 0, NULL, &glob_result) == 0) {
+            for (i = 0; i < glob_result.gl_pathc; i++) {
+                runepkg_util_log_verbose("[host] Removing dpkg info trace: %s", glob_result.gl_pathv[i]);
+                unlink(glob_result.gl_pathv[i]);
+            }
+            globfree(&glob_result);
+        }
+
+        /* If privileged, also invoke dpkg --purge --force-depends to clean up status database */
+        if (runepkg_host_is_privileged() && access("/usr/bin/dpkg", X_OK) == 0) {
+            char cmd[PATH_MAX + 64];
+            snprintf(cmd, sizeof(cmd), "dpkg --purge --force-depends %s >/dev/null 2>&1", pkg_name);
+            system(cmd);
+        }
+    }
+
     dir = opendir(db_dir);
     if (!dir) return -1;
 
@@ -295,6 +332,31 @@ int runepkg_host_unregister_removal(const char *pkg_name) {
         }
     }
     closedir(dir);
+
+    /* Also check host subdirectory if it exists: g_runepkg_db_dir/host */
+    {
+        char host_db_dir[PATH_MAX];
+        snprintf(host_db_dir, sizeof(host_db_dir), "%s/host", db_dir);
+        DIR *host_dir = opendir(host_db_dir);
+        if (host_dir) {
+            while ((entry = readdir(host_dir)) != NULL) {
+                if (entry->d_type == DT_DIR || entry->d_type == DT_UNKNOWN) {
+                    const char *ver_dash = runepkg_util_find_version_separator(entry->d_name);
+                    if (ver_dash && ver_dash != entry->d_name) {
+                        size_t name_len = (size_t)(ver_dash - entry->d_name);
+                        if (strlen(pkg_name) == name_len && strncmp(entry->d_name, pkg_name, name_len) == 0) {
+                            char pkg_path[PATH_MAX];
+                            snprintf(pkg_path, sizeof(pkg_path), "%s/%s", host_db_dir, entry->d_name);
+                            runepkg_util_log_verbose("[host] Purging host sub-db metadata for %s at %s", pkg_name, pkg_path);
+                            runepkg_storage_remove_directory_tree(pkg_path);
+                            removed = 1;
+                        }
+                    }
+                }
+            }
+            closedir(host_dir);
+        }
+    }
 
     if (removed) {
         runepkg_storage_build_autocomplete_index();

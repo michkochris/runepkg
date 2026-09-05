@@ -32,7 +32,7 @@ namespace fs = std::filesystem;
 class RuneHostDpkgSync {
 public:
     int sync() {
-        if (!g_dpkg_host || (strcmp(g_dpkg_host, "yes") != 0 && strcmp(g_dpkg_host, "auto") != 0)) {
+        if (!g_dpkg_host || strcmp(g_dpkg_host, "none") == 0 || (strcmp(g_dpkg_host, "yes") != 0 && strcmp(g_dpkg_host, "auto") != 0)) {
             return 0;
         }
 
