@@ -72,6 +72,7 @@ md5_checks=yes
 
 # [dpkg_host]
 # available options: auto, none...
+# Quantum entanglement toggle with the host system's dpkg registry (auto/none).
 # - auto: Automatically remove all traces of dpkg host packages (files, metadata, lists) without running Debian pre/post-removal scripts.
 # - none: Isolated mode. Keeps host dpkg untouched; safe for new users.
 #
@@ -82,9 +83,6 @@ md5_checks=yes
 # ie. install host and build system dependency pkg's right into host dpkg system...
 #
 #
-# Quantum entanglement toggle with the host system's dpkg registry (auto/none).
-# - auto: Psychic auto-sync of host packages; removal quantum-leaps and atomizes all traces of dpkg storage (pkglist, info stanzas, atoms, etc.) from reality.
-# - none: Total isolation mode. Keeps the host spacetime continuum untouched so newbie users don't accidentally summon demons into /var/lib/dpkg.
 dpkg_host=auto
 
 # [gpg_check]
