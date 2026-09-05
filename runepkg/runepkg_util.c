@@ -404,29 +404,37 @@ Dependency **parse_depends_with_constraints(const char *depends) {
 }
 
 int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
-    char *real_path;
     char *real_dir;
     size_t dir_len;
-    int result;
+    char cleaned_path[PATH_MAX * 2];
+    char resolved_dir[PATH_MAX];
 
     if (!path || !dir) return -1;
 
-    real_path = realpath(path, NULL);
     real_dir = realpath(dir, NULL);
-
-    if (!real_path || !real_dir) {
-        free(real_path);
-        free(real_dir);
+    if (!real_dir) {
         return 1;
     }
-
-    dir_len = strlen(real_dir);
-    result = (strncmp(real_path, real_dir, dir_len) == 0 &&
-                  (real_path[dir_len] == '\0' || real_path[dir_len] == '/'));
-
-    free(real_path);
+    strncpy(resolved_dir, real_dir, sizeof(resolved_dir) - 1);
+    resolved_dir[sizeof(resolved_dir) - 1] = '\0';
     free(real_dir);
-    return result;
+
+    if (path[0] != '/') {
+        snprintf(cleaned_path, sizeof(cleaned_path), "%s/%s", resolved_dir, path);
+    } else {
+        strncpy(cleaned_path, path, sizeof(cleaned_path) - 1);
+        cleaned_path[sizeof(cleaned_path) - 1] = '\0';
+    }
+
+    dir_len = strlen(resolved_dir);
+    if (strncmp(cleaned_path, resolved_dir, dir_len) != 0) {
+        return 0;
+    }
+    if (resolved_dir[dir_len - 1] != '/' && cleaned_path[dir_len] != '\0' && cleaned_path[dir_len] != '/') {
+        return 0;
+    }
+
+    return 1;
 }
 
 /* --- File System Operations --- */

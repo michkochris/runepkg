@@ -41,7 +41,8 @@ static int compare_packages(const void *a, const void *b) {
 int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_version, 
                                     char *path_buffer) {
     int ret;
-    if (!pkg_name || !pkg_version || !path_buffer) {
+    (void)pkg_version;
+    if (!pkg_name || !path_buffer) {
         return -1;
     }
 
@@ -50,7 +51,7 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
         return -1;
     }
 
-    ret = snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+    ret = snprintf(path_buffer, PATH_MAX, "%s/%s", g_runepkg_db_dir, pkg_name);
     if (ret >= PATH_MAX) {
         return -1;
     }
@@ -637,41 +638,8 @@ static int scan_and_add_entries(const char *dir_path, char ***entries, int *coun
                 free(to_add);
             }
         }
-
-        /* SPECIAL: For database directories, also add the package name WITHOUT the version */
-        if (!add_absolute && is_dir) {
-             const char *p_sep = runepkg_util_find_version_separator(entry->d_name);
-             if (p_sep) {
-                 size_t name_only_len = (size_t)(p_sep - entry->d_name);
-                 char *name_only = malloc(name_only_len + 1);
-                 if (name_only) {
-                     runepkg_util_safe_strncpy(name_only, entry->d_name, name_only_len + 1);
-                     name_only[name_only_len] = '\0';
-                     if (*count >= *capacity) {
-                         char **temp;
-                         *capacity = (*capacity == 0) ? 1024 : *capacity * 2;
-                         temp = realloc(*entries, *capacity * sizeof(char *));
-                         if (temp) {
-                             *entries = temp;
-                             if (*entries) {
-                                 (*entries)[(*count)++] = name_only;
-                             } else {
-                                 free(name_only);
-                             }
-                         } else {
-                             free(name_only);
-                         }
-                     } else {
-                         if (*entries) {
-                             (*entries)[(*count)++] = name_only;
-                         } else {
-                             free(name_only);
-                         }
-                     }
-                 }
-             }
-        }
     }
+
     closedir(dir);
     return 0;
 }

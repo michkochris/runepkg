@@ -168,9 +168,12 @@ int runepkg_init(void) {
                             pkg_name[name_len] = '\0';
                             runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), ver_dash + 1);
                         }
+                    } else {
+                        runepkg_secure_strcpy(pkg_name, sizeof(pkg_name), entry->d_name);
+                        pkg_version[0] = '\0';
                     }
                     
-                    if (pkg_name[0] && pkg_version[0]) {
+                    if (pkg_name[0]) {
                         PkgInfo pkg_info;
                         if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) == 0) {
                             runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
@@ -313,15 +316,29 @@ int handle_remove(const char *package_name) {
         input_len = strlen(trimmed);
 
         while ((entry = readdir(dir)) != NULL) {
-            const char *ver_ptr;
             if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
             if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
 
-            ver_ptr = runepkg_util_find_version_separator(entry->d_name);
-            if (ver_ptr && (size_t)(ver_ptr - entry->d_name) == input_len && strncmp(entry->d_name, trimmed, input_len) == 0) {
-                match_count++;
+            if (strcmp(entry->d_name, trimmed) == 0) {
+                const char *v_sep;
+                match_count = 1;
                 runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
-                runepkg_secure_strcpy(match_version, sizeof(match_version), ver_ptr + 1);
+                v_sep = runepkg_util_find_version_separator(entry->d_name);
+                if (v_sep) {
+                    runepkg_secure_strcpy(match_version, sizeof(match_version), v_sep + 1);
+                } else {
+                    match_version[0] = '\0';
+                }
+                break;
+            }
+
+            {
+                const char *ver_ptr = runepkg_util_find_version_separator(entry->d_name);
+                if (ver_ptr && (size_t)(ver_ptr - entry->d_name) == input_len && strncmp(entry->d_name, trimmed, input_len) == 0) {
+                    match_count++;
+                    runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
+                    runepkg_secure_strcpy(match_version, sizeof(match_version), ver_ptr + 1);
+                }
             }
         }
 

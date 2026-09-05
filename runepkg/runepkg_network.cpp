@@ -853,23 +853,37 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
     auto best_it = range.first;
     if (std::next(range.first) != range.second) {
         std::string best_version;
+        bool found_exact = false;
         for (auto it = range.first; it != range.second; ++it) {
             if (it->file_id >= idx_cache.file_list.size()) continue;
             std::ifstream meta(idx_cache.file_list[it->file_id]);
             if (!meta.is_open()) continue;
             meta.seekg(it->offset);
-            std::string line, ver;
+            std::string line, ver, real_name;
             while (std::getline(meta, line)) {
                 if (line.empty() || line == "\r") break;
-                if (line.compare(0, 9, "Version: ") == 0) {
+                if (line.compare(0, 9, "Package: ") == 0) {
+                    real_name = line.substr(9);
+                    if (!real_name.empty() && real_name.back() == '\r') real_name.pop_back();
+                } else if (line.compare(0, 9, "Version: ") == 0) {
                     ver = line.substr(9);
                     if (!ver.empty() && ver.back() == '\r') ver.pop_back();
-                    break;
                 }
             }
-            if (best_version.empty() || runepkg_util_compare_versions(ver.c_str(), best_version.c_str()) > 0) {
-                best_version = ver;
-                best_it = it;
+
+            if (real_name == pkg_name) {
+                // Priority 1: Exact match for the requested package name (the "Real" package)
+                if (!found_exact || runepkg_util_compare_versions(ver.c_str(), best_version.c_str()) > 0) {
+                    best_version = ver;
+                    best_it = it;
+                    found_exact = true;
+                }
+            } else if (!found_exact) {
+                // Priority 2: Best version among virtual providers (only if no real package found yet)
+                if (best_version.empty() || runepkg_util_compare_versions(ver.c_str(), best_version.c_str()) > 0) {
+                    best_version = ver;
+                    best_it = it;
+                }
             }
         }
     }
@@ -1020,6 +1034,67 @@ SourceMetadata get_source_package_metadata(const std::string& pkg_name) {
     return meta_data;
 }
 
+static bool runepkg_resolver_recover_and_retry_downloads(std::vector<DownloadTask>& tasks) {
+    std::cout << "\n\033[1;33m[resolver]\033[0m Encountered download errors. Sifting through missing package-versions and cross-referencing downloaded cache..." << std::endl;
+
+    const int MAX_RETRY_CYCLES = 5;
+    for (int cycle = 1; cycle <= MAX_RETRY_CYCLES; ++cycle) {
+        int missing_count = 0;
+        for (auto& t : tasks) {
+            if (!t.success) {
+                if (runepkg_util_file_exists(t.dest_path.c_str())) {
+                    struct stat st;
+                    if (stat(t.dest_path.c_str(), &st) == 0) {
+                        if (t.size == 0 || (size_t)st.st_size == t.size) {
+                            t.success = true;
+                            continue;
+                        }
+                    }
+                }
+                missing_count++;
+            }
+        }
+
+        if (missing_count == 0) {
+            std::cout << "\033[1;32m[success]\033[0m All missing packages successfully cross-referenced and recovered from cache." << std::endl;
+            return true;
+        }
+
+        std::cout << "  -> Cycle " << cycle << "/" << MAX_RETRY_CYCLES << ": Retrying " << missing_count << " missing/failed package(s)..." << std::endl;
+
+        std::vector<std::future<bool>> retry_futures;
+        ParallelExecutor pool(8);
+        for (size_t idx = 0; idx < tasks.size(); idx++) {
+            if (!tasks[idx].success) {
+                retry_futures.push_back(pool.enqueue([&tasks, idx]() {
+                    bool ok = download_file(tasks[idx].url, tasks[idx].dest_path, tasks[idx].size, tasks[idx].pkg_name, true);
+                    tasks[idx].success = ok;
+                    if (ok && runepkg_crypto_is_enabled()) {
+                        download_file(tasks[idx].url + ".sig", tasks[idx].dest_path + ".sig", 0, tasks[idx].pkg_name + " (sig)", true);
+                    }
+                    return ok;
+                }));
+            }
+        }
+
+        int cycle_fails = 0;
+        for (auto& f : retry_futures) {
+            if (!f.get()) cycle_fails++;
+        }
+
+        if (cycle_fails == 0) {
+            std::cout << "\033[1;32m[success]\033[0m All downloads recovered successfully after retry cycle " << cycle << "." << std::endl;
+            return true;
+        }
+
+        if (cycle < MAX_RETRY_CYCLES) {
+            usleep(1000000 * cycle);
+        }
+    }
+
+    return false;
+}
+
 extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
     std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
@@ -1115,6 +1190,17 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
     int fail_count = 0;
     for (size_t idx = 0; idx < tasks.size(); idx++) {
         if (!futures[idx].get()) fail_count++;
+    }
+
+    if (fail_count > 0) {
+        if (runepkg_resolver_recover_and_retry_downloads(tasks)) {
+            fail_count = 0;
+        } else {
+            fail_count = 0;
+            for (size_t idx = 0; idx < tasks.size(); idx++) {
+                if (!tasks[idx].success) fail_count++;
+            }
+        }
     }
 
     if (fail_count == 0) {
@@ -1277,6 +1363,17 @@ extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count,
 
     int fail_count = 0;
     for (size_t idx = 0; idx < tasks.size(); idx++) if (!futures[idx].get()) fail_count++;
+
+    if (fail_count > 0) {
+        if (runepkg_resolver_recover_and_retry_downloads(tasks)) {
+            fail_count = 0;
+        } else {
+            fail_count = 0;
+            for (size_t idx = 0; idx < tasks.size(); idx++) {
+                if (!tasks[idx].success) fail_count++;
+            }
+        }
+    }
 
     if (fail_count == 0) {
         std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << tasks.size() << " packages to " << (g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") << std::endl;

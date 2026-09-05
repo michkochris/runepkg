@@ -1,0 +1,1431 @@
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/
+[ zypherus /home/michko/runepkg/runepkg ]# make musl-all && make install
+--------------------------------------------------------
+   runepkg: The Grand Ritual of the Static Binary
+--------------------------------------------------------
+[final]  Forging the static runepkg binary...
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_util_cpp.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+✅ The Grand Ritual is Complete.
+Your static runepkg binary is ready: runepkg
+Verify with: ldd runepkg
+--------------------------------------------------------
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+Installation complete. (Run 'make install-target-rules' to sync the rules tree)
+[ zypherus /home/michko/runepkg/runepkg ]# nano /etc/runepkg/runepkgconfig
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  Base Directory:      /srv/lib/runepkg_dir
+  Control Directory:   /srv/lib/runepkg_dir/control_dir
+  Install Directory:   /
+  System Install Root: /
+  Database Directory:  /srv/lib/runepkg_dir/runepkg_db
+  Download Directory:  /srv/lib/runepkg_dir/download_dir
+  Build Directory:     /srv/lib/runepkg_dir/build_dir
+  Debs Directory:      /srv/lib/runepkg_dir/runepkg_debs
+  Cleanup: no
+  MD5 Checks: yes
+
+Configured Sources:
+==================
+  [1] deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+  [2] deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+  [3] deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
+  [4] deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg sync
+Host synchronization successful.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 16 package lists...
+  -> InRelease (trixie)        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> InRelease (trixie-upda... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> InRelease (trixie-back... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/non-free-firmwa... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/contrib/binary-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/non-free/binary... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/main/binary-amd64  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/contrib/source     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/non-free/source    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/non-free-firmwa... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> trixie/main/source        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] base-files: 13.8+deb13u5 -> 13.8+deb13u6
+  [upgradable] dhcpcd-base: 1:10.1.0-11+deb13u2 -> 1:10.1.0-11+deb13u3
+Update complete! Binary/Source indexes updated. 2 upgradable. Time: 4.5s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 107861 source rune stanzas in 1215ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (24590 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -vim-common
+dpkg: error: unknown option -v
+
+Type dpkg --help for help about installing and deinstalling packages [*];
+Use 'apt' or 'aptitude' for user-friendly package management;
+Type dpkg -Dhelp for a list of dpkg debug flag values;
+Type dpkg --force-help for a list of forcing options;
+Type dpkg-deb --help for help about manipulating *.deb files;
+
+Options marked [*] produce a lot of output - pipe it through 'less' or 'more' !
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -l vim-common
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name           Version      Architecture Description
++++-==============-============-============-=================================
+ii  vim-common     2:9.1.1230-2 all          Vi IMproved - Common files
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -s vim-common
+Package: vim-common
+Status: install ok installed
+Priority: important
+Section: editors
+Maintainer: Debian Vim Maintainers <team+vim@tracker.debian.org>
+Architecture: all
+Version: 2:9.1.1230-2
+Description: Vi IMproved - Common files
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -r vim-common
+Successfully removed packages:
+vim-common
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -l vim-common
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name           Version      Architecture Description
++++-==============-============-============-=================================
+un  vim-common     <none>       <none>       (no description available)
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -s vim-common
+dpkg-query: package 'vim-common' is not installed and no information is available
+Use dpkg --info (= dpkg-deb --info) to examine archive files.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i vim-common
+[runepkg] Planning installation for 1 package(s)...
+  vim-common
+
+1 packages (410.9 KB) will be installed. Continue? [y/N] y
+  -> vim-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 1 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for vim-common
+[runepkg] Installing vim-common-2:9.1.1230-2
+[warning] Running postinst for vim-common (configure)...
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -l vim-common
+Desired=Unknown/Install/Remove/Purge/Hold
+| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+||/ Name           Version      Architecture Description
++++-==============-============-============-=================================
+ii  vim-common     2:9.1.1230-2 all          Vi IMproved - Common files
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -s vim-common
+Package: vim-common
+Status: install ok installed
+Priority: important
+Section: editors
+Maintainer: Debian Vim Maintainers <team+vim@tracker.debian.org>
+Architecture: all
+Version: 2:9.1.1230-2
+Description: Vi IMproved - Common files
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -l vim-common
+Reading package data: 333 packages, 631.6 MB used, 953.9 GB available
+Listing installed packages...
+
+vim-common
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -s vim-common
+Reading package data: 333 packages, 631.6 MB used, 953.9 GB available
+Package: vim-common
+Version: 2:9.1.1230-2
+Architecture: all
+Maintainer: Debian Vim Maintainers <team+vim@tracker.debian.org>
+Description: Vi IMproved - Common files
+Depends: (none)
+Installed-Size: 1864
+Section: editors
+Priority: important
+Homepage: https://www.vim.org/
+Files installed: 51
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i build-essential
+[runepkg] Planning installation for 1 package(s)...
+  gcc-14-base libgcc-s1 libc6 libc-dev-bin linux-libc-dev libcrypt1 libcrypt-dev rpcsvc-proto libc6-dev libgmp10 libisl23
+  libmpfr6 libmpc3 libzstd1 zlib1g cpp-14-x86-64-linux-gnu cpp-14 cpp-x86-64-linux-gnu cpp libstdc++6 libcc1-0
+  binutils-common libsframe1 libbinutils libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu libgomp1 libitm1
+  libatomic1 libasan8 liblsan0 libtsan2 libubsan1 libhwasan0 libquadmath0 libgcc-14-dev gcc-14-x86-64-linux-gnu libgprofng0
+  binutils gcc-14 gcc-x86-64-linux-gnu gcc libstdc++-14-dev g++-14-x86-64-linux-gnu g++-14 g++-x86-64-linux-gnu g++ make
+  perl-base perl-modules-5.40 libbz2-1.0 libdb5.3t64 libgdbm6t64 libgdbm-compat4t64 libperl5.40 perl liblzma5 libmd0
+  libpcre2-8-0 libselinux1 libacl1 tar dpkg libdpkg-perl bzip2 xz-utils patch dpkg-dev build-essential
+
+71 packages (88.5 MB) will be installed. Continue? [y/N] y
+  -> gcc-14-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> rpcsvc-proto              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt-dev              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpc3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libisl23                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpfr6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-14                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcc1-0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsframe1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatomic1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libitm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgomp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-14-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libquadmath0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblsan0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtsan2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhwasan0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libubsan1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-14-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-14                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-14                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++-14-dev          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> make                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-14-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm6t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-14-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm-compat4t64        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-modules-5.40         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdb5.3t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmd0                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libacl1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libselinux1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpcre2-8-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libperl5.40               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bzip2                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> build-essential           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdpkg-perl              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> patch                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dpkg                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xz-utils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libasan8                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dpkg-dev                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tar                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 71 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for perl-modules-5.40
+[runepkg] Installing perl-modules-5.40-5.40.1-6
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0-1.0.8-6
+[md5sums] Passed for libdpkg-perl
+[runepkg] Installing libdpkg-perl-1.22.22
+[md5sums] Passed for dpkg-dev
+[runepkg] Installing dpkg-dev-1.22.22
+[md5sums] Passed for build-essential
+[runepkg] Installing build-essential-12.12
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i build-essential
+Package build-essential is already installed (12.12). Use -f/--force to reinstall.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i task-xfce-desktop
+[runepkg] Planning installation for 1 package(s)...
+  debconf gcc-14-base libgcc-s1 libc6 libcrypt1 perl-base liblocale-gettext-perl libdebconfclient0 libpcre2-8-0 libselinux1
+  base-passwd libgmp10 libnettle8t64 libhogweed6t64 sqv libbz2-1.0 libxxhash0 liblz4-1 liblzma5 libzstd1 zlib1g
+  openssl-provider-legacy libssl3t64 libstdc++6 libcap2 libsystemd0 libudev1 libapt-pkg7.0 debian-archive-keyring libseccomp2
+  apt tasksel-data tasksel sysvinit-utils lsb-base x11-common xkb-data libxau6 libxdmcp6 libxcb1 libx11-data libx11-6
+  libxext6 libice6 libuuid1 libsm6 libxt6t64 libxmu6 libxpm4 libxaw7 libxkbfile1 libxrender1 libxrandr2 x11-xkb-utils
+  xserver-common keyboard-configuration libblkid1 libacl1 libaudit-common libcap-ng0 libaudit1 libmount1 libpam0g
+  libsystemd-shared libapparmor1 libsmartcols1 mount systemd libkmod2 udev libglvnd0 libdrm-common libdrm2 libexpat1 libffi8
+  libwayland-server0 libdrm-amdgpu1 libpciaccess0 libdrm-intel1 libelf1t64 libmd0 libbsd0 libtinfo6 libedit2 libxml2 libz3-4
+  libllvm19 libsensors-config libsensors5 libx11-xcb1 libxcb-dri3-0 libxcb-present0 libxcb-randr0 libxcb-sync1 libxcb-xfixes0
+  libxshmfence1 mesa-libgallium libgbm1 libwayland-client0 libxcb-shm0 libegl-mesa0 libegl1 libdbus-1-3 libepoxy0 libxcb-glx0
+  libxxf86vm1 libvulkan1 libgl1-mesa-dri libglx-mesa0 libglx0 libgl1 libpixman-1-0 libunwind8 libxcvt0 libfontenc1 libbrotli1
+  libpng16-16t64 libfreetype6 libxfont2 xserver-xorg-core xserver-xorg-video-amdgpu libdrm-radeon1 xserver-xorg-video-radeon
+  xserver-xorg-video-ati xserver-xorg-video-fbdev libdrm-nouveau2 xserver-xorg-video-nouveau xserver-xorg-video-vesa
+  libxatracker2 xserver-xorg-video-vmware xserver-xorg-video-all libevdev2 libmtdev1t64 libatomic1 libglib2.0-0t64
+  libgudev-1.0-0 libwacom-common libwacom9 libinput-bin libinput10 xserver-xorg-input-libinput xserver-xorg-input-all
+  xserver-xorg libopengl0 libglu1-mesa xfonts-encodings xfonts-utils xfonts-base xfonts-100dpi xfonts-75dpi xfonts-scalable
+  libxcb-damage0 libxfixes3 libxcursor1 fonts-dejavu-mono fonts-dejavu-core fontconfig-config libfontconfig1 libxft2 libxi6
+  libxmuu1 bsdextrautils libuchardet0 groff-base libgdbm6t64 libpipeline1 man-db x11-apps x11-session-utils libxcb-shape0
+  libxcomposite1 libxinerama1 libxtst6 libxv1 libxxf86dga1 x11-utils libisl23 libmpfr6 libmpc3 cpp-14-x86-64-linux-gnu cpp-14
+  cpp-x86-64-linux-gnu cpp x11-xserver-utils xauth xinit xorg-docs-core xbitmaps libutempter0 xterm xorg libxcb-render0
+  libcairo2 libcairo-gobject2 libdav1d7 libgdk-pixbuf2.0-common shared-mime-info libjpeg62-turbo libdeflate0 libjbig0
+  liblerc4 libsharpyuv0 libwebp7 libtiff6 libgdk-pixbuf-2.0-0 fontconfig libfribidi0 libgraphite2-3 libharfbuzz0b
+  libthai-data libdatrie1 libthai0 libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 librsvg2-2 librsvg2-common
+  fonts-quicksand desktop-base task-desktop gtk-update-icon-cache hicolor-icon-theme adwaita-icon-theme at-spi2-common
+  libatk1.0-0t64 libatspi2.0-0t64 libatk-bridge2.0-0t64 libcloudproviders0 liblcms2-2 libcolord2 libavahi-common-data
+  libavahi-common3 libavahi-client3 libunistring5 libidn2-0 libp11-kit0 libtasn1-6 libgnutls30t64 libkrb5support0 libcom-err2
+  libk5crypto3 libkeyutils1 libkrb5-3 libgssapi-krb5-2 libcups2t64 libwayland-cursor0 libwayland-egl1 libxdamage1
+  libxkbcommon0 dbus-bin dbus-session-bus-common dbus-daemon libdb5.3t64 libpam-modules-bin libpam-modules libpam-runtime
+  init-system-helpers login.defs libattr1 libsemanage-common libsepol2 libsemanage2 passwd adduser dbus-system-bus-common
+  original-awk base-files dbus systemd-sysv libpam-systemd dbus-user-session libdconf1 libncursesw6 libproc2-0 procps
+  dconf-service dconf-gsettings-backend libgtk-3-common libgtk-3-0t64 libgtop2-common libgtop-2.0-11 libxfce4ui-common
+  libxcb-util1 libstartup-notification0 libxfce4util-common libxfce4util7 xfconf libxfconf-0-3 libxfce4ui-2-0
+  libxfce4ui-utils desktop-file-utils libexo-common libexo-2-0 exo-utils thunar-data libnotify4 libexif12 libthunarx-3-0
+  thunar libgarcon-common libgarcon-1-0 xfce4-appfinder libdbusmenu-glib4 libdbusmenu-gtk3-4 libgarcon-gtk3-1-0
+  libgtk-layer-shell0 libxres1 libwnck-3-common libwnck-3-0 libdisplay-info2 libxfce4windowing-common libxfce4windowing-0-0
+  libxfce4panel-2.0-4 xfce4-panel libkeybinder-3.0-0 libasyncns0 libogg0 libflac14 libmp3lame0 libmpg123-0t64 libopus0
+  libvorbis0a libvorbisenc2 libsndfile1 libpulse0 libpulse-mainloop-glib0 xfce4-pulseaudio-plugin libpython3.13-minimal
+  python3.13-minimal tar dpkg python3-minimal media-types netbase tzdata readline-common libreadline8t64 libsqlite3-0
+  libpython3.13-stdlib python3.13 libpython3-stdlib python3 python3-urllib3 xfce4-helpers libxklavier16 xfce4-settings
+  libpolkit-gobject-1-0 xfce4-session xfdesktop4-data libyaml-0-2 xfdesktop4 libxpresent1 xfwm4 xfce4 libayatana-ido3-0.4-0
+  libayatana-indicator3-7 liblightdm-gobject-1-0 lightdm-gtk-greeter libgpg-error0 libgcrypt20 lightdm task-xfce-desktop
+
+362 packages (173.6 MB) will be installed. Continue? [y/N] y
+  -> libdebconfclient0         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblocale-gettext-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxxhash0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> base-passwd               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debconf                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnettle8t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblz4-1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhogweed6t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sqv                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssl-provider-legacy   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libseccomp2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel-data              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libudev1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debian-archive-keyring    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lsb-base                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sysvinit-utils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxau6                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxdmcp6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libssl3t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxext6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapt-pkg7.0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libuuid1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libx11-data               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsm6                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xkb-data                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libice6                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libx11-6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxt6t64                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxmu6                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxpm4                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxkbfile1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxrender1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxrandr2                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxaw7                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libaudit-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap-ng0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-xkb-utils             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libaudit1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libblkid1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> keyboard-configuration    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmount1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapparmor1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam0g                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsmartcols1             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> mount                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkmod2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-common            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libglvnd0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm-common             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm-amdgpu1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexpat1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwayland-server0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd-shared         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libffi8                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> udev                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpciaccess0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm-intel1             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libedit2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbsd0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libelf1t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsensors-config         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsensors5               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-present0           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-dri3-0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libx11-xcb1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-randr0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxshmfence1             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-sync1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgbm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-xfixes0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwayland-client0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-shm0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libegl-mesa0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libegl1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxxf86vm1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdbus-1-3               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libepoxy0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-glx0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgl1-mesa-dri           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libvulkan1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libglx0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgl1                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libglx-mesa0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libz3-4                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcvt0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libunwind8                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfontenc1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpixman-1-0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfont2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpng16-16t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbrotli1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfreetype6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-amdgpu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm-radeon1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-fbdev  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdrm-nouveau2           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-ati    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-vesa   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-all    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-nou... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-vmware [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-video-radeon [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libevdev2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmtdev1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgudev-1.0-0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwacom9                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwacom-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libinput-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-input-all    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libglib2.0-0t64           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> mesa-libgallium           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-input-lib... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libinput10                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxatracker2             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libopengl0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-utils              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xserver-xorg-core         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-encodings          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-scalable           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfixes3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-damage0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libllvm19                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcursor1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fonts-dejavu-mono         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fontconfig-config         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fonts-dejavu-core         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfontconfig1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libglu1-mesa              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxft2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxmuu1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxi6                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-75dpi              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bsdextrautils             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpipeline1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libuchardet0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-session-utils         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcomposite1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-shape0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> groff-base                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> man-db                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxinerama1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxtst6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxv1                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfonts-100dpi             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-apps                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxxf86dga1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xauth                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xinit                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xbitmaps                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-xserver-utils         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> x11-utils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libutempter0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xorg                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xorg-docs-core            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-render0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcairo-gobject2         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xterm                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcairo2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdeflate0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjpeg62-turbo           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdav1d7                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjbig0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdk-pixbuf2.0-common   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> shared-mime-info          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsharpyuv0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblerc4                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfribidi0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdk-pixbuf-2.0-0       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwebp7                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtiff6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgraphite2-3            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdatrie1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libthai-data              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libthai0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpangocairo-1.0-0       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libharfbuzz0b             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpangoft2-1.0-0         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpango-1.0-0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> task-desktop              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> hicolor-icon-theme        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> librsvg2-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fonts-quicksand           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gtk-update-icon-cache     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> librsvg2-2                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fontconfig                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatk1.0-0t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatk-bridge2.0-0t64     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatspi2.0-0t64          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcloudproviders0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> at-spi2-common            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> adwaita-icon-theme        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libavahi-common3          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libavahi-client3          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblcms2-2                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libavahi-common-data      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcolord2                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libidn2-0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkrb5support0           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> desktop-base              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtasn1-6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcom-err2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libunistring5             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkeyutils1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libp11-kit0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libk5crypto3              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwayland-cursor0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwayland-egl1           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgnutls30t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgssapi-krb5-2          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxdamage1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcups2t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxkbcommon0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkrb5-3                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-session-bus-common   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-bin                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-daemon               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libattr1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init-system-helpers       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage-common        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-runtime            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> login.defs                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage2              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-system-bus-common    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsepol2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> original-awk              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> adduser                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> base-files                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd-sysv              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-user-session         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> passwd                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdconf1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libproc2-0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dconf-service             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncursesw6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-systemd            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dconf-gsettings-backend   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgtop2-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb-util1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> procps                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgtop-2.0-11            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstartup-notification0  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4ui-common         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4util7             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4util-common       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfconf                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfconf-0-3             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4ui-2-0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules-bin        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexo-common             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4ui-utils          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> desktop-file-utils        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgtk-3-0t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnotify4                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexo-2-0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> exo-utils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgtk-3-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libthunarx-3-0            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgarcon-common          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgarcon-1-0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> thunar-data               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexif12                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> thunar                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdbusmenu-glib4         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgarcon-gtk3-1-0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-appfinder           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdbusmenu-gtk3-4        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgtk-layer-shell0       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxres1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwnck-3-0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkeybinder-3.0-0        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4windowing-common  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4panel-2.0-4       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdisplay-info2          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwnck-3-common          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxfce4windowing-0-0     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libasyncns0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libogg0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libvorbisenc2             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libvorbis0a               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libflac14                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpg123-0t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmp3lame0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsndfile1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpulse-mainloop-glib0   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-panel               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> media-types               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-minimal           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpulse0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-pulseaudio-plugin   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> netbase                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libopus0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-minimal     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> readline-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libreadline8t64           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3-stdlib         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tzdata                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13-minimal        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-helpers             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsqlite3-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-urllib3           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxklavier16             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpolkit-gobject-1-0     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-stdlib      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxpresent1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libyaml-0-2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-session             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfce4-settings            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfdesktop4                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libayatana-ido3-0.4-0     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfdesktop4-data           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xfwm4                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblightdm-gobject-1-0    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgpg-error0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lightdm-gtk-greeter       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> task-xfce-desktop         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lightdm                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcrypt20               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libayatana-indicator3-7   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 362 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0-1.0.8-6
+[md5sums] Passed for tasksel-data
+[runepkg] Installing tasksel-data-3.81
+[warning] Running postinst for tasksel-data (configure)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[md5sums] Passed for tasksel
+[runepkg] Installing tasksel-3.81
+[warning] Running postinst for tasksel (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+debconf: DbDriver "config": could not write /var/cache/debconf/config.dat-new: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for lsb-base
+[runepkg] Installing lsb-base-11.6
+[md5sums] Passed for x11-common
+[warning] Running preinst for x11-common (install)...
+[runepkg] Installing x11-common-1:7.7+24+deb13u1
+[warning] Running postinst for x11-common (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+Failed to execute /usr/bin/pkttyagent: No such file or directory
+Reload daemon failed: Access denied
+[md5sums] Passed for xkb-data
+[runepkg] Installing xkb-data-2.42-1
+[md5sums] Passed for libxau6
+[runepkg] Installing libxau6-1:1.0.11-1
+[md5sums] Passed for libxdmcp6
+[runepkg] Installing libxdmcp6-1:1.1.5-1
+[md5sums] Passed for libxcb1
+[runepkg] Installing libxcb1-1.17.0-2+b1
+[md5sums] Passed for libx11-data
+[runepkg] Installing libx11-data-2:1.8.12-1
+[md5sums] Passed for libx11-6
+[runepkg] Installing libx11-6-2:1.8.12-1
+[md5sums] Passed for libxext6
+[runepkg] Installing libxext6-2:1.3.4-1+b3
+[md5sums] Passed for libice6
+[runepkg] Installing libice6-2:1.1.1-1
+[md5sums] Passed for libsm6
+[runepkg] Installing libsm6-2:1.2.6-1
+[md5sums] Passed for libxt6t64
+[runepkg] Installing libxt6t64-1:1.2.1-1.2+b2
+[md5sums] Passed for libxmu6
+[runepkg] Installing libxmu6-2:1.1.3-3+b4
+[md5sums] Passed for libxpm4
+[runepkg] Installing libxpm4-1:3.5.17-1+deb13u1
+[md5sums] Passed for libxaw7
+[runepkg] Installing libxaw7-2:1.0.16-1
+[md5sums] Passed for libxkbfile1
+[runepkg] Installing libxkbfile1-1:1.1.0-1+b4
+[md5sums] Passed for libxrender1
+[runepkg] Installing libxrender1-1:0.9.12-1
+[md5sums] Passed for libxrandr2
+[runepkg] Installing libxrandr2-2:1.5.4-1+b3
+[md5sums] Passed for x11-xkb-utils
+[runepkg] Installing x11-xkb-utils-7.7+9
+[md5sums] Passed for xserver-common
+[runepkg] Installing xserver-common-2:21.1.16-1.3+deb13u3
+[md5sums] Passed for keyboard-configuration
+[warning] Running preinst for keyboard-configuration (install)...
+[runepkg] Installing keyboard-configuration-1.242~deb13u1
+[warning] Running postinst for keyboard-configuration (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+cp: cannot stat '/etc/default/keyboard': No such file or directory
+debconf: DbDriver "config": could not write /var/cache/debconf/config.dat-new: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libglvnd0
+[runepkg] Installing libglvnd0-1.7.0-1+b2
+[md5sums] Passed for libdrm-common
+[runepkg] Installing libdrm-common-2.4.124-2
+[md5sums] Passed for libdrm2
+[runepkg] Installing libdrm2-2.4.124-2
+[md5sums] Passed for libwayland-server0
+[runepkg] Installing libwayland-server0-1.23.1-3
+[md5sums] Passed for libdrm-amdgpu1
+[runepkg] Installing libdrm-amdgpu1-2.4.124-2
+[md5sums] Passed for libpciaccess0
+[runepkg] Installing libpciaccess0-0.17-3+b3
+[md5sums] Passed for libdrm-intel1
+[runepkg] Installing libdrm-intel1-2.4.124-2
+[md5sums] Passed for libz3-4
+[runepkg] Installing libz3-4-4.13.3-1
+[md5sums] Passed for libllvm19
+[runepkg] Installing libllvm19-1:19.1.7-3+b1
+[md5sums] Passed for libsensors-config
+[runepkg] Installing libsensors-config-1:3.6.2-2
+[md5sums] Passed for libsensors5
+[runepkg] Installing libsensors5-1:3.6.2-2
+[md5sums] Passed for libx11-xcb1
+[runepkg] Installing libx11-xcb1-2:1.8.12-1
+[md5sums] Passed for libxcb-dri3-0
+[runepkg] Installing libxcb-dri3-0-1.17.0-2+b1
+[md5sums] Passed for libxcb-present0
+[runepkg] Installing libxcb-present0-1.17.0-2+b1
+[md5sums] Passed for libxcb-randr0
+[runepkg] Installing libxcb-randr0-1.17.0-2+b1
+[md5sums] Passed for libxcb-sync1
+[runepkg] Installing libxcb-sync1-1.17.0-2+b1
+[md5sums] Passed for libxcb-xfixes0
+[runepkg] Installing libxcb-xfixes0-1.17.0-2+b1
+[md5sums] Passed for libxshmfence1
+[runepkg] Installing libxshmfence1-1.3.3-1
+[md5sums] Passed for mesa-libgallium
+[runepkg] Installing mesa-libgallium-25.0.7-2+deb13u1
+[md5sums] Passed for libgbm1
+[runepkg] Installing libgbm1-25.0.7-2+deb13u1
+[md5sums] Passed for libwayland-client0
+[runepkg] Installing libwayland-client0-1.23.1-3
+[md5sums] Passed for libxcb-shm0
+[runepkg] Installing libxcb-shm0-1.17.0-2+b1
+[md5sums] Passed for libegl-mesa0
+[runepkg] Installing libegl-mesa0-25.0.7-2+deb13u1
+[md5sums] Passed for libegl1
+[runepkg] Installing libegl1-1.7.0-1+b2
+[md5sums] Passed for libepoxy0
+[runepkg] Installing libepoxy0-1.5.10-2
+[md5sums] Passed for libxcb-glx0
+[runepkg] Installing libxcb-glx0-1.17.0-2+b1
+[md5sums] Passed for libxxf86vm1
+[runepkg] Installing libxxf86vm1-1:1.1.4-1+b4
+[md5sums] Passed for libvulkan1
+[runepkg] Installing libvulkan1-1.4.309.0-1
+[md5sums] Passed for libgl1-mesa-dri
+[warning] Running preinst for libgl1-mesa-dri (install)...
+[runepkg] Installing libgl1-mesa-dri-25.0.7-2+deb13u1
+[warning] Running postinst for libgl1-mesa-dri (configure)...
+[md5sums] Passed for libglx-mesa0
+[runepkg] Installing libglx-mesa0-25.0.7-2+deb13u1
+[md5sums] Passed for libglx0
+[runepkg] Installing libglx0-1.7.0-1+b2
+[md5sums] Passed for libgl1
+[runepkg] Installing libgl1-1.7.0-1+b2
+[md5sums] Passed for libpixman-1-0
+[runepkg] Installing libpixman-1-0-0.44.0-3
+[md5sums] Passed for libunwind8
+[runepkg] Installing libunwind8-1.8.1-0.1
+[md5sums] Passed for libxcvt0
+[runepkg] Installing libxcvt0-0.1.3-1
+[md5sums] Passed for libfontenc1
+[runepkg] Installing libfontenc1-1:1.1.8-1+b2
+[md5sums] Passed for libpng16-16t64
+[runepkg] Installing libpng16-16t64-1.6.48-1+deb13u5
+[md5sums] Passed for libfreetype6
+[runepkg] Installing libfreetype6-2.13.3+dfsg-1+deb13u1
+[md5sums] Passed for libxfont2
+[runepkg] Installing libxfont2-1:2.0.6-1+b3
+[md5sums] Passed for xserver-xorg-core
+[runepkg] Installing xserver-xorg-core-2:21.1.16-1.3+deb13u3
+[md5sums] Passed for xserver-xorg-video-amdgpu
+[runepkg] Installing xserver-xorg-video-amdgpu-23.0.0-1
+[md5sums] Passed for libdrm-radeon1
+[runepkg] Installing libdrm-radeon1-2.4.124-2
+[md5sums] Passed for xserver-xorg-video-radeon
+[runepkg] Installing xserver-xorg-video-radeon-1:22.0.0-1
+[md5sums] Passed for xserver-xorg-video-ati
+[runepkg] Installing xserver-xorg-video-ati-1:22.0.0-1
+[md5sums] Passed for xserver-xorg-video-fbdev
+[runepkg] Installing xserver-xorg-video-fbdev-1:0.5.0-2
+[md5sums] Passed for libdrm-nouveau2
+[runepkg] Installing libdrm-nouveau2-2.4.124-2
+[md5sums] Passed for xserver-xorg-video-nouveau
+[runepkg] Installing xserver-xorg-video-nouveau-1:1.0.18-1
+[md5sums] Passed for xserver-xorg-video-vesa
+[runepkg] Installing xserver-xorg-video-vesa-1:2.6.0-2
+[md5sums] Passed for libxatracker2
+[runepkg] Installing libxatracker2-25.0.7-2+deb13u1
+[md5sums] Passed for xserver-xorg-video-vmware
+[runepkg] Installing xserver-xorg-video-vmware-1:13.4.0-1
+[md5sums] Passed for xserver-xorg-video-all
+[runepkg] Installing xserver-xorg-video-all-1:7.7+24+deb13u1
+[md5sums] Passed for libevdev2
+[runepkg] Installing libevdev2-1.13.4+dfsg-1
+[md5sums] Passed for libmtdev1t64
+[runepkg] Installing libmtdev1t64-1.1.7-1
+[md5sums] Passed for libglib2.0-0t64
+[warning] Running preinst for libglib2.0-0t64 (install)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[runepkg] Installing libglib2.0-0t64-2.84.4-3~deb13u3
+[warning] Running postinst for libglib2.0-0t64 (configure)...
+Error opening directory “/usr/share/glib-2.0/schemas”: No such file or directory
+Unable to open directory /usr/lib/x86_64-linux-gnu/gio/modules: Error opening directory “/usr/lib/x86_64-linux-gnu/gio/modules”: No such file or directory
+[md5sums] Passed for libgudev-1.0-0
+[runepkg] Installing libgudev-1.0-0-238-6
+[md5sums] Passed for libwacom-common
+[runepkg] Installing libwacom-common-2.14.0-1
+[md5sums] Passed for libwacom9
+[runepkg] Installing libwacom9-2.14.0-1
+[md5sums] Passed for libinput-bin
+[runepkg] Installing libinput-bin-1.28.1-1+deb13u1
+[md5sums] Passed for libinput10
+[runepkg] Installing libinput10-1.28.1-1+deb13u1
+[md5sums] Passed for xserver-xorg-input-libinput
+[runepkg] Installing xserver-xorg-input-libinput-1.5.0-1
+[md5sums] Passed for xserver-xorg-input-all
+[runepkg] Installing xserver-xorg-input-all-1:7.7+24+deb13u1
+[md5sums] Passed for xserver-xorg
+[runepkg] Installing xserver-xorg-1:7.7+24+deb13u1
+[md5sums] Passed for libopengl0
+[runepkg] Installing libopengl0-1.7.0-1+b2
+[md5sums] Passed for libglu1-mesa
+[runepkg] Installing libglu1-mesa-9.0.2-1.1+b3
+[md5sums] Passed for xfonts-encodings
+[runepkg] Installing xfonts-encodings-1:1.0.4-2.2
+[md5sums] Passed for xfonts-utils
+[runepkg] Installing xfonts-utils-1:7.7+7
+[warning] Running postinst for xfonts-utils (configure)...
+mkdir: cannot create directory ‘/var/lib/xfonts’: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for xfonts-base
+[runepkg] Installing xfonts-base-1:1.0.5+nmu1
+[warning] Running postinst for xfonts-base (configure)...
+/usr/share/fonts/X11/misc/fonts.dir: fopen(w): Permission denied
+head: cannot open '/usr/share/fonts/X11/misc/fonts.dir' for reading: No such file or directory
+sed: can't read /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 168: /usr/share/fonts/X11/misc/fonts.alias.update-new: Permission denied
+grep: /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 179: /usr/share/fonts/X11/misc/fonts.alias.update-new: Permission denied
+/usr/sbin/update-fonts-alias: line 180: /usr/share/fonts/X11/misc/fonts.alias.update-new: Permission denied
+mv: cannot stat '/usr/share/fonts/X11/misc/fonts.alias.update-new': No such file or directory
+[md5sums] Passed for xfonts-100dpi
+[runepkg] Installing xfonts-100dpi-1:1.0.5
+[warning] Running postinst for xfonts-100dpi (configure)...
+/usr/share/fonts/X11/100dpi/fonts.dir: fopen(w): Permission denied
+head: cannot open '/usr/share/fonts/X11/100dpi/fonts.dir' for reading: No such file or directory
+sed: can't read /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 168: /usr/share/fonts/X11/100dpi/fonts.alias.update-new: Permission denied
+grep: /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 179: /usr/share/fonts/X11/100dpi/fonts.alias.update-new: Permission denied
+/usr/sbin/update-fonts-alias: line 180: /usr/share/fonts/X11/100dpi/fonts.alias.update-new: Permission denied
+mv: cannot stat '/usr/share/fonts/X11/100dpi/fonts.alias.update-new': No such file or directory
+[md5sums] Passed for xfonts-75dpi
+[runepkg] Installing xfonts-75dpi-1:1.0.5
+[warning] Running postinst for xfonts-75dpi (configure)...
+/usr/share/fonts/X11/75dpi/fonts.dir: fopen(w): Permission denied
+head: cannot open '/usr/share/fonts/X11/75dpi/fonts.dir' for reading: No such file or directory
+sed: can't read /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 168: /usr/share/fonts/X11/75dpi/fonts.alias.update-new: Permission denied
+grep: /var/lib/xfonts/excluded-aliases: No such file or directory
+/usr/sbin/update-fonts-alias: line 179: /usr/share/fonts/X11/75dpi/fonts.alias.update-new: Permission denied
+/usr/sbin/update-fonts-alias: line 180: /usr/share/fonts/X11/75dpi/fonts.alias.update-new: Permission denied
+mv: cannot stat '/usr/share/fonts/X11/75dpi/fonts.alias.update-new': No such file or directory
+[md5sums] Passed for xfonts-scalable
+[runepkg] Installing xfonts-scalable-1:1.0.3-1.3
+[warning] Running postinst for xfonts-scalable (configure)...
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/sbin/update-fonts-scale: line 154: /usr/share/fonts/X11/Type1/fonts.scale.update-tmp: Permission denied
+/usr/share/fonts/X11/Type1/fonts.dir: fopen(w): Permission denied
+head: cannot open '/usr/share/fonts/X11/Type1/fonts.dir' for reading: No such file or directory
+[md5sums] Passed for libxcb-damage0
+[runepkg] Installing libxcb-damage0-1.17.0-2+b1
+[md5sums] Passed for libxfixes3
+[runepkg] Installing libxfixes3-1:6.0.0-2+b4
+[md5sums] Passed for libxcursor1
+[runepkg] Installing libxcursor1-1:1.2.3-1
+[md5sums] Passed for fonts-dejavu-mono
+[runepkg] Installing fonts-dejavu-mono-2.37-8
+[md5sums] Passed for fonts-dejavu-core
+[warning] Running preinst for fonts-dejavu-core (install)...
+[runepkg] Installing fonts-dejavu-core-2.37-8
+[warning] Running postinst for fonts-dejavu-core (configure)...
+[md5sums] Passed for fontconfig-config
+[runepkg] Installing fontconfig-config-2.15.0-2.3
+[warning] Running postinst for fontconfig-config (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+ln: failed to create symbolic link '/etc/fonts/conf.d/10-hinting-slight.conf': Permission denied
+debconf: DbDriver "config": could not write /var/cache/debconf/config.dat-new: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libfontconfig1
+[runepkg] Installing libfontconfig1-2.15.0-2.3
+[md5sums] Passed for libxft2
+[runepkg] Installing libxft2-2.3.6-1+b4
+[md5sums] Passed for libxi6
+[runepkg] Installing libxi6-2:1.8.2-1
+[md5sums] Passed for libxmuu1
+[runepkg] Installing libxmuu1-2:1.1.3-3+b4
+[md5sums] Passed for libuchardet0
+[runepkg] Installing libuchardet0-0.0.8-1+b2
+[md5sums] Passed for groff-base
+[runepkg] Installing groff-base-1.23.0-9
+[md5sums] Passed for libpipeline1
+[runepkg] Installing libpipeline1-1.5.8-1
+[md5sums] Passed for man-db
+[runepkg] Installing man-db-2.13.1-1
+[warning] Running postinst for man-db (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+chown: changing ownership of '/usr/bin/man': Operation not permitted
+chmod: changing permissions of '/usr/bin/man': Operation not permitted
+debconf: DbDriver "config": could not write /var/cache/debconf/config.dat-new: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for x11-apps
+[runepkg] Installing x11-apps-7.7+11+b1
+[md5sums] Passed for x11-session-utils
+[runepkg] Installing x11-session-utils-7.7+6+b1
+[md5sums] Passed for libxcb-shape0
+[runepkg] Installing libxcb-shape0-1.17.0-2+b1
+[md5sums] Passed for libxcomposite1
+[runepkg] Installing libxcomposite1-1:0.4.6-1
+[md5sums] Passed for libxinerama1
+[runepkg] Installing libxinerama1-2:1.1.4-3+b4
+[md5sums] Passed for libxtst6
+[runepkg] Installing libxtst6-2:1.2.5-1
+[md5sums] Passed for libxv1
+[runepkg] Installing libxv1-2:1.0.11-1.1+b3
+[md5sums] Passed for libxxf86dga1
+[runepkg] Installing libxxf86dga1-2:1.1.5-1+b3
+[md5sums] Passed for x11-utils
+[runepkg] Installing x11-utils-7.7+7
+[md5sums] Passed for x11-xserver-utils
+[runepkg] Installing x11-xserver-utils-7.7+11
+[md5sums] Passed for xauth
+[runepkg] Installing xauth-1:1.1.2-1.1
+[md5sums] Passed for xinit
+[runepkg] Installing xinit-1.4.2-1
+[warning] Running postinst for xinit (configure)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[md5sums] Passed for xorg-docs-core
+[runepkg] Installing xorg-docs-core-1:1.7.3-1
+[md5sums] Passed for xbitmaps
+[runepkg] Installing xbitmaps-1.1.1-2.2
+[md5sums] Passed for libutempter0
+[runepkg] Installing libutempter0-1.2.1-4
+[md5sums] Passed for xterm
+[runepkg] Installing xterm-398-1
+[warning] Running postinst for xterm (configure)...
+update-alternatives: using /usr/bin/xterm to provide /usr/bin/x-terminal-emulator (x-terminal-emulator) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/x-terminal-emulator.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for xorg
+[runepkg] Installing xorg-1:7.7+24+deb13u1
+[md5sums] Passed for libxcb-render0
+[runepkg] Installing libxcb-render0-1.17.0-2+b1
+[md5sums] Passed for libcairo2
+[runepkg] Installing libcairo2-1.18.4-1+b1
+[md5sums] Passed for libcairo-gobject2
+[runepkg] Installing libcairo-gobject2-1.18.4-1+b1
+[md5sums] Passed for libdav1d7
+[runepkg] Installing libdav1d7-1.5.1-1
+[md5sums] Passed for libgdk-pixbuf2.0-common
+[runepkg] Installing libgdk-pixbuf2.0-common-2.42.12+dfsg-4+deb13u1
+[md5sums] Passed for shared-mime-info
+[runepkg] Installing shared-mime-info-2.4-5+b2
+[warning] Running postinst for shared-mime-info (configure)...
+I/O error : No such file or directory
+I/O error : No such file or directory
+Failed to write XML file; For permission problems, try rerunning as root
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libjpeg62-turbo
+[runepkg] Installing libjpeg62-turbo-1:2.1.5-4
+[md5sums] Passed for libdeflate0
+[runepkg] Installing libdeflate0-1.23-2
+[md5sums] Passed for libjbig0
+[runepkg] Installing libjbig0-2.1-6.1+b2
+[md5sums] Passed for liblerc4
+[runepkg] Installing liblerc4-4.0.0+ds-5
+[md5sums] Passed for libsharpyuv0
+[runepkg] Installing libsharpyuv0-1.5.0-0.1
+[md5sums] Passed for libwebp7
+[runepkg] Installing libwebp7-1.5.0-0.1
+[md5sums] Passed for libtiff6
+[runepkg] Installing libtiff6-4.7.0-3+deb13u2
+[md5sums] Passed for libgdk-pixbuf-2.0-0
+[runepkg] Installing libgdk-pixbuf-2.0-0-2.42.12+dfsg-4+deb13u1
+[warning] Running postinst for libgdk-pixbuf-2.0-0 (configure)...
+/srv/lib/runepkg_dir/control_dir/libgdk-pixbuf-2.0-0_2.42.12+dfsg-4+deb13u1_amd64/control/postinst: line 31: /usr/lib/x86_64-linux-gnu/gdk-pixbuf-2.0/2.10.0/loaders.cache: Permission denied
+[md5sums] Passed for fontconfig
+[runepkg] Installing fontconfig-2.15.0-2.3
+[warning] Running postinst for fontconfig (configure)...
+mkdir: cannot create directory ‘/var/cache/fontconfig’: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libfribidi0
+[runepkg] Installing libfribidi0-1.0.16-1
+[md5sums] Passed for libgraphite2-3
+[runepkg] Installing libgraphite2-3-1.3.14-2+deb13u1
+[md5sums] Passed for libharfbuzz0b
+[runepkg] Installing libharfbuzz0b-10.2.0-1+deb13u1
+[md5sums] Passed for libthai-data
+[runepkg] Installing libthai-data-0.1.29-2
+[md5sums] Passed for libdatrie1
+[runepkg] Installing libdatrie1-0.2.13-3+b1
+[md5sums] Passed for libthai0
+[runepkg] Installing libthai0-0.1.29-2+b1
+[md5sums] Passed for libpango-1.0-0
+[runepkg] Installing libpango-1.0-0-1.56.3-1
+[md5sums] Passed for libpangoft2-1.0-0
+[runepkg] Installing libpangoft2-1.0-0-1.56.3-1
+[md5sums] Passed for libpangocairo-1.0-0
+[runepkg] Installing libpangocairo-1.0-0-1.56.3-1
+[md5sums] Passed for librsvg2-2
+[runepkg] Installing librsvg2-2-2.60.0+dfsg-1
+[md5sums] Passed for librsvg2-common
+[runepkg] Installing librsvg2-common-2.60.0+dfsg-1
+[warning] Running postinst for librsvg2-common (configure)...
+dpkg-trigger: error: unable to open/create triggers lock file '/var/lib/dpkg/triggers/Lock': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for fonts-quicksand
+[runepkg] Installing fonts-quicksand-0.2016-2.1
+[md5sums] Passed for desktop-base
+[warning] Running preinst for desktop-base (install)...
+[runepkg] Installing desktop-base-13.0.4
+[warning] Running postinst for desktop-base (configure)...
+update-alternatives: using /usr/share/desktop-base/debian-logos to provide /usr/share/images/vendor-logos (vendor-logos) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/vendor-logos.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for task-desktop
+[runepkg] Installing task-desktop-3.81
+[md5sums] Passed for gtk-update-icon-cache
+[warning] Running preinst for gtk-update-icon-cache (install)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+No diversion 'diversion of /usr/sbin/update-icon-caches to /usr/sbin/update-icon-caches.gtk2 by libgtk-3-bin', none removed.
+No diversion 'diversion of /usr/share/man/man8/update-icon-caches.8.gz to /usr/share/man/man8/update-icon-caches.gtk2.8.gz by libgtk-3-bin', none removed.
+[runepkg] Installing gtk-update-icon-cache-4.18.6+ds-2
+[md5sums] Passed for hicolor-icon-theme
+[runepkg] Installing hicolor-icon-theme-0.18-2
+[warning] Running postinst for hicolor-icon-theme (configure)...
+gtk-update-icon-cache: Failed to open file /usr/share/icons/hicolor/.icon-theme.cache : Permission denied
+WARNING: icon cache generation failed
+[md5sums] Passed for adwaita-icon-theme
+[runepkg] Installing adwaita-icon-theme-48.1-1
+[warning] Running postinst for adwaita-icon-theme (configure)...
+gtk-update-icon-cache: Failed to open file /usr/share/icons/Adwaita/.icon-theme.cache : Permission denied
+WARNING: icon cache generation failed for /usr/share/icons/Adwaita
+update-alternatives: using /usr/share/icons/Adwaita/cursor.theme to provide /usr/share/icons/default/index.theme (x-cursor-theme) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/x-cursor-theme.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for at-spi2-common
+[runepkg] Installing at-spi2-common-2.56.2-1+deb13u1
+[md5sums] Passed for libatk1.0-0t64
+[runepkg] Installing libatk1.0-0t64-2.56.2-1+deb13u1
+[md5sums] Passed for libatspi2.0-0t64
+[runepkg] Installing libatspi2.0-0t64-2.56.2-1+deb13u1
+[md5sums] Passed for libatk-bridge2.0-0t64
+[runepkg] Installing libatk-bridge2.0-0t64-2.56.2-1+deb13u1
+[md5sums] Passed for libcloudproviders0
+[runepkg] Installing libcloudproviders0-0.3.6-2
+[md5sums] Passed for liblcms2-2
+[runepkg] Installing liblcms2-2-2.16-2+deb13u2
+[md5sums] Passed for libcolord2
+[runepkg] Installing libcolord2-1.4.7-3
+[md5sums] Passed for libavahi-common-data
+[runepkg] Installing libavahi-common-data-0.8-16
+[md5sums] Passed for libavahi-common3
+[runepkg] Installing libavahi-common3-0.8-16
+[md5sums] Passed for libavahi-client3
+[runepkg] Installing libavahi-client3-0.8-16
+[md5sums] Passed for libcups2t64
+[runepkg] Installing libcups2t64-2.4.10-3+deb13u2
+[md5sums] Passed for libwayland-cursor0
+[runepkg] Installing libwayland-cursor0-1.23.1-3
+[md5sums] Passed for libwayland-egl1
+[runepkg] Installing libwayland-egl1-1.23.1-3
+[md5sums] Passed for libxdamage1
+[runepkg] Installing libxdamage1-1:1.1.6-1+b2
+[md5sums] Passed for libxkbcommon0
+[runepkg] Installing libxkbcommon0-1.7.0-2
+[md5sums] Passed for original-awk
+[runepkg] Installing original-awk-2025-01-16-1
+[warning] Running postinst for original-awk (configure)...
+update-alternatives: error: unable to create file '/var/lib/dpkg/alternatives/awk.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for dbus-user-session
+[runepkg] Installing dbus-user-session-1.16.2-2
+[md5sums] Passed for libdconf1
+[runepkg] Installing libdconf1-0.40.0-5
+[md5sums] Passed for dconf-service
+[runepkg] Installing dconf-service-0.40.0-5
+[md5sums] Passed for dconf-gsettings-backend
+[runepkg] Installing dconf-gsettings-backend-0.40.0-5
+[md5sums] Passed for libgtk-3-common
+[runepkg] Installing libgtk-3-common-3.24.49-3
+[md5sums] Passed for libgtk-3-0t64
+[warning] Running preinst for libgtk-3-0t64 (install)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[runepkg] Installing libgtk-3-0t64-3.24.49-3
+[warning] Running postinst for libgtk-3-0t64 (configure)...
+Failed to create file “/usr/lib/x86_64-linux-gnu/gtk-3.0/3.0.0/immodules.cache.KVE6U3”: Permission denied
+[md5sums] Passed for libgtop2-common
+[runepkg] Installing libgtop2-common-2.41.3-1
+[md5sums] Passed for libgtop-2.0-11
+[runepkg] Installing libgtop-2.0-11-2.41.3-1+b2
+[md5sums] Passed for libxfce4ui-common
+[runepkg] Installing libxfce4ui-common-4.20.1-1
+[md5sums] Passed for libxcb-util1
+[runepkg] Installing libxcb-util1-0.4.1-1
+[md5sums] Passed for libstartup-notification0
+[runepkg] Installing libstartup-notification0-0.12-8
+[md5sums] Passed for libxfce4util-common
+[runepkg] Installing libxfce4util-common-4.20.1-1
+[md5sums] Passed for libxfce4util7
+[runepkg] Installing libxfce4util7-4.20.1-1
+[md5sums] Passed for xfconf
+[runepkg] Installing xfconf-4.20.0-1
+[md5sums] Passed for libxfconf-0-3
+[runepkg] Installing libxfconf-0-3-4.20.0-1
+[md5sums] Passed for libxfce4ui-2-0
+[runepkg] Installing libxfce4ui-2-0-4.20.1-1
+[md5sums] Passed for libxfce4ui-utils
+[runepkg] Installing libxfce4ui-utils-4.20.1-1
+[md5sums] Passed for desktop-file-utils
+[runepkg] Installing desktop-file-utils-0.28-1
+[warning] Running postinst for desktop-file-utils (configure)...
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libexo-common
+[runepkg] Installing libexo-common-4.20.0-1
+[md5sums] Passed for libexo-2-0
+[runepkg] Installing libexo-2-0-4.20.0-1
+[md5sums] Passed for exo-utils
+[runepkg] Installing exo-utils-4.20.0-1
+[md5sums] Passed for thunar-data
+[runepkg] Installing thunar-data-4.20.2-1+deb13u1
+[md5sums] Passed for libnotify4
+[runepkg] Installing libnotify4-0.8.6-1
+[md5sums] Passed for libexif12
+[runepkg] Installing libexif12-0.6.25-1+deb13u1
+[md5sums] Passed for libthunarx-3-0
+[runepkg] Installing libthunarx-3-0-4.20.2-1+deb13u1
+[md5sums] Passed for thunar
+[warning] Running preinst for thunar (install)...
+[runepkg] Installing thunar-4.20.2-1+deb13u1
+[warning] Running postinst for thunar (configure)...
+[md5sums] Passed for libgarcon-common
+[runepkg] Installing libgarcon-common-4.20.0-1
+[md5sums] Passed for libgarcon-1-0
+[runepkg] Installing libgarcon-1-0-4.20.0-1
+[md5sums] Passed for xfce4-appfinder
+[runepkg] Installing xfce4-appfinder-4.20.0-2
+[md5sums] Passed for libdbusmenu-glib4
+[runepkg] Installing libdbusmenu-glib4-18.10.20180917~bzr492+repack1-4
+[md5sums] Passed for libdbusmenu-gtk3-4
+[runepkg] Installing libdbusmenu-gtk3-4-18.10.20180917~bzr492+repack1-4
+[md5sums] Passed for libgarcon-gtk3-1-0
+[runepkg] Installing libgarcon-gtk3-1-0-4.20.0-1
+[md5sums] Passed for libgtk-layer-shell0
+[runepkg] Installing libgtk-layer-shell0-0.9.0-2
+[md5sums] Passed for libxres1
+[runepkg] Installing libxres1-2:1.2.1-1+b2
+[md5sums] Passed for libwnck-3-common
+[runepkg] Installing libwnck-3-common-43.2-1
+[md5sums] Passed for libwnck-3-0
+[runepkg] Installing libwnck-3-0-43.2-1
+[md5sums] Passed for libdisplay-info2
+[runepkg] Installing libdisplay-info2-0.2.0-2
+[md5sums] Passed for libxfce4windowing-common
+[runepkg] Installing libxfce4windowing-common-4.20.2-1
+[md5sums] Passed for libxfce4windowing-0-0
+[runepkg] Installing libxfce4windowing-0-0-4.20.2-1
+[md5sums] Passed for libxfce4panel-2.0-4
+[runepkg] Installing libxfce4panel-2.0-4-4.20.4-1
+[md5sums] Passed for xfce4-panel
+[runepkg] Installing xfce4-panel-4.20.4-1
+[md5sums] Passed for libkeybinder-3.0-0
+[runepkg] Installing libkeybinder-3.0-0-0.3.2-1.1+b3
+[md5sums] Passed for libasyncns0
+[runepkg] Installing libasyncns0-0.8-6+b5
+[md5sums] Passed for libogg0
+[runepkg] Installing libogg0-1.3.5-3+b2
+[md5sums] Passed for libflac14
+[runepkg] Installing libflac14-1.5.0+ds-2
+[md5sums] Passed for libmp3lame0
+[runepkg] Installing libmp3lame0-3.100-6+b3
+[md5sums] Passed for libmpg123-0t64
+[runepkg] Installing libmpg123-0t64-1.32.10-1+deb13u1
+[md5sums] Passed for libopus0
+[runepkg] Installing libopus0-1.5.2-2
+[md5sums] Passed for libvorbis0a
+[runepkg] Installing libvorbis0a-1.3.7-3
+[md5sums] Passed for libvorbisenc2
+[runepkg] Installing libvorbisenc2-1.3.7-3
+[md5sums] Passed for libsndfile1
+[runepkg] Installing libsndfile1-1.2.2-2+deb13u1
+[md5sums] Passed for libpulse0
+[runepkg] Installing libpulse0-17.0+dfsg1-2+b1
+[md5sums] Passed for libpulse-mainloop-glib0
+[runepkg] Installing libpulse-mainloop-glib0-17.0+dfsg1-2+b1
+[md5sums] Passed for xfce4-pulseaudio-plugin
+[runepkg] Installing xfce4-pulseaudio-plugin-0.4.9-1
+[md5sums] Passed for libpython3.13-minimal
+[runepkg] Installing libpython3.13-minimal-3.13.5-2+deb13u3
+[warning] Running postinst for libpython3.13-minimal (configure)...
+[md5sums] Passed for python3.13-minimal
+[warning] Running preinst for python3.13-minimal (install)...
+mkdir: cannot create directory ‘/var/lib/python’: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script preinst failed with status 1
+[runepkg] Installing python3.13-minimal-3.13.5-2+deb13u3
+[warning] Running postinst for python3.13-minimal (configure)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[Errno 13] Permission denied: '/usr/lib/python3.13/__pycache__'ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for python3-minimal
+[runepkg] Installing python3-minimal-3.13.5-1
+[warning] Running postinst for python3-minimal (configure)...
+Traceback (most recent call last):
+  File "/usr/bin/py3compile", line 323, in <module>
+    main()
+    ~~~~^^
+  File "/usr/bin/py3compile", line 284, in main
+    pkg_files = tuple(dpf.from_package(options.package))
+  File "/usr/share/python3/debpython/files.py", line 55, in from_package
+    raise Exception("cannot get content of %s" % package_name)
+Exception: cannot get content of python3-minimal
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for media-types
+[runepkg] Installing media-types-13.0.0
+[md5sums] Passed for libpython3.13-stdlib
+[runepkg] Installing libpython3.13-stdlib-3.13.5-2+deb13u3
+[md5sums] Passed for python3.13
+[runepkg] Installing python3.13-3.13.5-2+deb13u3
+[warning] Running postinst for python3.13 (configure)...
+dpkg: warning: failed to open configuration file '/root/.dpkg.cfg' for reading: Permission denied
+[Errno 13] Permission denied: '/usr/lib/python3.13/__pycache__'ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for libpython3-stdlib
+[runepkg] Installing libpython3-stdlib-3.13.5-1
+[md5sums] Passed for python3
+[warning] Running preinst for python3 (install)...
+[runepkg] Installing python3-3.13.5-1
+[warning] Running postinst for python3 (configure)...
+mkdir: cannot create directory ‘/etc/python3’: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for python3-urllib3
+[runepkg] Installing python3-urllib3-2.3.0-3+deb13u2
+[warning] Running postinst for python3-urllib3 (configure)...
+Traceback (most recent call last):
+  File "/usr/bin/py3compile", line 323, in <module>
+    main()
+    ~~~~^^
+  File "/usr/bin/py3compile", line 302, in main
+    compile(files, versions,
+    ~~~~~~~^^^^^^^^^^^^^^^^^
+            options.force, options.optimize, e_patterns)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/bin/py3compile", line 185, in compile
+    for fn, versions_to_compile in filter_files(files, e_patterns, versions):
+                                   ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/bin/py3compile", line 128, in filter_files
+    for fpath in files:
+                 ^^^^^
+  File "/usr/share/python3/debpython/files.py", line 73, in filter_public
+    for fn in files:
+              ^^^^^
+  File "/usr/share/python3/debpython/files.py", line 55, in from_package
+    raise Exception("cannot get content of %s" % package_name)
+Exception: cannot get content of python3-urllib3
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for xfce4-helpers
+[runepkg] Installing xfce4-helpers-4.20.1-1
+[md5sums] Passed for libxklavier16
+[runepkg] Installing libxklavier16-5.4-5+b2
+[md5sums] Passed for xfce4-settings
+[runepkg] Installing xfce4-settings-4.20.1-1
+[md5sums] Passed for libpolkit-gobject-1-0
+[runepkg] Installing libpolkit-gobject-1-0-126-2
+[md5sums] Passed for xfce4-session
+[runepkg] Installing xfce4-session-4.20.2-2
+[warning] Running postinst for xfce4-session (configure)...
+update-alternatives: using /usr/bin/startxfce4 to provide /usr/bin/x-session-manager (x-session-manager) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/x-session-manager.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for xfdesktop4-data
+[runepkg] Installing xfdesktop4-data-4.20.1-1
+[md5sums] Passed for libyaml-0-2
+[runepkg] Installing libyaml-0-2-0.2.5-2
+[md5sums] Passed for xfdesktop4
+[runepkg] Installing xfdesktop4-4.20.1-1
+[md5sums] Passed for libxpresent1
+[runepkg] Installing libxpresent1-1.0.1-1+b2
+[md5sums] Passed for xfwm4
+[runepkg] Installing xfwm4-4.20.0-1
+[warning] Running postinst for xfwm4 (configure)...
+update-alternatives: using /usr/bin/xfwm4 to provide /usr/bin/x-window-manager (x-window-manager) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/x-window-manager.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for xfce4
+[runepkg] Installing xfce4-4.20.1
+[md5sums] Passed for libayatana-ido3-0.4-0
+[runepkg] Installing libayatana-ido3-0.4-0-0.10.4-1
+[md5sums] Passed for libayatana-indicator3-7
+[runepkg] Installing libayatana-indicator3-7-0.9.4-1+b1
+[md5sums] Passed for liblightdm-gobject-1-0
+[runepkg] Installing liblightdm-gobject-1-0-1.32.0-6+b2
+[md5sums] Passed for lightdm-gtk-greeter
+[runepkg] Installing lightdm-gtk-greeter-2.0.9-1
+[warning] Running postinst for lightdm-gtk-greeter (configure)...
+update-alternatives: using /usr/share/xgreeters/lightdm-gtk-greeter.desktop to provide /usr/share/xgreeters/lightdm-greeter.desktop (lightdm-greeter) in auto mode
+update-alternatives: error: error creating symbolic link '/etc/alternatives/lightdm-greeter.dpkg-tmp': Permission denied
+ERROR: Command exited with non-zero status: 2
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 2
+[md5sums] Passed for libgpg-error0
+[runepkg] Installing libgpg-error0-1.51-4
+[md5sums] Passed for libgcrypt20
+[runepkg] Installing libgcrypt20-1.11.0-7+deb13u1
+[warning] Running postinst for libgcrypt20 (configure)...
+[md5sums] Passed for lightdm
+[warning] Running preinst for lightdm (install)...
+[runepkg] Installing lightdm-1.32.0-6+b2
+[warning] Running postinst for lightdm (configure)...
+debconf: DbDriver "passwords" warning: could not open /var/cache/debconf/passwords.dat: Permission denied
+fatal: Only root may add a user or group to the system.
+debconf: DbDriver "config": could not write /var/cache/debconf/config.dat-new: Permission denied
+ERROR: Command exited with non-zero status: 1
+  Command: /bin/sh
+ERROR: Maintainer script postinst failed with status 1
+[md5sums] Passed for task-xfce-desktop
+[runepkg] Installing task-xfce-desktop-3.81
+[ zypherus /home/michko/runepkg/runepkg ]#

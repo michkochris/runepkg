@@ -273,6 +273,16 @@ char* runepkg_secure_path_concat(const char* dir, const char* file) {
         return NULL;
     }
     
+    /* Normalize leading slashes or ./ from file path */
+    while (file[0] == '/' || (file[0] == '.' && file[1] == '/')) {
+        if (file[0] == '/') {
+            while (*file == '/') file++;
+        } else if (file[0] == '.' && file[1] == '/') {
+            file += 2;
+            while (*file == '/') file++;
+        }
+    }
+
     dir_len = strlen(dir);
     file_len = strlen(file);
     
@@ -291,7 +301,7 @@ char* runepkg_secure_path_concat(const char* dir, const char* file) {
         if (flen >= 3 && strcmp(file + flen - 3, "/..") == 0) is_traversal = true;
     }
 
-    if (is_traversal || strstr(file, "//") || file[0] == '/') {
+    if (is_traversal || strstr(file, "//")) {
         runepkg_util_error("Suspicious file path: %s\n", file);
         return NULL;
     }

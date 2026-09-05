@@ -262,26 +262,128 @@ int runepkg_host_collect_installed(HostPackageInfo ***out_packages, int *out_cou
     return 0;
 }
 
-int runepkg_host_register_install(const PkgInfo *pkg_info) {
-    if (!pkg_info) return -1;
+extern char *g_system_install_root;
 
-    runepkg_util_log_verbose("[host] Registering installation: %s (%s)",
-                            pkg_info->package_name, pkg_info->version);
+/* Internal helper to update dpkg status file by replacing/adding a package stanza */
+static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
+    const char *status_path = "/var/lib/dpkg/status";
+    char tmp_path[PATH_MAX];
+    FILE *in, *out;
+    char line[16384];
+    int skip_current = 0;
 
-    /* For host integration, we might want to trigger 'dpkg -i' here?
-     * But for now, just ensure the metadata is in our DB. */
-    if (runepkg_storage_write_package_info(pkg_info->package_name, pkg_info->version, pkg_info) == 0) {
-        return 0;
+    if (access(status_path, R_OK) != 0) return 0; /* No status file to update */
+
+    snprintf(tmp_path, sizeof(tmp_path), "%s.runepkg.tmp", status_path);
+    in = fopen(status_path, "r");
+    if (!in) return -1;
+    out = fopen(tmp_path, "w");
+    if (!out) { fclose(in); return -1; }
+
+    while (fgets(line, sizeof(line), in)) {
+        if (strncmp(line, "Package: ", 9) == 0) {
+            const char *p_name = line + 9;
+            char name_buf[256];
+            size_t len = strlen(p_name);
+            if (len > 0 && p_name[len-1] == '\n') len--;
+            if (len > 0 && p_name[len-1] == '\r') len--;
+            if (len >= sizeof(name_buf)) len = sizeof(name_buf) - 1;
+            strncpy(name_buf, p_name, len);
+            name_buf[len] = '\0';
+
+            if (strcmp(name_buf, pkg_info->package_name) == 0) {
+                skip_current = 1;
+            } else {
+                skip_current = 0;
+            }
+        } else if (skip_current && (line[0] == '\n' || line[0] == '\r')) {
+            skip_current = 0;
+            continue; /* Skip the blank line at end of stanza */
+        }
+
+        if (!skip_current) {
+            fputs(line, out);
+        }
     }
 
-    return -1;
+    /* Append the new/updated stanza */
+    fprintf(out, "\nPackage: %s\n", pkg_info->package_name);
+    fprintf(out, "Status: install ok installed\n");
+    if (pkg_info->version) fprintf(out, "Version: %s\n", pkg_info->version);
+    if (pkg_info->architecture) fprintf(out, "Architecture: %s\n", pkg_info->architecture);
+    else fprintf(out, "Architecture: amd64\n");
+    if (pkg_info->maintainer) fprintf(out, "Maintainer: %s\n", pkg_info->maintainer);
+    if (pkg_info->section) fprintf(out, "Section: %s\n", pkg_info->section);
+    if (pkg_info->priority) fprintf(out, "Priority: %s\n", pkg_info->priority);
+    if (pkg_info->depends) fprintf(out, "Depends: %s\n", pkg_info->depends);
+    if (pkg_info->description) fprintf(out, "Description: %s\n", pkg_info->description);
+    else fprintf(out, "Description: Injected by runepkg high-speed engine\n");
+    fprintf(out, "\n");
+
+    fclose(in);
+    if (fflush(out) != 0 || fsync(fileno(out)) != 0) {
+        fclose(out);
+        unlink(tmp_path);
+        return -1;
+    }
+    fclose(out);
+
+    if (rename(tmp_path, status_path) != 0) {
+        unlink(tmp_path);
+        return -1;
+    }
+
+    return 0;
+}
+
+int runepkg_host_register_install(const PkgInfo *pkg_info) {
+    char list_path[PATH_MAX + 128];
+    FILE *list_file;
+    int i;
+
+    if (!pkg_info || !pkg_info->package_name) return -1;
+
+    runepkg_util_log_verbose("[host] Registering installation & injecting into dpkg host: %s (%s)",
+                            pkg_info->package_name, pkg_info->version ? pkg_info->version : "unknown");
+
+    /* Ensure metadata is in internal runepkg storage */
+    runepkg_storage_write_package_info(pkg_info->package_name, pkg_info->version, pkg_info);
+
+    /* If dpkg_host is not 'none' and we are installing to system root '/', inject into host dpkg database */
+    if ((!g_dpkg_host || strcmp(g_dpkg_host, "none") != 0) && (!g_system_install_root || strcmp(g_system_install_root, "/") == 0)) {
+        if (runepkg_host_update_status_file(pkg_info) == 0) {
+             runepkg_util_log_verbose("[host] Atomically updated package stanza for %s in /var/lib/dpkg/status", pkg_info->package_name);
+        }
+
+        if (pkg_info->file_count > 0 && pkg_info->file_list) {
+            snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s.list", pkg_info->package_name);
+            list_file = fopen(list_path, "w");
+            if (list_file) {
+                for (i = 0; i < pkg_info->file_count; i++) {
+                    const char *rel = pkg_info->file_list[i];
+                    if (rel && rel[0] != '\0') {
+                        if (rel[0] == '/') fprintf(list_file, "%s\n", rel);
+                        else fprintf(list_file, "/%s\n", rel);
+                    }
+                }
+                fclose(list_file);
+                runepkg_util_log_verbose("[host] Generated dpkg file list: %s", list_path);
+            }
+        }
+    }
+
+    return 0;
 }
 
 int runepkg_host_unregister_removal(const char *pkg_name) {
-    DIR *dir;
-    struct dirent *entry;
     char *db_dir = g_runepkg_db_dir;
     int removed = 0;
+    char info_pattern[PATH_MAX + 128];
+    glob_t glob_result;
+    int i;
+    char cmd[PATH_MAX + 128];
+    char pkg_path[PATH_MAX * 4];
+    char host_db_dir[PATH_MAX * 2];
 
     if (!pkg_name || !db_dir) return -1;
 
@@ -292,70 +394,39 @@ int runepkg_host_unregister_removal(const char *pkg_name) {
         runepkg_util_log_verbose("[host] dpkg_host=none. Skipping host dpkg trace removal.");
     } else if (!g_dpkg_host || strcmp(g_dpkg_host, "auto") == 0 || strcmp(g_dpkg_host, "yes") == 0) {
         /* Purge all traces of dpkg storage on host system (/var/lib/dpkg) */
-        char info_pattern[PATH_MAX];
-        glob_t glob_result;
-        int i;
-
         snprintf(info_pattern, sizeof(info_pattern), "/var/lib/dpkg/info/%s*", pkg_name);
         if (glob(info_pattern, 0, NULL, &glob_result) == 0) {
-            for (i = 0; i < glob_result.gl_pathc; i++) {
+            for (i = 0; i < (int)glob_result.gl_pathc; i++) {
                 runepkg_util_log_verbose("[host] Removing dpkg info trace: %s", glob_result.gl_pathv[i]);
-                unlink(glob_result.gl_pathv[i]);
+                (void)unlink(glob_result.gl_pathv[i]);
             }
             globfree(&glob_result);
         }
 
         /* If privileged, also invoke dpkg --purge --force-depends to clean up status database */
         if (runepkg_host_is_privileged() && access("/usr/bin/dpkg", X_OK) == 0) {
-            char cmd[PATH_MAX + 64];
             snprintf(cmd, sizeof(cmd), "dpkg --purge --force-depends %s >/dev/null 2>&1", pkg_name);
-            system(cmd);
-        }
-    }
-
-    dir = opendir(db_dir);
-    if (!dir) return -1;
-
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR || entry->d_type == DT_UNKNOWN) {
-            const char *ver_dash = runepkg_util_find_version_separator(entry->d_name);
-            if (ver_dash && ver_dash != entry->d_name) {
-                size_t name_len = (size_t)(ver_dash - entry->d_name);
-                if (strlen(pkg_name) == name_len && strncmp(entry->d_name, pkg_name, name_len) == 0) {
-                    char pkg_path[PATH_MAX];
-                    snprintf(pkg_path, sizeof(pkg_path), "%s/%s", db_dir, entry->d_name);
-                    runepkg_util_log_verbose("[host] Purging host metadata for %s at %s", pkg_name, pkg_path);
-                    runepkg_storage_remove_directory_tree(pkg_path);
-                    removed = 1;
-                }
+            {
+                int sys_ret = system(cmd);
+                (void)sys_ret;
             }
         }
     }
-    closedir(dir);
+
+    snprintf(pkg_path, sizeof(pkg_path), "%s/%s", db_dir, pkg_name);
+    if (runepkg_util_file_exists(pkg_path)) {
+        runepkg_util_log_verbose("[host] Purging host metadata for %s at %s", pkg_name, pkg_path);
+        runepkg_storage_remove_directory_tree(pkg_path);
+        removed = 1;
+    }
 
     /* Also check host subdirectory if it exists: g_runepkg_db_dir/host */
-    {
-        char host_db_dir[PATH_MAX];
-        snprintf(host_db_dir, sizeof(host_db_dir), "%s/host", db_dir);
-        DIR *host_dir = opendir(host_db_dir);
-        if (host_dir) {
-            while ((entry = readdir(host_dir)) != NULL) {
-                if (entry->d_type == DT_DIR || entry->d_type == DT_UNKNOWN) {
-                    const char *ver_dash = runepkg_util_find_version_separator(entry->d_name);
-                    if (ver_dash && ver_dash != entry->d_name) {
-                        size_t name_len = (size_t)(ver_dash - entry->d_name);
-                        if (strlen(pkg_name) == name_len && strncmp(entry->d_name, pkg_name, name_len) == 0) {
-                            char pkg_path[PATH_MAX];
-                            snprintf(pkg_path, sizeof(pkg_path), "%s/%s", host_db_dir, entry->d_name);
-                            runepkg_util_log_verbose("[host] Purging host sub-db metadata for %s at %s", pkg_name, pkg_path);
-                            runepkg_storage_remove_directory_tree(pkg_path);
-                            removed = 1;
-                        }
-                    }
-                }
-            }
-            closedir(host_dir);
-        }
+    snprintf(host_db_dir, sizeof(host_db_dir), "%s/host", db_dir);
+    snprintf(pkg_path, sizeof(pkg_path), "%s/%s", host_db_dir, pkg_name);
+    if (runepkg_util_file_exists(pkg_path)) {
+        runepkg_util_log_verbose("[host] Purging host sub-db metadata for %s at %s", pkg_name, pkg_path);
+        runepkg_storage_remove_directory_tree(pkg_path);
+        removed = 1;
     }
 
     if (removed) {

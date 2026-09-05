@@ -179,6 +179,8 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->section = runepkg_util_get_config_value(control_file_path, "Section", ':');
     pkg_info->priority = runepkg_util_get_config_value(control_file_path, "Priority", ':');
     pkg_info->homepage = runepkg_util_get_config_value(control_file_path, "Homepage", ':');
+    pkg_info->multi_arch = runepkg_util_get_config_value(control_file_path, "Multi-Arch", ':');
+    pkg_info->source_name = runepkg_util_get_config_value(control_file_path, "Source", ':');
 
     /* Check for maintainer scripts in control directory */
     control_dir_copy = strdup(control_file_path);

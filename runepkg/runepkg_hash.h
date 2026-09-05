@@ -50,6 +50,8 @@ typedef struct PkgInfo {
     char *priority;
     char *homepage;
     char *filename;
+    char *multi_arch;  /* Support for Multi-Arch: same/foreign/allowed */
+    char *source_name; /* Support for Source: pkg (version) */
     char *preinst;
     char *postinst;
     char *prerm;

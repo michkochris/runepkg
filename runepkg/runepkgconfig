@@ -93,16 +93,17 @@ gpg_check=no
 # base URL defined. Mixing repositories with different base URLs may cause
 # download failures (404) if a package exists in one but not the other.
 
-# [Example: Debian Stable (Bookworm)]
-# This is safe because all sources share the same base URL (deb.debian.org)
-# deb http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
-# deb http://deb.debian.org/debian bookworm-updates main contrib non-free non-free-firmware
-# deb http://deb.debian.org/debian bookworm-backports main contrib non-free non-free-firmware
-# deb-src http://deb.debian.org/debian bookworm main contrib non-free non-free-firmware
+# [Debian Stable (Bookworm)] - RECOMMENDED FOR RUNEPKG
+# Debian Stable provides frozen, reliable package versions that prevent 404 mirror pruning errors.
+deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 
-# [Kali Linux Rolling]
-# runepkg and runar linux use kali rolling latest release style packages by default.
-deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
-deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+# [Kali Linux Rolling] - LESS RELIABLE FOR RUNEPKG
+# Note: Kali has later/bleeding-edge packages, but is less reliable for runepkg because
+# rolling mirrors frequently prune older package versions, causing 404 download errors.
+# deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+# deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 
 # end of file...

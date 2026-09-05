@@ -927,39 +927,39 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
 
                 for (j = 0; curr_deps[j]; j++) {
                     PkgInfo *installed = runepkg_hash_search(runepkg_main_hash_table, curr_deps[j]->package);
+                    PkgInfo *planned = g_batch_planned_packages ? runepkg_hash_search(g_batch_planned_packages, curr_deps[j]->package) : NULL;
+                    PkgInfo *in_flight = installing_packages ? runepkg_hash_search(installing_packages, curr_deps[j]->package) : NULL;
                     int satisfied = 0;
 
-                    if (!installed && g_batch_planned_packages) {
-                        installed = runepkg_hash_search(g_batch_planned_packages, curr_deps[j]->package);
+                    /* Check all possible sources of the package info and see if any satisfy the constraint */
+                    if (installed && installed->version) {
+                        if (!curr_deps[j]->constraint || runepkg_util_check_version_constraint(installed->version, curr_deps[j]->constraint) == 1) {
+                            satisfied = 1;
+                        }
                     }
 
-                    if (!installed) {
-                        if (is_package_provided_by_table(runepkg_main_hash_table, curr_deps[j]->package)) {
+                    if (!satisfied && planned && planned->version) {
+                        if (!curr_deps[j]->constraint || runepkg_util_check_version_constraint(planned->version, curr_deps[j]->constraint) == 1) {
+                            satisfied = 1;
+                        }
+                    }
+
+                    if (!satisfied && in_flight && in_flight->version) {
+                        if (!curr_deps[j]->constraint || runepkg_util_check_version_constraint(in_flight->version, curr_deps[j]->constraint) == 1) {
+                            satisfied = 1;
+                        }
+                    }
+
+                    if (!satisfied) {
+                        if (is_package_provided_by_table(runepkg_main_hash_table, curr_deps[j]->package) ||
+                            (installing_packages && is_package_provided_by_table(installing_packages, curr_deps[j]->package)) ||
+                            (g_batch_planned_packages && is_package_provided_by_table(g_batch_planned_packages, curr_deps[j]->package))) {
                             runepkg_log_verbose("Dependency '%s' is satisfied by a virtual provider\n", curr_deps[j]->package);
                             continue;
                         }
-                        if (installing_packages && is_package_provided_by_table(installing_packages, curr_deps[j]->package)) {
-                            runepkg_log_verbose("Dependency '%s' is being satisfied by an in-flight virtual provider\n", curr_deps[j]->package);
-                            continue;
-                        }
-                        if (g_batch_planned_packages && is_package_provided_by_table(g_batch_planned_packages, curr_deps[j]->package)) {
-                            runepkg_log_verbose("Dependency '%s' will be satisfied by a planned virtual provider\n", curr_deps[j]->package);
-                            continue;
-                        }
                     }
 
-                    if (!installed && installing_packages) installed = runepkg_hash_search(installing_packages, curr_deps[j]->package);
-
-                    if (installed) {
-                        if (curr_deps[j]->constraint) {
-                            satisfied = runepkg_util_check_version_constraint(installed->version, curr_deps[j]->constraint);
-                            if (satisfied == -1) {
-                                printf("Warning: Unknown constraint '%s' for %s\n", curr_deps[j]->constraint, curr_deps[j]->package);
-                                satisfied = 1;
-                            }
-                        } else {
-                            satisfied = 1;
-                        }
+                    if (satisfied) {
                         if (is_top_level && g_force_mode && g_auto_confirm_siblings) {
                             satisfied = 0;
                         }
@@ -1201,7 +1201,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 runepkg_pack_free_package_info(&pkg_info);
                 return -1;
             }
+        }
 
+        /* Execute postinst if available, even for meta-packages with 0 files */
+        if (g_system_install_root && (strcmp(g_system_install_root, "/") == 0)) {
             runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
         }
 
@@ -1258,6 +1261,12 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
 
     clock_gettime(CLOCK_MONOTONIC, &end_time);
     install_time = (end_time.tv_sec - start_time.tv_sec) + (end_time.tv_nsec - start_time.tv_nsec) / 1000000000.0;
+
+    if (is_top_level) {
+        printf("\033[1;32m[success]\033[0m Successfully installed %s-%s in %.2fs\n",
+               pkg_info.package_name, pkg_info.version, install_time);
+    }
+
     runepkg_log_verbose("Total installation time: %.6f seconds\n", install_time);
 
     runepkg_pack_free_package_info(&pkg_info);
