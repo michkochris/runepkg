@@ -42,7 +42,8 @@ control_dir=/srv/lib/runepkg_dir/control_dir
 
 # [install_dir]
 # The target root for package installation (set to '/' for system-wide).
-install_dir=/srv/lib/runepkg_dir/install_dir
+install_dir=/
+#install_dir=/srv/lib/runepkg_dir/install_dir
 
 # [runepkg_db]
 # Persistent storage for the package manager's state.
@@ -95,15 +96,15 @@ gpg_check=no
 
 # [Debian Stable (Bookworm)] - RECOMMENDED FOR RUNEPKG
 # Debian Stable provides frozen, reliable package versions that prevent 404 mirror pruning errors.
-deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 
 # [Kali Linux Rolling] - LESS RELIABLE FOR RUNEPKG
 # Note: Kali has later/bleeding-edge packages, but is less reliable for runepkg because
 # rolling mirrors frequently prune older package versions, causing 404 download errors.
-# deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
-# deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 
 # end of file...
