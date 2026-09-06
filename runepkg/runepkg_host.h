@@ -82,6 +82,12 @@ int runepkg_host_query_package(const char *pkg_name, HostPackageInfo *out_info);
 const char *runepkg_host_get_architecture(void);
 
 /**
+ * @brief Checks if the current host is running under WSL (Windows Subsystem for Linux).
+ * @return 1 if WSL, 0 otherwise.
+ */
+int runepkg_host_is_wsl(void);
+
+/**
  * @brief Checks if the current user has host administrative privileges.
  * @return 1 if root/sudo, 0 otherwise.
  */

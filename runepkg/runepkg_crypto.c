@@ -10,6 +10,7 @@
 #include "runepkg_crypto.h"
 #include "runepkg_util.h"
 #include "runepkg_defensive.h"
+#include "runepkg_host.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -61,8 +62,8 @@ int runepkg_crypto_verify_file(const char *file_path, const char *signature_path
     argv[6] = (char *)file_path;
     argv[7] = NULL;
 
-    /* Security: gpgv doesn't need root, use sandbox if we are root */
-    if (runepkg_security_is_root()) {
+    /* Security: gpgv doesn't need root, use sandbox if we are privileged */
+    if (runepkg_host_is_privileged()) {
         result = runepkg_util_execute_command_sandbox(gpg_path, argv);
     } else {
         result = runepkg_util_execute_command_silent(gpg_path, argv);

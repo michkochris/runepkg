@@ -25,6 +25,38 @@
 /* Global host state */
 static char host_arch[32] = "unknown";
 static char host_os[64] = "unknown";
+static int is_wsl_cached = -1;
+
+int runepkg_host_is_wsl(void) {
+    struct utsname name;
+    if (is_wsl_cached != -1) return is_wsl_cached;
+
+    if (uname(&name) == 0) {
+        if (strstr(name.release, "WSL") || strstr(name.version, "WSL") ||
+            strstr(name.release, "Microsoft") || strstr(name.version, "Microsoft")) {
+            is_wsl_cached = 1;
+        } else {
+            is_wsl_cached = 0;
+        }
+    } else {
+        is_wsl_cached = 0;
+    }
+    return is_wsl_cached;
+}
+
+static void runepkg_host_prepare_wsl_env(void) {
+    if (!runepkg_host_is_wsl()) return;
+
+    runepkg_util_log_verbose("[host] WSL detected. Preparing environment stability fixes...");
+
+    /* Fix for NetworkManager postinst: chmod: cannot access '/var/lib/NetworkManager' */
+    if (runepkg_host_is_privileged()) {
+        if (!runepkg_util_file_exists("/var/lib/NetworkManager")) {
+            runepkg_util_log_verbose("[host] Creating /var/lib/NetworkManager for WSL compatibility.");
+            runepkg_util_create_dir_recursive("/var/lib/NetworkManager", 0755);
+        }
+    }
+}
 
 int runepkg_host_init(void) {
     struct utsname name;
@@ -43,8 +75,11 @@ int runepkg_host_init(void) {
         }
     }
 
-    runepkg_util_log_debug("[host] Initialized: OS=%s, Arch=%s, Privileged=%d",
-                          host_os, host_arch, runepkg_host_is_privileged());
+    runepkg_util_log_debug("[host] Initialized: OS=%s, Arch=%s, Privileged=%d, WSL=%d",
+                          host_os, host_arch, runepkg_host_is_privileged(), runepkg_host_is_wsl());
+
+    runepkg_host_prepare_wsl_env();
+
     return 0;
 }
 

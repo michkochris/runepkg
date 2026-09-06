@@ -1203,12 +1203,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
-        /* Execute postinst if available, even for meta-packages with 0 files */
-        if (g_system_install_root && (strcmp(g_system_install_root, "/") == 0)) {
-            runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
-        }
-
-        /* Register package info in storage AFTER successful file installation */
+        /* Register package info in storage BEFORE maintainer scripts to satisfy tools like py3compile */
         if (pkg_info.package_name && pkg_info.version) {
             if (runepkg_storage_create_package_directory(pkg_info.package_name, pkg_info.version) == 0) {
                 if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
@@ -1235,11 +1230,16 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
+        /* Integration: Notify host layer that a new installation occurred (inject into dpkg status/info) */
+        runepkg_host_register_install(&pkg_info);
+
+        /* Execute postinst if available, even for meta-packages with 0 files */
+        if (g_system_install_root && (strcmp(g_system_install_root, "/") == 0)) {
+            runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
+        }
+
         runepkg_storage_build_autocomplete_index();
         handle_update_pkglist();
-
-        /* Integration: Notify host layer that a new installation occurred */
-        runepkg_host_register_install(&pkg_info);
 
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
 

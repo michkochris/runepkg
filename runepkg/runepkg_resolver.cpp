@@ -169,6 +169,14 @@ public:
                 std::string c_prov = clean_package_key(prov);
                 if (virtual_to_real.find(c_prov) == virtual_to_real.end()) {
                     virtual_to_real[c_prov] = name;
+                } else {
+                    /* Heuristic: prefer 'base' packages or shorter names for virtual providers */
+                    std::string current = virtual_to_real[c_prov];
+                    if (name.find("-base") != std::string::npos && current.find("-base") == std::string::npos) {
+                        virtual_to_real[c_prov] = name;
+                    } else if (name.length() < current.length() && current.find("-base") == std::string::npos) {
+                        virtual_to_real[c_prov] = name;
+                    }
                 }
             }
         }
@@ -674,6 +682,16 @@ private:
             dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
         } else if (virtual_to_real.count(target_key)) {
             dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+        } else if (target_key.rfind("perlapi-", 0) == 0) {
+            /* Handle versioned perlapi virtual package skew in rolling releases */
+            for (const auto& [v_name, r_name] : virtual_to_real) {
+                if (v_name.rfind("perlapi-", 0) == 0) {
+                     runepkg_util_log_verbose("[resolver] Fuzzy match: substituting %s with available %s (provided by %s)\n",
+                                              target_key.c_str(), v_name.c_str(), r_name.c_str());
+                     dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                     return;
+                }
+            }
         }
     }
 
