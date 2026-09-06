@@ -11,12 +11,29 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a lightning-fast, high-performance hybrid C89/C++ package manager and toolchain forge engineered specifically for the **Debian ecosystem**. Unlike traditional tools bound to a specific distribution, **runepkg** treats the entire Debian package universe as a universal supply chain—enabling developers to unearth, compile, and deploy `.deb` software across modern workstations and constrained environments alike.
+**runepkg** is a lightning-fast, high-performance hybrid C89/C++ package manager engineered specifically for the **Debian ecosystem**. Unlike traditional tools bound to a specific distribution, **runepkg** treats the entire Debian package universe as a universal supply chain—enabling developers to unearth and deploy `.deb` software across modern workstations and constrained embedded environments alike.
 
 > [!IMPORTANT]
-> **Production Stability (v1.0.4+):** **runepkg** is now declared **Stable** and has been rigorously battle-tested. It has successfully demonstrated recursive dependency resolution, parallel downloading, and extraction for massive package sets, including full desktop environments like **XFCE** (270+ packages) and complete development toolchains like **build-essential**.
+> **Production Stability (v1.0.4+):** **runepkg** is now declared **Stable** and has been rigorously battle-tested. It has successfully demonstrated recursive dependency resolution, parallel downloading, and extraction for massive package sets, including full desktop environments like **XFCE** (270+ packages) and complete development environments like **build-essential**.
 >
-> **Usage Warning (Coexistence with apt):** **runepkg** is intended as a high-performance alternative to `apt` and `apt-get`. It is **NOT** recommended to use `runepkg` alongside standard `apt` on a primary host system, as `runepkg` operates independently and does not synchronize state with `apt`'s private database. This can lead `apt` to report broken dependencies (e.g., requiring `apt --fix-broken install`). Use `runepkg` for isolated environments, embedded systems, or as a dedicated replacement for those who require its specific performance and forging capabilities.
+> **Usage Warning (Coexistence with apt):** **runepkg** is intended as a high-performance alternative to `apt` and `apt-get`. It is **NOT** recommended to use `runepkg` alongside standard `apt` on a primary host system. Because `runepkg` maintains its own optimized binary state, `apt` will not be aware of changes made, leading to "broken dependency" reports. See [Known Limitations](#known-limitations) for details.
+
+## Is runepkg Right for Me?
+
+| Scenario | runepkg | apt | Recommendation |
+| :--- | :---: | :---: | :--- |
+| Standard Debian/Ubuntu desktop | ❌ | ✅ | Use **apt** |
+| Total `apt` replacement (Advanced) | ✅ | ❌ | Use **runepkg** |
+| Custom embedded environment staging | ✅ | ❌ | Use **runepkg** |
+| Deterministic package deployment | ✅ | ⚠️ | Use **runepkg** (faster) |
+| Need both on the same system | ❌ | ❌ | Use **Containers/chroot** |
+
+> [!TIP]
+> **Thinking of switching?** For power users who value raw performance and binary metadata efficiency, replacing `apt` entirely is a viable path. By syncing your existing state once via `runepkg sync`, you can transition to a pure **runepkg** workflow and relegate legacy tools to the "unused" list.
+
+---
+
+## Dual-Tier Architecture Overview
 
 - **Low-Level Core (Pure C89/C90, ~400–530 KB):** A minimalist, memory-safe `.deb` package manager with capabilities comparable to `busybox dpkg`. Designed for embedded targets, recovery media, and memory-constrained environments where ISO C90 compliance is paramount.
     - **ANSI C Compliance**: Strictly follows C89/C90 standards for maximum portability across legacy and modern compilers.
@@ -25,12 +42,10 @@
     - **musl-libc Optimization**: Deeply integrated with musl for predictable, high-performance static linking in embedded systems.
     - **Security-First Core**: Built on a hardened memory model with `secure_malloc`, zero-wiping, and path traversal protection.
 
-- **High-Level Version**: The extended C++ FFI suite transforms **runepkg** into a lightning fast **Debian** repository package manager but with a sophisticated toolchain and **Debian** compatible source package builder suited for rapid embedded systems deployment.
+- **High-Level Version**: The extended C++ FFI suite transforms **runepkg** into a lightning fast **Debian** repository package manager suited for rapid embedded systems deployment.
     - **Compact Extended Footprint**: Professional-grade binary size (**2.5 MB** 100% static) including full networking, compression, and C++ runtime.
     - **Parallel Networking**: High-speed multi-threaded repository synchronization and package downloading using `libcurl`.
     - **Enhanced C++ Security Foundation**: Hardened perimeter featuring automatic OpenPGP repository `InRelease` signature verification, streaming SHA256/SHA512 hash validation, path sanitization/jail traversal defense (`..`), POSIX `rlimit` extraction bounds, sandboxed privilege dropping (`_apt`), and 100% exception-safe C FFI bridge. Detailed technical background can be found in 💻 [CPP.md](./CPP.md).
-    - **Debian Source Building**: High-speed workflow for unearthing and forging source packages. `runepkg source <pkg>` downloads and sets up package, `runepkg build <pkg>` triggers a build, and `runepkg buildpkg-split <pkg>` splits package into multiple debian compatible `.deb` fragments (e.g., bin, dev, doc, ext...).
-    - **Cross-Toolchain Engine**: (`bootstrap <target> [pkgs...]`) builds a destructible/disposable cross compile toolchain that only adds build-dependencies of target <pkg's>. It cleanly cross compiles **Debian** compatible .deb's and runtime dependencies of the target <pkg's>. Perfect for a rapid deployment of .deb's into an embedded **Debian Ecosystem**. Keeping and creating a small footprint on an embedded device, not so easily done in the **Debian World.**
 
 **Lightning-Fast Binary Autocompletion**: Both versions of **runepkg** leverage a high-performance binary completion engine for rapid shell integration. The **Low-Level Core** provides instant suggestions for command-line options and installed packages, while the **High-Level Version** delivers predictive discovery for over **70,000+ Debian Repository Packages** via sophisticated drop-down menus. This includes resolution for **Debian Source Packages** when using `runepkg source <pkg>`, maximizing productivity directly from the shell.
 
@@ -40,8 +55,6 @@
 
 -   **Native Debian Ecosystem Compatibility:** Full fidelity with Debian binary `.deb` archives (control metadata, data payloads, md5sums, trigger scripts) and upstream repository metadata (`Packages.gz`, `Sources.gz`).
 -   **Binary-Serialized Metadata (`pkginfo.bin`):** Replaces flat-file parsing bottlenecks with structured binary records organized in hierarchical `package-version` directories, enabling $O(1)$ lookup speeds.
--   **Deterministic Cross-Toolchain Forge (`bootstrap`):** Automatically provisions isolated, disposable Stage-1 cross-compilers to build Debian-compatible binaries and runtime dependencies for specific target profiles (e.g., `x86_64-musl-static`, `x86_64-musl-shared`, `aarch64-linux-gnu`) without polluting the host environment (`build-toolchain` option reserved for future development).
--   **Granular Sub-Package Splitting (`buildpkg-split`):** Compiles Debian source packages directly and segments the resulting tree into discrete Debian fragments (`bin`, `dev`, `doc`, `lib`) or compiles only a targeted sub-package.
 -   **Hardened Memory Safety:** Built on a security-first memory model (`secure_malloc`) featuring automated zero-wiping, buffer protection, and strict path traversal validation.
 
 ---
@@ -49,7 +62,6 @@
 ## When to Use runepkg
 
 **Use runepkg if you:**
-- Need to compile Debian specific source packages for non-native architectures (ARM, RISC-V, x86_64-musl)
 - Are building embedded Linux systems and want full Debian specific package ecosystem access
 - Require minimal, isolated binaries with controlled dependencies for production deployment into Debian specific Linux system
 - Are maintaining custom Linux distributions based on specific Debian packages
@@ -61,7 +73,7 @@
 **runepkg** is built with a dual-tier architecture to suit different environments:
 
 - **Minimal Core (Pure C89):** The heart of the tool is strictly compliant with the ANSI C standard. This version is designed for minimal, low-level installations on memory-constrained embedded systems.
-- **Extended (C++ FFI):** An optional Extended C++ FFI layer provides high-speed parallel networking, repository synchronization, and a native Debian source package builder.
+- **Extended (C++ FFI):** An optional Extended C++ FFI layer provides high-speed parallel networking and repository synchronization.
 - **Compiler Agnostic:** Swap compilers during the build process (e.g., `CC=tcc`, `gcc`, `clang`, `pcc`, or `zig cc`) to suit your specific target environment or historical toolchain.
 - **BusyBox Compatibility:** When using with **BusyBox**, it may take a custom build and more manual configuration... specifically, ensuring utility symlinks are enabled so the plumbing for `ar`, `tar`, and `gzip` resolves correctly.
 
@@ -73,17 +85,16 @@
 │
 └───> [ Extended C++ FFI ] ────────> Parallel Downloader (libcurl)
                                      ├─> Dependency Resolver (runes_graph.bin)
-                                     ├─> Host Ingestion & Pruning (runes_host.bin)
-                                     └─> Cross-Compile Forge & Source Builder (.dsc)
+                                     └─> Host Ingestion & Pruning (runes_host.bin)
 ```
 
 | Feature                | Minimal Core (C89)                     | Extended Suite (C++ FFI)                                     |
 | :--------------------- | :------------------------------------- | :----------------------------------------------------------- |
-| **Primary Role**       | Local `.deb` Package Management        | Repository Sync, Dependency Resolution & Forging             |
+| **Primary Role**       | Local `.deb` Package Management        | Repository Sync & Dependency Resolution                      |
 | **Language Standard**  | ANSI C (C89 / C90)                     | ISO C89 + C++17 (FFI Bridge)                                 |
 | **Binary Footprint**   | ~417 KB dynamic / ~536 KB static       | ~2.5 MB (100% static)                                        |
 | **Dependencies**       | libc only (`musl` or `glibc`)          | `libcurl`, `zlib` (or statically bundled)                    |
-| **Packaging Commands** | `-i`, `-r`, `-l`, `-s`, `-L`, `-S`, `-u`, `-m`, `-b` | `update`, `upgrade`, `source`, `build`, `buildpkg-split`, `build-toolchain` |
+| **Packaging Commands** | `-i`, `-r`, `-l`, `-s`, `-L`, `-S`, `-u`, `-m`, `-b` | `update`, `upgrade`, `download-only`, `download-depends`     |
 | **Target Use Cases**   | Embedded targets, Linux From Scratch, initramfs       | Workstations, build farms, cross-compilation forges          |
 
 ---
@@ -100,10 +111,8 @@ This vision evolves package management by replacing the sequential, text-heavy b
 - **Intelligent Local-First Resolution:** A smart logic layer that automatically detects and resolves dependencies using sibling `.deb` files found in the local directory or download cache before reaching for the network.
 - **Security-Hardened Plumbing:** The core engine is built on a **security-first memory model** (`secure_malloc`) featuring automatic zero-wiping and strict **path traversal protection**. These defenses were refined through AI-driven security auditing to mitigate memory corruption risks and unauthorized filesystem access.
 - **Comprehensive musl libc Support:** Provides full compatibility for both the **Minimal C Core** and the **Extended C++ FFI Suite** when targeting **musl libc**.
-- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and source-building capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in 🏆 [HOLY_GRAIL.md](./HOLY_GRAIL.md) 
+- **Self-Contained Static Binaries:** Enables the creation of 100% statically-linked binaries that carry their own runtime—ensuring high-performance networking and package-management capabilities function on any Linux distribution with zero shared library dependencies. Detailed technical background on this systems programming milestone can be found in 🏆 [HOLY_GRAIL.md](./HOLY_GRAIL.md) 
 - **Enhanced Cryptographic Trust & Security Perimeter:** A comprehensive security layer supporting OpenPGP repository `InRelease` signature verification against system keyrings (`/etc/apt/trusted.gpg.d/`), streaming SHA256/SHA512 hash validation, POSIX `rlimit` extraction bounds (preventing zip bombs), sandboxed worker privilege dropping (`_apt`), and detached GPG signatures (`.sig`).
-- **Native Debian Source Building**: An integrated C++ pipeline that streamlines the fetching and compilation of Debian source packages, the produced .deb's are fully compatible with the Debian Ecosystem. Runepkg directly produces "Raw Debian Runes" from single package builds to multi-package splitting and allowing for the optional building of a sub-package. This is all done independently without the overhead of traditional Debian distribution build tools.
-- **Disposable Cross-Compilation Toolchain:** The `bootstrap <target> [pkgs...]` command bootstraps a destructible toolchain to cleanly cross-compile isolated, **Debian** compatible .deb's and runtime dependencies for the target packages. This enables rapid deployment of software into embedded **Debian Ecosystems** without contaminating the host environment (`build-toolchain` command line option is reserved for future development).
 - **Proven Stability at Scale:** Rigorously stress-tested by successfully installing full desktop environments like **GNOME** and **XFCE**. The engine demonstrated extreme stability while resolving, downloading, and extracting thousands of recursive dependencies simultaneously.
 
 Technical details on the genius architectural design choices can be found in 🎩 [DESIGN.md](./DESIGN.md).
@@ -117,12 +126,11 @@ Technical details on the genius architectural design choices can be found in �
 #### 1. A modular dependency bootstrap script is included for Debian, Ubuntu, and Kali Linux systems:
 
 ```bash
-# Install all components (Core, musl cross-tools, C++ FFI)
+# Install all components (Core, C++ FFI)
 ./debian-depends.sh --all
 
 # Or install modular profiles:
 ./debian-depends.sh --core      # Standard C compiler and basic build utilities
-./debian-depends.sh --musl      # musl-libc cross-compilation toolchain
 ./debian-depends.sh --extended  # C++ FFI headers, libcurl, and zlib
 ```
 
@@ -251,6 +259,14 @@ To ensure stability across reboots and support multiple environments, the core r
 - **`config_registry.txt`**: A persistent ledger that tracks the locations of active configuration files. This allows **runepkg** to reliably find its bearings even when custom config paths are used.
 - **`active_target.conf`**: This file tracks your currently active cross-compilation profile. Keeping it in the system configuration path ensures it is properly reloaded and persists even when the ephemeral build directories are cleaned.
 
+## Known Limitations
+
+- **apt/apt-get Coexistence**: `runepkg` maintains its own binary state (`runes_graph.bin`, `pkginfo.bin`). Mixed environments will cause `apt` to report broken dependencies.
+- **Environment Isolation**: Best used in containerized, chroot, or dedicated embedded environments to avoid host system pollution.
+- **Reconciliation**: While `runepkg sync` attempts to read `dpkg` status, it is a best-effort recovery and not a guaranteed fix for mixed-tool environments.
+- **Ecosystem Focus**: Exclusively targets the Debian ecosystem (.deb); not compatible with RPM or Arch Linux repositories.
+- **Headless Design**: No GUI interface; designed specifically for high-speed CLI and automated toolchain workflows.
+
 ---
 
 ## Usage:
@@ -330,7 +346,7 @@ Note: C++ features are enabled based on your build target (`make all`).
 
 ## Philosophy & Background
 ---
-*Built with ❤️ for the GNU/Linux community. **runepkg** treats packages as building blocks rather than strict system policies, allowing power users to build and compile .deb packages exactly as they wish.*
+*Built with ❤️ for the GNU/Linux community. **runepkg** treats packages as building blocks rather than strict system policies, allowing power users to build and deploy .deb packages exactly as they wish.*
 
 Developed from years of experience with Custom Cross Linux From Scratch (LFS), **runepkg** views ancient `.deb` packages as "runes"—valuable historical artifacts. This tool empowers you to unearth and run legacy software from Debian archives safely in modern environments.
 

@@ -4,9 +4,8 @@
 ### Executive Summary
 
 **runepkg v1.0.4** has undergone comprehensive real-world stress testing confirming **production-grade operational stability**. This assessment validates:
-- ✅ Full compile-from-source build cycle with zero errors.
 - ✅ System integration (installation, configuration, uninstallation) across multiple repository sources.
-- ✅ Massive-scale package operations: successfully handled **112,000+ source stanzas**.
+- ✅ Massive-scale package operations: successfully handled **112,000+ repository stanzas**.
 - ✅ Extreme recursive dependency resolution: Successfully planned and executed the installation of **task-xfce-desktop** (276+ concurrent packages) and **build-essential** (71+ packages).
 - ✅ Multi-distribution compatibility: Verified against **Debian (Trixie)** and **Kali Linux (Rolling)** repositories.
 - ✅ Cryptographic integrity validation: 100% pass rate on MD5 checksums for large batches.
@@ -16,11 +15,18 @@
 
 ### ⚠️ Important Usage Consideration: `apt` Coexistence
 
-During stress testing, it was identified that `runepkg` and `apt`/`apt-get` should not be used in parallel on the same host system for primary package management. 
+**runepkg and apt/apt-get should NOT be used in parallel** for the following reasons:
 
-- **State Conflict**: `runepkg` maintains its own optimized binary database (`runes_graph.bin`, `pkginfo.bin`) and bypasses the standard `apt` state tracking.
-- **Dependency Confusion**: Using `runepkg` to install system-level packages can cause `apt` to perceive the system as having "broken" dependencies (often prompting for `apt --fix-broken install`).
-- **Recommendation**: `runepkg` is engineered for users who want to **replace** `apt` in specialized environments, embedded targets, or custom toolchain forges. It is not intended to be a side-by-side companion to `apt` on standard desktop Debian installations.
+#### Why They Conflict
+- **Separate State Databases**: `runepkg` uses its own high-performance binary formats (`runes_graph.bin`, `pkginfo.bin`) for $O(1)$ lookups. `apt` relies on the legacy `/var/lib/apt/` and `/var/lib/dpkg/status` flat files.
+- **Dependency Graph Divergence**: Installing or removing packages via `runepkg` does not update the `apt` internal database, causing `apt` to perceive the system state as inconsistent.
+- **apt "Broken" Prompts**: Standard `apt` commands will often fail after `runepkg` operations, reporting missing dependencies that `runepkg` has already resolved but not reported to the `apt` cache.
+
+#### If You Must Coexist (Not Recommended)
+If your workflow requires both tools on a single host:
+1. **Isolation**: Run `runepkg` within a **containerized environment** (Docker/LXC) or a **chroot** jail.
+2. **Dedicated Use**: Use `runepkg` strictly for **isolated package management** and avoid using it for system-wide service management.
+3. **Reconciliation**: Use `runepkg sync` to attempt a best-effort reconciliation with the host `dpkg` state, though complete separation is the only guaranteed stable path.
 
 ---
 
@@ -37,4 +43,4 @@ The engine successfully resolved the full **XFCE Desktop Environment** tree from
 - **Execution**: Handled complex preinst/postinst maintainer scripts, file extractions, and shared mime-info updates concurrently.
 
 #### Future Roadmap
-Validation efforts are now focusing on the automated retrieval and passing of `host-depends` and `build-depends` to `dpkg`, which will further strengthen the "standalone" nature of the toolchain forge.
+Validation efforts are now focusing on the automated retrieval and passing of `host-depends` and `build-depends` to `dpkg`, which will further strengthen the "standalone" nature of the toolchain.
