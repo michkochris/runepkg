@@ -175,6 +175,14 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->depends = runepkg_util_get_config_value(control_file_path, "Depends", ':');
     pkg_info->pre_depends = runepkg_util_get_config_value(control_file_path, "Pre-Depends", ':');
     pkg_info->provides = runepkg_util_get_config_value(control_file_path, "Provides", ':');
+    pkg_info->build_depends = runepkg_util_get_config_value(control_file_path, "Build-Depends", ':');
+    pkg_info->build_depends_indep = runepkg_util_get_config_value(control_file_path, "Build-Depends-Indep", ':');
+    pkg_info->build_depends_arch = runepkg_util_get_config_value(control_file_path, "Build-Depends-Arch", ':');
+    pkg_info->conflicts = runepkg_util_get_config_value(control_file_path, "Conflicts", ':');
+    pkg_info->replaces = runepkg_util_get_config_value(control_file_path, "Replaces", ':');
+    pkg_info->breaks = runepkg_util_get_config_value(control_file_path, "Breaks", ':');
+    pkg_info->recommends = runepkg_util_get_config_value(control_file_path, "Recommends", ':');
+    pkg_info->suggests = runepkg_util_get_config_value(control_file_path, "Suggests", ':');
     pkg_info->installed_size = runepkg_util_get_config_value(control_file_path, "Installed-Size", ':');
     pkg_info->section = runepkg_util_get_config_value(control_file_path, "Section", ':');
     pkg_info->priority = runepkg_util_get_config_value(control_file_path, "Priority", ':');
@@ -495,6 +503,30 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->provides) {
         printf("Provides:     %s\n", pkg_info->provides);
+    }
+    if (pkg_info->build_depends) {
+        printf("Build-Depends: %s\n", pkg_info->build_depends);
+    }
+    if (pkg_info->build_depends_indep) {
+        printf("Build-Depends-Indep: %s\n", pkg_info->build_depends_indep);
+    }
+    if (pkg_info->build_depends_arch) {
+        printf("Build-Depends-Arch: %s\n", pkg_info->build_depends_arch);
+    }
+    if (pkg_info->conflicts) {
+        printf("Conflicts:    %s\n", pkg_info->conflicts);
+    }
+    if (pkg_info->replaces) {
+        printf("Replaces:     %s\n", pkg_info->replaces);
+    }
+    if (pkg_info->breaks) {
+        printf("Breaks:       %s\n", pkg_info->breaks);
+    }
+    if (pkg_info->recommends) {
+        printf("Recommends:   %s\n", pkg_info->recommends);
+    }
+    if (pkg_info->suggests) {
+        printf("Suggests:     %s\n", pkg_info->suggests);
     }
     if (pkg_info->homepage) {
         printf("Homepage:     %s\n", pkg_info->homepage);

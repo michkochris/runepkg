@@ -45,6 +45,14 @@ typedef struct PkgInfo {
     char *depends;
     char *pre_depends; /* Support for critical pre-dependencies */
     char *provides; /* Added support for Virtual Packages */
+    char *build_depends; /* NEW: Support for Build-Depends */
+    char *build_depends_indep;
+    char *build_depends_arch;
+    char *conflicts;
+    char *replaces;
+    char *breaks;
+    char *recommends;
+    char *suggests;
     char *installed_size;
     char *section;
     char *priority;

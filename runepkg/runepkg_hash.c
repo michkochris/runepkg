@@ -80,6 +80,14 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->depends);
     runepkg_util_free_and_null(&pkg_info->pre_depends);
     runepkg_util_free_and_null(&pkg_info->provides);
+    runepkg_util_free_and_null(&pkg_info->build_depends);
+    runepkg_util_free_and_null(&pkg_info->build_depends_indep);
+    runepkg_util_free_and_null(&pkg_info->build_depends_arch);
+    runepkg_util_free_and_null(&pkg_info->conflicts);
+    runepkg_util_free_and_null(&pkg_info->replaces);
+    runepkg_util_free_and_null(&pkg_info->breaks);
+    runepkg_util_free_and_null(&pkg_info->recommends);
+    runepkg_util_free_and_null(&pkg_info->suggests);
     runepkg_util_free_and_null(&pkg_info->installed_size);
     runepkg_util_free_and_null(&pkg_info->section);
     runepkg_util_free_and_null(&pkg_info->priority);
@@ -216,6 +224,36 @@ static void remove_from_provides_map(runepkg_hash_table_t *table, runepkg_hash_n
 
 static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size);
 
+static void cleanup_dummy_provides(runepkg_hash_table_t *table, const char *provider_name, const char *provides_str) {
+    char *provides_copy;
+    char *token;
+
+    if (!provides_str || !provider_name) return;
+    provides_copy = strdup(provides_str);
+    token = strtok(provides_copy, ",");
+    while (token) {
+        char *trimmed;
+        size_t name_len;
+        char *vname;
+
+        trimmed = runepkg_util_trim_whitespace(token);
+        name_len = strcspn(trimmed, " (");
+        vname = runepkg_secure_strndup(trimmed, name_len);
+
+        if (vname && vname[0] != '\0') {
+            PkgInfo *info;
+            info = runepkg_hash_search(table, vname);
+            /* Only remove if it's a dummy provided by this specific package */
+            if (info && info->source_name && strcmp(info->source_name, provider_name) == 0) {
+                runepkg_hash_remove_package(table, vname);
+            }
+        }
+        if (vname) free(vname);
+        token = strtok(NULL, ",");
+    }
+    free(provides_copy);
+}
+
 static void inject_dummy_provides(runepkg_hash_table_t *table, const PkgInfo *pkg_info) {
     char *provides_copy;
     char *token;
@@ -281,6 +319,14 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 curr->data.depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
                 curr->data.pre_depends = pkg_info->pre_depends ? runepkg_secure_strdup(pkg_info->pre_depends) : NULL;
                 curr->data.provides = pkg_info->provides ? runepkg_secure_strdup(pkg_info->provides) : NULL;
+                curr->data.build_depends = pkg_info->build_depends ? runepkg_secure_strdup(pkg_info->build_depends) : NULL;
+                curr->data.build_depends_indep = pkg_info->build_depends_indep ? runepkg_secure_strdup(pkg_info->build_depends_indep) : NULL;
+                curr->data.build_depends_arch = pkg_info->build_depends_arch ? runepkg_secure_strdup(pkg_info->build_depends_arch) : NULL;
+                curr->data.conflicts = pkg_info->conflicts ? runepkg_secure_strdup(pkg_info->conflicts) : NULL;
+                curr->data.replaces = pkg_info->replaces ? runepkg_secure_strdup(pkg_info->replaces) : NULL;
+                curr->data.breaks = pkg_info->breaks ? runepkg_secure_strdup(pkg_info->breaks) : NULL;
+                curr->data.recommends = pkg_info->recommends ? runepkg_secure_strdup(pkg_info->recommends) : NULL;
+                curr->data.suggests = pkg_info->suggests ? runepkg_secure_strdup(pkg_info->suggests) : NULL;
                 curr->data.installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
                 curr->data.section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
                 curr->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
@@ -350,6 +396,14 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.depends = pkg_info->depends ? runepkg_secure_strdup(pkg_info->depends) : NULL;
     new_node->data.pre_depends = pkg_info->pre_depends ? runepkg_secure_strdup(pkg_info->pre_depends) : NULL;
     new_node->data.provides = pkg_info->provides ? runepkg_secure_strdup(pkg_info->provides) : NULL;
+    new_node->data.build_depends = pkg_info->build_depends ? runepkg_secure_strdup(pkg_info->build_depends) : NULL;
+    new_node->data.build_depends_indep = pkg_info->build_depends_indep ? runepkg_secure_strdup(pkg_info->build_depends_indep) : NULL;
+    new_node->data.build_depends_arch = pkg_info->build_depends_arch ? runepkg_secure_strdup(pkg_info->build_depends_arch) : NULL;
+    new_node->data.conflicts = pkg_info->conflicts ? runepkg_secure_strdup(pkg_info->conflicts) : NULL;
+    new_node->data.replaces = pkg_info->replaces ? runepkg_secure_strdup(pkg_info->replaces) : NULL;
+    new_node->data.breaks = pkg_info->breaks ? runepkg_secure_strdup(pkg_info->breaks) : NULL;
+    new_node->data.recommends = pkg_info->recommends ? runepkg_secure_strdup(pkg_info->recommends) : NULL;
+    new_node->data.suggests = pkg_info->suggests ? runepkg_secure_strdup(pkg_info->suggests) : NULL;
     new_node->data.installed_size = pkg_info->installed_size ? runepkg_secure_strdup(pkg_info->installed_size) : NULL;
     new_node->data.section = pkg_info->section ? runepkg_secure_strdup(pkg_info->section) : NULL;
     new_node->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
@@ -476,6 +530,8 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
     unsigned int index;
     runepkg_hash_node_t *current;
     runepkg_hash_node_t *prev = NULL;
+    char *saved_provides = NULL;
+    char *saved_name = NULL;
 
     if (!table || !name || name[0] == '\0') return;
 
@@ -488,6 +544,9 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
     }
 
     if (current) {
+        saved_provides = current->data.provides ? strdup(current->data.provides) : NULL;
+        saved_name = strdup(current->data.package_name);
+
         if (prev) {
             prev->next = current->next;
         } else {
@@ -499,6 +558,13 @@ void runepkg_hash_remove_package(runepkg_hash_table_t *table, const char *name) 
         runepkg_hash_free_package_info(&current->data);
         free(current);
         table->count--;
+
+        /* Clean up any dummy packages that were created for this package's Provides */
+        if (saved_provides) {
+            cleanup_dummy_provides(table, saved_name, saved_provides);
+            free(saved_provides);
+        }
+        free(saved_name);
 
         runepkg_util_log_verbose("Package '%s' removed from hash table.\n", name);
 
@@ -626,6 +692,30 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->provides) {
         printf("Provides:     %s\n", pkg_info->provides);
+    }
+    if (pkg_info->build_depends) {
+        printf("Build-Depends: %s\n", pkg_info->build_depends);
+    }
+    if (pkg_info->build_depends_indep) {
+        printf("Build-Depends-Indep: %s\n", pkg_info->build_depends_indep);
+    }
+    if (pkg_info->build_depends_arch) {
+        printf("Build-Depends-Arch: %s\n", pkg_info->build_depends_arch);
+    }
+    if (pkg_info->conflicts) {
+        printf("Conflicts:    %s\n", pkg_info->conflicts);
+    }
+    if (pkg_info->replaces) {
+        printf("Replaces:     %s\n", pkg_info->replaces);
+    }
+    if (pkg_info->breaks) {
+        printf("Breaks:       %s\n", pkg_info->breaks);
+    }
+    if (pkg_info->recommends) {
+        printf("Recommends:   %s\n", pkg_info->recommends);
+    }
+    if (pkg_info->suggests) {
+        printf("Suggests:     %s\n", pkg_info->suggests);
     }
     if (pkg_info->homepage) {
         printf("Homepage:     %s\n", pkg_info->homepage);

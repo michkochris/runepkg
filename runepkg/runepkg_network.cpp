@@ -357,6 +357,15 @@ struct PkgMetadata {
     std::string depends;
     std::string pre_depends;
     std::string provides;
+    std::string build_depends;
+    std::string build_depends_indep;
+    std::string build_depends_arch;
+    std::string conflicts;
+    std::string replaces;
+    std::string breaks;
+    std::string recommends;
+    std::string suggests;
+    std::string installed_size;
     std::string filename;
     std::string source_name;
     std::string description;
@@ -952,6 +961,33 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
                 if (!prov.empty() && prov.back() == '\r') prov.pop_back();
                 if (meta_data.provides.empty()) meta_data.provides = prov;
                 else meta_data.provides += ", " + prov;
+            } else if (line.compare(0, 15, "Build-Depends: ") == 0) {
+                meta_data.build_depends = line.substr(15);
+                if (!meta_data.build_depends.empty() && meta_data.build_depends.back() == '\r') meta_data.build_depends.pop_back();
+            } else if (line.compare(0, 21, "Build-Depends-Indep: ") == 0) {
+                meta_data.build_depends_indep = line.substr(21);
+                if (!meta_data.build_depends_indep.empty() && meta_data.build_depends_indep.back() == '\r') meta_data.build_depends_indep.pop_back();
+            } else if (line.compare(0, 20, "Build-Depends-Arch: ") == 0) {
+                meta_data.build_depends_arch = line.substr(20);
+                if (!meta_data.build_depends_arch.empty() && meta_data.build_depends_arch.back() == '\r') meta_data.build_depends_arch.pop_back();
+            } else if (line.compare(0, 11, "Conflicts: ") == 0) {
+                meta_data.conflicts = line.substr(11);
+                if (!meta_data.conflicts.empty() && meta_data.conflicts.back() == '\r') meta_data.conflicts.pop_back();
+            } else if (line.compare(0, 10, "Replaces: ") == 0) {
+                meta_data.replaces = line.substr(10);
+                if (!meta_data.replaces.empty() && meta_data.replaces.back() == '\r') meta_data.replaces.pop_back();
+            } else if (line.compare(0, 8, "Breaks: ") == 0) {
+                meta_data.breaks = line.substr(8);
+                if (!meta_data.breaks.empty() && meta_data.breaks.back() == '\r') meta_data.breaks.pop_back();
+            } else if (line.compare(0, 12, "Recommends: ") == 0) {
+                meta_data.recommends = line.substr(12);
+                if (!meta_data.recommends.empty() && meta_data.recommends.back() == '\r') meta_data.recommends.pop_back();
+            } else if (line.compare(0, 10, "Suggests: ") == 0) {
+                meta_data.suggests = line.substr(10);
+                if (!meta_data.suggests.empty() && meta_data.suggests.back() == '\r') meta_data.suggests.pop_back();
+            } else if (line.compare(0, 16, "Installed-Size: ") == 0) {
+                meta_data.installed_size = line.substr(16);
+                if (!meta_data.installed_size.empty() && meta_data.installed_size.back() == '\r') meta_data.installed_size.pop_back();
             } else if (line.compare(0, 8, "Source: ") == 0) {
                 meta_data.source_name = line.substr(8);
                 size_t space = meta_data.source_name.find(' ');

@@ -150,6 +150,30 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
         } else if (strncmp(line, "Provides: ", 10) == 0) {
             if (info->provides) free(info->provides);
             info->provides = strdup(line + 10);
+        } else if (strncmp(line, "Build-Depends: ", 15) == 0) {
+            if (info->build_depends) free(info->build_depends);
+            info->build_depends = strdup(line + 15);
+        } else if (strncmp(line, "Build-Depends-Indep: ", 21) == 0) {
+            if (info->build_depends_indep) free(info->build_depends_indep);
+            info->build_depends_indep = strdup(line + 21);
+        } else if (strncmp(line, "Build-Depends-Arch: ", 20) == 0) {
+            if (info->build_depends_arch) free(info->build_depends_arch);
+            info->build_depends_arch = strdup(line + 20);
+        } else if (strncmp(line, "Conflicts: ", 11) == 0) {
+            if (info->conflicts) free(info->conflicts);
+            info->conflicts = strdup(line + 11);
+        } else if (strncmp(line, "Replaces: ", 10) == 0) {
+            if (info->replaces) free(info->replaces);
+            info->replaces = strdup(line + 10);
+        } else if (strncmp(line, "Breaks: ", 8) == 0) {
+            if (info->breaks) free(info->breaks);
+            info->breaks = strdup(line + 8);
+        } else if (strncmp(line, "Recommends: ", 12) == 0) {
+            if (info->recommends) free(info->recommends);
+            info->recommends = strdup(line + 12);
+        } else if (strncmp(line, "Suggests: ", 10) == 0) {
+            if (info->suggests) free(info->suggests);
+            info->suggests = strdup(line + 10);
         } else if (strncmp(line, "Description: ", 13) == 0) {
             if (info->description) free(info->description);
             info->description = strdup(line + 13);
@@ -351,6 +375,18 @@ static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
     if (pkg_info->section) fprintf(out, "Section: %s\n", pkg_info->section);
     if (pkg_info->priority) fprintf(out, "Priority: %s\n", pkg_info->priority);
     if (pkg_info->depends) fprintf(out, "Depends: %s\n", pkg_info->depends);
+    if (pkg_info->pre_depends) fprintf(out, "Pre-Depends: %s\n", pkg_info->pre_depends);
+    if (pkg_info->provides) fprintf(out, "Provides: %s\n", pkg_info->provides);
+    if (pkg_info->build_depends) fprintf(out, "Build-Depends: %s\n", pkg_info->build_depends);
+    if (pkg_info->build_depends_indep) fprintf(out, "Build-Depends-Indep: %s\n", pkg_info->build_depends_indep);
+    if (pkg_info->build_depends_arch) fprintf(out, "Build-Depends-Arch: %s\n", pkg_info->build_depends_arch);
+    if (pkg_info->conflicts) fprintf(out, "Conflicts: %s\n", pkg_info->conflicts);
+    if (pkg_info->replaces) fprintf(out, "Replaces: %s\n", pkg_info->replaces);
+    if (pkg_info->breaks) fprintf(out, "Breaks: %s\n", pkg_info->breaks);
+    if (pkg_info->recommends) fprintf(out, "Recommends: %s\n", pkg_info->recommends);
+    if (pkg_info->suggests) fprintf(out, "Suggests: %s\n", pkg_info->suggests);
+    if (pkg_info->installed_size) fprintf(out, "Installed-Size: %s\n", pkg_info->installed_size);
+    if (pkg_info->homepage) fprintf(out, "Homepage: %s\n", pkg_info->homepage);
     if (pkg_info->description) fprintf(out, "Description: %s\n", pkg_info->description);
     else fprintf(out, "Description: Injected by runepkg high-speed engine\n");
     fprintf(out, "\n");

@@ -566,6 +566,17 @@ int handle_status(const char *package_name) {
             printf("Maintainer: %s\n", pkg_info.maintainer ? pkg_info.maintainer : "(unknown)");
             printf("Description: %s\n", pkg_info.description ? pkg_info.description : "(unknown)");
             printf("Depends: %s\n", pkg_info.depends ? pkg_info.depends : "(none)");
+            if (pkg_info.pre_depends) printf("Pre-Depends: %s\n", pkg_info.pre_depends);
+            if (pkg_info.provides) printf("Provides: %s\n", pkg_info.provides);
+            if (pkg_info.build_depends) printf("Build-Depends: %s\n", pkg_info.build_depends);
+            if (pkg_info.build_depends_indep) printf("Build-Depends-Indep: %s\n", pkg_info.build_depends_indep);
+            if (pkg_info.build_depends_arch) printf("Build-Depends-Arch: %s\n", pkg_info.build_depends_arch);
+            if (pkg_info.conflicts) printf("Conflicts: %s\n", pkg_info.conflicts);
+            if (pkg_info.replaces) printf("Replaces: %s\n", pkg_info.replaces);
+            if (pkg_info.breaks) printf("Breaks: %s\n", pkg_info.breaks);
+            if (pkg_info.recommends) printf("Recommends: %s\n", pkg_info.recommends);
+            if (pkg_info.suggests) printf("Suggests: %s\n", pkg_info.suggests);
+            if (pkg_info.source_name) printf("Source: %s\n", pkg_info.source_name);
             printf("Installed-Size: %s\n", pkg_info.installed_size ? pkg_info.installed_size : "(unknown)");
             printf("Section: %s\n", pkg_info.section ? pkg_info.section : "(unknown)");
             printf("Priority: %s\n", pkg_info.priority ? pkg_info.priority : "(unknown)");
