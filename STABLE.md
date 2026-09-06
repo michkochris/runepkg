@@ -43,4 +43,4 @@ The engine successfully resolved the full **XFCE Desktop Environment** tree from
 - **Execution**: Handled complex preinst/postinst maintainer scripts, file extractions, and shared mime-info updates concurrently.
 
 #### Future Roadmap
-Validation efforts are now focusing on the automated retrieval and passing of `host-depends` and `build-depends` to `dpkg`, which will further strengthen the "standalone" nature of the toolchain.
+Validation efforts are now focusing on the automated retrieval and passing of `host-depends` and `build-depends` to `dpkg`, which will further strengthen the "standalone" nature of the package management engine.

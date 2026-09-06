@@ -16,7 +16,14 @@
 > [!IMPORTANT]
 > **Production Stability (v1.0.4+):** **runepkg** is now declared **Stable** and has been rigorously battle-tested. It has successfully demonstrated recursive dependency resolution, parallel downloading, and extraction for massive package sets, including full desktop environments like **XFCE** (270+ packages) and complete development environments like **build-essential**.
 >
-> **Usage Warning (Coexistence with apt):** **runepkg** is intended as a high-performance alternative to `apt` and `apt-get`. It is **NOT** recommended to use `runepkg` alongside standard `apt` on a primary host system. Because `runepkg` maintains its own optimized binary state, `apt` will not be aware of changes made, leading to "broken dependency" reports. See [Known Limitations](#known-limitations) for details.
+> **dpkg "Quantum Entanglement":** **runepkg** maintains perfect, real-time compatibility with **dpkg**. Adding or removing packages via `runepkg` correctly adjusts the underlying `dpkg` state, ensuring both tools stay in sync. This foundational harmony makes it trivial to pass `host-depends` and `build-depends` directly to the `dpkg` engine in future iterations.
+>
+> **Usage Warning (apt/apt-get):** While **runepkg** is a superior high-performance alternative, it is **NOT** recommended for use alongside `apt` on a primary host system. Because `apt` relies on its own private, isolated state cache, it will not perceive the changes made through the `runepkg/dpkg` layer, resulting in "broken dependency" errors.
+>
+> **Future Roadmap:**
+> - **Source Package Support:** Formal re-introduction of high-speed Debian Source Package building and granular splitting.
+> - **Embedded Forge Profiles:** Advanced cross-compilation profiles and deterministic environment staging.
+
 
 ## Is runepkg Right for Me?
 
@@ -47,13 +54,13 @@
     - **Parallel Networking**: High-speed multi-threaded repository synchronization and package downloading using `libcurl`.
     - **Enhanced C++ Security Foundation**: Hardened perimeter featuring automatic OpenPGP repository `InRelease` signature verification, streaming SHA256/SHA512 hash validation, path sanitization/jail traversal defense (`..`), POSIX `rlimit` extraction bounds, sandboxed privilege dropping (`_apt`), and 100% exception-safe C FFI bridge. Detailed technical background can be found in 💻 [CPP.md](./CPP.md).
 
-**Lightning-Fast Binary Autocompletion**: Both versions of **runepkg** leverage a high-performance binary completion engine for rapid shell integration. The **Low-Level Core** provides instant suggestions for command-line options and installed packages, while the **High-Level Version** delivers predictive discovery for over **70,000+ Debian Repository Packages** via sophisticated drop-down menus. This includes resolution for **Debian Source Packages** when using `runepkg source <pkg>`, maximizing productivity directly from the shell.
+**Lightning-Fast Binary Autocompletion**: Both versions of **runepkg** leverage a high-performance binary completion engine for rapid shell integration. The **Low-Level Core** provides instant suggestions for command-line options and installed packages, while the **High-Level Version** delivers predictive discovery for over **70,000+ Debian Repository Packages** via sophisticated drop-down menus, maximizing productivity directly from the shell.
 
 ---
 
 ## Key Features
 
--   **Native Debian Ecosystem Compatibility:** Full fidelity with Debian binary `.deb` archives (control metadata, data payloads, md5sums, trigger scripts) and upstream repository metadata (`Packages.gz`, `Sources.gz`).
+-   **Native Debian Ecosystem Compatibility:** Full fidelity with Debian binary `.deb` archives (control metadata, data payloads, md5sums, trigger scripts) and upstream repository metadata (`Packages.gz`).
 -   **Binary-Serialized Metadata (`pkginfo.bin`):** Replaces flat-file parsing bottlenecks with structured binary records organized in hierarchical `package-version` directories, enabling $O(1)$ lookup speeds.
 -   **Hardened Memory Safety:** Built on a security-first memory model (`secure_malloc`) featuring automated zero-wiping, buffer protection, and strict path traversal validation.
 
@@ -95,7 +102,7 @@
 | **Binary Footprint**   | ~417 KB dynamic / ~536 KB static       | ~2.5 MB (100% static)                                        |
 | **Dependencies**       | libc only (`musl` or `glibc`)          | `libcurl`, `zlib` (or statically bundled)                    |
 | **Packaging Commands** | `-i`, `-r`, `-l`, `-s`, `-L`, `-S`, `-u`, `-m`, `-b` | `update`, `upgrade`, `download-only`, `download-depends`     |
-| **Target Use Cases**   | Embedded targets, Linux From Scratch, initramfs       | Workstations, build farms, cross-compilation forges          |
+| **Target Use Cases**   | Embedded targets, Linux From Scratch, initramfs       | Workstations, build farms, isolated environments             |
 
 ---
 
@@ -235,9 +242,6 @@ For maximum performance, **runepkg** utilizes a high-speed binary database store
 - **`repo_index.bin` / `repo_src_index.bin`**: Optimized binary metadata indices for rapid repository searches and source package lookups.
 - **`repo_url_mapping.txt`**: Maps packages and source components to their respective repository base URLs for efficient downloading.
 
-> [!NOTE]
-> **Future Roadmap:** Upcoming versions of **runepkg** will feature enhanced `dpkg` integration, specifically automating the downloading and passing of `host-depends` and `build-depends` directly to the `dpkg` engine for even more robust local-first resolution.
-
 ```text
 /var/lib/runepkg_dir/
 ├── runepkg_db/
@@ -254,18 +258,9 @@ For maximum performance, **runepkg** utilizes a high-speed binary database store
 ```
 
 ### System Registry & State
-To ensure stability across reboots and support multiple environments, the core registry and toolchain state are stored independently of the package database in `/etc/runepkg/`:
+To ensure stability across reboots and support multiple environments, the core registry and system state are stored independently of the package database in `/etc/runepkg/`:
 
 - **`config_registry.txt`**: A persistent ledger that tracks the locations of active configuration files. This allows **runepkg** to reliably find its bearings even when custom config paths are used.
-- **`active_target.conf`**: This file tracks your currently active cross-compilation profile. Keeping it in the system configuration path ensures it is properly reloaded and persists even when the ephemeral build directories are cleaned.
-
-## Known Limitations
-
-- **apt/apt-get Coexistence**: `runepkg` maintains its own binary state (`runes_graph.bin`, `pkginfo.bin`). Mixed environments will cause `apt` to report broken dependencies.
-- **Environment Isolation**: Best used in containerized, chroot, or dedicated embedded environments to avoid host system pollution.
-- **Reconciliation**: While `runepkg sync` attempts to read `dpkg` status, it is a best-effort recovery and not a guaranteed fix for mixed-tool environments.
-- **Ecosystem Focus**: Exclusively targets the Debian ecosystem (.deb); not compatible with RPM or Arch Linux repositories.
-- **Headless Design**: No GUI interface; designed specifically for high-speed CLI and automated toolchain workflows.
 
 ---
 
