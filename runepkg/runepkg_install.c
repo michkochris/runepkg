@@ -1110,8 +1110,6 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
-        pkg_info.auto_installed = !is_top_level;
-
         if (g_verbose_mode) {
             runepkg_pack_print_package_info(&pkg_info);
         } else {
@@ -1205,7 +1203,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
-        /* Register package info in storage BEFORE maintainer scripts to satisfy tools like py3compile */
+        /* Register package info in storage and host dpkg BEFORE postinst
+         * This ensures scripts like py3compile can see the package in dpkg --get-selections */
         if (pkg_info.package_name && pkg_info.version) {
             if (runepkg_storage_create_package_directory(pkg_info.package_name, pkg_info.version) == 0) {
                 if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
@@ -1232,7 +1231,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
-        /* Integration: Notify host layer that a new installation occurred (inject into dpkg status/info) */
+        /* Integration: Notify host layer that a new installation occurred (inject into dpkg status) */
         runepkg_host_register_install(&pkg_info);
 
         /* Execute postinst if available, even for meta-packages with 0 files */

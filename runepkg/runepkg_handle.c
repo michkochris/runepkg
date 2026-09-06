@@ -254,153 +254,23 @@ void handle_remove_listfile(const char *path) {
     fclose(fp);
 }
 
-static int is_package_needed_by_others(const char *pkg_name, const char *excluding_pkg) {
-    size_t i;
-    if (!runepkg_main_hash_table) return 0;
-
-    for (i = 0; i < runepkg_main_hash_table->size; i++) {
-        runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
-        while (node) {
-            if (node->data.package_name && strcmp(node->data.package_name, excluding_pkg) != 0) {
-                Dependency **deps = parse_depends_with_constraints(node->data.depends);
-                Dependency **pre_deps = parse_depends_with_constraints(node->data.pre_depends);
-                int needed = 0;
-                int j;
-
-                if (deps) {
-                    for (j = 0; deps[j]; j++) {
-                        if (strcmp(deps[j]->package, pkg_name) == 0) needed = 1;
-                    }
-                }
-                if (!needed && pre_deps) {
-                    for (j = 0; pre_deps[j]; j++) {
-                        if (strcmp(pre_deps[j]->package, pkg_name) == 0) needed = 1;
-                    }
-                }
-
-                if (deps) {
-                    for (j = 0; deps[j]; j++) { free(deps[j]->package); free(deps[j]->constraint); free(deps[j]); }
-                    free(deps);
-                }
-                if (pre_deps) {
-                    for (j = 0; pre_deps[j]; j++) { free(pre_deps[j]->package); free(pre_deps[j]->constraint); free(pre_deps[j]); }
-                    free(pre_deps);
-                }
-
-                if (needed) return 1;
-            }
-            node = node->next;
-        }
-    }
-    return 0;
-}
-
-static int runepkg_remove_package_core(const char *pkg_name, const char *pkg_version, TransactionContext *tx_ctx) {
-    PkgInfo pkg_info;
-
-    if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) != 0) {
-        runepkg_util_log_verbose("[remove] Core: failed to read metadata for %s-%s\n", pkg_name, pkg_version);
-        return -1;
-    }
-
-    if (g_system_install_root && pkg_info.file_list && pkg_info.file_count > 0) {
-        int i;
-        extern int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action);
-        runepkg_execute_maintainer_script(pkg_info.prerm, &pkg_info, "remove");
-
-        for (i = 0; i < pkg_info.file_count; i++) {
-            const char *rel = pkg_info.file_list[i];
-            char *dst = NULL;
-            if (!rel || rel[0] == '\0') continue;
-
-            if (rel[0] == '/') {
-                dst = strdup(rel);
-            } else {
-                dst = runepkg_util_concat_path(g_system_install_root, rel);
-            }
-            if (!dst) continue;
-
-            if (runepkg_util_file_exists(dst)) {
-                char backup_path[PATH_MAX];
-                const char *base_name = strrchr(dst, '/');
-                base_name = base_name ? base_name + 1 : dst;
-                runepkg_secure_snprintf(backup_path, sizeof(backup_path),
-                    "%s/%s.%ld.bak", tx_ctx->staging_dir, base_name, (long)time(NULL));
-
-                if (runepkg_util_copy_file(dst, backup_path) == 0) {
-                    runepkg_journal_record_delete(tx_ctx, dst, backup_path);
-                } else {
-                    runepkg_journal_record_delete(tx_ctx, dst, "");
-                }
-
-                if (unlink(dst) != 0) {
-                    runepkg_log_verbose("Remove: failed to delete %s\n", dst);
-                }
-            }
-            runepkg_util_free_and_null(&dst);
-        }
-
-        runepkg_execute_maintainer_script(pkg_info.postrm, &pkg_info, "purge");
-    }
-
-    runepkg_hash_remove_package(runepkg_main_hash_table, pkg_name);
-
-    if (runepkg_storage_remove_package(pkg_name, pkg_version) != 0) {
-        printf("Warning: failed to remove package metadata for %s-%s\n", pkg_name, pkg_version);
-        runepkg_pack_free_package_info(&pkg_info);
-        return -1;
-    }
-
-    /* Suite Removal: Check dependencies that were auto-installed */
-    {
-        Dependency **deps = parse_depends_with_constraints(pkg_info.depends);
-        Dependency **pre_deps = parse_depends_with_constraints(pkg_info.pre_depends);
-        int j, pass;
-
-        for (pass = 0; pass < 2; pass++) {
-            Dependency **curr_deps = (pass == 0) ? pre_deps : deps;
-            if (!curr_deps) continue;
-
-            for (j = 0; curr_deps[j]; j++) {
-                PkgInfo *dep_info = runepkg_hash_search(runepkg_main_hash_table, curr_deps[j]->package);
-                if (dep_info && dep_info->auto_installed) {
-                    if (!is_package_needed_by_others(curr_deps[j]->package, pkg_name)) {
-                        runepkg_util_log_verbose("[suite] Removing unused dependency: %s\n", curr_deps[j]->package);
-                        runepkg_remove_package_core(curr_deps[j]->package, dep_info->version ? dep_info->version : "", tx_ctx);
-                    }
-                }
-            }
-        }
-
-        if (deps) {
-            for (j = 0; deps[j]; j++) { free(deps[j]->package); free(deps[j]->constraint); free(deps[j]); }
-            free(deps);
-        }
-        if (pre_deps) {
-            for (j = 0; pre_deps[j]; j++) { free(pre_deps[j]->package); free(pre_deps[j]->constraint); free(pre_deps[j]); }
-            free(pre_deps);
-        }
-    }
-
-    runepkg_pack_free_package_info(&pkg_info);
-
-    /* Integration: Notify host layer that a removal occurred for this package name */
-    runepkg_host_unregister_removal(pkg_name);
-    return 0;
-}
-
 int handle_remove(const char *package_name) {
     char name_buf[PATH_MAX];
     char *trimmed;
     char pkg_name[PATH_MAX];
     char pkg_version[PATH_MAX];
     const char *last_dash;
+    PkgInfo pkg_info;
     TransactionContext tx_ctx;
-    PkgInfo *hash_info;
 
     if (!package_name || package_name[0] == '\0') {
         printf("Error: remove requires a package name.\n");
         return -1;
+    }
+
+    if (runepkg_fsm_init(&tx_ctx, package_name, "remove") == 0) {
+        step_prepare(&tx_ctx);
+        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_COMMITTING);
     }
 
     runepkg_util_safe_strncpy(name_buf, package_name, sizeof(name_buf));
@@ -418,25 +288,17 @@ int handle_remove(const char *package_name) {
     memset(pkg_name, 0, sizeof(pkg_name));
     memset(pkg_version, 0, sizeof(pkg_version));
 
-    /* 1. Try to find in hash table first (fastest and most reliable) */
-    hash_info = runepkg_hash_search(runepkg_main_hash_table, trimmed);
-    if (hash_info) {
-        runepkg_secure_strcpy(pkg_name, sizeof(pkg_name), hash_info->package_name);
-        runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), hash_info->version ? hash_info->version : "");
-    } else {
-        /* 2. Try to parse name-version string */
-        last_dash = runepkg_util_find_version_separator(trimmed);
-        if (last_dash && last_dash != trimmed) {
-            size_t name_len = (size_t)(last_dash - trimmed);
-            if (name_len < sizeof(pkg_name)) {
-                memcpy(pkg_name, trimmed, name_len);
-                pkg_name[name_len] = '\0';
-                runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), last_dash + 1);
-            }
+    last_dash = runepkg_util_find_version_separator(trimmed);
+    if (last_dash && last_dash != trimmed) {
+        size_t name_len = (size_t)(last_dash - trimmed);
+        if (name_len < sizeof(pkg_name)) {
+            memcpy(pkg_name, trimmed, name_len);
+            pkg_name[name_len] = '\0';
+            runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), last_dash + 1);
         }
     }
 
-    if (pkg_name[0] == '\0') {
+    if (pkg_name[0] == '\0' || pkg_version[0] == '\0') {
         DIR *dir = opendir(g_runepkg_db_dir);
         struct dirent *entry;
         int match_count = 0;
@@ -504,7 +366,7 @@ int handle_remove(const char *package_name) {
                     }
                 }
                 closedir(list_dir);
-
+                
                 if (match_idx > 0) {
                     const char *items[100];
                     int i;
@@ -514,33 +376,40 @@ int handle_remove(const char *package_name) {
                     runepkg_util_print_columns(items, match_idx, "    ");
                 }
             }
-
+            
             return -2;
         } else {
             char suggestions[100][PATH_MAX];
             int suggestion_count = runepkg_util_get_package_suggestions(trimmed, g_runepkg_db_dir, suggestions, 100);
-
+            
             if (suggestion_count > 0) {
                 const char *items[100];
                 int i;
                 print_package_data_header();
                 printf("'%s' not installed... did you mean?\n\n", package_name);
-
+                
                 for (i = 0; i < suggestion_count; i++) {
                     items[i] = suggestions[i];
                 }
                 runepkg_util_print_columns(items, suggestion_count, "    ");
+                runepkg_log_fail("Package not found or ambiguous name", tx_ctx.log_dir);
+                step_cleanup(&tx_ctx);
                 return -2;
             } else {
                 printf("'%s' not installed... did you mean?\n\n", package_name);
+                runepkg_log_fail("Package not installed", tx_ctx.log_dir);
+                step_cleanup(&tx_ctx);
                 return -1;
             }
         }
     }
 
-    if (runepkg_fsm_init(&tx_ctx, pkg_name, "remove") != 0) return -1;
-    step_prepare(&tx_ctx);
-    runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_COMMITTING);
+    if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) != 0) {
+        printf("Error: package not installed: %s-%s\n", pkg_name, pkg_version);
+        runepkg_log_fail("Failed to read package control info", tx_ctx.log_dir);
+        step_cleanup(&tx_ctx);
+        return -1;
+    }
 
     if (g_verbose_mode) {
         char response[10];
@@ -548,18 +417,60 @@ int handle_remove(const char *package_name) {
         fflush(stdout);
         if (fgets(response, sizeof(response), stdin) == NULL || (response[0] != 'y' && response[0] != 'Y')) {
             printf("Removal cancelled.\n");
-            step_cleanup(&tx_ctx);
+            runepkg_pack_free_package_info(&pkg_info);
             return -1;
         }
     }
 
-    if (runepkg_remove_package_core(pkg_name, pkg_version, &tx_ctx) != 0) {
-        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_ROLLBACK);
-        runepkg_log_fail("Package removal failed", tx_ctx.log_dir);
-        step_rollback(&tx_ctx);
-        step_cleanup(&tx_ctx);
+    if (g_system_install_root && pkg_info.file_list && pkg_info.file_count > 0) {
+        int i;
+        extern int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action);
+        runepkg_execute_maintainer_script(pkg_info.prerm, &pkg_info, "remove");
+
+        for (i = 0; i < pkg_info.file_count; i++) {
+            const char *rel = pkg_info.file_list[i];
+            char *dst = NULL;
+            if (!rel || rel[0] == '\0') continue;
+
+            if (rel[0] == '/') {
+                dst = strdup(rel);
+            } else {
+                dst = runepkg_util_concat_path(g_system_install_root, rel);
+            }
+            if (!dst) continue;
+
+            if (runepkg_util_file_exists(dst)) {
+                char backup_path[PATH_MAX];
+                const char *base_name = strrchr(dst, '/');
+                base_name = base_name ? base_name + 1 : dst;
+                runepkg_secure_snprintf(backup_path, sizeof(backup_path),
+                    "%s/%s.%ld.bak", tx_ctx.staging_dir, base_name, (long)time(NULL));
+
+                if (runepkg_util_copy_file(dst, backup_path) == 0) {
+                    runepkg_journal_record_delete(&tx_ctx, dst, backup_path);
+                } else {
+                    runepkg_journal_record_delete(&tx_ctx, dst, "");
+                }
+
+                if (unlink(dst) != 0) {
+                    runepkg_log_verbose("Remove: failed to delete %s\n", dst);
+                }
+            }
+            runepkg_util_free_and_null(&dst);
+        }
+
+        runepkg_execute_maintainer_script(pkg_info.postrm, &pkg_info, "purge");
+    }
+
+    runepkg_pack_free_package_info(&pkg_info);
+
+    if (runepkg_storage_remove_package(pkg_name, pkg_version) != 0) {
+        printf("Warning: failed to remove package metadata for %s-%s\n", pkg_name, pkg_version);
         return -1;
     }
+
+    /* Integration: Notify host layer that a removal occurred for this package name */
+    runepkg_host_unregister_removal(pkg_name);
 
     runepkg_storage_build_autocomplete_index();
     handle_update_pkglist();

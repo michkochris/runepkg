@@ -216,6 +216,44 @@ static void remove_from_provides_map(runepkg_hash_table_t *table, runepkg_hash_n
 
 static int resize_hash_table(runepkg_hash_table_t *table, size_t new_size);
 
+static void inject_dummy_provides(runepkg_hash_table_t *table, const PkgInfo *pkg_info) {
+    char *provides_copy;
+    char *token;
+
+    if (!pkg_info || !pkg_info->provides) return;
+    provides_copy = strdup(pkg_info->provides);
+    token = strtok(provides_copy, ",");
+    while (token) {
+        char *trimmed = runepkg_util_trim_whitespace(token);
+        size_t name_len = strcspn(trimmed, " (");
+        char *vname = runepkg_secure_strndup(trimmed, name_len);
+
+        /* Only inject if it doesn't exist as a real package or dummy already */
+        if (vname && vname[0] != '\0' && !runepkg_hash_search(table, vname)) {
+            PkgInfo dummy;
+            char desc_buf[256];
+
+            runepkg_pack_init_package_info(&dummy);
+            dummy.package_name = strdup(vname);
+            dummy.version = pkg_info->version ? strdup(pkg_info->version) : NULL;
+
+            /* Record the actual provider so status/search can show it */
+            dummy.source_name = strdup(pkg_info->package_name);
+
+            snprintf(desc_buf, sizeof(desc_buf), "Virtual package provided by %s", pkg_info->package_name);
+            dummy.description = strdup(desc_buf);
+
+            dummy.provides = NULL; /* Avoid recursion */
+
+            runepkg_hash_add_package(table, &dummy);
+            runepkg_hash_free_package_info(&dummy);
+        }
+        if (vname) free(vname);
+        token = strtok(NULL, ",");
+    }
+    free(provides_copy);
+}
+
 int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_info) {
     runepkg_hash_node_t *new_node;
     unsigned int index;
@@ -253,7 +291,6 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 curr->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
                 curr->data.postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
                 curr->data.md5_verified = pkg_info->md5_verified;
-                curr->data.auto_installed = pkg_info->auto_installed;
                 curr->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
                 curr->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
                 curr->data.extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
@@ -282,6 +319,8 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 }
 
                 add_to_provides_map(table, curr);
+                /* Aggressively inject dummies for provided virtual packages */
+                if (pkg_info->provides) inject_dummy_provides(table, pkg_info);
                 return 0;
             }
             curr = curr->next;
@@ -321,7 +360,6 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
     new_node->data.postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
     new_node->data.md5_verified = pkg_info->md5_verified;
-    new_node->data.auto_installed = pkg_info->auto_installed;
     new_node->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
     new_node->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
     new_node->data.extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
@@ -355,6 +393,9 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     table->count++;
 
     add_to_provides_map(table, new_node);
+
+    /* Aggressively inject dummies for provided virtual packages */
+    if (pkg_info->provides) inject_dummy_provides(table, pkg_info);
 
     runepkg_util_log_verbose("Package '%s' added to hash table.\n", pkg_info->package_name);
     return 0;
@@ -509,13 +550,39 @@ void runepkg_hash_clear_table(runepkg_hash_table_t *table) {
 int is_package_provided_by_table(runepkg_hash_table_t *table, const char *pkg_name) {
     unsigned int index;
     runepkg_provides_node_t *curr;
+    const char *dash;
+
     if (!table || !pkg_name) return 0;
+
+    /* First, try exact match in provides map */
     index = hash_function(pkg_name, table->provides_size);
     curr = table->provides_buckets[index];
     while (curr) {
         if (strcmp(curr->virtual_name, pkg_name) == 0) return 1;
         curr = curr->next;
     }
+
+    /* Aggressive Version Sifting:
+     * If pkg_name is name-version (e.g. perlapi-5.42.2), sift through all buckets
+     * looking for a provider of the prefix 'name-'.
+     */
+    dash = strrchr(pkg_name, '-');
+    if (dash && dash != pkg_name) {
+        size_t prefix_len = dash - pkg_name + 1; /* include the dash */
+        size_t i;
+        for (i = 0; i < table->provides_size; i++) {
+            curr = table->provides_buckets[i];
+            while (curr) {
+                if (strncmp(curr->virtual_name, pkg_name, prefix_len) == 0) {
+                    runepkg_util_log_verbose("[hash] Aggressive sifting: satisfied %s via %s\n",
+                                             pkg_name, curr->virtual_name);
+                    return 1;
+                }
+                curr = curr->next;
+            }
+        }
+    }
+
     return 0;
 }
 
@@ -562,6 +629,9 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->homepage) {
         printf("Homepage:     %s\n", pkg_info->homepage);
+    }
+    if (pkg_info->source_name) {
+        printf("Provided-By:  %s\n", pkg_info->source_name);
     }
     if (pkg_info->description) {
         printf("Description:  %s\n", pkg_info->description);

@@ -156,9 +156,6 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
         }
     }
 
-    /* Write auto_installed flag at the END for backward compatibility (v1.1) */
-    fwrite(&pkg_info->auto_installed, sizeof(bool), 1, bin_file);
-
     fflush(bin_file);
     fsync(fileno(bin_file));
     fclose(bin_file);
@@ -271,14 +268,6 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
         for (i = 0; i < pkg_info->file_count; i++) {
             PARSE_STRING(pkg_info->file_list[i]);
         }
-    }
-
-    /* Read auto_installed flag at the END if available (v1.1+) */
-    if (ptr + sizeof(bool) <= end) {
-        memcpy(&pkg_info->auto_installed, ptr, sizeof(bool));
-        ptr += sizeof(bool);
-    } else {
-        pkg_info->auto_installed = false;
     }
 
     if (pkg_info->file_count == 0 || pkg_info->file_list == NULL) {
