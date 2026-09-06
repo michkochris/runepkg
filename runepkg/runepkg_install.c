@@ -1110,6 +1110,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
+        pkg_info.auto_installed = !is_top_level;
+
         if (g_verbose_mode) {
             runepkg_pack_print_package_info(&pkg_info);
         } else {

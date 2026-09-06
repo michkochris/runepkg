@@ -170,12 +170,23 @@ public:
                 if (virtual_to_real.find(c_prov) == virtual_to_real.end()) {
                     virtual_to_real[c_prov] = name;
                 } else {
-                    /* Heuristic: prefer 'base' packages or shorter names for virtual providers */
+                    /* Vigilant heuristic:
+                     * 1. Prefer packages already installed on host
+                     * 2. Prefer 'base' packages
+                     * 3. Prefer shorter names (usually more core)
+                     */
                     std::string current = virtual_to_real[c_prov];
-                    if (name.find("-base") != std::string::npos && current.find("-base") == std::string::npos) {
+                    bool name_installed = host_installed_set.count(clean_package_key(name));
+                    bool current_installed = host_installed_set.count(clean_package_key(current));
+
+                    if (name_installed && !current_installed) {
                         virtual_to_real[c_prov] = name;
-                    } else if (name.length() < current.length() && current.find("-base") == std::string::npos) {
-                        virtual_to_real[c_prov] = name;
+                    } else if (name_installed == current_installed) {
+                        if (name.find("-base") != std::string::npos && current.find("-base") == std::string::npos) {
+                            virtual_to_real[c_prov] = name;
+                        } else if (name.length() < current.length() && current.find("-base") == std::string::npos) {
+                            virtual_to_real[c_prov] = name;
+                        }
                     }
                 }
             }
@@ -682,14 +693,21 @@ private:
             dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
         } else if (virtual_to_real.count(target_key)) {
             dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed, visited, visiting, order);
-        } else if (target_key.rfind("perlapi-", 0) == 0) {
-            /* Handle versioned perlapi virtual package skew in rolling releases */
-            for (const auto& [v_name, r_name] : virtual_to_real) {
-                if (v_name.rfind("perlapi-", 0) == 0) {
-                     runepkg_util_log_verbose("[resolver] Fuzzy match: substituting %s with available %s (provided by %s)\n",
-                                              target_key.c_str(), v_name.c_str(), r_name.c_str());
-                     dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
-                     return;
+        } else {
+            /* Vigilant Version Sifting:
+             * If target_key is name-version (e.g. perlapi-5.42.2), sift through available
+             * providers of 'name-*' if the exact version isn't found.
+             */
+            size_t dash_pos = target_key.find_last_of('-');
+            if (dash_pos != std::string::npos && dash_pos > 0) {
+                std::string prefix = target_key.substr(0, dash_pos + 1); /* includes the dash */
+                for (const auto& [v_name, r_name] : virtual_to_real) {
+                    if (v_name.compare(0, prefix.length(), prefix) == 0) {
+                         runepkg_util_log_verbose("[resolver] Vigilant substitution: requested %s, found %s (provided by %s)\n",
+                                                  target_key.c_str(), v_name.c_str(), r_name.c_str());
+                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                         return;
+                    }
                 }
             }
         }

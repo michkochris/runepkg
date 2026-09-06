@@ -60,6 +60,7 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->prerm = NULL;
     pkg_info->postrm = NULL;
     pkg_info->md5_verified = false;
+    pkg_info->auto_installed = false;
     pkg_info->control_dir_path = NULL;
     pkg_info->data_dir_path = NULL;
     pkg_info->extraction_workspace_path = NULL;

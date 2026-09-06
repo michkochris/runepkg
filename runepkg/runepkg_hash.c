@@ -253,6 +253,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 curr->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
                 curr->data.postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
                 curr->data.md5_verified = pkg_info->md5_verified;
+                curr->data.auto_installed = pkg_info->auto_installed;
                 curr->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
                 curr->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
                 curr->data.extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
@@ -320,6 +321,7 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
     new_node->data.postrm = pkg_info->postrm ? runepkg_secure_strdup(pkg_info->postrm) : NULL;
     new_node->data.md5_verified = pkg_info->md5_verified;
+    new_node->data.auto_installed = pkg_info->auto_installed;
     new_node->data.control_dir_path = pkg_info->control_dir_path ? runepkg_secure_strdup(pkg_info->control_dir_path) : NULL;
     new_node->data.data_dir_path = pkg_info->data_dir_path ? runepkg_secure_strdup(pkg_info->data_dir_path) : NULL;
     new_node->data.extraction_workspace_path = pkg_info->extraction_workspace_path ? runepkg_secure_strdup(pkg_info->extraction_workspace_path) : NULL;
