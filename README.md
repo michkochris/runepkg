@@ -11,7 +11,12 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a lightning-fast, high-performance hybrid C89/C++ package manager and toolchain forge engineered specifically for the **Debian ecosystem**. Unlike traditional tools bound to a specific distribution, **runepkg** treats the entire Debian package universe as a universal supply chain—enabling developers to unearth, compile, and deploy `.deb` software across modern workstations and constrained embedded environments alike.
+**runepkg** is a lightning-fast, high-performance hybrid C89/C++ package manager and toolchain forge engineered specifically for the **Debian ecosystem**. Unlike traditional tools bound to a specific distribution, **runepkg** treats the entire Debian package universe as a universal supply chain—enabling developers to unearth, compile, and deploy `.deb` software across modern workstations and constrained environments alike.
+
+> [!IMPORTANT]
+> **Production Stability (v1.0.4+):** **runepkg** is now declared **Stable** and has been rigorously battle-tested. It has successfully demonstrated recursive dependency resolution, parallel downloading, and extraction for massive package sets, including full desktop environments like **XFCE** (270+ packages) and complete development toolchains like **build-essential**.
+>
+> **Usage Warning (Coexistence with apt):** **runepkg** is intended as a high-performance alternative to `apt` and `apt-get`. It is **NOT** recommended to use `runepkg` alongside standard `apt` on a primary host system, as `runepkg` operates independently and does not synchronize state with `apt`'s private database. This can lead `apt` to report broken dependencies (e.g., requiring `apt --fix-broken install`). Use `runepkg` for isolated environments, embedded systems, or as a dedicated replacement for those who require its specific performance and forging capabilities.
 
 - **Low-Level Core (Pure C89/C90, ~400–530 KB):** A minimalist, memory-safe `.deb` package manager with capabilities comparable to `busybox dpkg`. Designed for embedded targets, recovery media, and memory-constrained environments where ISO C90 compliance is paramount.
     - **ANSI C Compliance**: Strictly follows C89/C90 standards for maximum portability across legacy and modern compilers.
@@ -221,6 +226,9 @@ For maximum performance, **runepkg** utilizes a high-speed binary database store
 - **`runes_graph.bin`**: A high-performance serialized dependency graph. This allows the resolver to calculate complex build trees in milliseconds.
 - **`repo_index.bin` / `repo_src_index.bin`**: Optimized binary metadata indices for rapid repository searches and source package lookups.
 - **`repo_url_mapping.txt`**: Maps packages and source components to their respective repository base URLs for efficient downloading.
+
+> [!NOTE]
+> **Future Roadmap:** Upcoming versions of **runepkg** will feature enhanced `dpkg` integration, specifically automating the downloading and passing of `host-depends` and `build-depends` directly to the `dpkg` engine for even more robust local-first resolution.
 
 ```text
 /var/lib/runepkg_dir/
