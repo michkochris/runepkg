@@ -1007,11 +1007,6 @@ int runepkg_util_execute_command(const char *command_path, char *const argv[]) {
         perror("Failed to fork process");
         return -1;
     } else if (pid == 0) {
-#ifdef ENABLE_CPP_FFI
-        if (runepkg_security_is_root()) {
-            runepkg_security_drop_privileges_for_worker("_apt");
-        }
-#endif
         execvp(argv[0], argv);
         perror("Failed to execute command");
         _exit(1);
@@ -1064,11 +1059,6 @@ int runepkg_util_execute_command_to_file(const char *command_path, char *const a
         return -1;
     } else if (pid == 0) {
         int fd;
-#ifdef ENABLE_CPP_FFI
-        if (runepkg_security_is_root()) {
-            runepkg_security_drop_privileges_for_worker("_apt");
-        }
-#endif
         fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
         if (fd != -1) {
             dup2(fd, STDOUT_FILENO);
@@ -1119,6 +1109,47 @@ int runepkg_util_execute_command_telemetry(const char *command_path, char *const
     return runepkg_util_execute_command_to_file(command_path, argv, log_path);
 }
 
+int runepkg_util_execute_command_sandbox(const char *command_path, char *const argv[]) {
+    pid_t pid;
+    (void)command_path;
+    prepare_execution_environment();
+    pid = fork();
+    if (pid == -1) return -1;
+    else if (pid == 0) {
+#ifdef ENABLE_CPP_FFI
+        if (runepkg_security_is_root()) runepkg_security_drop_privileges_for_worker("_apt");
+#endif
+        execvp(argv[0], argv);
+        _exit(1);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    }
+}
+
+int runepkg_util_execute_command_sandbox_to_file(const char *command_path, char *const argv[], const char *log_path) {
+    pid_t pid;
+    (void)command_path;
+    prepare_execution_environment();
+    pid = fork();
+    if (pid == -1) return -1;
+    else if (pid == 0) {
+        int fd;
+#ifdef ENABLE_CPP_FFI
+        if (runepkg_security_is_root()) runepkg_security_drop_privileges_for_worker("_apt");
+#endif
+        fd = open(log_path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+        if (fd != -1) { dup2(fd, STDOUT_FILENO); dup2(fd, STDERR_FILENO); close(fd); }
+        execvp(argv[0], argv);
+        _exit(1);
+    } else {
+        int status;
+        waitpid(pid, &status, 0);
+        return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    }
+}
+
 int runepkg_util_execute_command_silent(const char *command_path, char *const argv[]) {
     pid_t pid;
     runepkg_util_log_debug("Executing silent command: %s\n", command_path);
@@ -1166,17 +1197,6 @@ static int extract_deb_archive(const char *deb_path, const char *destination_dir
         return -1;
     }
     chmod(destination_dir, 0777);
-#ifdef ENABLE_CPP_FFI
-    if (runepkg_security_is_root()) {
-        struct passwd *pw = getpwnam("_apt");
-        if (!pw) pw = getpwnam("nobody");
-        if (pw) {
-            if (chown(destination_dir, pw->pw_uid, pw->pw_gid) != 0) {
-                /* Ignored */
-            }
-        }
-    }
-#endif
 
     absolute_deb_path = realpath(deb_path, NULL);
     if (!absolute_deb_path) {
@@ -1303,17 +1323,6 @@ static int extract_tar_archive(const char *archive_path, const char *destination
         return -1;
     }
     chmod(destination_dir, 0777);
-#ifdef ENABLE_CPP_FFI
-    if (runepkg_security_is_root()) {
-        struct passwd *pw = getpwnam("_apt");
-        if (!pw) pw = getpwnam("nobody");
-        if (pw) {
-            if (chown(destination_dir, pw->pw_uid, pw->pw_gid) != 0) {
-                /* Ignored */
-            }
-        }
-    }
-#endif
 
     tar_path = "/usr/bin/tar";
 
@@ -1363,17 +1372,6 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
 
     runepkg_util_create_dir_recursive(extract_dir, 0777);
     chmod(extract_dir, 0777);
-#ifdef ENABLE_CPP_FFI
-    if (runepkg_security_is_root()) {
-        struct passwd *pw = getpwnam("_apt");
-        if (!pw) pw = getpwnam("nobody");
-        if (pw) {
-            if (chown(extract_dir, pw->pw_uid, pw->pw_gid) != 0) {
-                /* Ignored */
-            }
-        }
-    }
-#endif
 
     if (!runepkg_util_file_exists(deb_path)) {
         runepkg_util_error(".deb file not found: %s\n", deb_path);

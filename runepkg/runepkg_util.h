@@ -255,6 +255,11 @@ int runepkg_util_init_fhs(const char *root);
 int runepkg_util_execute_command(const char *command_path, char *const argv[]);
 
 /**
+ * @brief Executes a command while dropping root privileges to a sandbox user.
+ */
+int runepkg_util_execute_command_sandbox(const char *command_path, char *const argv[]);
+
+/**
  * @brief Executes a command but suppresses all output (stdout/stderr).
  */
 int runepkg_util_execute_command_silent(const char *command_path, char *const argv[]);
@@ -263,6 +268,11 @@ int runepkg_util_execute_command_silent(const char *command_path, char *const ar
  * @brief Executes an external command and redirects stdout/stderr to a file.
  */
 int runepkg_util_execute_command_to_file(const char *command_path, char *const argv[], const char *log_path);
+
+/**
+ * @brief Executes a command with privilege dropping and output redirection.
+ */
+int runepkg_util_execute_command_sandbox_to_file(const char *command_path, char *const argv[], const char *log_path);
 
 /**
  * @brief Executes an external command, redirects output to log_path, and displays a telemetry progress bar.

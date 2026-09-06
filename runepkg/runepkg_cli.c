@@ -698,6 +698,10 @@ int main(int argc, char *argv[]) {
                 printf("Error: %s requires a package name.\n", argv[i]);
                 cli_failed = 1;
             }
+        } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0 ||
+                   strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0 ||
+                   strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
+            /* Already handled in first pass */
         } else {
             cli_failed = 1;
             fprintf(stderr, "\033[1;31mError:\033[0m Unknown argument or command: %s\n", argv[i]);
