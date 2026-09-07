@@ -480,7 +480,10 @@ std::unordered_map<std::string, std::string> get_latest_versions() {
     std::vector<std::string> pkg_files;
     std::string line;
     while (std::getline(flist, line)) {
-        if (!line.empty()) pkg_files.push_back(line);
+        if (!line.empty()) {
+            if (line.back() == '\r') line.pop_back();
+            pkg_files.push_back(line);
+        }
     }
     flist.close();
 
@@ -847,7 +850,18 @@ extern "C" int runepkg_repo_search(const char *query) {
     }
 }
 
+static std::unordered_map<std::string, std::string> g_url_cache;
+static std::mutex g_url_cache_mutex;
+
 std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_offset, std::string *out_metafile) {
+    if (!pkg_name || *pkg_name == '\0') return "";
+
+    std::string cache_key = (is_source ? "src:" : "bin:") + std::string(pkg_name);
+    if (!out_offset && !out_metafile) {
+        std::lock_guard<std::mutex> lock(g_url_cache_mutex);
+        if (g_url_cache.count(cache_key)) return g_url_cache[cache_key];
+    }
+
     ensure_index_loaded(is_source);
     RepoIndex &idx_cache = is_source ? g_src_index : g_pkg_index;
 
@@ -925,7 +939,12 @@ std::string get_package_url(const char *pkg_name, bool is_source, uint32_t *out_
 
     if (base_url.empty()) return "";
     if (base_url.back() != '/') base_url += '/';
-    return base_url + rel_path;
+    std::string full_url = base_url + rel_path;
+    if (!out_offset && !out_metafile && !full_url.empty()) {
+        std::lock_guard<std::mutex> lock(g_url_cache_mutex);
+        g_url_cache[cache_key] = full_url;
+    }
+    return full_url;
 }
 
 PkgMetadata get_package_metadata(const std::string& pkg_name) {
@@ -1146,39 +1165,36 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
 
     std::cout << "\033[1;34m[runepkg]\033[0m Planning installation for " << count << " package(s)..." << std::endl;
 
-    for (int i = 0; i < count; i++) {
-        if (!pkg_names[i]) continue;
-        RuneTargetPlan *plan = nullptr;
-        if (runepkg_resolver_get_install_plan(pkg_names[i], &plan) == 0 && plan) {
-            plans.push_back(plan);
-            for (int j = 0; j < plan->node_count; j++) {
-                std::string pkg_name = plan->nodes[j].package_name;
-                std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
-                if (filename.empty()) {
-                    PkgMetadata meta = get_package_metadata(pkg_name);
-                    filename = meta.filename;
-                }
+    RuneTargetPlan *plan = nullptr;
+    if (runepkg_resolver_get_install_plan_multiple(pkg_names, count, &plan) == 0 && plan) {
+        plans.push_back(plan);
+        for (int j = 0; j < plan->node_count; j++) {
+            std::string pkg_name = plan->nodes[j].package_name;
+            std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
+            if (filename.empty()) {
+                PkgMetadata meta = get_package_metadata(pkg_name);
+                filename = meta.filename;
+            }
 
-                if (!filename.empty()) {
-                    std::string base_file = filename.substr(filename.find_last_of('/') + 1);
-                    std::string dest_path = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") + "/" + base_file;
+            if (!filename.empty()) {
+                std::string base_file = filename.substr(filename.find_last_of('/') + 1);
+                std::string dest_path = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") + "/" + base_file;
 
-                    if (unique_dest_files.find(dest_path) == unique_dest_files.end()) {
-                        unique_dest_files.insert(dest_path);
+                if (unique_dest_files.find(dest_path) == unique_dest_files.end()) {
+                    unique_dest_files.insert(dest_path);
 
-                        ensure_repo_mapping_loaded();
-                        std::string url = get_package_url(pkg_name.c_str(), false, nullptr, nullptr);
+                    ensure_repo_mapping_loaded();
+                    std::string url = get_package_url(pkg_name.c_str(), false, nullptr, nullptr);
 
-                        if (!url.empty()) {
-                            tasks.push_back({url, dest_path, pkg_name, plan->nodes[j].download_size, false});
-                            total_size += plan->nodes[j].download_size;
-                        }
+                    if (!url.empty()) {
+                        tasks.push_back({url, dest_path, pkg_name, plan->nodes[j].download_size, false});
+                        total_size += plan->nodes[j].download_size;
                     }
                 }
             }
-        } else {
-            std::cerr << "  -> \033[1;31mnot found:\033[0m " << pkg_names[i] << std::endl;
         }
+    } else {
+        std::cerr << "  -> \033[1;31mnot found\033[0m" << std::endl;
     }
 
     if (tasks.empty()) {
@@ -1256,12 +1272,12 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
 
     if (g_batch_planned_packages) {
         runepkg_hash_clear_table(g_batch_planned_packages);
-        for (auto plan : plans) {
-            for (int i = 0; i < plan->node_count; i++) {
+        for (auto p : plans) {
+            for (int i = 0; i < p->node_count; i++) {
                 PkgInfo dummy;
                 runepkg_pack_init_package_info(&dummy);
-                dummy.package_name = strdup(plan->nodes[i].package_name);
-                if (plan->nodes[i].version) dummy.version = strdup(plan->nodes[i].version);
+                dummy.package_name = strdup(p->nodes[i].package_name);
+                if (p->nodes[i].version) dummy.version = strdup(p->nodes[i].version);
                 runepkg_hash_add_package(g_batch_planned_packages, &dummy);
                 runepkg_pack_free_package_info(&dummy);
             }
@@ -1269,9 +1285,9 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
     }
 
     std::unordered_set<std::string> installed_in_this_pass;
-    for (auto plan : plans) {
-        for (int i = 0; i < plan->node_count; i++) {
-            std::string p_name = plan->nodes[i].package_name;
+    for (auto p : plans) {
+        for (int i = 0; i < p->node_count; i++) {
+            std::string p_name = p->nodes[i].package_name;
             if (installed_in_this_pass.count(p_name)) continue;
 
             std::string dest_path;
@@ -1550,18 +1566,28 @@ extern "C" int runepkg_upgrade(void) {
         for (size_t i = 0; i < runepkg_main_hash_table->size; i++) {
             runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
             while (node) {
-                std::string name = node->data.package_name;
-                if (latest_versions.count(name) && runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) to_upgrade.push_back(name);
+                if (node->data.package_name && node->data.version) {
+                    std::string name = node->data.package_name;
+                    if (latest_versions.count(name) && runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) {
+                        to_upgrade.push_back(name);
+                    }
+                }
                 node = node->next;
             }
         }
     }
     if (to_upgrade.empty()) { std::cout << "All packages are already up to date." << std::endl; return 0; }
 
+    std::cout << "\033[1;34m[runepkg]\033[0m Found " << to_upgrade.size() << " package(s) to upgrade." << std::endl;
+
     std::vector<const char*> pkgs_c;
     for (const auto& s : to_upgrade) pkgs_c.push_back(s.c_str());
 
-    return runepkg_repo_install_multiple(pkgs_c.data(), pkgs_c.size());
+    bool old_force = g_force_mode;
+    g_force_mode = true;
+    int res = runepkg_repo_install_multiple(pkgs_c.data(), pkgs_c.size());
+    g_force_mode = old_force;
+    return res;
 }
 
 extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int count) {

@@ -184,6 +184,47 @@ int runepkg_init(void) {
             }
             closedir(dir);
         }
+
+        /* 2. Load synced host packages from host subfolder if present */
+        {
+            char host_db_dir[PATH_MAX];
+            snprintf(host_db_dir, sizeof(host_db_dir), "%s/host", g_runepkg_db_dir);
+            dir = opendir(host_db_dir);
+            if (dir) {
+                struct dirent *entry;
+                while ((entry = readdir(dir)) != NULL) {
+                    if ((entry->d_type == DT_DIR || entry->d_type == DT_UNKNOWN) && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                        char pkg_name[PATH_MAX];
+                        char pkg_version[PATH_MAX];
+                        const char *ver_dash = runepkg_util_find_version_separator(entry->d_name);
+
+                        memset(pkg_name, 0, sizeof(pkg_name));
+                        memset(pkg_version, 0, sizeof(pkg_version));
+
+                        if (ver_dash && ver_dash != entry->d_name) {
+                            size_t name_len = (size_t)(ver_dash - entry->d_name);
+                            if (name_len < sizeof(pkg_name)) {
+                                memcpy(pkg_name, entry->d_name, name_len);
+                                pkg_name[name_len] = '\0';
+                                runepkg_secure_strcpy(pkg_version, sizeof(pkg_version), ver_dash + 1);
+                            }
+                        } else {
+                            runepkg_secure_strcpy(pkg_name, sizeof(pkg_name), entry->d_name);
+                            pkg_version[0] = '\0';
+                        }
+
+                        if (pkg_name[0] && !runepkg_hash_search(runepkg_main_hash_table, pkg_name)) {
+                            PkgInfo pkg_info;
+                            if (runepkg_storage_read_package_info(pkg_name, pkg_version, &pkg_info) == 0) {
+                                runepkg_hash_add_package(runepkg_main_hash_table, &pkg_info);
+                                runepkg_pack_free_package_info(&pkg_info);
+                            }
+                        }
+                    }
+                }
+                closedir(dir);
+            }
+        }
     }
     
     return 0;

@@ -107,6 +107,7 @@ int runepkg_repo_source_build_depends_download_multiple(const char **pkg_names, 
 int runepkg_resolver_harvest_graph(const char *sources_dir, const char *out_db_path);
 int runepkg_resolver_resolve_target(const char *pkg_name, RuneTargetPlan **out_plan);
 int runepkg_resolver_get_install_plan(const char *pkg_name, RuneTargetPlan **out_plan);
+int runepkg_resolver_get_install_plan_multiple(const char **pkg_names, int count, RuneTargetPlan **out_plan);
 void runepkg_resolver_free_plan(RuneTargetPlan *plan);
 int runepkg_resolver_dump_tree(const char *pkg_name);
 

@@ -784,14 +784,19 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             existing_inst = runepkg_hash_search(installing_packages, pkg_info.package_name);
         }
         if (existing_inst) {
-            if (g_force_mode) {
+            int is_version_upgrade = 0;
+            if (existing_inst->version && pkg_info.version && runepkg_util_compare_versions(pkg_info.version, existing_inst->version) > 0) {
+                is_version_upgrade = 1;
+            }
+
+            if (g_force_mode || is_version_upgrade) {
                 char *old_ver = existing_inst->version ? strdup(existing_inst->version) : NULL;
                 runepkg_hash_remove_package(runepkg_main_hash_table, pkg_info.package_name);
                 if (old_ver) {
                     runepkg_storage_remove_package(pkg_info.package_name, old_ver);
                 }
-                if (pkg_info.version && old_ver && strcmp(old_ver, pkg_info.version) != 0) {
-                    printf("Upgrading %s from %s to %s (force)\n",
+                if (is_version_upgrade || (pkg_info.version && old_ver && strcmp(old_ver, pkg_info.version) != 0)) {
+                    printf("Upgrading %s from %s to %s\n",
                            pkg_info.package_name,
                            old_ver ? old_ver : "(unknown)",
                            pkg_info.version ? pkg_info.version : "(unknown)");

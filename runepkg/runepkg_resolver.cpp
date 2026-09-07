@@ -131,7 +131,9 @@ public:
         return save_binary_graph(out_db_path, graph);
     }
 
-    int resolve_tree(const std::string& pkg_name, ResolveMode mode, RuneTargetPlan** out_plan) {
+    int resolve_tree_multiple(const std::vector<std::string>& pkg_names, ResolveMode mode, RuneTargetPlan** out_plan) {
+        if (pkg_names.empty()) return -1;
+
         std::string db_path = get_default_db_path();
         std::unordered_map<std::string, RuneGraphEntry> graph;
 
@@ -170,11 +172,6 @@ public:
                 if (virtual_to_real.find(c_prov) == virtual_to_real.end()) {
                     virtual_to_real[c_prov] = name;
                 } else {
-                    /* Vigilant heuristic:
-                     * 1. Prefer packages already installed on host
-                     * 2. Prefer 'base' packages
-                     * 3. Prefer shorter names (usually more core)
-                     */
                     std::string current = virtual_to_real[c_prov];
                     bool name_installed = host_installed_set.count(clean_package_key(name));
                     bool current_installed = host_installed_set.count(clean_package_key(current));
@@ -192,45 +189,41 @@ public:
             }
         }
 
-        std::string root_target = clean_package_key(pkg_name);
-        if (mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) {
-            char *src_name = runepkg_repo_find_source_for_binary(pkg_name.c_str());
-            if (src_name) {
-                root_target = clean_package_key(src_name);
-                free(src_name);
-            }
-        }
-
-        if (graph.find(root_target) == graph.end() && virtual_to_real.count(root_target)) {
-            root_target = virtual_to_real.at(root_target);
-        }
-
-        if ((mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) &&
-            root_target.rfind("src:", 0) != 0) {
-            std::string src_key = "src:" + root_target;
-            if (graph.count(src_key)) {
-                root_target = src_key;
-            } else {
-                auto it = graph.find(root_target);
-                if (it != graph.end() && !it->second.source_pkg.empty()) {
-                    std::string cross_src = "src:" + it->second.source_pkg;
-                    if (graph.count(cross_src)) root_target = cross_src;
-                }
-            }
-        }
-
-        if (graph.find(root_target) == graph.end()) {
-            std::cerr << "ERROR: Rune package '" << root_target << "' not found in dependency graph." << std::endl;
-            return -1;
-        }
-
         std::vector<RuneGraphEntry> resolved_order;
         std::set<std::string> visited;
         std::set<std::string> visiting;
 
-        if (!dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_set, visited, visiting, resolved_order)) {
-            std::cerr << "ERROR: Circular or broken dependency graph detected." << std::endl;
-            return -1;
+        for (const auto& raw_pkg_name : pkg_names) {
+            std::string root_target = clean_package_key(raw_pkg_name);
+            if (mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) {
+                char *src_name = runepkg_repo_find_source_for_binary(raw_pkg_name.c_str());
+                if (src_name) {
+                    root_target = clean_package_key(src_name);
+                    free(src_name);
+                }
+            }
+
+            if (graph.find(root_target) == graph.end() && virtual_to_real.count(root_target)) {
+                root_target = virtual_to_real.at(root_target);
+            }
+
+            if ((mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) &&
+                root_target.rfind("src:", 0) != 0) {
+                std::string src_key = "src:" + root_target;
+                if (graph.count(src_key)) {
+                    root_target = src_key;
+                } else {
+                    auto it = graph.find(root_target);
+                    if (it != graph.end() && !it->second.source_pkg.empty()) {
+                        std::string cross_src = "src:" + it->second.source_pkg;
+                        if (graph.count(cross_src)) root_target = cross_src;
+                    }
+                }
+            }
+
+            if (graph.find(root_target) != graph.end()) {
+                dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_set, visited, visiting, resolved_order, true);
+            }
         }
 
         /* Deduplicate execution array while preserving bottom-up topological order */
@@ -283,6 +276,11 @@ public:
         }
 
         return 0;
+    }
+
+    int resolve_tree(const std::string& pkg_name, ResolveMode mode, RuneTargetPlan** out_plan) {
+        std::vector<std::string> pkgs = { pkg_name };
+        return resolve_tree_multiple(pkgs, mode, out_plan);
     }
 
     void dump_tree_view(const std::string& pkg_name) {
@@ -606,10 +604,11 @@ private:
                        const std::unordered_set<std::string>& host_installed,
                        std::set<std::string>& visited,
                        std::set<std::string>& visiting,
-                       std::vector<RuneGraphEntry>& order) {
+                       std::vector<RuneGraphEntry>& order,
+                       bool is_root_target = false) {
         std::string check_name = clean_package_key(pkg);
 
-        if (mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name)) {
+        if (!is_root_target && mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name)) {
             visited.insert(pkg);
             return true;
         }
@@ -634,7 +633,7 @@ private:
                 }
             }
 
-            if (!(mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name))) {
+            if (is_root_target || !(mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name))) {
                 order.push_back(it->second);
             }
         }
@@ -854,15 +853,25 @@ extern "C" int runepkg_resolver_resolve_target(const char *pkg_name, RuneTargetP
     }
 }
 
-extern "C" int runepkg_resolver_get_install_plan(const char *pkg_name, RuneTargetPlan **out_plan) {
+extern "C" int runepkg_resolver_get_install_plan_multiple(const char **pkg_names, int count, RuneTargetPlan **out_plan) {
     try {
-        if (!pkg_name || !out_plan) return -1;
+        if (!pkg_names || count <= 0 || !out_plan) return -1;
+        std::vector<std::string> pkgs;
+        for (int i = 0; i < count; i++) {
+            if (pkg_names[i]) pkgs.push_back(pkg_names[i]);
+        }
+        if (pkgs.empty()) return -1;
         RuneResolverEngine engine;
-        return engine.resolve_tree(pkg_name, ResolveMode::MODE_HOST_DEPS, out_plan);
+        return engine.resolve_tree_multiple(pkgs, ResolveMode::MODE_HOST_DEPS, out_plan);
     } catch (...) {
         if (out_plan) *out_plan = NULL;
         return -1;
     }
+}
+
+extern "C" int runepkg_resolver_get_install_plan(const char *pkg_name, RuneTargetPlan **out_plan) {
+    if (!pkg_name) return -1;
+    return runepkg_resolver_get_install_plan_multiple(&pkg_name, 1, out_plan);
 }
 
 extern "C" void runepkg_resolver_free_plan(RuneTargetPlan *plan) {

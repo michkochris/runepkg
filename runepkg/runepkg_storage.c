@@ -55,6 +55,13 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
     if (ret >= PATH_MAX) {
         return -1;
     }
+    if (!runepkg_util_file_exists(path_buffer)) {
+        char host_path[PATH_MAX];
+        snprintf(host_path, sizeof(host_path), "%s/host/%s", g_runepkg_db_dir, pkg_name);
+        if (runepkg_util_file_exists(host_path)) {
+            runepkg_secure_strcpy(path_buffer, PATH_MAX, host_path);
+        }
+    }
     return 0;
 }
 
