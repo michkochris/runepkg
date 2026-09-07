@@ -152,6 +152,8 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     WRITE_STRING(pkg_info->priority);
     WRITE_STRING(pkg_info->homepage);
     WRITE_STRING(pkg_info->filename);
+    WRITE_STRING(pkg_info->multi_arch);
+    WRITE_STRING(pkg_info->source_name);
 
     /* Write file_count */
     fwrite(&pkg_info->file_count, sizeof(int), 1, bin_file);
@@ -236,7 +238,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
             ptr += sizeof(size_t); \
             if (slen > 0) { \
                 if (ptr + slen > end) goto parse_error; \
-                s = strdup(ptr); \
+                s = runepkg_secure_strdup(ptr); \
                 ptr += slen; \
             } else { \
                 s = NULL; \
@@ -264,6 +266,8 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     PARSE_STRING(pkg_info->priority);
     PARSE_STRING(pkg_info->homepage);
     PARSE_STRING(pkg_info->filename);
+    PARSE_STRING(pkg_info->multi_arch);
+    PARSE_STRING(pkg_info->source_name);
 
     if (ptr + sizeof(int) > end) goto parse_error;
     memcpy(&pkg_info->file_count, ptr, sizeof(int));

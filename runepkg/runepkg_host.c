@@ -151,14 +151,14 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
             if (info->provides) free(info->provides);
             info->provides = strdup(line + 10);
         } else if (strncmp(line, "Build-Depends: ", 15) == 0) {
-            if (info->build_depends) free(info->build_depends);
-            info->build_depends = strdup(line + 15);
+            runepkg_util_free_and_null(&info->build_depends);
+            info->build_depends = runepkg_secure_strdup(line + 15);
         } else if (strncmp(line, "Build-Depends-Indep: ", 21) == 0) {
-            if (info->build_depends_indep) free(info->build_depends_indep);
-            info->build_depends_indep = strdup(line + 21);
+            runepkg_util_free_and_null(&info->build_depends_indep);
+            info->build_depends_indep = runepkg_secure_strdup(line + 21);
         } else if (strncmp(line, "Build-Depends-Arch: ", 20) == 0) {
-            if (info->build_depends_arch) free(info->build_depends_arch);
-            info->build_depends_arch = strdup(line + 20);
+            runepkg_util_free_and_null(&info->build_depends_arch);
+            info->build_depends_arch = runepkg_secure_strdup(line + 20);
         } else if (strncmp(line, "Conflicts: ", 11) == 0) {
             if (info->conflicts) free(info->conflicts);
             info->conflicts = strdup(line + 11);
@@ -190,6 +190,12 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
         } else if (strncmp(line, "Installed-Size: ", 16) == 0) {
             if (info->installed_size) free(info->installed_size);
             info->installed_size = strdup(line + 16);
+        } else if (strncmp(line, "Multi-Arch: ", 12) == 0) {
+            if (info->multi_arch) free(info->multi_arch);
+            info->multi_arch = strdup(line + 12);
+        } else if (strncmp(line, "Source: ", 8) == 0) {
+            if (info->source_name) free(info->source_name);
+            info->source_name = strdup(line + 8);
         } else {
             field_ptr = NULL;
         }
@@ -386,6 +392,8 @@ static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
     if (pkg_info->recommends) fprintf(out, "Recommends: %s\n", pkg_info->recommends);
     if (pkg_info->suggests) fprintf(out, "Suggests: %s\n", pkg_info->suggests);
     if (pkg_info->installed_size) fprintf(out, "Installed-Size: %s\n", pkg_info->installed_size);
+    if (pkg_info->multi_arch) fprintf(out, "Multi-Arch: %s\n", pkg_info->multi_arch);
+    if (pkg_info->source_name) fprintf(out, "Source: %s\n", pkg_info->source_name);
     if (pkg_info->homepage) fprintf(out, "Homepage: %s\n", pkg_info->homepage);
     if (pkg_info->description) fprintf(out, "Description: %s\n", pkg_info->description);
     else fprintf(out, "Description: Injected by runepkg high-speed engine\n");

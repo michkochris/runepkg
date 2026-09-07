@@ -93,6 +93,8 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->priority);
     runepkg_util_free_and_null(&pkg_info->homepage);
     runepkg_util_free_and_null(&pkg_info->filename);
+    runepkg_util_free_and_null(&pkg_info->multi_arch);
+    runepkg_util_free_and_null(&pkg_info->source_name);
     runepkg_util_free_and_null(&pkg_info->preinst);
     runepkg_util_free_and_null(&pkg_info->postinst);
     runepkg_util_free_and_null(&pkg_info->prerm);
@@ -332,6 +334,8 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 curr->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
                 curr->data.homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
                 curr->data.filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+                curr->data.multi_arch = pkg_info->multi_arch ? runepkg_secure_strdup(pkg_info->multi_arch) : NULL;
+                curr->data.source_name = pkg_info->source_name ? runepkg_secure_strdup(pkg_info->source_name) : NULL;
                 curr->data.preinst = pkg_info->preinst ? runepkg_secure_strdup(pkg_info->preinst) : NULL;
                 curr->data.postinst = pkg_info->postinst ? runepkg_secure_strdup(pkg_info->postinst) : NULL;
                 curr->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;
@@ -409,6 +413,8 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.priority = pkg_info->priority ? runepkg_secure_strdup(pkg_info->priority) : NULL;
     new_node->data.homepage = pkg_info->homepage ? runepkg_secure_strdup(pkg_info->homepage) : NULL;
     new_node->data.filename = pkg_info->filename ? runepkg_secure_strdup(pkg_info->filename) : NULL;
+    new_node->data.multi_arch = pkg_info->multi_arch ? runepkg_secure_strdup(pkg_info->multi_arch) : NULL;
+    new_node->data.source_name = pkg_info->source_name ? runepkg_secure_strdup(pkg_info->source_name) : NULL;
     new_node->data.preinst = pkg_info->preinst ? runepkg_secure_strdup(pkg_info->preinst) : NULL;
     new_node->data.postinst = pkg_info->postinst ? runepkg_secure_strdup(pkg_info->postinst) : NULL;
     new_node->data.prerm = pkg_info->prerm ? runepkg_secure_strdup(pkg_info->prerm) : NULL;

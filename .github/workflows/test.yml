@@ -28,11 +28,11 @@ jobs:
 
       - name: Run Integration Tests
         run: |
-          cd runepkg/tests/integration
+          cd runepkg/rune-tests/integration
           make
 
       - name: Run Fuzzing Campaign
         run: |
-          cd runepkg/tests/fuzz
+          cd runepkg/rune-tests/fuzz
           make
           ./fuzz_sanitize_path -runs=5000
