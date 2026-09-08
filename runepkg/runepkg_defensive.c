@@ -15,6 +15,7 @@
 #include "runepkg_portable.h"
 #include "runepkg_defensive.h"
 #include "runepkg_util.h"
+#include "runepkg_storage.h"
 #include <ctype.h>
 
 /* Memory debugging globals */
@@ -567,6 +568,16 @@ const char* runepkg_error_string(runepkg_error_t error) {
         default:
             return "Unknown error";
     }
+}
+
+/* --- Defensive Validation Functions --- */
+
+runepkg_error_t runepkg_defensive_validate_conflicts(const char *pkg_name, const char *pkg_version, char *error_buf, size_t err_size) {
+    if (!pkg_name) return RUNEPKG_ERROR_NULL_POINTER;
+    if (runepkg_storage_check_conflict(pkg_name, pkg_version, error_buf, err_size) == 1) {
+        return RUNEPKG_ERROR_INVALID_INPUT;
+    }
+    return RUNEPKG_SUCCESS;
 }
 
 /* --- Memory Debugging --- */

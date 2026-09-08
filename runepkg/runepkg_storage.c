@@ -40,8 +40,6 @@ static int compare_packages(const void *a, const void *b) {
  */
 int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_version, 
                                     char *path_buffer) {
-    int ret;
-    (void)pkg_version;
     if (!pkg_name || !path_buffer) {
         return -1;
     }
@@ -51,17 +49,77 @@ int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_versi
         return -1;
     }
 
-    ret = snprintf(path_buffer, PATH_MAX, "%s/%s", g_runepkg_db_dir, pkg_name);
-    if (ret >= PATH_MAX) {
-        return -1;
+    if (pkg_version && pkg_version[0] != '\0') {
+        snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        if (runepkg_util_file_exists(path_buffer)) return 0;
+
+        snprintf(path_buffer, PATH_MAX, "%s/host/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        if (runepkg_util_file_exists(path_buffer)) return 0;
+
+        /* When pkg_version is specified, do NOT return a different version's directory! */
+        snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        return 0;
     }
-    if (!runepkg_util_file_exists(path_buffer)) {
-        char host_path[PATH_MAX];
-        snprintf(host_path, sizeof(host_path), "%s/host/%s", g_runepkg_db_dir, pkg_name);
-        if (runepkg_util_file_exists(host_path)) {
-            runepkg_secure_strcpy(path_buffer, PATH_MAX, host_path);
+
+    /* Only if pkg_version is NULL / empty, check unversioned paths or scan for installed version */
+    snprintf(path_buffer, PATH_MAX, "%s/%s", g_runepkg_db_dir, pkg_name);
+    if (runepkg_util_file_exists(path_buffer)) return 0;
+
+    snprintf(path_buffer, PATH_MAX, "%s/host/%s", g_runepkg_db_dir, pkg_name);
+    if (runepkg_util_file_exists(path_buffer)) return 0;
+
+    {
+        const char *db_dirs[2];
+        int d;
+        db_dirs[0] = g_runepkg_db_dir;
+        db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+
+        for (d = 0; d < 2; d++) {
+            const char *cdir = db_dirs[d];
+            DIR *dir;
+            struct dirent *entry;
+
+            if (!cdir || !runepkg_util_is_directory(cdir)) {
+                if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+                continue;
+            }
+
+            dir = opendir(cdir);
+            if (dir) {
+                while ((entry = readdir(dir)) != NULL) {
+                    char entry_name[256];
+                    const char *sep;
+
+                    if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                        strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                    sep = runepkg_util_find_version_separator(entry->d_name);
+                    memset(entry_name, 0, sizeof(entry_name));
+
+                    if (sep) {
+                        size_t nlen = (size_t)(sep - entry->d_name);
+                        if (nlen >= sizeof(entry_name)) nlen = sizeof(entry_name) - 1;
+                        memcpy(entry_name, entry->d_name, nlen);
+                        entry_name[nlen] = '\0';
+                    } else {
+                        runepkg_secure_strcpy(entry_name, sizeof(entry_name), entry->d_name);
+                    }
+
+                    if (strcmp(entry_name, pkg_name) == 0 || strcmp(entry->d_name, pkg_name) == 0) {
+                        snprintf(path_buffer, PATH_MAX, "%s/%s", cdir, entry->d_name);
+                        closedir(dir);
+                        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+                        return 0;
+                    }
+                }
+                closedir(dir);
+            }
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
         }
     }
+
+    snprintf(path_buffer, PATH_MAX, "%s/%s", g_runepkg_db_dir, pkg_name);
     return 0;
 }
 
@@ -196,7 +254,7 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     const char *end;
     int i;
 
-    if (!pkg_name || !pkg_version || !pkg_info) {
+    if (!pkg_name || !pkg_info) {
         return -1;
     }
 
@@ -383,7 +441,7 @@ int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version
     char *binary_file_path;
     int exists;
 
-    if (!pkg_name || !pkg_version) {
+    if (!pkg_name) {
         return -1;
     }
 
@@ -395,6 +453,106 @@ int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version
     exists = runepkg_util_file_exists(binary_file_path) ? 1 : 0;
     free(binary_file_path);
     return exists;
+}
+
+int runepkg_storage_find_provider(const char *virtual_pkg, PkgInfo *out_info) {
+    const char *db_dirs[2];
+    int d;
+
+    if (!virtual_pkg || !out_info || !g_runepkg_db_dir) return -1;
+
+    db_dirs[0] = g_runepkg_db_dir;
+    db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+
+    for (d = 0; d < 2; d++) {
+        const char *cdir = db_dirs[d];
+        DIR *dir;
+        struct dirent *entry;
+
+        if (!cdir || !runepkg_util_is_directory(cdir)) {
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            continue;
+        }
+
+        dir = opendir(cdir);
+        if (dir) {
+            while ((entry = readdir(dir)) != NULL) {
+                char entry_name[256];
+                char entry_ver[128];
+                const char *sep;
+                PkgInfo info;
+
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                    strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                sep = runepkg_util_find_version_separator(entry->d_name);
+                memset(entry_name, 0, sizeof(entry_name));
+                memset(entry_ver, 0, sizeof(entry_ver));
+
+                if (sep) {
+                    size_t nlen = (size_t)(sep - entry->d_name);
+                    if (nlen >= sizeof(entry_name)) nlen = sizeof(entry_name) - 1;
+                    memcpy(entry_name, entry->d_name, nlen);
+                    entry_name[nlen] = '\0';
+                    runepkg_secure_strcpy(entry_ver, sizeof(entry_ver), sep + 1);
+                } else {
+                    runepkg_secure_strcpy(entry_name, sizeof(entry_name), entry->d_name);
+                }
+
+                if (runepkg_storage_read_package_info(entry_name, entry_ver, &info) == 0) {
+                    if (info.provides && info.provides[0] != '\0') {
+                        char *pcopy = strdup(info.provides);
+                        if (pcopy) {
+                            char *token, *saveptr = NULL;
+                            token = strtok_r(pcopy, ",", &saveptr);
+                            while (token) {
+                                char *vname = runepkg_util_trim_whitespace(token);
+                                if (vname) {
+                                    char *paren = strchr(vname, '(');
+                                    if (paren) *paren = '\0';
+                                    vname = runepkg_util_trim_whitespace(vname);
+                                    if (vname && strcmp(vname, virtual_pkg) == 0) {
+                                        char desc_buf[512];
+                                        runepkg_pack_init_package_info(out_info);
+                                        out_info->package_name = strdup(virtual_pkg);
+                                        out_info->version = info.version ? strdup(info.version) : strdup("1.0");
+                                        out_info->architecture = info.architecture ? strdup(info.architecture) : strdup("all");
+                                        out_info->maintainer = info.maintainer ? strdup(info.maintainer) : NULL;
+
+                                        snprintf(desc_buf, sizeof(desc_buf), "Virtual package provided by installed package %s (%s)",
+                                                 info.package_name ? info.package_name : "host",
+                                                 info.version ? info.version : "1.0");
+                                        out_info->description = strdup(desc_buf);
+                                        out_info->depends = info.depends ? strdup(info.depends) : NULL;
+                                        out_info->provides = strdup(virtual_pkg);
+                                        out_info->conflicts = info.conflicts ? strdup(info.conflicts) : NULL;
+                                        out_info->replaces = info.replaces ? strdup(info.replaces) : NULL;
+                                        out_info->breaks = info.breaks ? strdup(info.breaks) : NULL;
+                                        out_info->source_name = info.package_name ? strdup(info.package_name) : NULL;
+                                        out_info->section = strdup("virtual");
+
+                                        free(pcopy);
+                                        runepkg_pack_free_package_info(&info);
+                                        closedir(dir);
+                                        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+                                        return 0;
+                                    }
+                                }
+                                token = strtok_r(NULL, ",", &saveptr);
+                            }
+                            free(pcopy);
+                        }
+                    }
+                    runepkg_pack_free_package_info(&info);
+                }
+            }
+            closedir(dir);
+        }
+        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+    }
+
+    return -1;
 }
 
 /**
@@ -417,11 +575,157 @@ int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_ver
 /**
  * @brief Removes a package from persistent storage
  */
+int runepkg_storage_remove_provided_dummies(const char *pkg_name) {
+    const char *db_dirs[2];
+    int d;
+
+    if (!pkg_name || !g_runepkg_db_dir) return 0;
+
+    db_dirs[0] = g_runepkg_db_dir;
+    db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+
+    for (d = 0; d < 2; d++) {
+        const char *cdir = db_dirs[d];
+        DIR *dir;
+        struct dirent *entry;
+
+        if (!cdir || !runepkg_util_is_directory(cdir)) {
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            continue;
+        }
+
+        dir = opendir(cdir);
+        if (dir) {
+            while ((entry = readdir(dir)) != NULL) {
+                char dummy_pkg[256];
+                char dummy_ver[128];
+                const char *sep;
+                PkgInfo info;
+
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                    strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                sep = runepkg_util_find_version_separator(entry->d_name);
+                if (!sep) continue;
+
+                memset(dummy_pkg, 0, sizeof(dummy_pkg));
+                memset(dummy_ver, 0, sizeof(dummy_ver));
+
+                {
+                    size_t name_len = (size_t)(sep - entry->d_name);
+                    if (name_len >= sizeof(dummy_pkg)) name_len = sizeof(dummy_pkg) - 1;
+                    memcpy(dummy_pkg, entry->d_name, name_len);
+                    dummy_pkg[name_len] = '\0';
+                }
+                runepkg_secure_strcpy(dummy_ver, sizeof(dummy_ver), sep + 1);
+
+                if (runepkg_storage_read_package_info(dummy_pkg, dummy_ver, &info) == 0) {
+                    bool is_dummy = false;
+                    if ((info.section && strcmp(info.section, "virtual") == 0) ||
+                        (info.description && strstr(info.description, "Virtual package provided by"))) {
+                        is_dummy = true;
+                    }
+
+                    if (is_dummy) {
+                        bool matches_provider = false;
+                        if (info.source_name && strcmp(info.source_name, pkg_name) == 0) {
+                            matches_provider = true;
+                        } else if (info.description && strstr(info.description, pkg_name) != NULL) {
+                            matches_provider = true;
+                        }
+
+                        if (matches_provider) {
+                            char *dpath = runepkg_util_concat_path(cdir, entry->d_name);
+                            if (dpath) {
+                                runepkg_log_verbose("[storage] Purging virtual dummy package '%s' provided by removed package '%s'\n", dummy_pkg, pkg_name);
+                                runepkg_storage_remove_directory_tree(dpath);
+                                free(dpath);
+                            }
+                        }
+                    }
+                    runepkg_pack_free_package_info(&info);
+                }
+            }
+            closedir(dir);
+        }
+        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+    }
+    return 0;
+}
+
+int runepkg_storage_remove_old_versions(const char *pkg_name, const char *new_version) {
+    const char *db_dirs[2];
+    int d;
+    int removed_count = 0;
+
+    if (!pkg_name || !g_runepkg_db_dir) return 0;
+
+    db_dirs[0] = g_runepkg_db_dir;
+    db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+
+    for (d = 0; d < 2; d++) {
+        const char *cdir = db_dirs[d];
+        DIR *dir;
+        struct dirent *entry;
+
+        if (!cdir || !runepkg_util_is_directory(cdir)) {
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            continue;
+        }
+
+        dir = opendir(cdir);
+        if (dir) {
+            while ((entry = readdir(dir)) != NULL) {
+                char entry_pkg[256];
+                char entry_ver[128];
+                const char *sep;
+
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                    strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                sep = runepkg_util_find_version_separator(entry->d_name);
+                if (!sep) continue;
+
+                memset(entry_pkg, 0, sizeof(entry_pkg));
+                memset(entry_ver, 0, sizeof(entry_ver));
+
+                {
+                    size_t name_len = (size_t)(sep - entry->d_name);
+                    if (name_len >= sizeof(entry_pkg)) name_len = sizeof(entry_pkg) - 1;
+                    memcpy(entry_pkg, entry->d_name, name_len);
+                    entry_pkg[name_len] = '\0';
+                }
+                runepkg_secure_strcpy(entry_ver, sizeof(entry_ver), sep + 1);
+
+                if (strcmp(entry_pkg, pkg_name) == 0) {
+                    if (!new_version || strcmp(entry_ver, new_version) != 0) {
+                        char *old_path = runepkg_util_concat_path(cdir, entry->d_name);
+                        if (old_path) {
+                            runepkg_log_verbose("[storage] Purging stale version directory: %s\n", old_path);
+                            runepkg_storage_remove_directory_tree(old_path);
+                            free(old_path);
+                            removed_count++;
+                        }
+                    }
+                }
+            }
+            closedir(dir);
+        }
+        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+    }
+    return removed_count;
+}
+
 int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version) {
     char pkg_dir_path[PATH_MAX];
-    if (!pkg_name || !pkg_version) {
+    if (!pkg_name) {
         return -1;
     }
+
+    /* Purge any host dummy virtual packages provided by pkg_name */
+    runepkg_storage_remove_provided_dummies(pkg_name);
 
     if (runepkg_storage_get_package_path(pkg_name, pkg_version, pkg_dir_path) != 0) {
         return -1;
@@ -786,8 +1090,9 @@ int runepkg_storage_build_autocomplete_index(void) {
     }
 
     if (count == 0) {
-        runepkg_log_verbose("No packages or build directories found, skipping index build.\n");
+        runepkg_log_verbose("No packages or build directories found, building empty conflicts index.\n");
         if (packages) free(packages);
+        runepkg_storage_build_conflicts_replaces_index();
         return 0;
     }
 
@@ -859,6 +1164,10 @@ int runepkg_storage_build_autocomplete_index(void) {
     free(packages);
 
     runepkg_log_verbose("Autocomplete index built: %d entries, %s\n", count, index_path);
+
+    /* Also build the conflicts/replaces binary index */
+    runepkg_storage_build_conflicts_replaces_index();
+
     return 0;
 
 error_cleanup:
@@ -869,4 +1178,332 @@ error_cleanup:
     if (offset_table) free(offset_table);
     if (string_blob) free(string_blob);
     return -1;
+}
+
+/* --- Conflicts & Replaces Binary Index Generator & Lookup --- */
+
+static void parse_relation_items(const char *src_pkg, const char *src_ver, const char *field_str,
+                                 uint32_t rel_type,
+                                 ConflictsReplacesEntry **entries, uint32_t *entry_count, uint32_t *capacity,
+                                 char **string_table, uint32_t *strings_size) {
+    char *copy, *token, *saveptr = NULL;
+
+    if (!field_str || field_str[0] == '\0') return;
+
+    copy = strdup(field_str);
+    if (!copy) return;
+
+    token = strtok_r(copy, ",", &saveptr);
+    while (token) {
+        char *item = runepkg_util_trim_whitespace(token);
+        if (item && item[0] != '\0') {
+            char target_pkg[128];
+            char constraint[64];
+            char *paren;
+
+            memset(target_pkg, 0, sizeof(target_pkg));
+            memset(constraint, 0, sizeof(constraint));
+
+            paren = strchr(item, '(');
+            if (paren) {
+                size_t name_len = (size_t)(paren - item);
+                if (name_len >= sizeof(target_pkg)) name_len = sizeof(target_pkg) - 1;
+                memcpy(target_pkg, item, name_len);
+                target_pkg[name_len] = '\0';
+
+                runepkg_util_safe_strncpy(constraint, paren, sizeof(constraint));
+            } else {
+                runepkg_util_safe_strncpy(target_pkg, item, sizeof(target_pkg));
+            }
+
+            {
+                char *t_trim = runepkg_util_trim_whitespace(target_pkg);
+                char *c_trim = runepkg_util_trim_whitespace(constraint);
+
+                if (t_trim && t_trim[0] != '\0') {
+                    uint32_t off_src_pkg, off_src_ver, off_target_pkg, off_constraint;
+                    size_t len;
+
+                    if (*entry_count >= *capacity) {
+                        uint32_t new_cap = (*capacity == 0) ? 64 : (*capacity * 2);
+                        ConflictsReplacesEntry *new_entries = realloc(*entries, new_cap * sizeof(ConflictsReplacesEntry));
+                        if (!new_entries) break;
+                        *entries = new_entries;
+                        *capacity = new_cap;
+                    }
+
+                    #define APPEND_STR(str_val, out_offset) do { \
+                        const char *s = (str_val) ? (str_val) : ""; \
+                        len = strlen(s) + 1; \
+                        *string_table = realloc(*string_table, *strings_size + len); \
+                        memcpy(*string_table + *strings_size, s, len); \
+                        out_offset = *strings_size; \
+                        *strings_size += (uint32_t)len; \
+                    } while(0)
+
+                    APPEND_STR(src_pkg, off_src_pkg);
+                    APPEND_STR(src_ver, off_src_ver);
+                    APPEND_STR(t_trim, off_target_pkg);
+                    APPEND_STR(c_trim, off_constraint);
+
+                    (*entries)[*entry_count].src_pkg_offset = off_src_pkg;
+                    (*entries)[*entry_count].src_ver_offset = off_src_ver;
+                    (*entries)[*entry_count].target_pkg_offset = off_target_pkg;
+                    (*entries)[*entry_count].constraint_offset = off_constraint;
+                    (*entries)[*entry_count].relation_type = rel_type;
+
+                    (*entry_count)++;
+                }
+            }
+        }
+        token = strtok_r(NULL, ",", &saveptr);
+    }
+    free(copy);
+}
+
+int runepkg_storage_build_conflicts_replaces_index(void) {
+    char bin_path[PATH_MAX];
+    char txt_path[PATH_MAX];
+    FILE *fbin = NULL, *ftxt = NULL;
+    DIR *dir = NULL;
+    struct dirent *entry;
+    ConflictsReplacesHeader hdr;
+    ConflictsReplacesEntry *entries = NULL;
+    uint32_t entry_count = 0;
+    uint32_t capacity = 0;
+    char *string_table = NULL;
+    uint32_t strings_size = 0;
+    const char *db_dirs[2];
+    int db_idx;
+
+    if (!g_runepkg_db_dir) return -1;
+
+    runepkg_log_verbose("Building conflicts/replaces binary index...\n");
+
+    db_dirs[0] = g_runepkg_db_dir;
+    db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+
+    for (db_idx = 0; db_idx < 2; db_idx++) {
+        const char *current_db = db_dirs[db_idx];
+        if (!current_db || !runepkg_util_is_directory(current_db)) {
+            if (db_idx == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            continue;
+        }
+
+        dir = opendir(current_db);
+        if (dir) {
+            while ((entry = readdir(dir)) != NULL) {
+                char pkg_name[256];
+                char pkg_ver[128];
+                const char *sep;
+                PkgInfo info;
+
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+                if (strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                sep = runepkg_util_find_version_separator(entry->d_name);
+                if (!sep) continue;
+
+                memset(pkg_name, 0, sizeof(pkg_name));
+                memset(pkg_ver, 0, sizeof(pkg_ver));
+
+                {
+                    size_t name_len = (size_t)(sep - entry->d_name);
+                    if (name_len >= sizeof(pkg_name)) name_len = sizeof(pkg_name) - 1;
+                    memcpy(pkg_name, entry->d_name, name_len);
+                    pkg_name[name_len] = '\0';
+                }
+                runepkg_secure_strcpy(pkg_ver, sizeof(pkg_ver), sep + 1);
+
+                if (runepkg_storage_read_package_info(pkg_name, pkg_ver, &info) == 0) {
+                    if (info.conflicts) {
+                        parse_relation_items(pkg_name, pkg_ver, info.conflicts, RUNEPKG_RELATION_CONFLICTS,
+                                             &entries, &entry_count, &capacity, &string_table, &strings_size);
+                    }
+                    if (info.breaks) {
+                        parse_relation_items(pkg_name, pkg_ver, info.breaks, RUNEPKG_RELATION_BREAKS,
+                                             &entries, &entry_count, &capacity, &string_table, &strings_size);
+                    }
+                    if (info.replaces) {
+                        parse_relation_items(pkg_name, pkg_ver, info.replaces, RUNEPKG_RELATION_REPLACES,
+                                             &entries, &entry_count, &capacity, &string_table, &strings_size);
+                    }
+                    if (info.provides) {
+                        parse_relation_items(pkg_name, pkg_ver, info.provides, RUNEPKG_RELATION_PROVIDES,
+                                             &entries, &entry_count, &capacity, &string_table, &strings_size);
+                    }
+                    runepkg_pack_free_package_info(&info);
+                }
+            }
+            closedir(dir);
+        }
+        if (db_idx == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+    }
+
+    /* Write binary index */
+    snprintf(bin_path, sizeof(bin_path), "%s/%s", g_runepkg_db_dir, RUNEPKG_STORAGE_CONFLICTS_BINARY_FILE);
+    fbin = fopen(bin_path, "wb");
+    if (fbin) {
+        hdr.magic = 0x52554E45;
+        hdr.version = 1;
+        hdr.entry_count = entry_count;
+        hdr.strings_size = strings_size;
+
+        fwrite(&hdr, sizeof(hdr), 1, fbin);
+        if (entry_count > 0 && entries) {
+            fwrite(entries, sizeof(ConflictsReplacesEntry), entry_count, fbin);
+        }
+        if (strings_size > 0 && string_table) {
+            fwrite(string_table, 1, strings_size, fbin);
+        }
+        fclose(fbin);
+        chmod(bin_path, 0644);
+    }
+
+    /* Write text index summary */
+    snprintf(txt_path, sizeof(txt_path), "%s/%s", g_runepkg_db_dir, RUNEPKG_STORAGE_CONFLICTS_TEXT_FILE);
+    ftxt = fopen(txt_path, "w");
+    if (ftxt) {
+        uint32_t i;
+        fprintf(ftxt, "# runepkg conflicts-replaces index (%u entries)\n", entry_count);
+        for (i = 0; i < entry_count; i++) {
+            const char *spkg = string_table + entries[i].src_pkg_offset;
+            const char *sver = string_table + entries[i].src_ver_offset;
+            const char *tpkg = string_table + entries[i].target_pkg_offset;
+            const char *cons = string_table + entries[i].constraint_offset;
+            const char *rel_str = "UNKNOWN";
+
+            if (entries[i].relation_type == RUNEPKG_RELATION_CONFLICTS) rel_str = "Conflicts";
+            else if (entries[i].relation_type == RUNEPKG_RELATION_BREAKS) rel_str = "Breaks";
+            else if (entries[i].relation_type == RUNEPKG_RELATION_REPLACES) rel_str = "Replaces";
+            else if (entries[i].relation_type == RUNEPKG_RELATION_PROVIDES) rel_str = "Provides";
+
+            fprintf(ftxt, "%s (%s) %s %s %s\n", spkg, sver, rel_str, tpkg, cons);
+        }
+        fclose(ftxt);
+        chmod(txt_path, 0644);
+    }
+
+    if (entries) free(entries);
+    if (string_table) free(string_table);
+
+    runepkg_log_verbose("Conflicts/replaces index built: %u entries\n", entry_count);
+    return 0;
+}
+
+static int get_installed_package_version(const char *pkg_name, char *out_ver, size_t ver_size) {
+    PkgInfo info;
+    if (!pkg_name || !out_ver) return 0;
+    if (runepkg_storage_read_package_info(pkg_name, NULL, &info) == 0) {
+        if (info.version) {
+            runepkg_secure_strcpy(out_ver, ver_size, info.version);
+            runepkg_pack_free_package_info(&info);
+            return 1;
+        }
+        runepkg_pack_free_package_info(&info);
+    }
+    return 0;
+}
+
+int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version, char *conflict_target, size_t target_size) {
+    char bin_path[PATH_MAX];
+    FILE *fbin;
+    ConflictsReplacesHeader hdr;
+    ConflictsReplacesEntry *entries = NULL;
+    char *string_table = NULL;
+    uint32_t i;
+    int conflict_found = 0;
+
+    if (!pkg_name || !g_runepkg_db_dir) return 0;
+
+    snprintf(bin_path, sizeof(bin_path), "%s/%s", g_runepkg_db_dir, RUNEPKG_STORAGE_CONFLICTS_BINARY_FILE);
+    fbin = fopen(bin_path, "rb");
+    if (!fbin) return 0;
+
+    if (fread(&hdr, sizeof(hdr), 1, fbin) != 1 || hdr.magic != 0x52554E45) {
+        fclose(fbin);
+        return 0;
+    }
+
+    if (hdr.entry_count == 0) {
+        fclose(fbin);
+        return 0;
+    }
+
+    entries = malloc(hdr.entry_count * sizeof(ConflictsReplacesEntry));
+    string_table = malloc(hdr.strings_size);
+
+    if (!entries || !string_table) {
+        if (entries) free(entries);
+        if (string_table) free(string_table);
+        fclose(fbin);
+        return -1;
+    }
+
+    if (fread(entries, sizeof(ConflictsReplacesEntry), hdr.entry_count, fbin) != hdr.entry_count ||
+        fread(string_table, 1, hdr.strings_size, fbin) != hdr.strings_size) {
+        free(entries);
+        free(string_table);
+        fclose(fbin);
+        return -1;
+    }
+    fclose(fbin);
+
+    for (i = 0; i < hdr.entry_count; i++) {
+        const char *spkg = string_table + entries[i].src_pkg_offset;
+        const char *tpkg = string_table + entries[i].target_pkg_offset;
+        const char *cons = string_table + entries[i].constraint_offset;
+
+        if (entries[i].relation_type == RUNEPKG_RELATION_CONFLICTS) {
+            if (strcmp(spkg, pkg_name) == 0) {
+                if (strcmp(tpkg, pkg_name) != 0) {
+                    char inst_ver[128];
+                    if (get_installed_package_version(tpkg, inst_ver, sizeof(inst_ver))) {
+                        bool is_conflict = true;
+                        if (cons && cons[0] != '\0') {
+                            is_conflict = (runepkg_util_check_version_constraint(inst_ver, cons) == 1);
+                        }
+                        if (is_conflict) {
+                            if (conflict_target && target_size > 0) {
+                                snprintf(conflict_target, target_size, "Package '%s' conflicts with installed package '%s' (%s)", pkg_name, tpkg, inst_ver);
+                            }
+                            conflict_found = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (strcmp(tpkg, pkg_name) == 0) {
+                if (strcmp(spkg, pkg_name) != 0) {
+                    char inst_ver[128];
+                    if (get_installed_package_version(spkg, inst_ver, sizeof(inst_ver))) {
+                        if (conflict_target && target_size > 0) {
+                            snprintf(conflict_target, target_size, "Package '%s' conflicts with installed package '%s' (%s)", pkg_name, spkg, inst_ver);
+                        }
+                        conflict_found = 1;
+                        break;
+                    }
+                }
+            }
+        } else if (entries[i].relation_type == RUNEPKG_RELATION_BREAKS) {
+            if (strcmp(tpkg, pkg_name) == 0 && pkg_version && cons && cons[0] != '\0') {
+                if (strcmp(spkg, pkg_name) != 0) {
+                    char inst_ver[128];
+                    if (get_installed_package_version(spkg, inst_ver, sizeof(inst_ver))) {
+                        if (runepkg_util_check_version_constraint(pkg_version, cons) == 1) {
+                            if (conflict_target && target_size > 0) {
+                                snprintf(conflict_target, target_size, "Package '%s' (%s) breaks installed package '%s' (%s)", pkg_name, pkg_version ? pkg_version : "0", spkg, inst_ver);
+                            }
+                            conflict_found = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    free(entries);
+    free(string_table);
+    return conflict_found;
 }

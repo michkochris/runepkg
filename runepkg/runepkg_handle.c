@@ -340,50 +340,64 @@ int handle_remove(const char *package_name) {
     }
 
     if (pkg_name[0] == '\0' || pkg_version[0] == '\0') {
-        DIR *dir = opendir(g_runepkg_db_dir);
+        DIR *dir;
         struct dirent *entry;
         int match_count = 0;
         char match_name[PATH_MAX];
         char match_version[PATH_MAX];
-        size_t input_len;
-
-        if (!dir) {
-            printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
-            return -1;
-        }
+        const char *db_dirs[2];
+        int d;
 
         memset(match_name, 0, sizeof(match_name));
         memset(match_version, 0, sizeof(match_version));
-        input_len = strlen(trimmed);
 
-        while ((entry = readdir(dir)) != NULL) {
-            if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
-            if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
+        db_dirs[0] = g_runepkg_db_dir;
+        db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
 
-            if (strcmp(entry->d_name, trimmed) == 0) {
-                const char *v_sep;
-                match_count = 1;
-                runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
-                v_sep = runepkg_util_find_version_separator(entry->d_name);
-                if (v_sep) {
-                    runepkg_secure_strcpy(match_version, sizeof(match_version), v_sep + 1);
-                } else {
-                    match_version[0] = '\0';
-                }
-                break;
+        for (d = 0; d < 2; d++) {
+            const char *cdir = db_dirs[d];
+            if (!cdir || !runepkg_util_is_directory(cdir)) {
+                if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+                continue;
             }
 
-            {
-                const char *ver_ptr = runepkg_util_find_version_separator(entry->d_name);
-                if (ver_ptr && (size_t)(ver_ptr - entry->d_name) == input_len && strncmp(entry->d_name, trimmed, input_len) == 0) {
-                    match_count++;
-                    runepkg_secure_strcpy(match_name, sizeof(match_name), trimmed);
-                    runepkg_secure_strcpy(match_version, sizeof(match_version), ver_ptr + 1);
+            dir = opendir(cdir);
+            if (dir) {
+                while ((entry = readdir(dir)) != NULL) {
+                    char entry_name[256];
+                    char entry_ver[128];
+                    const char *sep;
+
+                    if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                    if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                        strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                    sep = runepkg_util_find_version_separator(entry->d_name);
+                    memset(entry_name, 0, sizeof(entry_name));
+                    memset(entry_ver, 0, sizeof(entry_ver));
+
+                    if (sep) {
+                        size_t nlen = (size_t)(sep - entry->d_name);
+                        if (nlen >= sizeof(entry_name)) nlen = sizeof(entry_name) - 1;
+                        memcpy(entry_name, entry->d_name, nlen);
+                        entry_name[nlen] = '\0';
+                        runepkg_secure_strcpy(entry_ver, sizeof(entry_ver), sep + 1);
+                    } else {
+                        runepkg_secure_strcpy(entry_name, sizeof(entry_name), entry->d_name);
+                    }
+
+                    if (strcmp(entry_name, trimmed) == 0 || strcmp(entry->d_name, trimmed) == 0) {
+                        match_count = 1;
+                        runepkg_secure_strcpy(match_name, sizeof(match_name), entry_name);
+                        runepkg_secure_strcpy(match_version, sizeof(match_version), entry_ver);
+                        break;
+                    }
                 }
+                closedir(dir);
             }
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            if (match_count > 0) break;
         }
-
-        closedir(dir);
 
         if (match_count == 1) {
             runepkg_secure_strcpy(pkg_name, sizeof(pkg_name), match_name);
@@ -543,7 +557,8 @@ int handle_status(const char *package_name) {
     int exact_match_count = 0;
     char exact_match_name[PATH_MAX];
     char exact_match_version[PATH_MAX];
-    size_t name_len;
+    const char *db_dirs[2];
+    int d;
 
     if (!package_name || !g_runepkg_db_dir) {
         printf("Error: Invalid package name or config.\n");
@@ -552,50 +567,56 @@ int handle_status(const char *package_name) {
 
     print_package_data_header();
 
-    dir = opendir(g_runepkg_db_dir);
-    if (!dir) {
-        printf("Error: Cannot open runepkg database directory: %s\n", g_runepkg_db_dir);
-        return -1;
-    }
-
     memset(exact_match_name, 0, sizeof(exact_match_name));
     memset(exact_match_version, 0, sizeof(exact_match_version));
 
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 || strcmp(entry->d_name, "lists") == 0) continue;
+    db_dirs[0] = g_runepkg_db_dir;
+    db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
 
-        if (strcmp(entry->d_name, package_name) == 0) {
-            const char *last_dash = NULL;
-            exact_match_count = 1;
-            last_dash = runepkg_util_find_version_separator(entry->d_name);
-            if (last_dash) {
-                name_len = (size_t)(last_dash - entry->d_name);
-                runepkg_util_safe_strncpy(exact_match_name, entry->d_name, name_len + 1);
-                exact_match_name[name_len] = '\0';
-                runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), last_dash + 1);
-            } else {
-                runepkg_secure_strcpy(exact_match_name, sizeof(exact_match_name), entry->d_name);
-                exact_match_version[0] = '\0';
-            }
-            break;
+    for (d = 0; d < 2; d++) {
+        const char *cdir = db_dirs[d];
+        if (!cdir || !runepkg_util_is_directory(cdir)) {
+            if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+            continue;
         }
 
-        {
-            name_len = strlen(package_name);
-            if (strncmp(entry->d_name, package_name, name_len) == 0 && entry->d_name[name_len] == '-') {
-                const char *ver = entry->d_name + name_len + 1;
-                if (*ver != '\0' && isdigit((unsigned char)*ver)) {
-                    exact_match_count++;
-                    if (exact_match_count == 1) {
-                        runepkg_secure_strcpy(exact_match_name, sizeof(exact_match_name), package_name);
-                        runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), ver);
-                    }
+        dir = opendir(cdir);
+        if (dir) {
+            while ((entry = readdir(dir)) != NULL) {
+                char entry_name[256];
+                char entry_ver[128];
+                const char *sep;
+
+                if (entry->d_type != DT_DIR && entry->d_type != DT_UNKNOWN) continue;
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                    strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                sep = runepkg_util_find_version_separator(entry->d_name);
+                memset(entry_name, 0, sizeof(entry_name));
+                memset(entry_ver, 0, sizeof(entry_ver));
+
+                if (sep) {
+                    size_t nlen = (size_t)(sep - entry->d_name);
+                    if (nlen >= sizeof(entry_name)) nlen = sizeof(entry_name) - 1;
+                    memcpy(entry_name, entry->d_name, nlen);
+                    entry_name[nlen] = '\0';
+                    runepkg_secure_strcpy(entry_ver, sizeof(entry_ver), sep + 1);
+                } else {
+                    runepkg_secure_strcpy(entry_name, sizeof(entry_name), entry->d_name);
+                }
+
+                if (strcmp(entry_name, package_name) == 0 || strcmp(entry->d_name, package_name) == 0) {
+                    exact_match_count = 1;
+                    runepkg_secure_strcpy(exact_match_name, sizeof(exact_match_name), entry_name);
+                    runepkg_secure_strcpy(exact_match_version, sizeof(exact_match_version), entry_ver);
+                    break;
                 }
             }
+            closedir(dir);
         }
+        if (d == 1 && db_dirs[1]) free((void*)db_dirs[1]);
+        if (exact_match_count > 0) break;
     }
-    closedir(dir);
 
     if (exact_match_count == 1) {
         PkgInfo pkg_info;
@@ -636,8 +657,37 @@ int handle_status(const char *package_name) {
         }
     } else {
         if (exact_match_count == 0) {
+            PkgInfo prov_info;
             char suggestions[12][PATH_MAX];
             int count;
+
+            if (runepkg_storage_find_provider(package_name, &prov_info) == 0) {
+                printf("Package: %s\n", prov_info.package_name);
+                printf("Version: %s\n", prov_info.version ? prov_info.version : "(unknown)");
+                printf("Architecture: %s\n", prov_info.architecture ? prov_info.architecture : "(unknown)");
+                printf("Maintainer: %s\n", prov_info.maintainer ? prov_info.maintainer : "(unknown)");
+                printf("Description: %s\n", prov_info.description ? prov_info.description : "(unknown)");
+                printf("Depends: %s\n", prov_info.depends ? prov_info.depends : "(none)");
+                if (prov_info.pre_depends) printf("Pre-Depends: %s\n", prov_info.pre_depends);
+                if (prov_info.provides) printf("Provides: %s\n", prov_info.provides);
+                if (prov_info.build_depends) printf("Build-Depends: %s\n", prov_info.build_depends);
+                if (prov_info.build_depends_indep) printf("Build-Depends-Indep: %s\n", prov_info.build_depends_indep);
+                if (prov_info.build_depends_arch) printf("Build-Depends-Arch: %s\n", prov_info.build_depends_arch);
+                if (prov_info.conflicts) printf("Conflicts: %s\n", prov_info.conflicts);
+                if (prov_info.replaces) printf("Replaces: %s\n", prov_info.replaces);
+                if (prov_info.breaks) printf("Breaks: %s\n", prov_info.breaks);
+                if (prov_info.recommends) printf("Recommends: %s\n", prov_info.recommends);
+                if (prov_info.suggests) printf("Suggests: %s\n", prov_info.suggests);
+                if (prov_info.source_name) printf("Source: %s\n", prov_info.source_name);
+                printf("Installed-Size: %s\n", prov_info.installed_size ? prov_info.installed_size : "(unknown)");
+                printf("Section: %s\n", prov_info.section ? prov_info.section : "(unknown)");
+                printf("Priority: %s\n", prov_info.priority ? prov_info.priority : "(unknown)");
+                printf("Homepage: %s\n", prov_info.homepage ? prov_info.homepage : "(unknown)");
+                printf("Files installed: 0\n");
+                runepkg_pack_free_package_info(&prov_info);
+                return 0;
+            }
+
             printf("'%s' not installed... did you mean?\n\n", package_name);
             count = runepkg_completion_get_repo_suggestions(package_name, suggestions, 12);
             if (count > 0) {

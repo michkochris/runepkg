@@ -1,0 +1,75 @@
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/
+[ zypherus /home/michko/runepkg/runepkg ]# make musl-all && make install
+--------------------------------------------------------
+   runepkg: The Grand Ritual of the Static Binary
+--------------------------------------------------------
+[final]  Forging the static runepkg binary...
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_util_cpp.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+✅ The Grand Ritual is Complete.
+Your static runepkg binary is ready: runepkg
+Verify with: ldd runepkg
+--------------------------------------------------------
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+Installation complete. (Run 'make install-target-rules' to sync the rules tree)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg sync
+Host synchronization successful.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] libversion-perl: 5.42.2-3 -> 1:0.9934-1+b1
+  [upgradable] libmodule-corelist-perl: 5.42.2-3 -> 5.20260803-1
+  [upgradable] lzma: 5.8.3-1 -> 25.00+dfsg-1
+  [upgradable] lsb-base: 3.18-1 -> 11.6
+Update complete! Binary/Source indexes updated. 4 upgradable. Time: 7.0s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 112496 source rune stanzas in 1524ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26504 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i binutils-mingw-w64-i686
+[error] Package Conflict Detected:
+  [conflict] Package 'binutils-mingw-w64-i686' conflicts with installed package 'elf-binutils' (2.47-2)
+Aborting installation due to package conflict. Use -f/--force to override.
+[ zypherus /home/michko/runepkg/runepkg ]#

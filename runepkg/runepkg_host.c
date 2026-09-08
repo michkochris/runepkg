@@ -128,65 +128,65 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
 
         if (strncmp(line, "Package: ", 9) == 0) {
             if (info->package_name) free(info->package_name);
-            info->package_name = strdup(line + 9);
+            info->package_name = strdup(runepkg_util_trim_whitespace(line + 9));
             field_ptr = &info->package_name;
         } else if (strncmp(line, "Status: ", 8) == 0) {
             if (strstr(line, "installed")) found_installed = 1;
         } else if (strncmp(line, "Version: ", 9) == 0) {
             if (info->version) free(info->version);
-            info->version = strdup(line + 9);
+            info->version = strdup(runepkg_util_trim_whitespace(line + 9));
         } else if (strncmp(line, "Architecture: ", 14) == 0) {
             if (info->architecture) free(info->architecture);
-            info->architecture = strdup(line + 14);
+            info->architecture = strdup(runepkg_util_trim_whitespace(line + 14));
         } else if (strncmp(line, "Maintainer: ", 12) == 0) {
             if (info->maintainer) free(info->maintainer);
-            info->maintainer = strdup(line + 12);
+            info->maintainer = strdup(runepkg_util_trim_whitespace(line + 12));
         } else if (strncmp(line, "Depends: ", 9) == 0) {
             if (info->depends) free(info->depends);
-            info->depends = strdup(line + 9);
+            info->depends = strdup(runepkg_util_trim_whitespace(line + 9));
         } else if (strncmp(line, "Pre-Depends: ", 13) == 0) {
             if (info->pre_depends) free(info->pre_depends);
-            info->pre_depends = strdup(line + 13);
+            info->pre_depends = strdup(runepkg_util_trim_whitespace(line + 13));
         } else if (strncmp(line, "Provides: ", 10) == 0) {
             if (info->provides) free(info->provides);
-            info->provides = strdup(line + 10);
+            info->provides = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Build-Depends: ", 15) == 0) {
             runepkg_util_free_and_null(&info->build_depends);
-            info->build_depends = runepkg_secure_strdup(line + 15);
+            info->build_depends = runepkg_secure_strdup(runepkg_util_trim_whitespace(line + 15));
         } else if (strncmp(line, "Build-Depends-Indep: ", 21) == 0) {
             runepkg_util_free_and_null(&info->build_depends_indep);
-            info->build_depends_indep = runepkg_secure_strdup(line + 21);
+            info->build_depends_indep = runepkg_secure_strdup(runepkg_util_trim_whitespace(line + 21));
         } else if (strncmp(line, "Build-Depends-Arch: ", 20) == 0) {
             runepkg_util_free_and_null(&info->build_depends_arch);
-            info->build_depends_arch = runepkg_secure_strdup(line + 20);
+            info->build_depends_arch = runepkg_secure_strdup(runepkg_util_trim_whitespace(line + 20));
         } else if (strncmp(line, "Conflicts: ", 11) == 0) {
             if (info->conflicts) free(info->conflicts);
-            info->conflicts = strdup(line + 11);
+            info->conflicts = strdup(runepkg_util_trim_whitespace(line + 11));
         } else if (strncmp(line, "Replaces: ", 10) == 0) {
             if (info->replaces) free(info->replaces);
-            info->replaces = strdup(line + 10);
+            info->replaces = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Breaks: ", 8) == 0) {
             if (info->breaks) free(info->breaks);
-            info->breaks = strdup(line + 8);
+            info->breaks = strdup(runepkg_util_trim_whitespace(line + 8));
         } else if (strncmp(line, "Recommends: ", 12) == 0) {
             if (info->recommends) free(info->recommends);
-            info->recommends = strdup(line + 12);
+            info->recommends = strdup(runepkg_util_trim_whitespace(line + 12));
         } else if (strncmp(line, "Suggests: ", 10) == 0) {
             if (info->suggests) free(info->suggests);
-            info->suggests = strdup(line + 10);
+            info->suggests = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Description: ", 13) == 0) {
             if (info->description) free(info->description);
-            info->description = strdup(line + 13);
+            info->description = strdup(runepkg_util_trim_whitespace(line + 13));
             field_ptr = &info->description;
         } else if (strncmp(line, "Section: ", 9) == 0) {
             if (info->section) free(info->section);
-            info->section = strdup(line + 9);
+            info->section = strdup(runepkg_util_trim_whitespace(line + 9));
         } else if (strncmp(line, "Priority: ", 10) == 0) {
             if (info->priority) free(info->priority);
-            info->priority = strdup(line + 10);
+            info->priority = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Homepage: ", 10) == 0) {
             if (info->homepage) free(info->homepage);
-            info->homepage = strdup(line + 10);
+            info->homepage = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Installed-Size: ", 16) == 0) {
             if (info->installed_size) free(info->installed_size);
             info->installed_size = strdup(line + 16);
@@ -206,19 +206,136 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
     return 0;
 }
 
+static void generate_provides_dummy_packages(const PkgInfo *host_pkg) {
+    char *copy, *token, *saveptr = NULL;
+
+    if (!host_pkg || !host_pkg->provides || host_pkg->provides[0] == '\0') return;
+
+    copy = strdup(host_pkg->provides);
+    if (!copy) return;
+
+    token = strtok_r(copy, ",", &saveptr);
+    while (token) {
+        char *virt_name = runepkg_util_trim_whitespace(token);
+        if (virt_name && virt_name[0] != '\0') {
+            char *paren = strchr(virt_name, '(');
+            if (paren) *paren = '\0';
+            virt_name = runepkg_util_trim_whitespace(virt_name);
+
+            if (virt_name && virt_name[0] != '\0') {
+                char dummy_version[64];
+                PkgInfo dummy_info;
+
+                runepkg_secure_strcpy(dummy_version, sizeof(dummy_version), host_pkg->version ? host_pkg->version : "1.0");
+
+                if (!runepkg_storage_package_exists(virt_name, dummy_version)) {
+                    if (runepkg_storage_create_package_directory(virt_name, dummy_version) == 0) {
+                        char desc_buf[512];
+                        runepkg_pack_init_package_info(&dummy_info);
+                        dummy_info.package_name = strdup(virt_name);
+                        dummy_info.version = strdup(dummy_version);
+
+                        snprintf(desc_buf, sizeof(desc_buf), "Virtual package provided by host package %s (%s)",
+                                 host_pkg->package_name ? host_pkg->package_name : "host",
+                                 host_pkg->version ? host_pkg->version : "1.0");
+                        dummy_info.description = strdup(desc_buf);
+                        dummy_info.provides = strdup(virt_name);
+                        dummy_info.architecture = host_pkg->architecture ? strdup(host_pkg->architecture) : strdup("all");
+                        dummy_info.section = strdup("virtual");
+                        dummy_info.maintainer = host_pkg->maintainer ? strdup(host_pkg->maintainer) : NULL;
+                        dummy_info.conflicts = host_pkg->conflicts ? strdup(host_pkg->conflicts) : NULL;
+                        dummy_info.breaks = host_pkg->breaks ? strdup(host_pkg->breaks) : NULL;
+                        dummy_info.replaces = host_pkg->replaces ? strdup(host_pkg->replaces) : NULL;
+                        dummy_info.depends = host_pkg->depends ? strdup(host_pkg->depends) : NULL;
+                        dummy_info.source_name = host_pkg->package_name ? strdup(host_pkg->package_name) : NULL;
+
+                        runepkg_storage_write_package_info(virt_name, dummy_version, &dummy_info);
+                        runepkg_pack_free_package_info(&dummy_info);
+                        runepkg_util_log_verbose("[host] Created dummy virtual package for '%s' (provided by %s)", virt_name, host_pkg->package_name ? host_pkg->package_name : "host");
+                    }
+                }
+            }
+        }
+        token = strtok_r(NULL, ",", &saveptr);
+    }
+    free(copy);
+}
+
+static void prune_orphaned_provides_dummies(char **active_provides, int active_count) {
+    char host_dir[PATH_MAX];
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!g_runepkg_db_dir) return;
+
+    snprintf(host_dir, sizeof(host_dir), "%s/host", g_runepkg_db_dir);
+    if (!runepkg_util_is_directory(host_dir)) return;
+
+    dir = opendir(host_dir);
+    if (!dir) return;
+
+    while ((entry = readdir(dir)) != NULL) {
+        char pkg_name[256];
+        char pkg_ver[128];
+        const char *sep;
+        PkgInfo info;
+
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) continue;
+
+        sep = runepkg_util_find_version_separator(entry->d_name);
+        if (!sep) continue;
+
+        memset(pkg_name, 0, sizeof(pkg_name));
+        memset(pkg_ver, 0, sizeof(pkg_ver));
+
+        {
+            size_t name_len = (size_t)(sep - entry->d_name);
+            if (name_len >= sizeof(pkg_name)) name_len = sizeof(pkg_name) - 1;
+            memcpy(pkg_name, entry->d_name, name_len);
+            pkg_name[name_len] = '\0';
+        }
+        runepkg_secure_strcpy(pkg_ver, sizeof(pkg_ver), sep + 1);
+
+        if (runepkg_storage_read_package_info(pkg_name, pkg_ver, &info) == 0) {
+            if ((info.section && strcmp(info.section, "virtual") == 0) ||
+                (info.description && strstr(info.description, "Virtual dummy package"))) {
+                int is_active = 0;
+                int i;
+                for (i = 0; i < active_count; i++) {
+                    if (active_provides[i] && strcmp(active_provides[i], pkg_name) == 0) {
+                        is_active = 1;
+                        break;
+                    }
+                }
+                if (!is_active) {
+                    char *dummy_path = runepkg_util_concat_path(host_dir, entry->d_name);
+                    if (dummy_path) {
+                        runepkg_util_log_verbose("[host] Pruning orphaned dummy virtual package: %s", dummy_path);
+                        runepkg_storage_remove_directory_tree(dummy_path);
+                        free(dummy_path);
+                    }
+                }
+            }
+            runepkg_pack_free_package_info(&info);
+        }
+    }
+    closedir(dir);
+}
+
 int runepkg_host_sync(void) {
     FILE *fp;
     const char *status_file = "/var/lib/dpkg/status";
     PkgInfo info;
     int count = 0;
+    char **active_provides = NULL;
+    int active_provides_count = 0;
+    int active_provides_cap = 0;
+    int i;
 
-    /* Check dpkg_host config: if 'none', skip host sync */
-    if (!g_dpkg_host || strcmp(g_dpkg_host, "none") == 0) {
-        runepkg_util_log_debug("[host] dpkg_host is set to 'none' or not configured. Skipping host sync.");
-        return 0;
-    }
-    if (strcmp(g_dpkg_host, "auto") != 0 && strcmp(g_dpkg_host, "yes") != 0) {
-        runepkg_util_log_debug("[host] dpkg_host is not 'auto' (value: %s). Skipping host sync.", g_dpkg_host);
+    /* Check dpkg_host config: if 'none', skip host sync but still update local index */
+    if (g_dpkg_host && strcmp(g_dpkg_host, "none") == 0) {
+        runepkg_util_log_debug("[host] dpkg_host is set to 'none'. Skipping host sync.");
+        runepkg_storage_build_autocomplete_index();
         return 0;
     }
 
@@ -226,6 +343,7 @@ int runepkg_host_sync(void) {
 
     if (!runepkg_util_file_exists(status_file)) {
         runepkg_util_log_debug("[host] dpkg status file not found, skipping deep sync.");
+        runepkg_storage_build_autocomplete_index();
         return 0;
     }
 
@@ -244,17 +362,52 @@ int runepkg_host_sync(void) {
                     count++;
                 }
             }
+            if (info.provides) {
+                char *pcopy = strdup(info.provides);
+                if (pcopy) {
+                    char *ptoken, *psave = NULL;
+                    ptoken = strtok_r(pcopy, ",", &psave);
+                    while (ptoken) {
+                        char *vname = runepkg_util_trim_whitespace(ptoken);
+                        if (vname && vname[0] != '\0') {
+                            char *paren = strchr(vname, '(');
+                            if (paren) *paren = '\0';
+                            vname = runepkg_util_trim_whitespace(vname);
+                            if (vname && vname[0] != '\0') {
+                                if (active_provides_count >= active_provides_cap) {
+                                    int ncap = (active_provides_cap == 0) ? 32 : active_provides_cap * 2;
+                                    char **ntable = realloc(active_provides, ncap * sizeof(char*));
+                                    if (ntable) {
+                                        active_provides = ntable;
+                                        active_provides_cap = ncap;
+                                    }
+                                }
+                                if (active_provides_count < active_provides_cap) {
+                                    active_provides[active_provides_count++] = strdup(vname);
+                                }
+                            }
+                        }
+                        ptoken = strtok_r(NULL, ",", &psave);
+                    }
+                    free(pcopy);
+                }
+                generate_provides_dummy_packages(&info);
+            }
         }
         runepkg_pack_free_package_info(&info);
     }
 
     fclose(fp);
 
-    if (count > 0) {
-        runepkg_util_log_verbose("[host] Synced %d new host packages into runepkg database.", count);
-        /* Rebuild autocomplete pool to include new host packages */
-        runepkg_storage_build_autocomplete_index();
-    }
+    /* Prune any dummy virtual packages whose host providers were removed */
+    prune_orphaned_provides_dummies(active_provides, active_provides_count);
+
+    for (i = 0; i < active_provides_count; i++) free(active_provides[i]);
+    if (active_provides) free(active_provides);
+
+    runepkg_util_log_verbose("[host] Synced %d new host packages into runepkg database.", count);
+    /* Always rebuild autocomplete pool and conflicts index after sync */
+    runepkg_storage_build_autocomplete_index();
 
     return 0;
 }
@@ -424,9 +577,6 @@ int runepkg_host_register_install(const PkgInfo *pkg_info) {
 
     runepkg_util_log_verbose("[host] Registering installation & injecting into dpkg host: %s (%s)",
                             pkg_info->package_name, pkg_info->version ? pkg_info->version : "unknown");
-
-    /* Ensure metadata is in internal runepkg storage */
-    runepkg_storage_write_package_info(pkg_info->package_name, pkg_info->version, pkg_info);
 
     /* If dpkg_host is not 'none' and we are installing to system root '/', inject into host dpkg database */
     if ((!g_dpkg_host || strcmp(g_dpkg_host, "none") != 0) && (!g_system_install_root || strcmp(g_system_install_root, "/") == 0)) {

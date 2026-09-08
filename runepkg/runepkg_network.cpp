@@ -1150,6 +1150,58 @@ static bool runepkg_resolver_recover_and_retry_downloads(std::vector<DownloadTas
     return false;
 }
 
+static bool check_inter_plan_conflict(const std::string& conflicts_str, const std::string& target_pkg, const std::string& target_ver) {
+    if (conflicts_str.empty() || target_pkg.empty()) return false;
+
+    char *copy = strdup(conflicts_str.c_str());
+    if (!copy) return false;
+
+    bool conflict_found = false;
+    char *token, *saveptr = NULL;
+    token = strtok_r(copy, ",", &saveptr);
+    while (token) {
+        char *item = runepkg_util_trim_whitespace(token);
+        if (item && item[0] != '\0') {
+            char tpkg[128];
+            char constraint[64];
+            char *paren;
+
+            memset(tpkg, 0, sizeof(tpkg));
+            memset(constraint, 0, sizeof(constraint));
+
+            paren = strchr(item, '(');
+            if (paren) {
+                size_t name_len = (size_t)(paren - item);
+                if (name_len >= sizeof(tpkg)) name_len = sizeof(tpkg) - 1;
+                memcpy(tpkg, item, name_len);
+                tpkg[name_len] = '\0';
+
+                runepkg_util_safe_strncpy(constraint, paren, sizeof(constraint));
+            } else {
+                runepkg_util_safe_strncpy(tpkg, item, sizeof(tpkg));
+            }
+
+            char *t_trim = runepkg_util_trim_whitespace(tpkg);
+            char *c_trim = runepkg_util_trim_whitespace(constraint);
+
+            if (t_trim && strcmp(t_trim, target_pkg.c_str()) == 0) {
+                if (c_trim && c_trim[0] != '\0') {
+                    if (runepkg_util_check_version_constraint(target_ver.c_str(), c_trim) == 1) {
+                        conflict_found = true;
+                        break;
+                    }
+                } else {
+                    conflict_found = true;
+                    break;
+                }
+            }
+        }
+        token = strtok_r(NULL, ",", &saveptr);
+    }
+    free(copy);
+    return conflict_found;
+}
+
 extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
     std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
@@ -1172,7 +1224,7 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
             std::string pkg_name = plan->nodes[j].package_name;
             std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
             if (filename.empty()) {
-                PkgMetadata meta = get_package_metadata(pkg_name);
+                PkgMetadata meta = get_package_metadata(pkg_name.c_str());
                 filename = meta.filename;
             }
 
@@ -1200,6 +1252,53 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
     if (tasks.empty()) {
         for (auto p : plans) runepkg_resolver_free_plan(p);
         return 0;
+    }
+
+    /* Pre-flight conflict check across all planned packages using binary index */
+    bool preflight_conflict = false;
+    for (auto p : plans) {
+        for (int j = 0; j < p->node_count; j++) {
+            char conflict_err[512];
+            memset(conflict_err, 0, sizeof(conflict_err));
+            std::string ver_str = p->nodes[j].version ? p->nodes[j].version : "";
+            if (ver_str.empty()) {
+                PkgMetadata meta = get_package_metadata(p->nodes[j].package_name);
+                ver_str = meta.version;
+            }
+            if (runepkg_storage_check_conflict(p->nodes[j].package_name, ver_str.c_str(), conflict_err, sizeof(conflict_err)) == 1) {
+                if (!g_force_mode) {
+                    std::cerr << "\033[1;31m[conflict]\033[0m " << conflict_err << ". Use -f/--force to override." << std::endl;
+                    preflight_conflict = true;
+                } else {
+                    std::cout << "\033[1;33m[override]\033[0m Overriding conflict: " << conflict_err << std::endl;
+                }
+            }
+        }
+
+        /* Inter-plan conflict check */
+        for (int a = 0; a < p->node_count; a++) {
+            for (int b = a + 1; b < p->node_count; b++) {
+                std::string name_a = p->nodes[a].package_name;
+                std::string name_b = p->nodes[b].package_name;
+                std::string ver_b = p->nodes[b].version ? p->nodes[b].version : "";
+                PkgMetadata meta_a = get_package_metadata(name_a.c_str());
+                if (!meta_a.conflicts.empty()) {
+                    if (check_inter_plan_conflict(meta_a.conflicts, name_b, ver_b)) {
+                        if (!g_force_mode) {
+                            std::cerr << "\033[1;31m[conflict]\033[0m Proposed package '" << name_a << "' conflicts with proposed package '" << name_b << " (" << ver_b << ")'. Use -f/--force to override." << std::endl;
+                            preflight_conflict = true;
+                        } else {
+                            std::cout << "\033[1;33m[override]\033[0m Overriding conflict: Proposed package '" << name_a << "' conflicts with proposed package '" << name_b << " (" << ver_b << ")'" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (preflight_conflict) {
+        for (auto p : plans) runepkg_resolver_free_plan(p);
+        return -1;
     }
 
     bool needs_confirm = true;
@@ -1320,6 +1419,16 @@ extern "C" int runepkg_repo_package_exists(const char *pkg_name) {
     clean_pkg.erase(0, clean_pkg.find_first_not_of(" \t")); clean_pkg.erase(clean_pkg.find_last_not_of(" \t") + 1);
     std::string url = get_package_url(clean_pkg.c_str(), false, nullptr, nullptr);
     return !url.empty();
+}
+
+extern "C" char* runepkg_repo_get_candidate_version(const char *pkg_name) {
+    if (!pkg_name) return NULL;
+    std::string clean_pkg = pkg_name; size_t extra_pos = clean_pkg.find_first_of(":[<");
+    if (extra_pos != std::string::npos) clean_pkg = clean_pkg.substr(0, extra_pos);
+    clean_pkg.erase(0, clean_pkg.find_first_not_of(" \t")); clean_pkg.erase(clean_pkg.find_last_not_of(" \t") + 1);
+    PkgMetadata meta = get_package_metadata(clean_pkg.c_str());
+    if (meta.version.empty()) return NULL;
+    return strdup(meta.version.c_str());
 }
 
 extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count, bool recursive) {
@@ -1569,7 +1678,9 @@ extern "C" int runepkg_upgrade(void) {
                 if (node->data.package_name && node->data.version) {
                     std::string name = node->data.package_name;
                     if (latest_versions.count(name) && runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) {
-                        to_upgrade.push_back(name);
+                        if (runepkg_storage_package_exists(name.c_str(), latest_versions[name].c_str()) != 1) {
+                            to_upgrade.push_back(name);
+                        }
                     }
                 }
                 node = node->next;
@@ -1583,10 +1694,7 @@ extern "C" int runepkg_upgrade(void) {
     std::vector<const char*> pkgs_c;
     for (const auto& s : to_upgrade) pkgs_c.push_back(s.c_str());
 
-    bool old_force = g_force_mode;
-    g_force_mode = true;
     int res = runepkg_repo_install_multiple(pkgs_c.data(), pkgs_c.size());
-    g_force_mode = old_force;
     return res;
 }
 

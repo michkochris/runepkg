@@ -96,6 +96,21 @@ int runepkg_storage_load_host_file_list(const char *pkg_name, PkgInfo *pkg_info)
 int runepkg_storage_remove_package(const char *pkg_name, const char *pkg_version);
 
 /**
+ * @brief Purges any host virtual dummy package records provided by pkg_name
+ * @param pkg_name The provider package name
+ * @return 0 on success, -1 on failure
+ */
+int runepkg_storage_remove_provided_dummies(const char *pkg_name);
+
+/**
+ * @brief Finds an installed package that provides virtual_pkg and populates out_info
+ * @param virtual_pkg The virtual package name to search for
+ * @param out_info Pointer to PkgInfo to receive virtual package details
+ * @return 0 on success (found provider), -1 if not found
+ */
+int runepkg_storage_find_provider(const char *virtual_pkg, PkgInfo *out_info);
+
+/**
  * @brief Recursively delete a directory tree (files and subdirs).
  * @return 0 on success, -1 on failure
  */
@@ -108,6 +123,14 @@ int runepkg_storage_remove_directory_tree(const char *path);
  * @return 1 if exists, 0 if not, -1 on error
  */
 int runepkg_storage_package_exists(const char *pkg_name, const char *pkg_version);
+
+/**
+ * @brief Removes old version directories for a package from persistent storage
+ * @param pkg_name The package name
+ * @param new_version The new package version to keep
+ * @return Number of old version directories removed
+ */
+int runepkg_storage_remove_old_versions(const char *pkg_name, const char *new_version);
 
 /**
  * @brief Lists all packages in persistent storage
@@ -138,6 +161,48 @@ int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_ver
  * @return 0 on success, -1 on failure
  */
 int runepkg_storage_build_autocomplete_index(void);
+
+/* Relation types for Conflicts, Breaks, Replaces, Provides */
+#define RUNEPKG_RELATION_CONFLICTS 1
+#define RUNEPKG_RELATION_BREAKS    2
+#define RUNEPKG_RELATION_REPLACES  3
+#define RUNEPKG_RELATION_PROVIDES  4
+
+/* Binary header for conflicts-replaces.bin */
+typedef struct {
+    uint32_t magic;         /* 0x52554E45 ("RUNE") */
+    uint32_t version;       /* Format version (1) */
+    uint32_t entry_count;   /* Number of relation entries */
+    uint32_t strings_size;  /* Size of string table blob */
+} ConflictsReplacesHeader;
+
+/* Binary entry for conflicts-replaces.bin */
+typedef struct {
+    uint32_t src_pkg_offset;   /* String offset for source package name */
+    uint32_t src_ver_offset;   /* String offset for source package version */
+    uint32_t target_pkg_offset;/* String offset for target package/virtual name */
+    uint32_t constraint_offset;/* String offset for version constraint */
+    uint32_t relation_type;    /* RUNEPKG_RELATION_CONFLICTS, BREAKS, REPLACES, PROVIDES */
+} ConflictsReplacesEntry;
+
+#define RUNEPKG_STORAGE_CONFLICTS_BINARY_FILE "conflicts-replaces.bin"
+#define RUNEPKG_STORAGE_CONFLICTS_TEXT_FILE   "conflicts-replaces.txt"
+
+/**
+ * @brief Builds the binary conflicts, breaks, replaces, and provides index (conflicts-replaces.bin / .txt)
+ * @return 0 on success, -1 on failure
+ */
+int runepkg_storage_build_conflicts_replaces_index(void);
+
+/**
+ * @brief Checks if installing pkg_name (with pkg_version) violates any conflicts or breaks
+ * @param pkg_name The package name to test
+ * @param pkg_version The package version to test
+ * @param conflict_target Buffer to receive conflicting package name if conflict found (optional)
+ * @param target_size Size of conflict_target buffer
+ * @return 1 if conflict/breaks found, 0 if safe, -1 on error
+ */
+int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version, char *conflict_target, size_t target_size);
 
 #ifdef __cplusplus
 }

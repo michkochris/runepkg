@@ -1,0 +1,46 @@
+[ zypherus /home/michko/runepkg ]# ls -a
+.   COPILOT.md  DESIGN.md  .github        .idea    README.md  STABLE.md
+..  CPP.md      .git       HOLY_GRAIL.md  LICENSE  runepkg    TESTING.md
+[ zypherus /home/michko/runepkg ]# ls -a runepkg/
+.                      runepkg_config.c     runepkg_install.c     runepkg_util.c
+..                     runepkg_config.h     runepkg_install.h     runepkg_util.cpp
+bashrc                 runepkg_cpp_ffi.h    runepkg_logo.svg      runepkg_util_cpp.cpp
+conflict-reformat.txt  runepkg_crypto.c     runepkg_md5sums.c     runepkg_util_cpp.hpp
+copy_makefile.sh       runepkg_crypto.h     runepkg_md5sums.h     runepkg_util.h
+debian-depends.sh      runepkg_defensive.c  runepkg_network.cpp   runepkg_util.hpp
+forge-musl-all.sh      runepkg_defensive.h  runepkg_pack.c        rune-tests
+future_cpp             runepkg_guard.cpp    runepkg_pack.h        standard-debian-conflict-breaks.txt
+gemini-svg.svg         runepkg_guard.hpp    runepkg_portable.h    target-runes
+Makefile               runepkg_handle.c     runepkg_resolver.cpp  targets
+make_runepkg_deb.sh    runepkg_handle.h     runepkg_security.cpp  test_fsm_chaos.sh
+output.txt             runepkg_hash.c       runepkg_security.hpp  text-files
+runepkg_cli.c          runepkg_hash.h       runepkg_state.c       version-check.sh
+runepkg_completion.c   runepkg_host.c       runepkg_state.h       vrunepkg_config
+runepkg_completion.h   runepkg_host.h       runepkg_storage.c
+runepkgconfig          runepkg_icon.svg     runepkg_storage.h
+[ zypherus /home/michko/runepkg ]# runepkg -s binutils
+Reading package data: 637 packages, 1.2 GB used, 953.4 GB available
+Package: binutils
+Version: 2.47-2
+Architecture: amd64
+Maintainer: Matthias Klose <doko@debian.org>
+Description: GNU assembler, linker and binary utilities
+Depends: libbinutils (= 2.47-2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.47-2), binutils-x86-64-linux-gnu (= 2.47-2)
+Provides: elf-binutils
+Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
+Replaces: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-common (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90)
+Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-10)
+Suggests: binutils-doc (>= 2.47-2), gprofng-gui, binutils-gold
+Installed-Size: 1119
+Section: devel
+Priority: optional
+Homepage: https://www.gnu.org/software/binutils/
+Files installed: 41
+[ zypherus /home/michko/runepkg ]# runepkg -i binutils-mingw-w64-i686
+[runepkg] Planning installation for 1 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libzstd1 zlib1g binutils-mingw-w64-base binutils-common
+  binutils-mingw-w64-i686
+
+9 packages (8.4 MB) will be installed. Continue? [y/N] n
+Installation cancelled.
+[ zypherus /home/michko/runepkg ]#

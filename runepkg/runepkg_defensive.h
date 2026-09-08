@@ -188,6 +188,18 @@ void runepkg_memory_stats(void);
 size_t runepkg_memory_usage(void);
 #endif
 
+/* --- Defensive Validation Functions --- */
+
+/**
+ * @brief Validates package installation against binary conflicts/breaks index.
+ * @param pkg_name Package name to validate.
+ * @param pkg_version Package version to validate.
+ * @param error_buf Buffer to receive conflict description if invalid.
+ * @param err_size Size of error_buf.
+ * @return RUNEPKG_SUCCESS (0) if valid, RUNEPKG_ERROR_INVALID_INPUT (-5) if conflict found.
+ */
+runepkg_error_t runepkg_defensive_validate_conflicts(const char *pkg_name, const char *pkg_version, char *error_buf, size_t err_size);
+
 /* --- Error Messages --- */
 const char* runepkg_error_string(runepkg_error_t error);
 

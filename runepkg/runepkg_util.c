@@ -273,6 +273,17 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
     if (!cons) return -1;
     cons_trim = runepkg_util_trim_whitespace(cons);
 
+    /* Strip enclosing parentheses if present e.g. "(<< 2.23.52)" */
+    if (cons_trim[0] == '(') {
+        size_t tlen;
+        cons_trim++;
+        tlen = strlen(cons_trim);
+        if (tlen > 0 && cons_trim[tlen - 1] == ')') {
+            cons_trim[tlen - 1] = '\0';
+        }
+        cons_trim = runepkg_util_trim_whitespace(cons_trim);
+    }
+
     /* Parse operator and version from the trimmed copy */
     op_len = strcspn(cons_trim, " 0123456789");
     if (op_len == 0 || op_len > 2) {

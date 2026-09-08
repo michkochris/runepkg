@@ -75,6 +75,7 @@ int runepkg_upgrade(void);
 int runepkg_repo_search(const char *query);
 int runepkg_repo_info(const char *pkg_name);
 int runepkg_repo_package_exists(const char *pkg_name);
+char* runepkg_repo_get_candidate_version(const char *pkg_name);
 char* runepkg_repo_find_source_for_binary(const char *bin_pkg_name);
 char* runepkg_repo_get_source_build_depends(const char *src_pkg_name);
 

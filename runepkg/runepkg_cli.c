@@ -212,11 +212,44 @@ int main(int argc, char *argv[]) {
                             cli_failed = 1;
                         }
                     } else {
-                        if (runepkg_main_hash_table && runepkg_hash_search(runepkg_main_hash_table, next_arg) && !g_force_mode) {
-                            PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, next_arg);
+                        PkgInfo *info = NULL;
+                        bool is_eligible_upgrade = false;
+                        char *repo_ver = NULL;
+                        char conflict_err[512];
+                        bool has_conflict = false;
+
+                        if (runepkg_main_hash_table) {
+                            info = runepkg_hash_search(runepkg_main_hash_table, next_arg);
+                        }
+
+#ifdef ENABLE_CPP_FFI
+                        repo_ver = runepkg_repo_get_candidate_version(next_arg);
+                        if (info && info->version && repo_ver) {
+                            if (runepkg_util_compare_versions(repo_ver, info->version) > 0) {
+                                is_eligible_upgrade = true;
+                            }
+                        }
+#endif
+
+                        /* Pre-flight conflict check BEFORE "already installed" check */
+                        memset(conflict_err, 0, sizeof(conflict_err));
+                        if (runepkg_storage_check_conflict(next_arg, repo_ver ? repo_ver : "", conflict_err, sizeof(conflict_err)) == 1) {
+                            has_conflict = true;
+                        }
+
+                        if (has_conflict && !g_force_mode) {
+                            fprintf(stderr, "\033[1;31m[conflict]\033[0m %s. Use -f/--force to override.\n", conflict_err[0] ? conflict_err : "Unresolvable package conflict");
+                            cli_failed = 1;
+                        } else if (info && !is_eligible_upgrade && !g_force_mode) {
+                            if (has_conflict && g_force_mode) {
+                                printf("\033[1;33m[override]\033[0m Overriding conflict: %s\n", conflict_err);
+                            }
                             printf("Package %s is already installed (%s). Use -f/--force to reinstall.\n", next_arg, info->version ? info->version : "unknown");
                         } else {
 #ifdef ENABLE_CPP_FFI
+                            if (has_conflict && g_force_mode) {
+                                printf("\033[1;33m[override]\033[0m Overriding conflict: %s\n", conflict_err);
+                            }
                             if (runepkg_repo_package_exists(next_arg)) {
                                 if (repo_pkg_count < 1024) {
                                     repo_pkgs[repo_pkg_count++] = next_arg;
@@ -236,6 +269,7 @@ int main(int argc, char *argv[]) {
                             cli_failed = 1;
 #endif
                         }
+                        if (repo_ver) free(repo_ver);
                     }
                     i++;
                 }

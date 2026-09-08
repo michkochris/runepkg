@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h>
 #include <pthread.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -41,6 +42,54 @@
 /* forward-declare internal installer to avoid implicit declaration when
  * `handle_install` (wrapper) calls it before its definition. */
 static int handle_install_internal(const char *deb_file_path, int is_top_level);
+
+static void supersede_host_dummy_packages(const PkgInfo *pkg_info) {
+    char pattern[PATH_MAX];
+    glob_t glob_res;
+
+    if (!pkg_info || !pkg_info->package_name || !g_runepkg_db_dir) return;
+
+    /* Case 1: Purge host dummy package directory matching pkg_info->package_name */
+    snprintf(pattern, sizeof(pattern), "%s/host/%s-*", g_runepkg_db_dir, pkg_info->package_name);
+    if (glob(pattern, 0, NULL, &glob_res) == 0) {
+        size_t i;
+        for (i = 0; i < glob_res.gl_pathc; i++) {
+            runepkg_util_log_verbose("[install] Native install superseding host dummy: %s", glob_res.gl_pathv[i]);
+            runepkg_storage_remove_directory_tree(glob_res.gl_pathv[i]);
+        }
+        globfree(&glob_res);
+    }
+
+    /* Case 2: Purge host dummy package directories for virtual packages provided by pkg_info */
+    if (pkg_info->provides && pkg_info->provides[0] != '\0') {
+        char *pcopy = strdup(pkg_info->provides);
+        if (pcopy) {
+            char *ptoken, *psave = NULL;
+            ptoken = strtok_r(pcopy, ",", &psave);
+            while (ptoken) {
+                char *vname = runepkg_util_trim_whitespace(ptoken);
+                if (vname && vname[0] != '\0') {
+                    char *paren = strchr(vname, '(');
+                    if (paren) *paren = '\0';
+                    vname = runepkg_util_trim_whitespace(vname);
+                    if (vname && vname[0] != '\0') {
+                        snprintf(pattern, sizeof(pattern), "%s/host/%s-*", g_runepkg_db_dir, vname);
+                        if (glob(pattern, 0, NULL, &glob_res) == 0) {
+                            size_t i;
+                            for (i = 0; i < glob_res.gl_pathc; i++) {
+                                runepkg_util_log_verbose("[install] Native install superseding virtual dummy: %s", glob_res.gl_pathv[i]);
+                                runepkg_storage_remove_directory_tree(glob_res.gl_pathv[i]);
+                            }
+                            globfree(&glob_res);
+                        }
+                    }
+                }
+                ptoken = strtok_r(NULL, ",", &psave);
+            }
+            free(pcopy);
+        }
+    }
+}
 
 int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pkg_info, const char *action) {
     char *script_name;
@@ -770,6 +819,27 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         PkgInfo *existing_inst_main;
         PkgInfo *existing_inst;
 
+        /* Pre-flight conflict validation via binary index */
+        {
+            char conflict_err[512];
+            memset(conflict_err, 0, sizeof(conflict_err));
+            if (runepkg_defensive_validate_conflicts(pkg_info.package_name, pkg_info.version, conflict_err, sizeof(conflict_err)) != RUNEPKG_SUCCESS) {
+                if (!g_force_mode) {
+                    fprintf(stderr, "\033[1;31m[conflict]\033[0m %s. Use -f/--force to override.\n",
+                            conflict_err[0] ? conflict_err : "Unresolvable package conflict");
+                    runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                    runepkg_pack_free_package_info(&pkg_info);
+                    return -1;
+                } else {
+                    printf("\033[1;33m[override]\033[0m Overriding conflict: %s\n", conflict_err);
+                }
+            }
+        }
+
+        if (pkg_info.replaces) {
+            runepkg_log_verbose("\033[1;36m[replaces]\033[0m Package %s replaces files owned by: %s\n", pkg_info.package_name, pkg_info.replaces);
+        }
+
         if (installing_packages && runepkg_hash_search(installing_packages, pkg_info.package_name)) {
             runepkg_log_verbose("Skipping install of %s: already installing (recursive).\n", pkg_info.package_name);
             runepkg_pack_cleanup_extraction_workspace(&pkg_info);
@@ -792,9 +862,6 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             if (g_force_mode || is_version_upgrade) {
                 char *old_ver = existing_inst->version ? strdup(existing_inst->version) : NULL;
                 runepkg_hash_remove_package(runepkg_main_hash_table, pkg_info.package_name);
-                if (old_ver) {
-                    runepkg_storage_remove_package(pkg_info.package_name, old_ver);
-                }
                 if (is_version_upgrade || (pkg_info.version && old_ver && strcmp(old_ver, pkg_info.version) != 0)) {
                     printf("Upgrading %s from %s to %s\n",
                            pkg_info.package_name,
@@ -1211,6 +1278,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         /* Register package info in storage and host dpkg BEFORE postinst
          * This ensures scripts like py3compile can see the package in dpkg --get-selections */
         if (pkg_info.package_name && pkg_info.version) {
+            supersede_host_dummy_packages(&pkg_info);
+            runepkg_storage_remove_old_versions(pkg_info.package_name, pkg_info.version);
             if (runepkg_storage_create_package_directory(pkg_info.package_name, pkg_info.version) == 0) {
                 if (runepkg_storage_write_package_info(pkg_info.package_name, pkg_info.version, &pkg_info) == 0) {
                     if (runepkg_main_hash_table) {
@@ -1244,8 +1313,10 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             runepkg_execute_maintainer_script(pkg_info.postinst, &pkg_info, "configure");
         }
 
-        runepkg_storage_build_autocomplete_index();
-        handle_update_pkglist();
+        if (is_top_level) {
+            runepkg_storage_build_autocomplete_index();
+            handle_update_pkglist();
+        }
 
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);
 

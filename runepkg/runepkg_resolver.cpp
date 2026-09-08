@@ -21,6 +21,7 @@
 #include <cstring>
 #include <algorithm>
 #include <libgen.h>
+#include <dirent.h>
 
 #include "runepkg_cpp_ffi.h"
 #include "runepkg_util_cpp.hpp"
@@ -74,6 +75,9 @@ struct RuneGraphEntry {
     std::vector<std::string> pre_depends;  // critical runtime
 
     std::vector<std::string> provides;
+    std::vector<std::string> conflicts;
+    std::vector<std::string> breaks;
+    std::vector<std::string> replaces;
     PkgDomain domain = PkgDomain::DOMAIN_RUNEPKG_NATIVE;
 };
 
@@ -131,6 +135,57 @@ public:
         return save_binary_graph(out_db_path, graph);
     }
 
+    static void populate_host_installed_map(std::unordered_map<std::string, std::string>& host_map) {
+        const char *db_dirs[2];
+        int d;
+
+        if (runepkg_main_hash_table) {
+            for (size_t i = 0; i < runepkg_main_hash_table->size; i++) {
+                runepkg_hash_node_t *node = runepkg_main_hash_table->buckets[i];
+                while (node) {
+                    if (node->data.package_name && node->data.version) {
+                        std::string pname = clean_package_key(node->data.package_name);
+                        if (!pname.empty()) {
+                            host_map[pname] = node->data.version;
+                        }
+                    }
+                    node = node->next;
+                }
+            }
+        }
+
+        if (!g_runepkg_db_dir) return;
+
+        db_dirs[0] = g_runepkg_db_dir;
+        char host_sub[PATH_MAX];
+        snprintf(host_sub, sizeof(host_sub), "%s/host", g_runepkg_db_dir);
+        db_dirs[1] = host_sub;
+
+        for (d = 0; d < 2; d++) {
+            const char *cdir = db_dirs[d];
+            DIR *dir = opendir(cdir);
+            if (!dir) continue;
+
+            struct dirent *entry;
+            while ((entry = readdir(dir)) != NULL) {
+                if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0 ||
+                    strcmp(entry->d_name, "lists") == 0 || strcmp(entry->d_name, "host") == 0) continue;
+
+                const char *sep = runepkg_util_find_version_separator(entry->d_name);
+                if (!sep) continue;
+
+                std::string raw_name(entry->d_name, (size_t)(sep - entry->d_name));
+                std::string ver_str(sep + 1);
+                std::string pkg_name = clean_package_key(raw_name);
+
+                if (!pkg_name.empty()) {
+                    host_map[pkg_name] = ver_str;
+                }
+            }
+            closedir(dir);
+        }
+    }
+
     int resolve_tree_multiple(const std::vector<std::string>& pkg_names, ResolveMode mode, RuneTargetPlan** out_plan) {
         if (pkg_names.empty()) return -1;
 
@@ -147,22 +202,28 @@ public:
         }
 
         /* Load host packages to prevent resolving tools already satisfied on the host */
-        std::unordered_set<std::string> host_installed_set;
+        std::unordered_map<std::string, std::string> host_installed_map;
         std::string host_db = get_default_host_db_path();
         if (fs::exists(host_db)) {
             std::unordered_map<std::string, RuneGraphEntry> host_graph;
             if (load_binary_graph(host_db, host_graph) == 0) {
                 for (const auto& [h_name, h_node] : host_graph) {
-                    host_installed_set.insert(clean_package_key(h_name));
+                    std::string cname = clean_package_key(h_name);
+                    host_installed_map[cname] = h_node.version;
                     for (const auto& prov : h_node.provides) {
-                        host_installed_set.insert(clean_package_key(prov));
+                        std::string cprov = clean_package_key(prov);
+                        if (host_installed_map.find(cprov) == host_installed_map.end()) {
+                            host_installed_map[cprov] = h_node.version;
+                        }
                     }
-                    if (h_name == "debhelper") {
-                        host_installed_set.insert("debhelper-compat");
+                    if (cname == "debhelper") {
+                        host_installed_map["debhelper-compat"] = h_node.version;
                     }
                 }
             }
         }
+        /* Dynamically populate installed packages from runepkg_db and host directories */
+        populate_host_installed_map(host_installed_map);
 
         /* Build virtual-to-real mapping across the binary and source graph */
         std::unordered_map<std::string, std::string> virtual_to_real;
@@ -173,8 +234,8 @@ public:
                     virtual_to_real[c_prov] = name;
                 } else {
                     std::string current = virtual_to_real[c_prov];
-                    bool name_installed = host_installed_set.count(clean_package_key(name));
-                    bool current_installed = host_installed_set.count(clean_package_key(current));
+                    bool name_installed = host_installed_map.count(clean_package_key(name));
+                    bool current_installed = host_installed_map.count(clean_package_key(current));
 
                     if (name_installed && !current_installed) {
                         virtual_to_real[c_prov] = name;
@@ -222,7 +283,7 @@ public:
             }
 
             if (graph.find(root_target) != graph.end()) {
-                dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_set, visited, visiting, resolved_order, true);
+                dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_map, visited, visiting, resolved_order, true);
             }
         }
 
@@ -440,6 +501,9 @@ private:
 
             entry.depends = parse_depends_vector(info.depends ? info.depends : "");
             entry.pre_depends = parse_depends_vector(info.pre_depends ? info.pre_depends : "");
+            entry.conflicts = parse_depends_vector(info.conflicts ? info.conflicts : "");
+            entry.breaks = parse_depends_vector(info.breaks ? info.breaks : "");
+            entry.replaces = parse_depends_vector(info.replaces ? info.replaces : "");
 
             if (info.provides) {
                 char **parsed = parse_depends(info.provides);
@@ -501,6 +565,12 @@ private:
                 current.depends = parse_depends_vector(line.substr(9));
             } else if (line.compare(0, 13, "Pre-Depends: ") == 0) {
                 current.pre_depends = parse_depends_vector(line.substr(13));
+            } else if (line.compare(0, 11, "Conflicts: ") == 0) {
+                current.conflicts = parse_depends_vector(line.substr(11));
+            } else if (line.compare(0, 8, "Breaks: ") == 0) {
+                current.breaks = parse_depends_vector(line.substr(8));
+            } else if (line.compare(0, 10, "Replaces: ") == 0) {
+                current.replaces = parse_depends_vector(line.substr(10));
             } else if (line.compare(0, 10, "Provides: ") == 0) {
                 std::string raw_prov = line.substr(10);
                 char **parsed = parse_depends(raw_prov.c_str());
@@ -597,18 +667,61 @@ private:
         }
     }
 
+    static std::string extract_constraint_string(const std::string& raw) {
+        size_t paren_start = raw.find('(');
+        size_t paren_end = raw.find(')', paren_start);
+        if (paren_start != std::string::npos && paren_end != std::string::npos && paren_end > paren_start) {
+            return raw.substr(paren_start + 1, paren_end - paren_start - 1);
+        }
+        return "";
+    }
+
+    static bool is_installed_satisfied(const std::string& dep_raw, const std::unordered_map<std::string, std::string>& host_installed_map) {
+        std::string key = clean_package_key(dep_raw);
+        std::string constraint = extract_constraint_string(dep_raw);
+
+        /* Ground Truth: Check direct disk storage using runepkg_storage_package_exists() */
+        if (constraint.empty()) {
+            if (runepkg_storage_package_exists(key.c_str(), NULL) == 1) {
+                return true;
+            }
+        } else {
+            size_t eq_pos = constraint.find('=');
+            if (eq_pos != std::string::npos) {
+                std::string target_ver = constraint.substr(eq_pos + 1);
+                target_ver.erase(0, target_ver.find_first_not_of(" \t\r\n="));
+                target_ver.erase(target_ver.find_last_not_of(" \t\r\n") + 1);
+                if (!target_ver.empty() && runepkg_storage_package_exists(key.c_str(), target_ver.c_str()) == 1) {
+                    return true;
+                }
+            }
+        }
+
+        auto it = host_installed_map.find(key);
+        if (it == host_installed_map.end()) {
+            return false;
+        }
+
+        if (constraint.empty()) {
+            return true;
+        }
+
+        int res = runepkg_util_check_version_constraint(it->second.c_str(), constraint.c_str());
+        return (res == 1);
+    }
+
     bool dfs_resolve_v2(const std::string& pkg,
                        ResolveMode mode,
                        const std::unordered_map<std::string, RuneGraphEntry>& graph,
                        const std::unordered_map<std::string, std::string>& virtual_to_real,
-                       const std::unordered_set<std::string>& host_installed,
+                       const std::unordered_map<std::string, std::string>& host_installed_map,
                        std::set<std::string>& visited,
                        std::set<std::string>& visiting,
                        std::vector<RuneGraphEntry>& order,
                        bool is_root_target = false) {
         std::string check_name = clean_package_key(pkg);
 
-        if (!is_root_target && mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name)) {
+        if (!is_root_target && (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) && is_installed_satisfied(pkg, host_installed_map)) {
             visited.insert(pkg);
             return true;
         }
@@ -622,18 +735,18 @@ private:
         if (it != graph.end()) {
             if (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_TOOLCHAIN || mode == ResolveMode::MODE_HOST_DEPS) {
                 for (const auto& dep : it->second.pre_depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
                 }
                 for (const auto& dep : it->second.depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
                 }
             } else if (mode == ResolveMode::MODE_BUILD) {
                 for (const auto& dep : it->second.target_build_depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
                 }
             }
 
-            if (is_root_target || !(mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(check_name))) {
+            if (is_root_target || !(mode == ResolveMode::MODE_HOST_DEPS && is_installed_satisfied(pkg, host_installed_map))) {
                 order.push_back(it->second);
             }
         }
@@ -648,13 +761,13 @@ private:
                           ResolveMode mode,
                           const std::unordered_map<std::string, RuneGraphEntry>& graph,
                           const std::unordered_map<std::string, std::string>& virtual_to_real,
-                          const std::unordered_set<std::string>& host_installed,
+                          const std::unordered_map<std::string, std::string>& host_installed_map,
                           std::set<std::string>& visited,
                           std::set<std::string>& visiting,
                           std::vector<RuneGraphEntry>& order) {
         std::string target_key = clean_package_key(dep);
 
-        if (mode == ResolveMode::MODE_HOST_DEPS && host_installed.count(target_key)) {
+        if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) && is_installed_satisfied(dep, host_installed_map)) {
             return;
         }
 
@@ -689,9 +802,9 @@ private:
         }
 
         if (graph.count(target_key)) {
-            dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+            dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
         } else if (virtual_to_real.count(target_key)) {
-            dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+            dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
         } else {
             /* Vigilant Version Sifting:
              * If target_key is name-version (e.g. perlapi-5.42.2), sift through available
@@ -704,7 +817,7 @@ private:
                     if (v_name.compare(0, prefix.length(), prefix) == 0) {
                          runepkg_util_log_verbose("[resolver] Vigilant substitution: requested %s, found %s (provided by %s)\n",
                                                   target_key.c_str(), v_name.c_str(), r_name.c_str());
-                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed, visited, visiting, order);
+                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
                          return;
                     }
                 }
