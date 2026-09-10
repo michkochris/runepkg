@@ -77,7 +77,6 @@ struct RuneGraphEntry {
     std::vector<std::string> provides;
     std::vector<std::string> conflicts;
     std::vector<std::string> breaks;
-    std::vector<std::string> replaces;
     PkgDomain domain = PkgDomain::DOMAIN_RUNEPKG_NATIVE;
 };
 
@@ -503,7 +502,6 @@ private:
             entry.pre_depends = parse_depends_vector(info.pre_depends ? info.pre_depends : "");
             entry.conflicts = parse_depends_vector(info.conflicts ? info.conflicts : "");
             entry.breaks = parse_depends_vector(info.breaks ? info.breaks : "");
-            entry.replaces = parse_depends_vector(info.replaces ? info.replaces : "");
 
             if (info.provides) {
                 char **parsed = parse_depends(info.provides);
@@ -569,8 +567,6 @@ private:
                 current.conflicts = parse_depends_vector(line.substr(11));
             } else if (line.compare(0, 8, "Breaks: ") == 0) {
                 current.breaks = parse_depends_vector(line.substr(8));
-            } else if (line.compare(0, 10, "Replaces: ") == 0) {
-                current.replaces = parse_depends_vector(line.substr(10));
             } else if (line.compare(0, 10, "Provides: ") == 0) {
                 std::string raw_prov = line.substr(10);
                 char **parsed = parse_depends(raw_prov.c_str());

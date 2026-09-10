@@ -634,7 +634,6 @@ int handle_status(const char *package_name) {
             if (pkg_info.build_depends_indep) printf("Build-Depends-Indep: %s\n", pkg_info.build_depends_indep);
             if (pkg_info.build_depends_arch) printf("Build-Depends-Arch: %s\n", pkg_info.build_depends_arch);
             if (pkg_info.conflicts) printf("Conflicts: %s\n", pkg_info.conflicts);
-            if (pkg_info.replaces) printf("Replaces: %s\n", pkg_info.replaces);
             if (pkg_info.breaks) printf("Breaks: %s\n", pkg_info.breaks);
             if (pkg_info.recommends) printf("Recommends: %s\n", pkg_info.recommends);
             if (pkg_info.suggests) printf("Suggests: %s\n", pkg_info.suggests);
@@ -674,7 +673,6 @@ int handle_status(const char *package_name) {
                 if (prov_info.build_depends_indep) printf("Build-Depends-Indep: %s\n", prov_info.build_depends_indep);
                 if (prov_info.build_depends_arch) printf("Build-Depends-Arch: %s\n", prov_info.build_depends_arch);
                 if (prov_info.conflicts) printf("Conflicts: %s\n", prov_info.conflicts);
-                if (prov_info.replaces) printf("Replaces: %s\n", prov_info.replaces);
                 if (prov_info.breaks) printf("Breaks: %s\n", prov_info.breaks);
                 if (prov_info.recommends) printf("Recommends: %s\n", prov_info.recommends);
                 if (prov_info.suggests) printf("Suggests: %s\n", prov_info.suggests);

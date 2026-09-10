@@ -162,37 +162,36 @@ int runepkg_storage_print_package_info(const char *pkg_name, const char *pkg_ver
  */
 int runepkg_storage_build_autocomplete_index(void);
 
-/* Relation types for Conflicts, Breaks, Replaces, Provides */
+/* Relation types for Conflicts, Breaks, Provides */
 #define RUNEPKG_RELATION_CONFLICTS 1
 #define RUNEPKG_RELATION_BREAKS    2
-#define RUNEPKG_RELATION_REPLACES  3
-#define RUNEPKG_RELATION_PROVIDES  4
+#define RUNEPKG_RELATION_PROVIDES  3
 
-/* Binary header for conflicts-replaces.bin */
+/* Binary header for conflicts-breaks.bin */
 typedef struct {
     uint32_t magic;         /* 0x52554E45 ("RUNE") */
     uint32_t version;       /* Format version (1) */
     uint32_t entry_count;   /* Number of relation entries */
     uint32_t strings_size;  /* Size of string table blob */
-} ConflictsReplacesHeader;
+} ConflictsBreaksHeader;
 
-/* Binary entry for conflicts-replaces.bin */
+/* Binary entry for conflicts-breaks.bin */
 typedef struct {
     uint32_t src_pkg_offset;   /* String offset for source package name */
     uint32_t src_ver_offset;   /* String offset for source package version */
     uint32_t target_pkg_offset;/* String offset for target package/virtual name */
     uint32_t constraint_offset;/* String offset for version constraint */
-    uint32_t relation_type;    /* RUNEPKG_RELATION_CONFLICTS, BREAKS, REPLACES, PROVIDES */
-} ConflictsReplacesEntry;
+    uint32_t relation_type;    /* RUNEPKG_RELATION_CONFLICTS, BREAKS, PROVIDES */
+} ConflictsBreaksEntry;
 
-#define RUNEPKG_STORAGE_CONFLICTS_BINARY_FILE "conflicts-replaces.bin"
-#define RUNEPKG_STORAGE_CONFLICTS_TEXT_FILE   "conflicts-replaces.txt"
+#define RUNEPKG_STORAGE_CONFLICTS_BINARY_FILE "conflicts-breaks.bin"
+#define RUNEPKG_STORAGE_CONFLICTS_TEXT_FILE   "conflicts-breaks.txt"
 
 /**
- * @brief Builds the binary conflicts, breaks, replaces, and provides index (conflicts-replaces.bin / .txt)
+ * @brief Builds the binary conflicts, breaks, and provides index (conflicts-breaks.bin / .txt)
  * @return 0 on success, -1 on failure
  */
-int runepkg_storage_build_conflicts_replaces_index(void);
+int runepkg_storage_build_conflicts_breaks_index(void);
 
 /**
  * @brief Checks if installing pkg_name (with pkg_version) violates any conflicts or breaks

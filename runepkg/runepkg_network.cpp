@@ -361,7 +361,6 @@ struct PkgMetadata {
     std::string build_depends_indep;
     std::string build_depends_arch;
     std::string conflicts;
-    std::string replaces;
     std::string breaks;
     std::string recommends;
     std::string suggests;
@@ -992,9 +991,6 @@ PkgMetadata get_package_metadata(const std::string& pkg_name) {
             } else if (line.compare(0, 11, "Conflicts: ") == 0) {
                 meta_data.conflicts = line.substr(11);
                 if (!meta_data.conflicts.empty() && meta_data.conflicts.back() == '\r') meta_data.conflicts.pop_back();
-            } else if (line.compare(0, 10, "Replaces: ") == 0) {
-                meta_data.replaces = line.substr(10);
-                if (!meta_data.replaces.empty() && meta_data.replaces.back() == '\r') meta_data.replaces.pop_back();
             } else if (line.compare(0, 8, "Breaks: ") == 0) {
                 meta_data.breaks = line.substr(8);
                 if (!meta_data.breaks.empty() && meta_data.breaks.back() == '\r') meta_data.breaks.pop_back();

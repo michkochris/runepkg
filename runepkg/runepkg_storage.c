@@ -208,7 +208,6 @@ int runepkg_storage_write_package_info(const char *pkg_name, const char *pkg_ver
     WRITE_STRING(pkg_info->build_depends_indep);
     WRITE_STRING(pkg_info->build_depends_arch);
     WRITE_STRING(pkg_info->conflicts);
-    WRITE_STRING(pkg_info->replaces);
     WRITE_STRING(pkg_info->breaks);
     WRITE_STRING(pkg_info->recommends);
     WRITE_STRING(pkg_info->suggests);
@@ -322,7 +321,6 @@ int runepkg_storage_read_package_info(const char *pkg_name, const char *pkg_vers
     PARSE_STRING(pkg_info->build_depends_indep);
     PARSE_STRING(pkg_info->build_depends_arch);
     PARSE_STRING(pkg_info->conflicts);
-    PARSE_STRING(pkg_info->replaces);
     PARSE_STRING(pkg_info->breaks);
     PARSE_STRING(pkg_info->recommends);
     PARSE_STRING(pkg_info->suggests);
@@ -527,7 +525,6 @@ int runepkg_storage_find_provider(const char *virtual_pkg, PkgInfo *out_info) {
                                         out_info->depends = info.depends ? strdup(info.depends) : NULL;
                                         out_info->provides = strdup(virtual_pkg);
                                         out_info->conflicts = info.conflicts ? strdup(info.conflicts) : NULL;
-                                        out_info->replaces = info.replaces ? strdup(info.replaces) : NULL;
                                         out_info->breaks = info.breaks ? strdup(info.breaks) : NULL;
                                         out_info->source_name = info.package_name ? strdup(info.package_name) : NULL;
                                         out_info->section = strdup("virtual");
@@ -1092,7 +1089,7 @@ int runepkg_storage_build_autocomplete_index(void) {
     if (count == 0) {
         runepkg_log_verbose("No packages or build directories found, building empty conflicts index.\n");
         if (packages) free(packages);
-        runepkg_storage_build_conflicts_replaces_index();
+        runepkg_storage_build_conflicts_breaks_index();
         return 0;
     }
 
@@ -1165,8 +1162,8 @@ int runepkg_storage_build_autocomplete_index(void) {
 
     runepkg_log_verbose("Autocomplete index built: %d entries, %s\n", count, index_path);
 
-    /* Also build the conflicts/replaces binary index */
-    runepkg_storage_build_conflicts_replaces_index();
+    /* Also build the conflicts/breaks binary index */
+    runepkg_storage_build_conflicts_breaks_index();
 
     return 0;
 
@@ -1180,11 +1177,11 @@ error_cleanup:
     return -1;
 }
 
-/* --- Conflicts & Replaces Binary Index Generator & Lookup --- */
+/* --- Conflicts & Breaks Binary Index Generator & Lookup --- */
 
 static void parse_relation_items(const char *src_pkg, const char *src_ver, const char *field_str,
                                  uint32_t rel_type,
-                                 ConflictsReplacesEntry **entries, uint32_t *entry_count, uint32_t *capacity,
+                                 ConflictsBreaksEntry **entries, uint32_t *entry_count, uint32_t *capacity,
                                  char **string_table, uint32_t *strings_size) {
     char *copy, *token, *saveptr = NULL;
 
@@ -1226,7 +1223,7 @@ static void parse_relation_items(const char *src_pkg, const char *src_ver, const
 
                     if (*entry_count >= *capacity) {
                         uint32_t new_cap = (*capacity == 0) ? 64 : (*capacity * 2);
-                        ConflictsReplacesEntry *new_entries = realloc(*entries, new_cap * sizeof(ConflictsReplacesEntry));
+                        ConflictsBreaksEntry *new_entries = realloc(*entries, new_cap * sizeof(ConflictsBreaksEntry));
                         if (!new_entries) break;
                         *entries = new_entries;
                         *capacity = new_cap;
@@ -1261,14 +1258,14 @@ static void parse_relation_items(const char *src_pkg, const char *src_ver, const
     free(copy);
 }
 
-int runepkg_storage_build_conflicts_replaces_index(void) {
+int runepkg_storage_build_conflicts_breaks_index(void) {
     char bin_path[PATH_MAX];
     char txt_path[PATH_MAX];
     FILE *fbin = NULL, *ftxt = NULL;
     DIR *dir = NULL;
     struct dirent *entry;
-    ConflictsReplacesHeader hdr;
-    ConflictsReplacesEntry *entries = NULL;
+    ConflictsBreaksHeader hdr;
+    ConflictsBreaksEntry *entries = NULL;
     uint32_t entry_count = 0;
     uint32_t capacity = 0;
     char *string_table = NULL;
@@ -1278,7 +1275,7 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
 
     if (!g_runepkg_db_dir) return -1;
 
-    runepkg_log_verbose("Building conflicts/replaces binary index...\n");
+    runepkg_log_verbose("Building conflicts/breaks binary index...\n");
 
     db_dirs[0] = g_runepkg_db_dir;
     db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
@@ -1324,10 +1321,6 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
                         parse_relation_items(pkg_name, pkg_ver, info.breaks, RUNEPKG_RELATION_BREAKS,
                                              &entries, &entry_count, &capacity, &string_table, &strings_size);
                     }
-                    if (info.replaces) {
-                        parse_relation_items(pkg_name, pkg_ver, info.replaces, RUNEPKG_RELATION_REPLACES,
-                                             &entries, &entry_count, &capacity, &string_table, &strings_size);
-                    }
                     if (info.provides) {
                         parse_relation_items(pkg_name, pkg_ver, info.provides, RUNEPKG_RELATION_PROVIDES,
                                              &entries, &entry_count, &capacity, &string_table, &strings_size);
@@ -1351,7 +1344,7 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
 
         fwrite(&hdr, sizeof(hdr), 1, fbin);
         if (entry_count > 0 && entries) {
-            fwrite(entries, sizeof(ConflictsReplacesEntry), entry_count, fbin);
+            fwrite(entries, sizeof(ConflictsBreaksEntry), entry_count, fbin);
         }
         if (strings_size > 0 && string_table) {
             fwrite(string_table, 1, strings_size, fbin);
@@ -1365,7 +1358,7 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
     ftxt = fopen(txt_path, "w");
     if (ftxt) {
         uint32_t i;
-        fprintf(ftxt, "# runepkg conflicts-replaces index (%u entries)\n", entry_count);
+        fprintf(ftxt, "# runepkg conflicts-breaks index (%u entries)\n", entry_count);
         for (i = 0; i < entry_count; i++) {
             const char *spkg = string_table + entries[i].src_pkg_offset;
             const char *sver = string_table + entries[i].src_ver_offset;
@@ -1375,7 +1368,6 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
 
             if (entries[i].relation_type == RUNEPKG_RELATION_CONFLICTS) rel_str = "Conflicts";
             else if (entries[i].relation_type == RUNEPKG_RELATION_BREAKS) rel_str = "Breaks";
-            else if (entries[i].relation_type == RUNEPKG_RELATION_REPLACES) rel_str = "Replaces";
             else if (entries[i].relation_type == RUNEPKG_RELATION_PROVIDES) rel_str = "Provides";
 
             fprintf(ftxt, "%s (%s) %s %s %s\n", spkg, sver, rel_str, tpkg, cons);
@@ -1387,7 +1379,7 @@ int runepkg_storage_build_conflicts_replaces_index(void) {
     if (entries) free(entries);
     if (string_table) free(string_table);
 
-    runepkg_log_verbose("Conflicts/replaces index built: %u entries\n", entry_count);
+    runepkg_log_verbose("Conflicts/breaks index built: %u entries\n", entry_count);
     return 0;
 }
 
@@ -1408,8 +1400,8 @@ static int get_installed_package_version(const char *pkg_name, char *out_ver, si
 int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version, char *conflict_target, size_t target_size) {
     char bin_path[PATH_MAX];
     FILE *fbin;
-    ConflictsReplacesHeader hdr;
-    ConflictsReplacesEntry *entries = NULL;
+    ConflictsBreaksHeader hdr;
+    ConflictsBreaksEntry *entries = NULL;
     char *string_table = NULL;
     uint32_t i;
     int conflict_found = 0;
@@ -1430,7 +1422,7 @@ int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version
         return 0;
     }
 
-    entries = malloc(hdr.entry_count * sizeof(ConflictsReplacesEntry));
+    entries = malloc(hdr.entry_count * sizeof(ConflictsBreaksEntry));
     string_table = malloc(hdr.strings_size);
 
     if (!entries || !string_table) {
@@ -1440,7 +1432,7 @@ int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version
         return -1;
     }
 
-    if (fread(entries, sizeof(ConflictsReplacesEntry), hdr.entry_count, fbin) != hdr.entry_count ||
+    if (fread(entries, sizeof(ConflictsBreaksEntry), hdr.entry_count, fbin) != hdr.entry_count ||
         fread(string_table, 1, hdr.strings_size, fbin) != hdr.strings_size) {
         free(entries);
         free(string_table);
@@ -1486,17 +1478,39 @@ int runepkg_storage_check_conflict(const char *pkg_name, const char *pkg_version
                 }
             }
         } else if (entries[i].relation_type == RUNEPKG_RELATION_BREAKS) {
-            if (strcmp(tpkg, pkg_name) == 0 && pkg_version && cons && cons[0] != '\0') {
-                if (strcmp(spkg, pkg_name) != 0) {
-                    char inst_ver[128];
-                    if (get_installed_package_version(spkg, inst_ver, sizeof(inst_ver))) {
-                        if (runepkg_util_check_version_constraint(pkg_version, cons) == 1) {
-                            if (conflict_target && target_size > 0) {
-                                snprintf(conflict_target, target_size, "Package '%s' (%s) breaks installed package '%s' (%s)", pkg_name, pkg_version ? pkg_version : "0", spkg, inst_ver);
-                            }
-                            conflict_found = 1;
-                            break;
+            /* Case 1: Installed package spkg declares Breaks: tpkg (cons).
+               pkg_name being installed is tpkg with pkg_version matching cons. */
+            if (strcmp(tpkg, pkg_name) == 0 && strcmp(spkg, pkg_name) != 0) {
+                char inst_ver[128];
+                if (get_installed_package_version(spkg, inst_ver, sizeof(inst_ver))) {
+                    bool is_break = true;
+                    if (cons && cons[0] != '\0' && pkg_version && pkg_version[0] != '\0') {
+                        is_break = (runepkg_util_check_version_constraint(pkg_version, cons) == 1);
+                    }
+                    if (is_break) {
+                        if (conflict_target && target_size > 0) {
+                            snprintf(conflict_target, target_size, "Package '%s' (%s) breaks installed package '%s' (%s)", pkg_name, pkg_version ? pkg_version : "0", spkg, inst_ver);
                         }
+                        conflict_found = 1;
+                        break;
+                    }
+                }
+            }
+            /* Case 2: Package pkg_name being installed is spkg, declaring Breaks: tpkg (cons).
+               tpkg is installed with inst_ver matching cons. */
+            if (strcmp(spkg, pkg_name) == 0 && strcmp(tpkg, pkg_name) != 0) {
+                char inst_ver[128];
+                if (get_installed_package_version(tpkg, inst_ver, sizeof(inst_ver))) {
+                    bool is_break = true;
+                    if (cons && cons[0] != '\0') {
+                        is_break = (runepkg_util_check_version_constraint(inst_ver, cons) == 1);
+                    }
+                    if (is_break) {
+                        if (conflict_target && target_size > 0) {
+                            snprintf(conflict_target, target_size, "Package '%s' breaks installed package '%s' (%s)", pkg_name, tpkg, inst_ver);
+                        }
+                        conflict_found = 1;
+                        break;
                     }
                 }
             }

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Filename:    test_conflicts_provides.sh
-# Description: Integration test for conflicts-replaces.bin and Provides dummy sync
+# Description: Integration test for conflicts-breaks.bin and Provides dummy sync
 # ==============================================================================
 
 set -e
@@ -39,16 +39,16 @@ export RUNEPKG_CONFIG_PATH="$CONF_FILE"
 echo -e "${YELLOW}Executing runepkg sync with custom config...${RESET}"
 "$TARGET_BIN" sync || true
 
-# Verify conflicts-replaces.bin and conflicts-replaces.txt creation
-CONF_BIN="$TEST_DIR/runepkg_dir/runepkg_db/conflicts-replaces.bin"
-CONF_TXT="$TEST_DIR/runepkg_dir/runepkg_db/conflicts-replaces.txt"
+# Verify conflicts-breaks.bin and conflicts-breaks.txt creation
+CONF_BIN="$TEST_DIR/runepkg_dir/runepkg_db/conflicts-breaks.bin"
+CONF_TXT="$TEST_DIR/runepkg_dir/runepkg_db/conflicts-breaks.txt"
 
 if [ -f "$CONF_BIN" ] && [ -f "$CONF_TXT" ]; then
-    echo -e "${GREEN}Verified conflicts-replaces.bin and conflicts-replaces.txt successfully created in DB.${RESET}"
+    echo -e "${GREEN}Verified conflicts-breaks.bin and conflicts-breaks.txt successfully created in DB.${RESET}"
     echo -e "${YELLOW}Index Summary Contents:${RESET}"
     cat "$CONF_TXT"
 else
-    echo -e "${RED}Error: conflicts-replaces index files missing at $CONF_BIN${RESET}"
+    echo -e "${RED}Error: conflicts-breaks index files missing at $CONF_BIN${RESET}"
     rm -rf "$TEST_DIR"
     exit 1
 fi

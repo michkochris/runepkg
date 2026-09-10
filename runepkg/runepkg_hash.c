@@ -84,7 +84,6 @@ void runepkg_hash_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->build_depends_indep);
     runepkg_util_free_and_null(&pkg_info->build_depends_arch);
     runepkg_util_free_and_null(&pkg_info->conflicts);
-    runepkg_util_free_and_null(&pkg_info->replaces);
     runepkg_util_free_and_null(&pkg_info->breaks);
     runepkg_util_free_and_null(&pkg_info->recommends);
     runepkg_util_free_and_null(&pkg_info->suggests);
@@ -325,7 +324,6 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
                 curr->data.build_depends_indep = pkg_info->build_depends_indep ? runepkg_secure_strdup(pkg_info->build_depends_indep) : NULL;
                 curr->data.build_depends_arch = pkg_info->build_depends_arch ? runepkg_secure_strdup(pkg_info->build_depends_arch) : NULL;
                 curr->data.conflicts = pkg_info->conflicts ? runepkg_secure_strdup(pkg_info->conflicts) : NULL;
-                curr->data.replaces = pkg_info->replaces ? runepkg_secure_strdup(pkg_info->replaces) : NULL;
                 curr->data.breaks = pkg_info->breaks ? runepkg_secure_strdup(pkg_info->breaks) : NULL;
                 curr->data.recommends = pkg_info->recommends ? runepkg_secure_strdup(pkg_info->recommends) : NULL;
                 curr->data.suggests = pkg_info->suggests ? runepkg_secure_strdup(pkg_info->suggests) : NULL;
@@ -404,7 +402,6 @@ int runepkg_hash_add_package(runepkg_hash_table_t *table, const PkgInfo *pkg_inf
     new_node->data.build_depends_indep = pkg_info->build_depends_indep ? runepkg_secure_strdup(pkg_info->build_depends_indep) : NULL;
     new_node->data.build_depends_arch = pkg_info->build_depends_arch ? runepkg_secure_strdup(pkg_info->build_depends_arch) : NULL;
     new_node->data.conflicts = pkg_info->conflicts ? runepkg_secure_strdup(pkg_info->conflicts) : NULL;
-    new_node->data.replaces = pkg_info->replaces ? runepkg_secure_strdup(pkg_info->replaces) : NULL;
     new_node->data.breaks = pkg_info->breaks ? runepkg_secure_strdup(pkg_info->breaks) : NULL;
     new_node->data.recommends = pkg_info->recommends ? runepkg_secure_strdup(pkg_info->recommends) : NULL;
     new_node->data.suggests = pkg_info->suggests ? runepkg_secure_strdup(pkg_info->suggests) : NULL;
@@ -710,9 +707,6 @@ void runepkg_hash_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->conflicts) {
         printf("Conflicts:    %s\n", pkg_info->conflicts);
-    }
-    if (pkg_info->replaces) {
-        printf("Replaces:     %s\n", pkg_info->replaces);
     }
     if (pkg_info->breaks) {
         printf("Breaks:       %s\n", pkg_info->breaks);

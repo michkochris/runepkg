@@ -49,7 +49,6 @@ typedef struct PkgInfo {
     char *build_depends_indep;
     char *build_depends_arch;
     char *conflicts;
-    char *replaces;
     char *breaks;
     char *recommends;
     char *suggests;

@@ -54,7 +54,6 @@ void runepkg_pack_init_package_info(PkgInfo *pkg_info) {
     pkg_info->build_depends_indep = NULL;
     pkg_info->build_depends_arch = NULL;
     pkg_info->conflicts = NULL;
-    pkg_info->replaces = NULL;
     pkg_info->breaks = NULL;
     pkg_info->recommends = NULL;
     pkg_info->suggests = NULL;
@@ -96,7 +95,6 @@ void runepkg_pack_free_package_info(PkgInfo *pkg_info) {
     runepkg_util_free_and_null(&pkg_info->build_depends_indep);
     runepkg_util_free_and_null(&pkg_info->build_depends_arch);
     runepkg_util_free_and_null(&pkg_info->conflicts);
-    runepkg_util_free_and_null(&pkg_info->replaces);
     runepkg_util_free_and_null(&pkg_info->breaks);
     runepkg_util_free_and_null(&pkg_info->recommends);
     runepkg_util_free_and_null(&pkg_info->suggests);
@@ -199,7 +197,6 @@ int runepkg_pack_parse_control_file(const char *control_file_path, PkgInfo *pkg_
     pkg_info->build_depends_indep = runepkg_util_get_config_value(control_file_path, "Build-Depends-Indep", ':');
     pkg_info->build_depends_arch = runepkg_util_get_config_value(control_file_path, "Build-Depends-Arch", ':');
     pkg_info->conflicts = runepkg_util_get_config_value(control_file_path, "Conflicts", ':');
-    pkg_info->replaces = runepkg_util_get_config_value(control_file_path, "Replaces", ':');
     pkg_info->breaks = runepkg_util_get_config_value(control_file_path, "Breaks", ':');
     pkg_info->recommends = runepkg_util_get_config_value(control_file_path, "Recommends", ':');
     pkg_info->suggests = runepkg_util_get_config_value(control_file_path, "Suggests", ':');
@@ -535,9 +532,6 @@ void runepkg_pack_print_package_info(const PkgInfo *pkg_info) {
     }
     if (pkg_info->conflicts) {
         printf("Conflicts:    %s\n", pkg_info->conflicts);
-    }
-    if (pkg_info->replaces) {
-        printf("Replaces:     %s\n", pkg_info->replaces);
     }
     if (pkg_info->breaks) {
         printf("Breaks:       %s\n", pkg_info->breaks);

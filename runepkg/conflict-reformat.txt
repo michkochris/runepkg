@@ -1,11 +1,9 @@
 
 in any runepkg scenario concerning runepkg keeping track of and installing to an alternate install_dir, runepkg only keeps track all pkg info and host installed, runepkg installed in one location runepkg_dir/runepkg_db/
-this should be the basis and foundation of laying ground work debian conflicts, breaks, replaces. we should introdeuce another binary file conflicts-replaces.bin to runepkg lightning fast binary autocomplete and binary mmap indices pkg storage system.
+this should be the basis and foundation of laying ground work debian conflicts and breaks. we should introduce another binary file conflicts-breaks.bin to runepkg lightning fast binary autocomplete and binary mmap indices pkg storage system.
 
 runepkg sync with host installed currently does not use runepkg superior provides dummy pkg creation, adding this feature will make runepkg pkg management superior, easily making runepkg capable of bypassing particuler debian related pkg and version errors related to the debian ecosystem.
 
-after adding the file conflicts-replaces.bin to the runepkg persistant storage solution, we can catch a silly user trying to install some binutils-unknown pkg, the current runepkg working location identified in the current runepkg config, will determine what pkg installed root or alternate location. the ultimate runepkg_dir/runepkg_db, will be indiviadual alternate runepkg install locations, runepkg can easily change locations and re sync or update? 
+after adding the file conflicts-breaks.bin to the runepkg persistant storage solution, we can catch a silly user trying to install some binutils-unknown pkg, the current runepkg working location identified in the current runepkg config, will determine what pkg installed root or alternate location. the ultimate runepkg_dir/runepkg_db, will be indiviadual alternate runepkg install locations, runepkg can easily change locations and re sync or update?
 
-runepkg will keep track of one conflicts-replaces.bin/ conflicts-replaces.txt at a time, makeing runepkg superior for embeeded debian based systems?
-
-we create a implementatiion plan first to make sure everything lines up with developer intentions?
+runepkg will keep track of one conflicts-breaks.bin/ conflicts-breaks.txt at a time, makeing runepkg superior for embeeded debian based systems?

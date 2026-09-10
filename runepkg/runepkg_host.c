@@ -162,9 +162,6 @@ static int parse_dpkg_stanza(FILE *fp, PkgInfo *info) {
         } else if (strncmp(line, "Conflicts: ", 11) == 0) {
             if (info->conflicts) free(info->conflicts);
             info->conflicts = strdup(runepkg_util_trim_whitespace(line + 11));
-        } else if (strncmp(line, "Replaces: ", 10) == 0) {
-            if (info->replaces) free(info->replaces);
-            info->replaces = strdup(runepkg_util_trim_whitespace(line + 10));
         } else if (strncmp(line, "Breaks: ", 8) == 0) {
             if (info->breaks) free(info->breaks);
             info->breaks = strdup(runepkg_util_trim_whitespace(line + 8));
@@ -245,7 +242,6 @@ static void generate_provides_dummy_packages(const PkgInfo *host_pkg) {
                         dummy_info.maintainer = host_pkg->maintainer ? strdup(host_pkg->maintainer) : NULL;
                         dummy_info.conflicts = host_pkg->conflicts ? strdup(host_pkg->conflicts) : NULL;
                         dummy_info.breaks = host_pkg->breaks ? strdup(host_pkg->breaks) : NULL;
-                        dummy_info.replaces = host_pkg->replaces ? strdup(host_pkg->replaces) : NULL;
                         dummy_info.depends = host_pkg->depends ? strdup(host_pkg->depends) : NULL;
                         dummy_info.source_name = host_pkg->package_name ? strdup(host_pkg->package_name) : NULL;
 
@@ -540,7 +536,6 @@ static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
     if (pkg_info->build_depends_indep) fprintf(out, "Build-Depends-Indep: %s\n", pkg_info->build_depends_indep);
     if (pkg_info->build_depends_arch) fprintf(out, "Build-Depends-Arch: %s\n", pkg_info->build_depends_arch);
     if (pkg_info->conflicts) fprintf(out, "Conflicts: %s\n", pkg_info->conflicts);
-    if (pkg_info->replaces) fprintf(out, "Replaces: %s\n", pkg_info->replaces);
     if (pkg_info->breaks) fprintf(out, "Breaks: %s\n", pkg_info->breaks);
     if (pkg_info->recommends) fprintf(out, "Recommends: %s\n", pkg_info->recommends);
     if (pkg_info->suggests) fprintf(out, "Suggests: %s\n", pkg_info->suggests);

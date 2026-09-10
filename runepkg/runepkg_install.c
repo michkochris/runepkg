@@ -836,10 +836,6 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             }
         }
 
-        if (pkg_info.replaces) {
-            runepkg_log_verbose("\033[1;36m[replaces]\033[0m Package %s replaces files owned by: %s\n", pkg_info.package_name, pkg_info.replaces);
-        }
-
         if (installing_packages && runepkg_hash_search(installing_packages, pkg_info.package_name)) {
             runepkg_log_verbose("Skipping install of %s: already installing (recursive).\n", pkg_info.package_name);
             runepkg_pack_cleanup_extraction_workspace(&pkg_info);
