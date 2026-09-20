@@ -579,10 +579,11 @@ int runepkg_host_register_install(const PkgInfo *pkg_info) {
              runepkg_util_log_verbose("[host] Atomically updated package stanza for %s in /var/lib/dpkg/status", pkg_info->package_name);
         }
 
-        if (pkg_info->file_count > 0 && pkg_info->file_list) {
-            snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s.list", pkg_info->package_name);
-            list_file = fopen(list_path, "w");
-            if (list_file) {
+        snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s.list", pkg_info->package_name);
+        list_file = fopen(list_path, "w");
+        if (list_file) {
+            fprintf(list_file, "/.\n");
+            if (pkg_info->file_count > 0 && pkg_info->file_list) {
                 for (i = 0; i < pkg_info->file_count; i++) {
                     const char *rel = pkg_info->file_list[i];
                     if (rel && rel[0] != '\0') {
@@ -590,9 +591,9 @@ int runepkg_host_register_install(const PkgInfo *pkg_info) {
                         else fprintf(list_file, "/%s\n", rel);
                     }
                 }
-                fclose(list_file);
-                runepkg_util_log_verbose("[host] Generated dpkg file list: %s", list_path);
             }
+            fclose(list_file);
+            runepkg_util_log_verbose("[host] Generated dpkg file list: %s", list_path);
         }
     }
 

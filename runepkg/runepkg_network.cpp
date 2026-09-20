@@ -1704,14 +1704,41 @@ extern "C" int runepkg_upgrade(void) {
     }
     if (to_upgrade.empty()) { std::cout << "All packages are already up to date." << std::endl; return 0; }
 
+    /* JOB 1 & JOB 2: Multi-Pass Graph Sweep */
+    RuneTargetPlan *plan1 = nullptr;
+    std::vector<const char*> pkgs_pass1;
+    for (const auto& s : to_upgrade) pkgs_pass1.push_back(s.c_str());
+
+    std::unordered_set<std::string> upgrade_set(to_upgrade.begin(), to_upgrade.end());
+
+    if (runepkg_resolver_get_install_plan_multiple(pkgs_pass1.data(), pkgs_pass1.size(), &plan1) == 0 && plan1) {
+        for (int i = 0; i < plan1->node_count; i++) {
+            if (plan1->nodes[i].package_name) {
+                std::string n_name = plan1->nodes[i].package_name;
+                if (upgrade_set.find(n_name) == upgrade_set.end()) {
+                    if (latest_versions.count(n_name)) {
+                        PkgInfo *h_info = runepkg_main_hash_table ? runepkg_hash_search(runepkg_main_hash_table, n_name.c_str()) : NULL;
+                        if (h_info && h_info->version) {
+                            if (runepkg_util_compare_versions(latest_versions[n_name].c_str(), h_info->version) > 0) {
+                                to_upgrade.push_back(n_name);
+                                upgrade_set.insert(n_name);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        runepkg_resolver_free_plan(plan1);
+    }
+
     std::cout << "\033[1;34m[runepkg]\033[0m Found " << to_upgrade.size() << " package(s) to upgrade." << std::endl;
 
-    std::vector<const char*> pkgs_c;
-    for (const auto& s : to_upgrade) pkgs_c.push_back(s.c_str());
+    std::vector<const char*> pkgs_final;
+    for (const auto& s : to_upgrade) pkgs_final.push_back(s.c_str());
 
     bool prev_force = g_force_mode;
     g_force_mode = true;
-    int res = runepkg_repo_install_multiple(pkgs_c.data(), pkgs_c.size());
+    int res = runepkg_repo_install_multiple(pkgs_final.data(), pkgs_final.size());
     g_force_mode = prev_force;
     return res;
 }

@@ -681,30 +681,23 @@ private:
         return "";
     }
 
-    static bool is_installed_satisfied(const std::string& dep_raw, const std::unordered_map<std::string, std::string>& host_installed_map) {
+    static bool is_installed_satisfied(const std::string& dep_raw,
+                                       const std::unordered_map<std::string, std::string>& host_installed_map,
+                                       const std::unordered_map<std::string, RuneGraphEntry>& graph) {
         std::string key = clean_package_key(dep_raw);
         std::string constraint = extract_constraint_string(dep_raw);
-
-        /* Ground Truth: Check direct disk storage using runepkg_storage_package_exists() */
-        if (constraint.empty()) {
-            if (runepkg_storage_package_exists(key.c_str(), NULL) == 1) {
-                return true;
-            }
-        } else {
-            size_t eq_pos = constraint.find('=');
-            if (eq_pos != std::string::npos) {
-                std::string target_ver = constraint.substr(eq_pos + 1);
-                target_ver.erase(0, target_ver.find_first_not_of(" \t\r\n="));
-                target_ver.erase(target_ver.find_last_not_of(" \t\r\n") + 1);
-                if (!target_ver.empty() && runepkg_storage_package_exists(key.c_str(), target_ver.c_str()) == 1) {
-                    return true;
-                }
-            }
-        }
 
         auto it = host_installed_map.find(key);
         if (it == host_installed_map.end()) {
             return false;
+        }
+
+        /* Ground Truth: If repository graph has a newer version than host, dependency is NOT satisfied */
+        auto g_it = graph.find(key);
+        if (g_it != graph.end() && !g_it->second.version.empty() && !it->second.empty()) {
+            if (runepkg_util_compare_versions(g_it->second.version.c_str(), it->second.c_str()) > 0) {
+                return false;
+            }
         }
 
         if (constraint.empty()) {
@@ -736,7 +729,7 @@ private:
             explicit_targets.find(check_name) == explicit_targets.end() &&
             explicit_targets.find(real_pkg) == explicit_targets.end() &&
             (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
-            is_installed_satisfied(pkg, host_installed_map)) {
+            is_installed_satisfied(pkg, host_installed_map, graph)) {
             visited.insert(pkg);
             return true;
         }
@@ -789,7 +782,7 @@ private:
         if (explicit_targets.find(target_key) == explicit_targets.end() &&
             explicit_targets.find(real_key) == explicit_targets.end()) {
             if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
-                is_installed_satisfied(dep, host_installed_map)) {
+                is_installed_satisfied(dep, host_installed_map, graph)) {
                 return;
             }
         }
