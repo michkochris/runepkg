@@ -128,11 +128,12 @@ int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pk
     }
 
     {
-        char *argv[4];
+        char *argv[5];
         argv[0] = (char*)"sh";
         argv[1] = (char*)script_path;
         argv[2] = (char*)action;
-        argv[3] = NULL;
+        argv[3] = (char*)(pkg_info && pkg_info->version ? pkg_info->version : "");
+        argv[4] = NULL;
         ret = runepkg_util_execute_command("/bin/sh", argv);
     }
 

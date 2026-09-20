@@ -1,5 +1,4 @@
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo make clean-all && sudo make uninstall
+[ zypherus /home/michko/runepkg/runepkg ]# make clean-all && make uninstall
 Cleaning up build artifacts and unearthed runes...
 🧹 Clean complete. The forge is reset.
 Purging extended workspace artifacts (vrunepkg_dir, etc.)...
@@ -8,9 +7,8 @@ Done.
 Uninstalling runepkg...
 Note: /etc/runepkg has been preserved.
 Uninstallation complete.
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo make all && sudo make install
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
 make[1]: Entering directory '/home/michko/runepkg/runepkg'
 --------------------------------------------------------
   Unearthing Runes: Compiling runepkg v1.0.4
@@ -43,132 +41,1076 @@ Installing runepkg to /usr/bin...
 Installing configuration to /etc/runepkg...
 Installing target profiles...
 Installation complete. (Run 'make install-target-rules' to sync the rules tree)
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo rm -rf /srv/lib/runepkg_dir/
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg sync
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg sync
 Host synchronization successful.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg update
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] bind9-libs: 1:9.20.23-1 -> 1:9.20.27-2
+  [upgradable] dbus-daemon: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libnewt0.52: 0.52.25-2 -> 0.52.25-2+b1
+  [upgradable] python3.13: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libfido2-1: 1.17.0-1 -> 1.17.0-2
+  [upgradable] linux-sysctl-defaults: 4.15 -> 4.17
+  [upgradable] init-system-helpers: 1.69+kali1 -> 1.69+nmu1+kali1
+  [upgradable] zsh: 5.9-8+b40 -> 5.9.2-1+b1
+  [upgradable] libapt-pkg7.0: 3.2.0+kali1 -> 3.3.3+kali1
+  [upgradable] dbus-bin: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] libscalar-list-utils-perl: 5.42.3-1 -> 1:1.70-1+b1
+  [upgradable] libpython3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libsemanage2: 3.10-1 -> 3.11-1+b1
+  [upgradable] udev: 260.1-1 -> 261.2-1
+  [upgradable] openssh-client-gssapi: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] libsepol2: 3.10-1 -> 3.11-1
+  [upgradable] dhcpcd-base: 1:10.3.2-3 -> 1:10.5.2-1
+  [upgradable] libsystemd0: 260.1-1 -> 261.2-1
+  [upgradable] libpython3.13-stdlib: 3.13.12-1 -> 3.13.15-1
+  [upgradable] dbus: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] nano: 9.0-1 -> 9.2-1
+  [upgradable] bind9-dnsutils: 1:9.20.23-1 -> 1:9.20.27-2
+  [upgradable] liburing2: 2.14-1 -> 2.15-1
+  [upgradable] tasksel: 3.88+kali2 -> 3.90+kali1
+  [upgradable] libffi8: 3.5.2-4 -> 3.8.0-2
+  [upgradable] kali-linux-core: 2026.2.12 -> 2026.3.9
+  [upgradable] tzdata: 2026b-1 -> 2026c-1
+  [upgradable] laptop-detect: 0.16+nmu1 -> 0.17
+  [upgradable] kali-defaults: 2026.2.12 -> 2026.3.2
+  [upgradable] libjson-c5: 0.18+ds-3 -> 0.19+ds-1
+  [upgradable] kali-system-core: 2026.2.12 -> 2026.3.9
+  [upgradable] libcap-ng0: 0.9.3-1 -> 0.9.3-1+b1
+  [upgradable] python3: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] apt: 3.2.0+kali1 -> 3.3.3+kali1
+  [upgradable] debianutils: 5.23.2 -> 5.24
+  [upgradable] libversion-perl: 5.42.3-1 -> 1:0.9934-1+b1
+  [upgradable] vim: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] openssh-server: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] openssh-sftp-server: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] apt-transport-https: 3.2.0+kali1 -> 3.3.3+kali1
+  [upgradable] libattr1: 1:2.5.2-4 -> 1:2.6.0-1
+  [upgradable] python3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libpam0g: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] procps: 2:4.0.4-9+b2 -> 2:4.0.6-3
+  [upgradable] ifupdown: 0.8.45 -> 0.8.45+nmu1+b1
+  [upgradable] libsqlite3-0: 3.46.1-9+b1 -> 3.53.4-2
+  [upgradable] libpam-runtime: 1.7.0-5 -> 1.7.0-8
+  [upgradable] kali-system-cli: 2026.2.12 -> 2026.3.9
+  [upgradable] publicsuffix: 20260428.1050-1 -> 20260725.1419-1
+  [upgradable] libpam-modules: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] adduser: 3.156 -> 3.159
+  [upgradable] vim-runtime: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] libsystemd-shared: 260.1-1 -> 261.2-1
+  [upgradable] libcap2: 1:2.78-1 -> 1:2.78-1+b1
+  [upgradable] sqv: 1.3.0-5+b2 -> 1.5.0-1
+  [upgradable] tmux: 3.6b-1 -> 3.7c-1
+  [upgradable] libdbus-1-3: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] liblmdb0: 0.9.31-1+b3 -> 0.9.35-1
+  [upgradable] sudo: 1.9.17p2-7 -> 1.9.17p2-8
+  [upgradable] init: 1.69+kali1 -> 1.69+nmu1+kali1
+  [upgradable] libjansson4: 2.14-2+b4 -> 2.15.1-1
+  [upgradable] distro-info-data: 0.69 -> 2026.08.20-1
+  [upgradable] tasksel-data: 3.88+kali2 -> 3.90+kali1
+  [upgradable] libpython3-stdlib: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] netbase: 6.5 -> 6.6
+  [upgradable] libpam-modules-bin: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] python3-minimal: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] libcrypt1: 1:4.5.1-1+b1 -> 1:4.5.2+20251210-1
+  [upgradable] python3-newt: 0.52.25-2 -> 0.52.25-2+b1
+  [upgradable] bind9-host: 1:9.20.23-1 -> 1:9.20.27-2
+  [upgradable] systemd-sysv: 260.1-1 -> 261.2-1
+  [upgradable] libpam-systemd: 260.1-1 -> 261.2-1
+  [upgradable] vim-common: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] runit-helper: 2.16.6 -> 2.16.7
+  [upgradable] openssh-client: 1:10.3p1-4 -> 1:10.4p1-5
+  [upgradable] ucf: 3.0053 -> 3.0056
+  [upgradable] apt-utils: 3.2.0+kali1 -> 3.3.3+kali1
+  [upgradable] libmodule-corelist-perl: 5.42.3-1 -> 5.20260820-1
+  [upgradable] lzma: 5.8.3-1 -> 25.00+dfsg-1
+  [upgradable] nfs-common: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] base-files: 1:2026.2.0 -> 1:2026.3.1
+  [upgradable] libexpat1: 2.8.1-1 -> 2.8.3-1
+  [upgradable] libxml2-16: 2.15.3+dfsg-1 -> 2.15.3+dfsg-1+b1
+  [upgradable] iproute2: 7.0.0-1 -> 7.1.0-1
+  [upgradable] wget: 1.25.0-2 -> 1.25.0-3
+  [upgradable] bash: 5.3-3 -> 5.3-3+b1
+  [upgradable] lsb-base: 3.18-1 -> 11.6
+  [upgradable] findutils: 4.10.0-4 -> 4.11.0-2
+  [upgradable] libnfsidmap1: 1:2.9.1-1 -> 1:2.9.2-1
+  [upgradable] libselinux1: 3.10-1 -> 3.11-2
+  [upgradable] libseccomp2: 2.6.0-2+b1 -> 2.6.1-1+b1
+  [upgradable] kali-linux-wsl: 2026.2.12 -> 2026.3.9
+  [upgradable] libcap2-bin: 1:2.78-1 -> 1:2.78-1+b1
+  [upgradable] libdigest-sha-perl: 5.42.3-1 -> 6.04-1+b4
+  [upgradable] tzdata-legacy: 2026b-1 -> 2026c-1
+  [upgradable] vim-tiny: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] python3-apt: 3.1.0 -> 3.1.0+b1
+  [upgradable] libaudit1: 1:4.1.2-1+b1 -> 1:4.1.2-1+b2
+  [upgradable] libsemanage-common: 3.10-1 -> 3.11-1
+  [upgradable] dbus-user-session: 1.16.2-5 -> 1.16.2-5+b1
+  [upgradable] whiptail: 0.52.25-2 -> 0.52.25-2+b1
+  [upgradable] libpcap0.8t64: 1.10.6-1 -> 1.10.6-2
+  [upgradable] libapparmor1: 4.1.7-4 -> 4.1.8-2
+  [upgradable] libudev1: 260.1-1 -> 261.2-1
+  [upgradable] zsh-common: 5.9-8 -> 5.9.2-1
+  [upgradable] systemd: 260.1-1 -> 261.2-1
+  [upgradable] python-is-python3: 3.13.3-1 -> 3.14.7-1
+  [upgradable] libcbor0.10: 0.10.2-2.1+b1 -> 0.10.2-2.2
+  [upgradable] apt-file: 3.3 -> 3.4
+Update complete! Binary/Source indexes updated. 109 upgradable. Time: 6.1s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113047 source rune stanzas in 576ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26684 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg upgrade
+[runepkg] Starting full system upgrade...
+[runepkg] Found 109 package(s) to upgrade.
+[runepkg] Planning installation for 109 package(s)...
+  libjson-c5 liblmdb0 libxml2-16 bind9-libs libsystemd0 libdbus-1-3 dbus-bin libsystemd-shared systemd libapparmor1
+  libcap-ng0 libaudit1 libexpat1 libselinux1 dbus-daemon libnewt0.52 libpython3.13-minimal python3.13-minimal netbase
+  tzdata libffi8 libsqlite3-0 libpython3.13-stdlib python3.13 libcbor0.10 libudev1 libfido2-1 linux-sysctl-defaults
+  init-system-helpers zsh-common libcap2 debianutils zsh libapt-pkg7.0 libcrypt1 perl-base perl
+  libscalar-list-utils-perl libsemanage-common libsepol2 libsemanage2 udev openssh-common openssh-client-gssapi
+  dhcpcd-base dbus nano bind9-host bind9-dnsutils liburing2 sqv libseccomp2 apt tasksel-data tasksel kali-defaults
+  libnfsidmap1 libnl-3-200 libnl-genl-3-200 adduser libproc2-1 procps ucf nfs-common openssh-client libpam0g
+  libpam-modules-bin libpam-modules libpam-runtime openssh-sftp-server runit-helper openssh-server
+  libpython3.14-minimal python3.14-minimal python3-minimal libpython3.14-stdlib python3.14 libpython3-stdlib python3
+  python-is-python3 sudo tmux tzdata-legacy vim-common vim-tiny wget kali-system-core kali-linux-core laptop-detect
+  libversion-perl vim-runtime vim apt-transport-https libattr1 libcap2-bin iproute2 ifupdown kali-system-cli
+  publicsuffix systemd-sysv init libjansson4 distro-info-data python3-newt libpam-systemd apt-utils
+  libmodule-corelist-perl lzma base-files bash sysvinit-utils lsb-base findutils kali-linux-wsl libdigest-sha-perl
+  python3-apt dbus-user-session whiptail libpcap0.8t64 apt-file
+
+120 packages (60.4 MB) will be installed. Continue? [y/N] y
+  -> libjson-c5                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblmdb0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-bin                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdbus-1-3               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml2-16                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-libs                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap-ng0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapparmor1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd-shared         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexpat1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libselinux1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libaudit1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-daemon               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnewt0.52               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libffi8                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> netbase                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tzdata                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcbor0.10               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13-minimal        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsqlite3-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-minimal     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libudev1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-stdlib      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-sysctl-defaults     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfido2-1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init-system-helpers       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debianutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libscalar-list-utils-perl [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage-common        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapt-pkg7.0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage2              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dhcpcd-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsepol2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-common            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-host                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-client-gssapi     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-dnsutils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liburing2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libseccomp2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nano                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sqv                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel-data              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnfsidmap1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-defaults             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnl-3-200               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> udev                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libproc2-1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ucf                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> adduser                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnl-genl-3-200          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nfs-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> procps                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-client            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules-bin        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-runtime            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam0g                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> runit-helper              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-sftp-server       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-server            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3-stdlib         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-minimal           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.14-minimal     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python-is-python3         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.14                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.14-minimal        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tzdata-legacy             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tmux                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.14-stdlib      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sudo                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-system-core          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-linux-core           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-tiny                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> laptop-detect             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-transport-https       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap2-bin               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libattr1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ifupdown                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-system-cli           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd-sysv              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> publicsuffix              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libversion-perl           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> wget                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> distro-info-data          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-newt              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> iproute2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-utils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-systemd            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmodule-corelist-perl   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> base-files                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lzma                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-runtime               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sysvinit-utils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-linux-wsl            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lsb-base                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdigest-sha-perl        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bash                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-user-session         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-apt               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> findutils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> whiptail                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-file                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpcap0.8t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 120 packages to /srv/lib/runepkg_dir/download_dir
+Upgrading libjson-c5 from 0.18+ds-3 to 0.19+ds-1
+[md5sums] Passed for libjson-c5
+[runepkg] Installing libjson-c5 (0.19+ds-1)
+Upgrading liblmdb0 from 0.9.31-1+b3 to 0.9.35-1
+[md5sums] Passed for liblmdb0
+[runepkg] Installing liblmdb0 (0.9.35-1)
+Upgrading libxml2-16 from 2.15.3+dfsg-1 to 2.15.3+dfsg-1+b1
+[md5sums] Passed for libxml2-16
+[runepkg] Installing libxml2-16 (2.15.3+dfsg-1+b1)
+Upgrading bind9-libs from 1:9.20.23-1 to 1:9.20.27-2
+[md5sums] Passed for bind9-libs
+[runepkg] Installing bind9-libs (1:9.20.27-2)
+Upgrading libsystemd0 from 260.1-1 to 261.2-1
+[md5sums] Passed for libsystemd0
+[runepkg] Installing libsystemd0 (261.2-1)
+Upgrading libdbus-1-3 from 1.16.2-5 to 1.16.2-5+b1
+[md5sums] Passed for libdbus-1-3
+[runepkg] Installing libdbus-1-3 (1.16.2-5+b1)
+Upgrading dbus-bin from 1.16.2-5 to 1.16.2-5+b1
+[md5sums] Passed for dbus-bin
+[runepkg] Installing dbus-bin (1.16.2-5+b1)
+Upgrading libsystemd-shared from 260.1-1 to 261.2-1
+[md5sums] Passed for libsystemd-shared
+[warning] Running preinst for libsystemd-shared (install)...
+[runepkg] Installing libsystemd-shared (261.2-1)
+Upgrading systemd from 260.1-1 to 261.2-1
+[md5sums] Passed for systemd
+[warning] Running preinst for systemd (install)...
+[runepkg] Installing systemd (261.2-1)
+[warning] Running postinst for systemd (configure)...
+Failed to kill unit user@1000.service: No main process to kill
+Failed to connect to system scope bus via local transport: Connection refused
+Failed to connect to system scope bus via local transport: Connection refused
+Upgrading libapparmor1 from 4.1.7-4 to 4.1.8-2
+[md5sums] Passed for libapparmor1
+[runepkg] Installing libapparmor1 (4.1.8-2)
+Upgrading libcap-ng0 from 0.9.3-1 to 0.9.3-1+b1
+[md5sums] Passed for libcap-ng0
+[runepkg] Installing libcap-ng0 (0.9.3-1+b1)
+Upgrading libaudit1 from 1:4.1.2-1+b1 to 1:4.1.2-1+b2
+[md5sums] Passed for libaudit1
+[runepkg] Installing libaudit1 (1:4.1.2-1+b2)
+Upgrading libexpat1 from 2.8.1-1 to 2.8.3-1
+[md5sums] Passed for libexpat1
+[runepkg] Installing libexpat1 (2.8.3-1)
+Upgrading libselinux1 from 3.10-1 to 3.11-2
+[md5sums] Passed for libselinux1
+[runepkg] Installing libselinux1 (3.11-2)
+[warning] Running postinst for libselinux1 (configure)...
+Upgrading dbus-daemon from 1.16.2-5 to 1.16.2-5+b1
+[md5sums] Passed for dbus-daemon
+[runepkg] Installing dbus-daemon (1.16.2-5+b1)
+[warning] Running postinst for dbus-daemon (configure)...
+Upgrading libnewt0.52 from 0.52.25-2 to 0.52.25-2+b1
+[md5sums] Passed for libnewt0.52
+[warning] Running preinst for libnewt0.52 (install)...
+[runepkg] Installing libnewt0.52 (0.52.25-2+b1)
+Upgrading libpython3.13-minimal from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for libpython3.13-minimal
+[runepkg] Installing libpython3.13-minimal (3.13.15-1)
+[warning] Running postinst for libpython3.13-minimal (configure)...
+Upgrading python3.13-minimal from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for python3.13-minimal
+[warning] Running preinst for python3.13-minimal (install)...
+[runepkg] Installing python3.13-minimal (3.13.15-1)
+[warning] Running postinst for python3.13-minimal (configure)...
+Upgrading netbase from 6.5 to 6.6
+[md5sums] Passed for netbase
+[runepkg] Installing netbase (6.6)
+[warning] Running postinst for netbase (configure)...
+Upgrading tzdata from 2026b-1 to 2026c-1
+[md5sums] Passed for tzdata
+[runepkg] Installing tzdata (2026c-1)
+[warning] Running postinst for tzdata (configure)...
+
+Current default time zone: 'America/New_York'
+Local time is now:      Sun Sep 20 17:37:41 EDT 2026.
+Universal Time is now:  Sun Sep 20 21:37:41 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Upgrading libffi8 from 3.5.2-4 to 3.8.0-2
+[md5sums] Passed for libffi8
+[runepkg] Installing libffi8 (3.8.0-2)
+Upgrading libsqlite3-0 from 3.46.1-9+b1 to 3.53.4-2
+[md5sums] Passed for libsqlite3-0
+[runepkg] Installing libsqlite3-0 (3.53.4-2)
+Upgrading libpython3.13-stdlib from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for libpython3.13-stdlib
+[runepkg] Installing libpython3.13-stdlib (3.13.15-1)
+Upgrading python3.13 from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for python3.13
+[runepkg] Installing python3.13 (3.13.15-1)
+[warning] Running postinst for python3.13 (configure)...
+Upgrading libcbor0.10 from 0.10.2-2.1+b1 to 0.10.2-2.2
+[md5sums] Passed for libcbor0.10
+[runepkg] Installing libcbor0.10 (0.10.2-2.2)
+Upgrading libudev1 from 260.1-1 to 261.2-1
+[md5sums] Passed for libudev1
+[runepkg] Installing libudev1 (261.2-1)
+Upgrading libfido2-1 from 1.17.0-1 to 1.17.0-2
+[md5sums] Passed for libfido2-1
+[runepkg] Installing libfido2-1 (1.17.0-2)
+Upgrading linux-sysctl-defaults from 4.15 to 4.17
+[md5sums] Passed for linux-sysctl-defaults
+[runepkg] Installing linux-sysctl-defaults (4.17)
+Upgrading init-system-helpers from 1.69+kali1 to 1.69+nmu1+kali1
+[md5sums] Passed for init-system-helpers
+[runepkg] Installing init-system-helpers (1.69+nmu1+kali1)
+[warning] Running postinst for init-system-helpers (configure)...
+Upgrading zsh-common from 5.9-8 to 5.9.2-1
+[md5sums] Passed for zsh-common
+[warning] Running preinst for zsh-common (install)...
+[runepkg] Installing zsh-common (5.9.2-1)
+[warning] Running postinst for zsh-common (configure)...
+Upgrading libcap2 from 1:2.78-1 to 1:2.78-1+b1
+[md5sums] Passed for libcap2
+[runepkg] Installing libcap2 (1:2.78-1+b1)
+Upgrading debianutils from 5.23.2 to 5.24
+[md5sums] Passed for debianutils
+[runepkg] Installing debianutils (5.24)
+[warning] Running postinst for debianutils (configure)...
+Upgrading zsh from 5.9-8+b40 to 5.9.2-1+b1
+[md5sums] Passed for zsh
+[warning] Running preinst for zsh (install)...
+[runepkg] Installing zsh (5.9.2-1+b1)
+[warning] Running postinst for zsh (configure)...
+Upgrading libapt-pkg7.0 from 3.2.0+kali1 to 3.3.3+kali1
+[md5sums] Passed for libapt-pkg7.0
+[runepkg] Installing libapt-pkg7.0 (3.3.3+kali1)
+Upgrading libcrypt1 from 1:4.5.1-1+b1 to 1:4.5.2+20251210-1
+[md5sums] Passed for libcrypt1
+[runepkg] Installing libcrypt1 (1:4.5.2+20251210-1)
+Upgrading libscalar-list-utils-perl from 5.42.3-1 to 1:1.70-1+b1
+[md5sums] Passed for libscalar-list-utils-perl
+[runepkg] Installing libscalar-list-utils-perl (1:1.70-1+b1)
+Upgrading libsemanage-common from 3.10-1 to 3.11-1
+[md5sums] Passed for libsemanage-common
+[runepkg] Installing libsemanage-common (3.11-1)
+Upgrading libsepol2 from 3.10-1 to 3.11-1
+[md5sums] Passed for libsepol2
+[runepkg] Installing libsepol2 (3.11-1)
+Upgrading libsemanage2 from 3.10-1 to 3.11-1+b1
+[md5sums] Passed for libsemanage2
+[runepkg] Installing libsemanage2 (3.11-1+b1)
+Upgrading udev from 260.1-1 to 261.2-1
+[md5sums] Passed for udev
+[warning] Running preinst for udev (install)...
+[runepkg] Installing udev (261.2-1)
+[warning] Running postinst for udev (configure)...
+[md5sums] Passed for openssh-common
+[runepkg] Installing openssh-common (1:10.4p1-5)
+Upgrading openssh-client-gssapi from 1:10.3p1-4 to 1:10.4p1-5
+[md5sums] Passed for openssh-client-gssapi
+[warning] Running preinst for openssh-client-gssapi (install)...
+[runepkg] Installing openssh-client-gssapi (1:10.4p1-5)
+[warning] Running postinst for openssh-client-gssapi (configure)...
+Upgrading dhcpcd-base from 1:10.3.2-3 to 1:10.5.2-1
+[md5sums] Passed for dhcpcd-base
+[runepkg] Installing dhcpcd-base (1:10.5.2-1)
+[warning] Running postinst for dhcpcd-base (configure)...
+Upgrading dbus from 1.16.2-5 to 1.16.2-5+b1
+[md5sums] Passed for dbus
+[warning] Running preinst for dbus (install)...
+[runepkg] Installing dbus (1.16.2-5+b1)
+[warning] Running postinst for dbus (configure)...
+A reboot may be required to replace a running dbus-daemon.
+Please reboot the system when convenient.
+dbus.service is a disabled or a static unit, not starting it.
+Upgrading nano from 9.0-1 to 9.2-1
+[md5sums] Passed for nano
+[runepkg] Installing nano (9.2-1)
+[warning] Running postinst for nano (configure)...
+Upgrading bind9-host from 1:9.20.23-1 to 1:9.20.27-2
+[md5sums] Passed for bind9-host
+[runepkg] Installing bind9-host (1:9.20.27-2)
+Upgrading bind9-dnsutils from 1:9.20.23-1 to 1:9.20.27-2
+[md5sums] Passed for bind9-dnsutils
+[runepkg] Installing bind9-dnsutils (1:9.20.27-2)
+Upgrading liburing2 from 2.14-1 to 2.15-1
+[md5sums] Passed for liburing2
+[runepkg] Installing liburing2 (2.15-1)
+Upgrading sqv from 1.3.0-5+b2 to 1.5.0-1
+[md5sums] Passed for sqv
+[runepkg] Installing sqv (1.5.0-1)
+Upgrading libseccomp2 from 2.6.0-2+b1 to 2.6.1-1+b1
+[md5sums] Passed for libseccomp2
+[runepkg] Installing libseccomp2 (2.6.1-1+b1)
+Upgrading apt from 3.2.0+kali1 to 3.3.3+kali1
+[md5sums] Passed for apt
+[warning] Running preinst for apt (install)...
+[runepkg] Installing apt (3.3.3+kali1)
+[warning] Running postinst for apt (configure)...
+Upgrading tasksel-data from 3.88+kali2 to 3.90+kali1
+[md5sums] Passed for tasksel-data
+[runepkg] Installing tasksel-data (3.90+kali1)
+[warning] Running postinst for tasksel-data (configure)...
+Upgrading tasksel from 3.88+kali2 to 3.90+kali1
+[md5sums] Passed for tasksel
+[runepkg] Installing tasksel (3.90+kali1)
+[warning] Running postinst for tasksel (configure)...
+Upgrading kali-defaults from 2026.2.12 to 2026.3.2
+[md5sums] Passed for kali-defaults
+[warning] Running preinst for kali-defaults (install)...
+Leaving “diversion of /etc/skel/.bashrc to /etc/skel/.bashrc.original by kali-defaults”
+Leaving “diversion of /etc/ssl/openssl.cnf to /etc/ssl/openssl.cnf.original by kali-defaults”
+Leaving “diversion of /etc/xrdp/xrdp.ini to /etc/xrdp/xrdp.ini.original by kali-defaults”
+Leaving “diversion of /etc/zsh/newuser.zshrc.recommended to /etc/zsh/newuser.zshrc.recommended.original by kali-defaults”
+Leaving “diversion of /etc/zsh/zprofile to /etc/zsh/zprofile.original by kali-defaults”
+Leaving “diversion of /usr/lib/python3.13/EXTERNALLY-MANAGED to /usr/lib/python3.13/EXTERNALLY-MANAGED.original by kali-defaults”
+Leaving “diversion of /usr/lib/python3.14/EXTERNALLY-MANAGED to /usr/lib/python3.14/EXTERNALLY-MANAGED.original by kali-defaults”
+Leaving “diversion of /usr/share/samba/smb.conf to /usr/share/samba/smb.conf.original by kali-defaults”
+[runepkg] Installing kali-defaults (2026.3.2)
+[warning] Running postinst for kali-defaults (configure)...
+Configuring /etc/environment
+Upgrading libnfsidmap1 from 1:2.9.1-1 to 1:2.9.2-1
+[md5sums] Passed for libnfsidmap1
+[runepkg] Installing libnfsidmap1 (1:2.9.2-1)
+[md5sums] Passed for libnl-3-200
+[runepkg] Installing libnl-3-200 (3.12.0-2+b1)
+[md5sums] Passed for libnl-genl-3-200
+[runepkg] Installing libnl-genl-3-200 (3.12.0-2+b1)
+Upgrading adduser from 3.156 to 3.159
+[md5sums] Passed for adduser
+[warning] Running preinst for adduser (install)...
+[runepkg] Installing adduser (3.159)
+[md5sums] Passed for libproc2-1
+[runepkg] Installing libproc2-1 (2:4.0.6-3)
+Upgrading procps from 2:4.0.4-9+b2 to 2:4.0.6-3
+[md5sums] Passed for procps
+[warning] Running preinst for procps (install)...
+[runepkg] Installing procps (2:4.0.6-3)
+[warning] Running postinst for procps (configure)...
+Upgrading ucf from 3.0053 to 3.0056
+[md5sums] Passed for ucf
+[warning] Running preinst for ucf (install)...
+Moving old data out of the way
+[runepkg] Installing ucf (3.0056)
+[warning] Running postinst for ucf (configure)...
+Upgrading nfs-common from 1:2.9.1-1 to 1:2.9.2-1
+[md5sums] Passed for nfs-common
+[warning] Running preinst for nfs-common (install)...
+[runepkg] Installing nfs-common (1:2.9.2-1)
+[warning] Running postinst for nfs-common (configure)...
+Replacing config file /etc/nfs.conf with new version
+auth-rpcgss-module.service is a disabled or a static unit not running, not starting it.
+nfs-idmapd.service is a disabled or a static unit not running, not starting it.
+nfs-utils.service is a disabled or a static unit not running, not starting it.
+proc-fs-nfsd.mount is a disabled or a static unit not running, not starting it.
+rpc-gssd.service is a disabled or a static unit not running, not starting it.
+rpc-statd.service is a disabled or a static unit not running, not starting it.
+rpc-svcgssd.service is a disabled or a static unit not running, not starting it.
+Upgrading openssh-client from 1:10.3p1-4 to 1:10.4p1-5
+[md5sums] Passed for openssh-client
+[warning] Running preinst for openssh-client (install)...
+[runepkg] Installing openssh-client (1:10.4p1-5)
+[warning] Running postinst for openssh-client (configure)...
+Upgrading libpam0g from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam0g
+[runepkg] Installing libpam0g (1.7.0-8)
+[warning] Running postinst for libpam0g (configure)...
+Upgrading libpam-modules-bin from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam-modules-bin
+[runepkg] Installing libpam-modules-bin (1.7.0-8)
+[warning] Running postinst for libpam-modules-bin (configure)...
+pam_namespace.service is a disabled or a static unit not running, not starting it.
+Upgrading libpam-modules from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam-modules
+[warning] Running preinst for libpam-modules (install)...
+[runepkg] Installing libpam-modules (1.7.0-8)
+[warning] Running postinst for libpam-modules (configure)...
+Upgrading libpam-runtime from 1.7.0-5 to 1.7.0-8
+[md5sums] Passed for libpam-runtime
+[runepkg] Installing libpam-runtime (1.7.0-8)
+[warning] Running postinst for libpam-runtime (configure)...
+Upgrading openssh-sftp-server from 1:10.3p1-4 to 1:10.4p1-5
+[md5sums] Passed for openssh-sftp-server
+[runepkg] Installing openssh-sftp-server (1:10.4p1-5)
+Upgrading runit-helper from 2.16.6 to 2.16.7
+[md5sums] Passed for runit-helper
+[runepkg] Installing runit-helper (2.16.7)
+Upgrading openssh-server from 1:10.3p1-4 to 1:10.4p1-5
+[md5sums] Passed for openssh-server
+[warning] Running preinst for openssh-server (install)...
+[runepkg] Installing openssh-server (1:10.4p1-5)
+[warning] Running postinst for openssh-server (configure)...
+Replacing config file /etc/ssh/sshd_config with new version
+ssh.service is a disabled or a static unit not running, not starting it.
+ssh.socket is a disabled or a static unit not running, not starting it.
+sshd-keygen.service is a disabled or a static unit not running, not starting it.
+[md5sums] Passed for libpython3.14-minimal
+[runepkg] Installing libpython3.14-minimal (3.14.7-3)
+[warning] Running postinst for libpython3.14-minimal (configure)...
+[md5sums] Passed for python3.14-minimal
+[warning] Running preinst for python3.14-minimal (install)...
+[runepkg] Installing python3.14-minimal (3.14.7-3)
+[warning] Running postinst for python3.14-minimal (configure)...
+dpkg-query: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+python3.14-minimal: can't get files for byte-compilation
+Upgrading python3-minimal from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for python3-minimal
+[runepkg] Installing python3-minimal (3.14.7-3)
+[warning] Running postinst for python3-minimal (configure)...
+[md5sums] Passed for libpython3.14-stdlib
+[runepkg] Installing libpython3.14-stdlib (3.14.7-3)
+[md5sums] Passed for python3.14
+[runepkg] Installing python3.14 (3.14.7-3)
+[warning] Running postinst for python3.14 (configure)...
+dpkg-query: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+python3.14: can't get files for byte-compilation
+Upgrading libpython3-stdlib from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for libpython3-stdlib
+[runepkg] Installing libpython3-stdlib (3.14.7-3)
+Upgrading python3 from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for python3
+[warning] Running preinst for python3 (install)...
+[runepkg] Installing python3 (3.14.7-3)
+[warning] Running postinst for python3 (configure)...
+running python rtupdate hooks for python3.14...
+running python post-rtupdate hooks for python3.14...
+Upgrading python-is-python3 from 3.13.3-1 to 3.14.7-1
+[md5sums] Passed for python-is-python3
+[runepkg] Installing python-is-python3 (3.14.7-1)
+Upgrading sudo from 1.9.17p2-7 to 1.9.17p2-8
+[md5sums] Passed for sudo
+[warning] Running preinst for sudo (install)...
+[runepkg] Installing sudo (1.9.17p2-8)
+[warning] Running postinst for sudo (configure)...
+Upgrading tmux from 3.6b-1 to 3.7c-1
+[md5sums] Passed for tmux
+[runepkg] Installing tmux (3.7c-1)
+[warning] Running postinst for tmux (configure)...
+Upgrading tzdata-legacy from 2026b-1 to 2026c-1
+[md5sums] Passed for tzdata-legacy
+[runepkg] Installing tzdata-legacy (2026c-1)
+Upgrading vim-common from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-common
+[runepkg] Installing vim-common (2:9.2.0858-1)
+[warning] Running postinst for vim-common (configure)...
+Upgrading vim-tiny from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-tiny
+[runepkg] Installing vim-tiny (2:9.2.0858-1)
+[warning] Running postinst for vim-tiny (configure)...
+Upgrading wget from 1.25.0-2 to 1.25.0-3
+[md5sums] Passed for wget
+[runepkg] Installing wget (1.25.0-3)
+Upgrading kali-system-core from 2026.2.12 to 2026.3.9
+[md5sums] Passed for kali-system-core
+[runepkg] Installing kali-system-core (2026.3.9)
+Upgrading kali-linux-core from 2026.2.12 to 2026.3.9
+[md5sums] Passed for kali-linux-core
+[runepkg] Installing kali-linux-core (2026.3.9)
+Upgrading laptop-detect from 0.16+nmu1 to 0.17
+[md5sums] Passed for laptop-detect
+[runepkg] Installing laptop-detect (0.17)
+Upgrading libversion-perl from 5.42.3-1 to 1:0.9934-1+b1
+[md5sums] Passed for libversion-perl
+[runepkg] Installing libversion-perl (1:0.9934-1+b1)
+Upgrading vim-runtime from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-runtime
+[warning] Running preinst for vim-runtime (install)...
+Leaving “diversion of /usr/share/vim/vim92/doc/help.txt to /usr/share/vim/vim92/doc/help.txt.vim-tiny by vim-runtime”
+Leaving “diversion of /usr/share/vim/vim92/doc/tags to /usr/share/vim/vim92/doc/tags.vim-tiny by vim-runtime”
+[runepkg] Installing vim-runtime (2:9.2.0858-1)
+[warning] Running postinst for vim-runtime (configure)...
+Upgrading vim from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim
+[runepkg] Installing vim (2:9.2.0858-1)
+[warning] Running postinst for vim (configure)...
+Upgrading libattr1 from 1:2.5.2-4 to 1:2.6.0-1
+[md5sums] Passed for libattr1
+[runepkg] Installing libattr1 (1:2.6.0-1)
+Upgrading libcap2-bin from 1:2.78-1 to 1:2.78-1+b1
+[md5sums] Passed for libcap2-bin
+[runepkg] Installing libcap2-bin (1:2.78-1+b1)
+Upgrading iproute2 from 7.0.0-1 to 7.1.0-1
+[md5sums] Passed for iproute2
+[runepkg] Installing iproute2 (7.1.0-1)
+[warning] Running postinst for iproute2 (configure)...
+Upgrading ifupdown from 0.8.45 to 0.8.45+nmu1+b1
+[md5sums] Passed for ifupdown
+[warning] Running preinst for ifupdown (install)...
+[runepkg] Installing ifupdown (0.8.45+nmu1+b1)
+[warning] Running postinst for ifupdown (configure)...
+Upgrading kali-system-cli from 2026.2.12 to 2026.3.9
+[md5sums] Passed for kali-system-cli
+[runepkg] Installing kali-system-cli (2026.3.9)
+Upgrading publicsuffix from 20260428.1050-1 to 20260725.1419-1
+[md5sums] Passed for publicsuffix
+[runepkg] Installing publicsuffix (20260725.1419-1)
+Upgrading systemd-sysv from 260.1-1 to 261.2-1
+[md5sums] Passed for systemd-sysv
+[runepkg] Installing systemd-sysv (261.2-1)
+[warning] Running postinst for systemd-sysv (configure)...
+Upgrading init from 1.69+kali1 to 1.69+nmu1+kali1
+[md5sums] Passed for init
+[runepkg] Installing init (1.69+nmu1+kali1)
+Upgrading libjansson4 from 2.14-2+b4 to 2.15.1-1
+[md5sums] Passed for libjansson4
+[runepkg] Installing libjansson4 (2.15.1-1)
+Upgrading distro-info-data from 0.69 to 2026.08.20-1
+[md5sums] Passed for distro-info-data
+[runepkg] Installing distro-info-data (2026.08.20-1)
+Upgrading python3-newt from 0.52.25-2 to 0.52.25-2+b1
+[md5sums] Passed for python3-newt
+[runepkg] Installing python3-newt (0.52.25-2+b1)
+[warning] Running postinst for python3-newt (configure)...
+Upgrading libpam-systemd from 260.1-1 to 261.2-1
+[md5sums] Passed for libpam-systemd
+[runepkg] Installing libpam-systemd (261.2-1)
+[warning] Running postinst for libpam-systemd (configure)...
+Upgrading apt-utils from 3.2.0+kali1 to 3.3.3+kali1
+[md5sums] Passed for apt-utils
+[runepkg] Installing apt-utils (3.3.3+kali1)
+Upgrading libmodule-corelist-perl from 5.42.3-1 to 5.20260820-1
+[md5sums] Passed for libmodule-corelist-perl
+[warning] Running preinst for libmodule-corelist-perl (install)...
+Adding “diversion of /usr/bin/corelist to /usr/bin/corelist.bundled by libmodule-corelist-perl”
+Adding “diversion of /usr/share/man/man1/corelist.1.gz to /usr/share/man/man1/corelist.bundled.1.gz by libmodule-corelist-perl”
+[runepkg] Installing libmodule-corelist-perl (5.20260820-1)
+Upgrading lzma from 5.8.3-1 to 25.00+dfsg-1
+[md5sums] Passed for lzma
+[runepkg] Installing lzma (25.00+dfsg-1)
+[warning] Running postinst for lzma (configure)...
+update-alternatives: using /usr/bin/lzmp to provide /usr/bin/lzma (lzma) in auto mode
+Upgrading base-files from 1:2026.2.0 to 1:2026.3.1
+[md5sums] Passed for base-files
+[warning] Running preinst for base-files (install)...
+[runepkg] Installing base-files (1:2026.3.1)
+[warning] Running postinst for base-files (configure)...
+Upgrading bash from 5.3-3 to 5.3-3+b1
+[md5sums] Passed for bash
+[runepkg] Installing bash (5.3-3+b1)
+[warning] Running postinst for bash (configure)...
+Upgrading lsb-base from 3.18-1 to 11.6
+[md5sums] Passed for lsb-base
+[runepkg] Installing lsb-base (11.6)
+Upgrading findutils from 4.10.0-4 to 4.11.0-2
+[md5sums] Passed for findutils
+[runepkg] Installing findutils (4.11.0-2)
+Upgrading kali-linux-wsl from 2026.2.12 to 2026.3.9
+[md5sums] Passed for kali-linux-wsl
+[runepkg] Installing kali-linux-wsl (2026.3.9)
+Upgrading libdigest-sha-perl from 5.42.3-1 to 6.04-1+b4
+[md5sums] Passed for libdigest-sha-perl
+[warning] Running preinst for libdigest-sha-perl (install)...
+Adding “diversion of /usr/bin/shasum to /usr/bin/shasum.bundled by libdigest-sha-perl”
+Adding “diversion of /usr/share/man/man1/shasum.1.gz to /usr/share/man/man1/shasum.bundled.1.gz by libdigest-sha-perl”
+[runepkg] Installing libdigest-sha-perl (6.04-1+b4)
+Upgrading python3-apt from 3.1.0 to 3.1.0+b1
+[md5sums] Passed for python3-apt
+[runepkg] Installing python3-apt (3.1.0+b1)
+[warning] Running postinst for python3-apt (configure)...
+Upgrading dbus-user-session from 1.16.2-5 to 1.16.2-5+b1
+[md5sums] Passed for dbus-user-session
+[runepkg] Installing dbus-user-session (1.16.2-5+b1)
+Upgrading whiptail from 0.52.25-2 to 0.52.25-2+b1
+[md5sums] Passed for whiptail
+[warning] Running preinst for whiptail (install)...
+[runepkg] Installing whiptail (0.52.25-2+b1)
+Upgrading libpcap0.8t64 from 1.10.6-1 to 1.10.6-2
+[md5sums] Passed for libpcap0.8t64
+[runepkg] Installing libpcap0.8t64 (1.10.6-2)
+Upgrading apt-file from 3.3 to 3.4
+[md5sums] Passed for apt-file
+[runepkg] Installing apt-file (3.4)
+[warning] Running postinst for apt-file (configure)...
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
 [runepkg] Starting parallel repository update...
 Downloading 8 package lists...
   -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖ·]  99.1%
 Building Hybrid Binary and Source Indexes...
 Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 19.4s
+  [upgradable] apt-transport-https: 3.2.0+kali1 -> 3.3.3+kali1
+Update complete! Binary/Source indexes updated. 1 upgradable. Time: 14.0s
 [harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
   -> Found 16 index partitions to analyze.
-[success] Processed 113047 source rune stanzas in 619ms.
+[success] Processed 113047 source rune stanzas in 566ms.
   -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26684 KB)
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg upgrade
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg upgrade
 [runepkg] Starting full system upgrade...
-All packages are already up to date.
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg -i sysvinit-core
-[conflict] Package 'sysvinit-core' conflicts with installed package 'systemd-sysv' (261.2-1). Use -f/--force to override.
-
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg -i fastfetch
+[runepkg] Found 1 package(s) to upgrade.
 [runepkg] Planning installation for 1 package(s)...
-  libyyjson0 fastfetch
+  apt apt-transport-https
 
-2 packages (720.3 KB) will be installed. Continue? [y/N] y
-  -> libyyjson0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> fastfetch                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+2 packages (1.5 MB) will be installed. Continue? [y/N] y
 
 [success] Downloaded 2 packages to /srv/lib/runepkg_dir/download_dir
-[md5sums] Passed for libyyjson0
-[runepkg] Installing libyyjson0 (0.12.0+ds-2)
-[md5sums] Passed for fastfetch
-[runepkg] Installing fastfetch (2.66.0+dfsg-1)
+Upgrading apt-transport-https from 3.2.0+kali1 to 3.3.3+kali1
+[md5sums] Passed for apt-transport-https
+[runepkg] Installing apt-transport-https (3.3.3+kali1)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg info fastfetch
-Package: fastfetch
-Version: 2.66.0+dfsg-1
-Architecture: amd64
-Maintainer: Hiago De Franco <hiago@defranco.dev.br>
-Description: neofetch-like tool for fetching system information
-Depends: libc6 (>= 2.38), libyyjson0 (>= 0.12.0+ds)
-Source: fastfetch
-Download-Size: 617.9 KB
-Installed-Size: 2.1 MB
-Section: utils
-Priority: optional
-Homepage: https://github.com/fastfetch-cli/fastfetch
-Status: installed (version 2.66.0+dfsg-1)
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 7.7s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113047 source rune stanzas in 579ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26684 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# apt upgrade
+You might want to run 'apt --fix-broken install' to correct these.
+Unsatisfied dependencies:
+ openssh-client-gssapi : Conflicts: openssh-client
+Error: Unmet dependencies. Try 'apt --fix-broken install' with no packages (or specify a solution).
+[ zypherus /home/michko/runepkg/runepkg ]# apt --fix-broken install
+Correcting dependencies... Done
+The following packages were automatically installed and are no longer required:
+  libperl5.40  libpython3.13-minimal  libpython3.13-stdlib  perl-modules-5.40  python3.13  python3.13-minimal
+Use 'sudo apt autoremove' to remove them.
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg -s fastfetch
-Reading package data: 634 packages, 1.8 GB used, 952.6 GB available
-Package: fastfetch
-Version: 2.66.0+dfsg-1
-Architecture: amd64
-Maintainer: Hiago De Franco <hiago@defranco.dev.br>
-Description: neofetch-like tool for fetching system information
-Depends: libc6 (>= 2.38), libyyjson0 (>= 0.12.0+ds)
-Installed-Size: 2151
-Section: utils
-Priority: optional
-Homepage: https://github.com/fastfetch-cli/fastfetch
-Files installed: 46
+REMOVING:
+  openssh-client-gssapi
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg -s binutils
-Reading package data: 634 packages, 1.8 GB used, 952.6 GB available
-Package: binutils
-Version: 2.47-2
-Architecture: amd64
-Maintainer: Matthias Klose <doko@debian.org>
-Description: GNU assembler, linker and binary utilities
-The programs in this package are used to assemble, link and manipulate
-binary and object files.  They may be used in conjunction with a compiler
-and various libraries to build programs.
-Depends: libbinutils (= 2.47-2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.47-2), binutils-x86-64-linux-gnu (= 2.47-2)
-Provides: elf-binutils
-Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
-Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-10)
-Suggests: binutils-doc (>= 2.47-2), gprofng-gui, binutils-gold
-Installed-Size: 1119
-Section: devel
-Priority: optional
-Homepage: https://www.gnu.org/software/binutils/
-Files installed: 41
+Summary:
+  Upgrading: 0, Installing: 0, Removing: 1, Not Upgrading: 35
+  Freed space: 3,919 kB
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$ sudo runepkg info binutils
-Package: binutils
-Version: 2.47-2
-Architecture: amd64
-Maintainer: Matthias Klose <doko@debian.org>
-Description: GNU assembler, linker and binary utilities
-Depends: libbinutils (= 2.47-2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.47-2), binutils-x86-64-linux-gnu (= 2.47-2)
-Provides: elf-binutils
-Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
-Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-10)
-Suggests: binutils-doc (>= 2.47-2), gprofng-gui, binutils-gold
-Source: binutils
-Download-Size: 275.4 KB
-Installed-Size: 1.1 MB
-Section: devel
-Priority: optional
-Homepage: https://www.gnu.org/software/binutils/
-Status: installed (version 2.47-2)
+Continue? [Y/n] y
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47320 files and directories currently installed.)
+Removing openssh-client-gssapi (1:10.4p1-5)…
+[ zypherus /home/michko/runepkg/runepkg ]# apt upgrade
+The following packages were automatically installed and are no longer required:
+  libperl5.40  libpython3.13-minimal  libpython3.13-stdlib  perl-modules-5.40  python3.13  python3.13-minimal
+Use 'sudo apt autoremove' to remove them.
 
-┌──(michko㉿zypherus)-[~/runepkg/runepkg]
-└─$
+Upgrading:
+  apt          dhcpcd-base   libnfsidmap1        libpython3.13-minimal  openssh-server       tzdata
+  base-files   iproute2      libpam-modules      libpython3.14-minimal  openssh-sftp-server  tzdata-legacy
+  bind9-host   libapparmor1  libpam-modules-bin  nano                   procps               udev
+  bind9-libs   libcap2-bin   libpam-runtime      nfs-common             python3              vim-common
+  dbus-bin     libcrypt1     libpam0g            openssh-client         python3-apt          zsh-common
+  dbus-daemon  libffi8       libpcap0.8t64       openssh-common         systemd-sysv
+
+Summary:
+  Upgrading: 35, Installing: 0, Removing: 0, Not Upgrading: 0
+  Download size: 18.2 MB
+  Space needed: 0 B / 1,023 GB available
+
+Continue? [Y/n] y
+Get:1 http://kali.download/kali kali-last-snapshot/main amd64 base-files amd64 1:2026.3.1 [92.0 kB]
+Get:2 http://http.kali.org/kali kali-last-snapshot/main amd64 apt amd64 3.3.3+kali1 [1,539 kB]
+Get:3 http://kali.download/kali kali-last-snapshot/main amd64 libpam-runtime all 1.7.0-8 [246 kB]
+Get:4 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 libpam-modules amd64 1.7.0-8 [168 kB]
+Get:6 http://kali.download/kali kali-last-snapshot/main amd64 python3 amd64 3.14.7-3 [26.0 kB]
+Get:8 http://kali.download/kali kali-last-snapshot/main amd64 libpam0g amd64 1.7.0-8 [66.9 kB]
+Get:9 http://kali.download/kali kali-last-snapshot/main amd64 libpam-modules-bin amd64 1.7.0-8 [46.3 kB]
+Get:12 http://kali.download/kali kali-last-snapshot/main amd64 dhcpcd-base amd64 1:10.5.2-1 [221 kB]
+Get:13 http://http.kali.org/kali kali-last-snapshot/main amd64 libcap2-bin amd64 1:2.78-1+b1 [36.9 kB]
+Get:17 http://kali.download/kali kali-last-snapshot/main amd64 udev amd64 261.2-1 [1,485 kB]
+Get:7 http://http.kali.org/kali kali-last-snapshot/main amd64 libcrypt1 amd64 1:4.5.2+20251210-1 [100 kB]
+Get:10 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 tzdata all 2026c-1 [260 kB]
+Get:26 http://us.mirror.ionos.com/linux/distributions/kali/kali kali-last-snapshot/main amd64 libffi8 amd64 3.8.0-2 [32.5 kB]
+Get:5 http://kali.mirror.rafal.ca/kali kali-last-snapshot/main amd64 systemd-sysv amd64 261.2-1 [41.2 kB]
+Get:14 http://kali.mirror.rafal.ca/kali kali-last-snapshot/main amd64 iproute2 amd64 7.1.0-1 [1,149 kB]
+Get:11 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 tzdata-legacy all 2026c-1 [179 kB]
+Get:29 http://us.mirror.ionos.com/linux/distributions/kali/kali kali-last-snapshot/main amd64 libpython3.13-minimal amd64 3.13.15-1 [868 kB]
+Get:18 http://kali.download/kali kali-last-snapshot/main amd64 vim-common all 2:9.2.0858-1 [485 kB]
+Get:19 http://kali.download/kali kali-last-snapshot/main amd64 bind9-libs amd64 1:9.20.27-2 [1,317 kB]
+Get:16 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 procps amd64 2:4.0.6-3 [983 kB]
+Get:15 http://kali.mirror.rafal.ca/kali kali-last-snapshot/main amd64 nano amd64 9.2-1 [704 kB]
+Get:32 http://us.mirror.ionos.com/linux/distributions/kali/kali kali-last-snapshot/main amd64 openssh-sftp-server amd64 1:10.4p1-5 [70.4 kB]
+Get:21 http://kali.mirror.rafal.ca/kali kali-last-snapshot/main amd64 openssh-common amd64 1:10.4p1-5 [492 kB]
+Get:22 http://kali.download/kali kali-last-snapshot/main amd64 openssh-client amd64 1:10.4p1-5 [734 kB]
+Get:23 http://http.kali.org/kali kali-last-snapshot/main amd64 dbus-bin amd64 1.16.2-5+b1 [76.7 kB]
+Get:24 http://kali.download/kali kali-last-snapshot/main amd64 libapparmor1 amd64 4.1.8-2 [38.7 kB]
+Get:25 http://http.kali.org/kali kali-last-snapshot/main amd64 dbus-daemon amd64 1.16.2-5+b1 [156 kB]
+Get:27 http://kali.download/kali kali-last-snapshot/main amd64 libnfsidmap1 amd64 1:2.9.2-1 [55.5 kB]
+Get:28 http://kali.download/kali kali-last-snapshot/main amd64 libpcap0.8t64 amd64 1.10.6-2 [176 kB]
+Get:33 http://kali.download/kali kali-last-snapshot/main amd64 openssh-server amd64 1:10.4p1-5 [634 kB]
+Get:35 http://kali.download/kali kali-last-snapshot/main amd64 zsh-common all 5.9.2-1 [4,293 kB]
+Get:20 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 bind9-host amd64 1:9.20.27-2 [52.2 kB]
+Get:30 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 libpython3.14-minimal amd64 3.14.7-3 [902 kB]
+Get:31 http://mirror.us.cdn-perfprod.com/kali kali-last-snapshot/main amd64 nfs-common amd64 1:2.9.2-1 [264 kB]
+Get:34 http://http.kali.org/kali kali-last-snapshot/main amd64 python3-apt amd64 3.1.0+b1 [167 kB]
+Fetched 18.2 MB in 5s (3,932 kB/s)
+Extracting templates from packages: 100%
+Preconfiguring packages ...
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47307 files and directories currently installed.)
+Preparing to unpack …/base-files_1%3a2026.3.1_amd64.deb…
+Unpacking base-files (1:2026.3.1) over (1:2026.3.1)…
+Setting up base-files (1:2026.3.1)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47332 files and directories currently installed.)
+Preparing to unpack …/apt_3.3.3+kali1_amd64.deb…
+Unpacking apt (3.3.3+kali1) over (3.3.3+kali1)…
+Setting up apt (3.3.3+kali1)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47363 files and directories currently installed.)
+Preparing to unpack …/libpam-runtime_1.7.0-8_all.deb…
+Unpacking libpam-runtime (1.7.0-8) over (1.7.0-8)…
+Setting up libpam-runtime (1.7.0-8)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47370 files and directories currently installed.)
+Preparing to unpack …/libpam-modules_1.7.0-8_amd64.deb…
+Unpacking libpam-modules:amd64 (1.7.0-8) over (1.7.0-8)…
+Setting up libpam-modules:amd64 (1.7.0-8)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47369 files and directories currently installed.)
+Preparing to unpack …/systemd-sysv_261.2-1_amd64.deb…
+Unpacking systemd-sysv (261.2-1) over (261.2-1)…
+Preparing to unpack …/python3_3.14.7-3_amd64.deb…
+running python pre-rtupdate hooks for python3.14...
+Unpacking python3 (3.14.7-3) over (3.14.7-3)…
+Preparing to unpack …/libcrypt1_1%3a4.5.2+20251210-1_amd64.deb…
+Unpacking libcrypt1:amd64 (1:4.5.2+20251210-1) over (1:4.5.2+20251210-1)…
+Setting up libcrypt1:amd64 (1:4.5.2+20251210-1)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47371 files and directories currently installed.)
+Preparing to unpack …/libpam0g_1.7.0-8_amd64.deb…
+Unpacking libpam0g:amd64 (1.7.0-8) over (1.7.0-8)…
+Setting up libpam0g:amd64 (1.7.0-8)…
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47370 files and directories currently installed.)
+Preparing to unpack …/libpam-modules-bin_1.7.0-8_amd64.deb…
+Unpacking libpam-modules-bin (1.7.0-8) over (1.7.0-8)…
+Setting up libpam-modules-bin (1.7.0-8)…
+pam_namespace.service is a disabled or a static unit not running, not starting it.
+dpkg: warning: files list file for package 'libpython3.14-stdlib:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libpython3.14-minimal:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libproc2-1:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-genl-3-200:amd64' missing; assuming package has no files currently installed
+dpkg: warning: files list file for package 'libnl-3-200:amd64' missing; assuming package has no files currently installed
+(Reading database… 47371 files and directories currently installed.)
+Preparing to unpack …/00-tzdata_2026c-1_all.deb…
+Unpacking tzdata (2026c-1) over (2026c-1)…
+Preparing to unpack …/01-tzdata-legacy_2026c-1_all.deb…
+Unpacking tzdata-legacy (2026c-1) over (2026c-1)…
+Preparing to unpack …/02-dhcpcd-base_1%3a10.5.2-1_amd64.deb…
+Unpacking dhcpcd-base (1:10.5.2-1) over (1:10.5.2-1)…
+Preparing to unpack …/03-libcap2-bin_1%3a2.78-1+b1_amd64.deb…
+Unpacking libcap2-bin (1:2.78-1+b1) over (1:2.78-1+b1)…
+Preparing to unpack …/04-iproute2_7.1.0-1_amd64.deb…
+Unpacking iproute2 (7.1.0-1) over (7.1.0-1)…
+Preparing to unpack …/05-nano_9.2-1_amd64.deb…
+Unpacking nano (9.2-1) over (9.2-1)…
+Preparing to unpack …/06-procps_2%3a4.0.6-3_amd64.deb…
+Unpacking procps (2:4.0.6-3) over (2:4.0.6-3)…
+Preparing to unpack …/07-udev_261.2-1_amd64.deb…
+Unpacking udev (261.2-1) over (261.2-1)…
+Preparing to unpack …/08-vim-common_2%3a9.2.0858-1_all.deb…
+Unpacking vim-common (2:9.2.0858-1) over (2:9.2.0858-1)…
+Preparing to unpack …/09-bind9-libs_1%3a9.20.27-2_amd64.deb…
+Unpacking bind9-libs:amd64 (1:9.20.27-2) over (1:9.20.27-2)…
+Preparing to unpack …/10-bind9-host_1%3a9.20.27-2_amd64.deb…
+Unpacking bind9-host (1:9.20.27-2) over (1:9.20.27-2)…
+Preparing to unpack …/11-openssh-common_1%3a10.4p1-5_amd64.deb…
+Unpacking openssh-common (1:10.4p1-5) over (1:10.4p1-5)…
+Preparing to unpack …/12-openssh-client_1%3a10.4p1-5_amd64.deb…
+Unpacking openssh-client (1:10.4p1-5) over (1:10.4p1-5)…
+Preparing to unpack …/13-dbus-bin_1.16.2-5+b1_amd64.deb…
+Unpacking dbus-bin (1.16.2-5+b1) over (1.16.2-5+b1)…
+Preparing to unpack …/14-libapparmor1_4.1.8-2_amd64.deb…
+Unpacking libapparmor1:amd64 (4.1.8-2) over (4.1.8-2)…
+Preparing to unpack …/15-dbus-daemon_1.16.2-5+b1_amd64.deb…
+Unpacking dbus-daemon (1.16.2-5+b1) over (1.16.2-5+b1)…
+Preparing to unpack …/16-libffi8_3.8.0-2_amd64.deb…
+Unpacking libffi8:amd64 (3.8.0-2) over (3.8.0-2)…
+Preparing to unpack …/17-libnfsidmap1_1%3a2.9.2-1_amd64.deb…
+Unpacking libnfsidmap1:amd64 (1:2.9.2-1) over (1:2.9.2-1)…
+Preparing to unpack …/18-libpcap0.8t64_1.10.6-2_amd64.deb…
+Unpacking libpcap0.8t64:amd64 (1.10.6-2) over (1.10.6-2)…
+Preparing to unpack …/19-libpython3.13-minimal_3.13.15-1_amd64.deb…
+Unpacking libpython3.13-minimal:amd64 (3.13.15-1) over (3.13.15-1)…
+Preparing to unpack …/20-libpython3.14-minimal_3.14.7-3_amd64.deb…
+Unpacking libpython3.14-minimal:amd64 (3.14.7-3) over (3.14.7-3)…
+Preparing to unpack …/21-nfs-common_1%3a2.9.2-1_amd64.deb…
+Unpacking nfs-common (1:2.9.2-1) over (1:2.9.2-1)…
+Preparing to unpack …/22-openssh-sftp-server_1%3a10.4p1-5_amd64.deb…
+Unpacking openssh-sftp-server (1:10.4p1-5) over (1:10.4p1-5)…
+Preparing to unpack …/23-openssh-server_1%3a10.4p1-5_amd64.deb…
+Unpacking openssh-server (1:10.4p1-5) over (1:10.4p1-5)…
+Preparing to unpack …/24-python3-apt_3.1.0+b1_amd64.deb…
+Unpacking python3-apt (3.1.0+b1) over (3.1.0+b1)…
+Preparing to unpack …/25-zsh-common_5.9.2-1_all.deb…
+Unpacking zsh-common (5.9.2-1) over (5.9.2-1)…
+Setting up systemd-sysv (261.2-1)…
+Setting up libnfsidmap1:amd64 (1:2.9.2-1)…
+Setting up libapparmor1:amd64 (4.1.8-2)…
+Setting up bind9-libs:amd64 (1:9.20.27-2)…
+Setting up zsh-common (5.9.2-1)…
+Setting up openssh-common (1:10.4p1-5)…
+Setting up openssh-client (1:10.4p1-5)…
+Setting up libpython3.14-minimal:amd64 (3.14.7-3)…
+Setting up python3 (3.14.7-3)…
+running python rtupdate hooks for python3.14...
+running python post-rtupdate hooks for python3.14...
+Setting up nfs-common (1:2.9.2-1)…
+auth-rpcgss-module.service is a disabled or a static unit not running, not starting it.
+nfs-idmapd.service is a disabled or a static unit not running, not starting it.
+nfs-utils.service is a disabled or a static unit not running, not starting it.
+proc-fs-nfsd.mount is a disabled or a static unit not running, not starting it.
+rpc-gssd.service is a disabled or a static unit not running, not starting it.
+rpc-statd.service is a disabled or a static unit not running, not starting it.
+rpc-svcgssd.service is a disabled or a static unit not running, not starting it.
+Setting up tzdata (2026c-1)…
+
+Current default time zone: 'America/New_York'
+Local time is now:      Sun Sep 20 17:39:22 EDT 2026.
+Universal Time is now:  Sun Sep 20 21:39:22 UTC 2026.
+Run 'dpkg-reconfigure tzdata' if you wish to change it.
+
+Setting up libcap2-bin (1:2.78-1+b1)…
+Setting up libpython3.13-minimal:amd64 (3.13.15-1)…
+Setting up vim-common (2:9.2.0858-1)…
+Setting up udev (261.2-1)…
+Setting up dhcpcd-base (1:10.5.2-1)…
+Setting up nano (9.2-1)…
+Setting up libffi8:amd64 (3.8.0-2)…
+Setting up procps (2:4.0.6-3)…
+Setting up libpcap0.8t64:amd64 (1.10.6-2)…
+Setting up bind9-host (1:9.20.27-2)…
+Setting up dbus-bin (1.16.2-5+b1)…
+Setting up openssh-sftp-server (1:10.4p1-5)…
+Setting up openssh-server (1:10.4p1-5)…
+ssh.service is a disabled or a static unit not running, not starting it.
+ssh.socket is a disabled or a static unit not running, not starting it.
+sshd-keygen.service is a disabled or a static unit not running, not starting it.
+Setting up python3-apt (3.1.0+b1)…
+Setting up iproute2 (7.1.0-1)…
+Setting up dbus-daemon (1.16.2-5+b1)…
+Setting up tzdata-legacy (2026c-1)…
+Processing triggers for libc-bin (2.43-4)…
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 13.7s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113047 source rune stanzas in 564ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26684 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg upgrade
+[runepkg] Starting full system upgrade...
+All packages are already up to date.
+[ zypherus /home/michko/runepkg/runepkg ]#

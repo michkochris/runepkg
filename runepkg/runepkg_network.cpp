@@ -1695,9 +1695,7 @@ extern "C" int runepkg_upgrade(void) {
                 if (node->data.package_name && node->data.version) {
                     std::string name = node->data.package_name;
                     if (latest_versions.count(name) && runepkg_util_compare_versions(latest_versions[name].c_str(), node->data.version) > 0) {
-                        if (runepkg_storage_package_exists(name.c_str(), latest_versions[name].c_str()) != 1) {
-                            to_upgrade.push_back(name);
-                        }
+                        to_upgrade.push_back(name);
                     }
                 }
                 node = node->next;

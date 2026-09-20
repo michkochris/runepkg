@@ -249,6 +249,15 @@ public:
             }
         }
 
+        std::unordered_set<std::string> explicit_targets;
+        for (const auto& raw_pkg_name : pkg_names) {
+            std::string clean_name = clean_package_key(raw_pkg_name);
+            explicit_targets.insert(clean_name);
+            if (virtual_to_real.count(clean_name)) {
+                explicit_targets.insert(virtual_to_real.at(clean_name));
+            }
+        }
+
         std::vector<RuneGraphEntry> resolved_order;
         std::set<std::string> visited;
         std::set<std::string> visiting;
@@ -282,7 +291,7 @@ public:
             }
 
             if (graph.find(root_target) != graph.end()) {
-                dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_map, visited, visiting, resolved_order, true);
+                dfs_resolve_v2(root_target, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, resolved_order, true);
             }
         }
 
@@ -711,13 +720,23 @@ private:
                        const std::unordered_map<std::string, RuneGraphEntry>& graph,
                        const std::unordered_map<std::string, std::string>& virtual_to_real,
                        const std::unordered_map<std::string, std::string>& host_installed_map,
+                       const std::unordered_set<std::string>& explicit_targets,
                        std::set<std::string>& visited,
                        std::set<std::string>& visiting,
                        std::vector<RuneGraphEntry>& order,
                        bool is_root_target = false) {
         std::string check_name = clean_package_key(pkg);
+        std::string real_pkg = check_name;
+        if (graph.find(real_pkg) == graph.end() && virtual_to_real.count(real_pkg)) {
+            real_pkg = virtual_to_real.at(real_pkg);
+        }
 
-        if (!is_root_target && (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) && is_installed_satisfied(pkg, host_installed_map)) {
+        /* If package is NOT in explicit_targets and is already satisfied on host, skip it */
+        if (!is_root_target &&
+            explicit_targets.find(check_name) == explicit_targets.end() &&
+            explicit_targets.find(real_pkg) == explicit_targets.end() &&
+            (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
+            is_installed_satisfied(pkg, host_installed_map)) {
             visited.insert(pkg);
             return true;
         }
@@ -731,20 +750,18 @@ private:
         if (it != graph.end()) {
             if (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_TOOLCHAIN || mode == ResolveMode::MODE_HOST_DEPS) {
                 for (const auto& dep : it->second.pre_depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
                 }
                 for (const auto& dep : it->second.depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
                 }
             } else if (mode == ResolveMode::MODE_BUILD) {
                 for (const auto& dep : it->second.target_build_depends) {
-                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+                    resolve_dep_node(dep, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
                 }
             }
 
-            if (is_root_target || !(mode == ResolveMode::MODE_HOST_DEPS && is_installed_satisfied(pkg, host_installed_map))) {
-                order.push_back(it->second);
-            }
+            order.push_back(it->second);
         }
 
         visiting.erase(pkg);
@@ -758,13 +775,23 @@ private:
                           const std::unordered_map<std::string, RuneGraphEntry>& graph,
                           const std::unordered_map<std::string, std::string>& virtual_to_real,
                           const std::unordered_map<std::string, std::string>& host_installed_map,
+                          const std::unordered_set<std::string>& explicit_targets,
                           std::set<std::string>& visited,
                           std::set<std::string>& visiting,
                           std::vector<RuneGraphEntry>& order) {
         std::string target_key = clean_package_key(dep);
+        std::string real_key = target_key;
+        if (graph.find(real_key) == graph.end() && virtual_to_real.count(real_key)) {
+            real_key = virtual_to_real.at(real_key);
+        }
 
-        if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) && is_installed_satisfied(dep, host_installed_map)) {
-            return;
+        /* If dependency is NOT in explicit_targets and is already satisfied on host, skip it */
+        if (explicit_targets.find(target_key) == explicit_targets.end() &&
+            explicit_targets.find(real_key) == explicit_targets.end()) {
+            if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
+                is_installed_satisfied(dep, host_installed_map)) {
+                return;
+            }
         }
 
         if (mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) {
@@ -798,9 +825,9 @@ private:
         }
 
         if (graph.count(target_key)) {
-            dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+            dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
         } else if (virtual_to_real.count(target_key)) {
-            dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+            dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
         } else {
             /* Vigilant Version Sifting:
              * If target_key is name-version (e.g. perlapi-5.42.2), sift through available
@@ -813,7 +840,7 @@ private:
                     if (v_name.compare(0, prefix.length(), prefix) == 0) {
                          runepkg_util_log_verbose("[resolver] Vigilant substitution: requested %s, found %s (provided by %s)\n",
                                                   target_key.c_str(), v_name.c_str(), r_name.c_str());
-                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed_map, visited, visiting, order);
+                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
                          return;
                     }
                 }
@@ -971,7 +998,7 @@ extern "C" int runepkg_resolver_get_install_plan_multiple(const char **pkg_names
         }
         if (pkgs.empty()) return -1;
         RuneResolverEngine engine;
-        return engine.resolve_tree_multiple(pkgs, ResolveMode::MODE_HOST_DEPS, out_plan);
+        return engine.resolve_tree_multiple(pkgs, ResolveMode::MODE_INSTALL, out_plan);
     } catch (...) {
         if (out_plan) *out_plan = NULL;
         return -1;

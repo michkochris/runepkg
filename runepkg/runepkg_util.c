@@ -484,7 +484,8 @@ int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
         temp_path[len - 1] = '\0';
     }
 
-    if (temp_path[0] == '/' && (len == 1 || (len > 1 && temp_path[1] == '\0'))) {
+    if (temp_path[0] == '\0' || strcmp(temp_path, ".") == 0 ||
+        (temp_path[0] == '/' && (len == 1 || (len > 1 && temp_path[1] == '\0')))) {
         free(temp_path);
         return 0;
     }
@@ -513,16 +514,18 @@ int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
             *p = '/';
         }
     }
-    if (ret == 0 && mkdir(temp_path, mode) == -1) {
-        if (errno != EEXIST) {
-            perror("Failed to create final directory");
-            fprintf(stderr, "Directory: %s\n", temp_path);
-            ret = -1;
-        } else {
-            struct stat st;
-            if (stat(temp_path, &st) == 0 && !S_ISDIR(st.st_mode)) {
-                fprintf(stderr, "\033[1;31m[error]\033[0m Path exists but is not a directory: %s\n", temp_path);
+    if (ret == 0 && temp_path[0] != '\0' && strcmp(temp_path, ".") != 0 && strcmp(temp_path, "/") != 0) {
+        if (mkdir(temp_path, mode) == -1) {
+            if (errno != EEXIST) {
+                perror("Failed to create final directory");
+                fprintf(stderr, "Directory: %s\n", temp_path);
                 ret = -1;
+            } else {
+                struct stat st;
+                if (stat(temp_path, &st) == 0 && !S_ISDIR(st.st_mode)) {
+                    fprintf(stderr, "\033[1;31m[error]\033[0m Path exists but is not a directory: %s\n", temp_path);
+                    ret = -1;
+                }
             }
         }
     }
