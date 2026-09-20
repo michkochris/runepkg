@@ -1,0 +1,65 @@
+================================================================================
+                    RUNEPKG ARCHITECTURAL REFERENCE NOTE
+             Topic: Linux OOM Killer vs. Load Factor Governor
+================================================================================
+
+1. EXECUTIVE SUMMARY & CORE MECHANISM
+--------------------------------------------------------------------------------
+The Linux Out-Of-Memory (OOM) Killer is an asynchronous kernel protection mechanism
+(triggered via mm/oom_kill.c) that activates when the operating system completely
+exhausts available physical RAM and swap space (CommitLimit exceeded under strict
+overcommit, or unresolvable page allocation failures).
+
+Key Distinction:
+  - CPU Load Factor (tracked via getloadavg()):
+      Measures runnable tasks and tasks in uninterruptible disk sleep (D-state).
+      A high load factor measures CPU and I/O scheduling demand, NOT physical memory
+      consumption.
+  - Memory Pressure (tracked via /proc/meminfo or PSI /proc/pressure/memory):
+      Measures active resident set size (RSS), page cache pressure, and free swap.
+      OOM triggers strictly on memory allocation failure, independent of CPU load.
+
+2. HOW CONCURRENT BUILDS INDUCE OOM ON EMBEDDED SYSTEMS
+--------------------------------------------------------------------------------
+During native compilation (e.g., GCC/Clang assembling large translation units or
+running high-optimization passes like -O2/-O3 and LTO):
+  1. Each compiler process spawned by 'make -jN' demands its own heap (often 100MB-500MB+
+     per heavy C++ file).
+  2. If the concurrency governor spawns tasks based purely on core count without
+     checking available RAM, total RSS spikes rapidly.
+  3. Swap thrashing begins -> tasks enter uninterruptible I/O wait -> Load Average spikes.
+  4. Once physical memory + swap cannot satisfy an anonymous page allocation, the
+     kernel invokes select_bad_process() and sends SIGKILL to the process with the
+     highest oom_score.
+
+3. GOVERNOR AUDIT & VERIFICATION CRITERIA
+--------------------------------------------------------------------------------
+To guarantee resilience on memory-constrained devices, the concurrency engine should
+evaluate two independent control gates before spawning worker threads:
+
+Gate A: CPU Load Gate
+  - Metric: getloadavg() normalized by core count (e.g., load / nproc).
+  - Purpose: Prevents CPU scheduler thrashing and keeps terminal I/O responsive.
+  - Action: Delay task dispatch when normalized load > 1.0 - 1.2.
+
+Gate B: Physical Memory Availability Gate (Direct OOM Defense)
+  - Metric: MemAvailable from /proc/meminfo (or sysconf(_SC_AVPHYS_PAGES)).
+  - Rule of Thumb: Require a minimum buffer (e.g., at least 150MB-250MB free per
+    concurrent compiler instance).
+  - Action: If available memory falls below the threshold, dynamically reduce active
+    worker slots to 1 regardless of available CPU cores.
+
+4. REAL-TIME INSPECTION COMMANDS FOR TESTING
+--------------------------------------------------------------------------------
+During stress testing and large package builds, monitor governor behavior using:
+
+  # Monitor kernel OOM invocations
+  dmesg -wT | grep -i -E "oom|killed process"
+
+  # Monitor system load and memory distribution
+  watch -n 1 'head -n 5 /proc/loadavg /proc/meminfo'
+
+  # Check Linux 4.20+ Pressure Stall Information (PSI) if enabled
+  cat /proc/pressure/memory
+
+================================================================================

@@ -1,0 +1,7 @@
+package = gcc-stage1-bootstrap
+build_system = autotools
+configure_args = --prefix=${TOOLCHAIN_DIR} --build=x86_64-pc-linux-gnu --host=x86_64-pc-linux-gnu --target=${TARGET_TRIPLE} --without-headers --with-newlib --enable-languages=c --disable-threads --disable-shared --disable-multilib --disable-nls --disable-werror --disable-libatomic --disable-libgomp --disable-libquadmath --disable-libssp --disable-libvtv --disable-libstdcxx --disable-libsanitizer
+make_build_targets = all-gcc all-target-libgcc
+make_install_targets = install-gcc install-target-libgcc
+libc = any
+arch = any

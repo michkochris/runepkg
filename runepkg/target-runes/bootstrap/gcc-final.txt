@@ -1,0 +1,7 @@
+package = gcc-final-bootstrap
+build_system = autotools
+configure_args = --prefix=${TOOLCHAIN_DIR} --build=x86_64-pc-linux-gnu --host=x86_64-pc-linux-gnu --target=${TARGET_TRIPLE} --with-sysroot=${SYSROOT_DIR} --with-build-sysroot=${SYSROOT_DIR} --with-native-system-header-dir=/usr/include --enable-languages=c,c++ --enable-threads=posix --enable-shared --enable-static --disable-nls --disable-multilib --disable-werror --disable-libstdcxx-pch --disable-libsanitizer --disable-libssp --disable-libquadmath --disable-libvtv --disable-libgomp --disable-libatomic CFLAGS_FOR_TARGET="-O2 -g" CXXFLAGS_FOR_TARGET="-O2 -g"
+make_build_targets = all-gcc all-target-libgcc all-target-libstdc++-v3
+make_install_targets = install-gcc install-target-libgcc install-target-libstdc++-v3
+libc = any
+arch = any

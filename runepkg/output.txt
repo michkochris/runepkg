@@ -1,0 +1,174 @@
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo make clean-all && sudo make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Purging extended workspace artifacts (vrunepkg_dir, etc.)...
+Dismantling the Grand Forge (forge_musl)...
+Done.
+Uninstalling runepkg...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo make all && sudo make install
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_utility.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [link]  Linking target: runepkg
+⚡ runepkg build complete: runepkg
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+Installation complete. (Run 'make install-target-rules' to sync the rules tree)
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo rm -rf /srv/lib/runepkg_dir/
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg sync
+Host synchronization successful.
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖ·]  99.1%
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 19.4s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113047 source rune stanzas in 619ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26684 KB)
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg upgrade
+[runepkg] Starting full system upgrade...
+All packages are already up to date.
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg -i sysvinit-core
+[conflict] Package 'sysvinit-core' conflicts with installed package 'systemd-sysv' (261.2-1). Use -f/--force to override.
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg -i fastfetch
+[runepkg] Planning installation for 1 package(s)...
+  libyyjson0 fastfetch
+
+2 packages (720.3 KB) will be installed. Continue? [y/N] y
+  -> libyyjson0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fastfetch                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 2 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for libyyjson0
+[runepkg] Installing libyyjson0 (0.12.0+ds-2)
+[md5sums] Passed for fastfetch
+[runepkg] Installing fastfetch (2.66.0+dfsg-1)
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg info fastfetch
+Package: fastfetch
+Version: 2.66.0+dfsg-1
+Architecture: amd64
+Maintainer: Hiago De Franco <hiago@defranco.dev.br>
+Description: neofetch-like tool for fetching system information
+Depends: libc6 (>= 2.38), libyyjson0 (>= 0.12.0+ds)
+Source: fastfetch
+Download-Size: 617.9 KB
+Installed-Size: 2.1 MB
+Section: utils
+Priority: optional
+Homepage: https://github.com/fastfetch-cli/fastfetch
+Status: installed (version 2.66.0+dfsg-1)
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg -s fastfetch
+Reading package data: 634 packages, 1.8 GB used, 952.6 GB available
+Package: fastfetch
+Version: 2.66.0+dfsg-1
+Architecture: amd64
+Maintainer: Hiago De Franco <hiago@defranco.dev.br>
+Description: neofetch-like tool for fetching system information
+Depends: libc6 (>= 2.38), libyyjson0 (>= 0.12.0+ds)
+Installed-Size: 2151
+Section: utils
+Priority: optional
+Homepage: https://github.com/fastfetch-cli/fastfetch
+Files installed: 46
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg -s binutils
+Reading package data: 634 packages, 1.8 GB used, 952.6 GB available
+Package: binutils
+Version: 2.47-2
+Architecture: amd64
+Maintainer: Matthias Klose <doko@debian.org>
+Description: GNU assembler, linker and binary utilities
+The programs in this package are used to assemble, link and manipulate
+binary and object files.  They may be used in conjunction with a compiler
+and various libraries to build programs.
+Depends: libbinutils (= 2.47-2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.47-2), binutils-x86-64-linux-gnu (= 2.47-2)
+Provides: elf-binutils
+Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
+Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-10)
+Suggests: binutils-doc (>= 2.47-2), gprofng-gui, binutils-gold
+Installed-Size: 1119
+Section: devel
+Priority: optional
+Homepage: https://www.gnu.org/software/binutils/
+Files installed: 41
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$ sudo runepkg info binutils
+Package: binutils
+Version: 2.47-2
+Architecture: amd64
+Maintainer: Matthias Klose <doko@debian.org>
+Description: GNU assembler, linker and binary utilities
+Depends: libbinutils (= 2.47-2), libc6 (>= 2.38), libgcc-s1 (>= 3.0), libgprofng0 (>= 2.45.50), libstdc++6 (>= 13.1), binutils-common (= 2.47-2), binutils-x86-64-linux-gnu (= 2.47-2)
+Provides: elf-binutils
+Conflicts: binutils-mingw-w64-i686 (<< 2.23.52.20130612-1+3), binutils-mingw-w64-x86-64 (<< 2.23.52.20130612-1+3), binutils-multiarch (<< 2.27-8), modutils (<< 2.4.19-1)
+Breaks: binutils-aarch64-linux-gnu (<< 2.43.90), binutils-i686-linux-gnu (<< 2.43.90), binutils-riscv64-linux-gnu (<< 2.43.90), binutils-x86-64-linux-gnu (<< 2.43.90), libc6-dev (<< 2.42-10)
+Suggests: binutils-doc (>= 2.47-2), gprofng-gui, binutils-gold
+Source: binutils
+Download-Size: 275.4 KB
+Installed-Size: 1.1 MB
+Section: devel
+Priority: optional
+Homepage: https://www.gnu.org/software/binutils/
+Status: installed (version 2.47-2)
+
+┌──(michko㉿zypherus)-[~/runepkg/runepkg]
+└─$

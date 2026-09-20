@@ -1,0 +1,54 @@
+================================================================================
+                    RUNEPKG ARCHITECTURAL INCIDENT NOTE
+            Topic: Network Engine Race Condition & Segfault Fix
+================================================================================
+
+1. INCIDENT OVERVIEW & FAILURE SIGNATURE
+--------------------------------------------------------------------------------
+During high-concurrency source archive downloads (specifically multi-archive source
+packages such as upstream kernel headers / 'linux' source trees), the parallel network
+engine encountered an intermittent Segmentation Fault (SIGSEGV).
+
+Fault Location:
+  - Source file: runepkg_network.cpp
+  - Subsystem: Multi-threaded parallel download worker pool
+  - Manifestation: Process crash during asynchronous progress reporting / stanza unearthing.
+
+2. ROOT CAUSE ANALYSIS
+--------------------------------------------------------------------------------
+The fault originated from an unsynchronized data race on shared worker state:
+  1. Multiple worker threads executing parallel libcurl transfers simultaneously
+     read and modified an unsynchronized std::map tracking transfer percentages.
+  2. Because large packages (like 'linux') involve multiple large files processed
+     concurrently across worker threads, map tree restructuring and node rebalancing
+     occurred concurrently without mutual exclusion.
+  3. This concurrent modification caused heap corruption inside the standard library
+     container, resulting in memory invalidation and a subsequent SIGSEGV.
+
+3. REMEDIATION & DEFENSIVE HARDENING
+--------------------------------------------------------------------------------
+The following fixes were implemented to restore deterministic, thread-safe execution:
+
+  1. Mutex-Guarded State Access:
+     - All read/write access to the progress map container is strictly enclosed
+       within the g_progress_mutex lock in runepkg_network.cpp.
+     - Ensures single-threaded access to progress updates and prevents container
+       corruption under arbitrary thread counts.
+
+  2. Configuration & Path Validation Gates:
+     - Added explicit NULL and validity checks for g_build_dir within download
+       routing routines to prevent invalid memory dereferences if configuration
+       paths become uninitialized or unset.
+
+  3. Synchronized Terminal UI Reporting:
+     - Enforced synchronized rendering for the multi-threaded runic progress bars,
+       preventing interleaved terminal line corruptions while maintaining parallel
+       transfer throughput across 8+ worker threads.
+
+4. VERIFICATION STATUS
+--------------------------------------------------------------------------------
+  - Thread-safety verified across multi-file source downloads.
+  - Changes integrated into core build tree and validated against parallel downloads.
+
+================================================================================
+

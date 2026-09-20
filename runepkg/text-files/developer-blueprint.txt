@@ -1,0 +1,178 @@
+Here is the complete developer-blueprint.txt ready to be dropped into your project documentation or passed directly to Android Studio / Gemini for implementation.
+
+Plaintext
+================================================================================
+                    RUNEPKG DEVELOPER BLUEPRINT & SPECIFICATION
+          Destructible Profile-Driven Toolchain & Packaging Engine
+================================================================================
+
+1. SYSTEM ARCHITECTURE & PHILOSOPHY
+--------------------------------------------------------------------------------
+runepkg orchestrates cross-compilation environments using a destructible,
+single-active-target model. It enforces clean separation between Stage 1 
+(raw sysroot & bootstrap toolchain) and Stage 2 (Debian package resolution 
+and .deb generation).
+
+Core Tenets:
+- Deterministic Isolation: All target staging lives under /mnt/runepkg/<target-profile>.
+- Low-Resource Safe: Single-queue sequential package builds throttled by a system 
+  load-factor algorithm (CPU/RAM telemetry) to prevent host thrashing.
+- Persistent State: Survives reboots via persistent state registry in /etc/runepkg/ 
+  synchronized with runepkg's mmap repo index.
+- Standard Artifacts: Emits standard .deb archives with automatic ELF DT_NEEDED 
+  dependency resolution and header/binary splitting (buildpkg-split).
+
+
+2. DIRECTORY & CONFIGURATION LAYOUT
+--------------------------------------------------------------------------------
+Host Configurations & State:
+  /etc/runepkg/
+  ├── runepkg.conf              # Master config (log_dir, default profiles)
+  ├── active_target.conf        # Current active target state registry
+  └── targets/                  # Target profile definition files
+      ├── arm-uclibc.conf
+      ├── arm-musleabi.conf
+      └── mips-uclibc.conf
+
+Staging & Mount Structure:
+  /mnt/runepkg/<target-profile>/
+  ├── crosstools/               # Host-side cross-compilers (gcc, binutils, ld)
+  │   └── bin/                  # <triplet>-gcc, <triplet>-as, etc.
+  └── sysroot/                  # Target root staging (headers, libc, libs)
+      ├── usr/include/
+      └── usr/lib/
+
+Logging:
+  /var/lib/runepkg_dir/log_dir/ # Defined by log_dir in runepkg.conf
+  ├── toolchain_<profile>_<timestamp>.log
+  └── pkg_<pkgname>_<timestamp>.log
+
+
+3. CONFIGURATION FILE SPECIFICATIONS
+--------------------------------------------------------------------------------
+A. /etc/runepkg/runepkg.conf
+   log_dir=/var/lib/runepkg_dir/log_dir
+   profiles_dir=/etc/runepkg/targets
+   default_staging_base=/mnt/runepkg
+   max_load_factor=0.85         # Throttling ceiling (85% RAM/CPU load)
+
+B. /etc/runepkg/targets/arm-uclibc.conf
+   [Target]
+   name=arm-uclibc
+   arch=arm
+   subarch=armv7-a
+   abi=eabi
+   float=hard
+   libc=uclibc
+   triplet=arm-unknown-linux-uclibceabi
+   deb_host_arch=armhf
+
+   [Paths]
+   sysroot=/mnt/runepkg/arm-uclibc/sysroot
+   crosstools=/mnt/runepkg/arm-uclibc/crosstools
+   cross_bin=/mnt/runepkg/arm-uclibc/crosstools/bin
+
+   [Environment]
+   CC=arm-unknown-linux-uclibceabi-gcc
+   CXX=arm-unknown-linux-uclibceabi-g++
+   LD=arm-unknown-linux-uclibceabi-ld
+   AR=arm-unknown-linux-uclibceabi-ar
+   STRIP=arm-unknown-linux-uclibceabi-strip
+   READELF=arm-unknown-linux-uclibceabi-readelf
+   PKG_CONFIG_SYSROOT_DIR=/mnt/runepkg/arm-uclibc/sysroot
+   PKG_CONFIG_LIBDIR=/mnt/runepkg/arm-uclibc/sysroot/usr/lib/pkgconfig
+
+C. /etc/runepkg/active_target.conf (Dynamic Registry)
+   ACTIVE_TARGET=arm-uclibc
+   ACTIVE_TRIPLET=arm-unknown-linux-uclibceabi
+   ACTIVE_SYSROOT=/mnt/runepkg/arm-uclibc/sysroot
+   ACTIVE_CROSSTOOLS=/mnt/runepkg/arm-uclibc/crosstools
+   ACTIVATED_AT=1756160000
+
+
+4. CLI COMMAND SPECIFICATION & BEHAVIOR
+--------------------------------------------------------------------------------
+Command: runepkg switch --target=<profile>
+  - Validates profile in /etc/runepkg/targets/<profile>.conf.
+  - Initializes /mnt/runepkg/<profile>/{sysroot,crosstools} hierarchy if missing.
+  - Atomically writes active state to /etc/runepkg/active_target.conf.
+  - Syncs with mmap state memory helper to ensure autocomplete & repo indexes 
+    reflect the active architecture.
+
+Command: runepkg --print-profile
+  - Reads /etc/runepkg/active_target.conf.
+  - Prints:
+      Active Profile:  arm-uclibc
+      Target Triplet:  arm-unknown-linux-uclibceabi
+      Sysroot:         /mnt/runepkg/arm-uclibc/sysroot
+      Crosstools:      /mnt/runepkg/arm-uclibc/crosstools/bin
+      Status:          READY (Toolchain Verified)
+
+Command: runepkg switch --reset
+  - Clears /etc/runepkg/active_target.conf.
+  - Resets runepkg environment context back to native host system.
+
+Command: runepkg build-toolchain --target=<profile> [pkg]
+  - Invokes Stage 1 bootstrap:
+      1. Cross-binutils targeting ${triplet} -> ${crosstools}/bin
+      2. Minimal GCC bootstrap (C-only, static, --without-headers)
+      3. Linux kernel headers -> ${sysroot}/usr/include
+      4. Target libc (uClibc-ng / musl) -> ${sysroot}/usr/lib
+      5. Full GCC final cross compiler -> ${crosstools}/bin
+  - If optional [pkg] is provided:
+      Automatically switches context to <profile> and invokes Stage 2 build.
+
+Command: runepkg source <pkg>
+  - Downloads Debian source archive (.dsc, tarballs) to current workdir.
+
+Command: runepkg buildpkg-split <pkg>
+  - Compiles package against active sysroot.
+  - Runs ELF dynamic inspection via ${READELF} -d on compiled binaries.
+  - Generates split .deb packages:
+      <pkg>_<ver>_<arch>.deb       (Runtime bins, shared libs, config)
+      <pkg>-dev_<ver>_<arch>.deb   (Headers, static libs, pkg-config)
+
+
+5. EXECUTION ENGINE & SED INJECTION PIPELINE
+--------------------------------------------------------------------------------
+Load Factor Governor:
+  - Before spawning each build step, read /proc/loadavg and /proc/meminfo.
+  - If (Current Load / CPU Cores) > max_load_factor OR Available RAM < 15%:
+      Sleep interval backoff until host resources settle.
+  - Enforce strictly sequential package compilation (queue depth = 1).
+
+Rules & Sed Injection Strategy:
+  - During Stage 2 cross-builds, debian/rules and autotools/cmake scripts are 
+    dynamically sanitized using regex/sed passes:
+      1. Prefix Injection: Force `--prefix=/usr --sysroot=${ACTIVE_SYSROOT}`
+      2. Host Path Stripping: Remove hardcoded `-I/usr/include` and `-L/usr/lib`
+      3. RPATH Sanitization: Strip host library search paths from ELF binaries.
+      4. Installation Redirect: Set `DESTDIR=${BUILD_STAGE_DIR}` to isolate 
+         outputs prior to .deb packaging.
+
+
+6. C89 / MUSL CORE VS C++ FFI BOUNDARY
+--------------------------------------------------------------------------------
+C Core (C89, musl libc compliant):
+  - CLI argument parsing & switch command dispatcher.
+  - Profile INI parser & persistent registry reader/writer.
+  - Process fork/exec supervisor with environment variable injection.
+  - Direct ELF header parsing / readelf DT_NEEDED extraction.
+  - CPU/RAM load factor calculator.
+
+C++ FFI Bridge (extern "C"):
+  - Debian repo networking & .dsc archive verification.
+  - Dependency solver & Build-Depends-Pool graph generator.
+  - Compression stream handling (gzip, xz) and `ar` container packing for .deb.
+  - mmap cache index synchronization across reboot cycles.
+
+
+7. LOGGING & ERROR HANDLING PROTOCOL
+--------------------------------------------------------------------------------
+- All process standard output and standard error streams are redirected to:
+    ${log_dir}/runepkg_<phase>_<target>_<timestamp>.log
+- On compilation failure:
+    1. Trap exit code and preserve failed build tree in /tmp/runepkg-failed-*/.
+    2. Print last 25 lines of relevant log file to stderr.
+    3. Do not corrupt or alter /etc/runepkg/active_target.conf.
+================================================================================
