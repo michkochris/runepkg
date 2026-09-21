@@ -11,7 +11,7 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a lightning-fast, high-performance hybrid C89/C++ package manager engineered specifically for the **Debian ecosystem**. Unlike traditional tools bound to a specific distribution, **runepkg** treats the entire Debian package universe as a universal supply chain—enabling developers to unearth and deploy `.deb` software across modern workstations and constrained embedded environments alike.
+**runepkg** is a lightning-fast, high-performance hybrid pure C89/C++ package manager engineered specifically for the **Debian ecosystem**. **runepkg** treats the entire Debian package universe as a universal blood bank, leveraging the whole supply chain to enable developers to unearth and deploy `.deb` software from any Debian repository, including legendary Debian archives. With **runepkg**'s dual architecture, it serves as a low-level package manager for constrained embedded environments, while simultaneously providing extended C++ features to deliver a lightning-fast package manager that outperforms `apt`.
 
 > [!IMPORTANT]
 > **Production Stability (v1.0.4+):** **runepkg** is now declared **Stable** and has been rigorously battle-tested. It has successfully demonstrated recursive dependency resolution, parallel downloading, and extraction for massive package sets, including full desktop environments like **XFCE** (270+ packages) and complete development environments like **build-essential**.
@@ -33,7 +33,6 @@
 | Total `apt` replacement (Advanced) | ✅ | ❌ | Use **runepkg** |
 | Custom embedded environment staging | ✅ | ❌ | Use **runepkg** |
 | Deterministic package deployment | ✅ | ⚠️ | Use **runepkg** (faster) |
-| Need both on the same system | ❌ | ❌ | Use **Containers/chroot** |
 
 > [!TIP]
 > **Thinking of switching?** For power users who value raw performance and binary metadata efficiency, replacing `apt` entirely is a viable path. By syncing your existing state once via `runepkg sync`, you can transition to a pure **runepkg** workflow and relegate legacy tools to the "unused" list.
