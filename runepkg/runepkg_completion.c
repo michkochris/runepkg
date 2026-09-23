@@ -33,10 +33,10 @@
 static int g_completion_printed_count = 0;
 static const int MAX_COMPLETION_RESULTS = 99;
 
-static char g_completion_seen[256][64];
+static char g_completion_seen[256][PATH_MAX];
 static int g_completion_seen_count = 0;
 
-static char g_already_on_cmdline[128][64];
+static char g_already_on_cmdline[128][PATH_MAX];
 static int g_already_on_cmdline_count = 0;
 
 static char g_current_partial[128] = {0};
@@ -101,7 +101,7 @@ static void print_candidate(const char *name) {
 
     /* 3. Add to seen list and print */
     if (g_completion_seen_count < 256) {
-        runepkg_secure_strcpy(g_completion_seen[g_completion_seen_count++], 64, norm);
+        runepkg_secure_strcpy(g_completion_seen[g_completion_seen_count++], PATH_MAX, norm);
     }
 
     printf("%s\n", norm);
@@ -133,9 +133,9 @@ static void populate_already_on_cmdline(const char *partial) {
         while (tok && g_already_on_cmdline_count < 128) {
             /* Only track tokens that don't look like flags and aren't the program name */
             if (tok[0] != '-' && strcmp(tok, "runepkg") != 0) {
-                char norm[64];
+                char norm[PATH_MAX];
                 normalize_candidate_name(norm, tok, sizeof(norm));
-                runepkg_secure_strcpy(g_already_on_cmdline[g_already_on_cmdline_count++], 64, norm);
+                runepkg_secure_strcpy(g_already_on_cmdline[g_already_on_cmdline_count++], PATH_MAX, norm);
             }
             tok = strtok(NULL, " \t");
         }

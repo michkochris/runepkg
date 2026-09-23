@@ -42,8 +42,8 @@ control_dir=/srv/lib/runepkg_dir/control_dir
 
 # [install_dir]
 # The target root for package installation (set to '/' for system-wide).
-install_dir=/
-#install_dir=/srv/lib/runepkg_dir/install_dir
+#install_dir=/
+install_dir=/srv/lib/runepkg_dir/install_dir
 
 # [runepkg_db]
 # Persistent storage for the package manager's state.

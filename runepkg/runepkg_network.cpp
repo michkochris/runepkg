@@ -1743,6 +1743,71 @@ extern "C" int runepkg_upgrade(void) {
     return res;
 }
 
+extern "C" int runepkg_repo_info(const char *pkg_name) {
+    if (!pkg_name) return -1;
+
+    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_index.bin";
+    if (!runepkg_util_file_exists(index_path.c_str())) {
+        std::cerr << "\033[1;31m[error]\033[0m Repository index not found. Please run 'runepkg update' first." << std::endl;
+        return -1;
+    }
+
+    PkgMetadata meta = get_package_metadata(pkg_name);
+    if (meta.url.empty()) {
+        printf("'%s' not found... did you mean?\n\n", pkg_name);
+        char suggestions[12][PATH_MAX];
+        int count = runepkg_completion_get_repo_suggestions(pkg_name, suggestions, 12);
+        if (count > 0) {
+            const char *items[12];
+            for (int i = 0; i < count; i++) items[i] = suggestions[i];
+            runepkg_util_print_columns(items, count, "    ");
+        }
+        return -1;
+    }
+
+    printf("Package: %s\n", meta.name.c_str());
+    printf("Version: %s\n", meta.version.empty() ? "(unknown)" : meta.version.c_str());
+    printf("Architecture: %s\n", meta.architecture.empty() ? "(unknown)" : meta.architecture.c_str());
+    printf("Maintainer: %s\n", meta.maintainer.empty() ? "(unknown)" : meta.maintainer.c_str());
+    printf("Description: %s\n", meta.description.empty() ? "(unknown)" : meta.description.c_str());
+    printf("Depends: %s\n", meta.depends.empty() ? "(none)" : meta.depends.c_str());
+    if (!meta.pre_depends.empty()) printf("Pre-Depends: %s\n", meta.pre_depends.c_str());
+    if (!meta.provides.empty()) printf("Provides: %s\n", meta.provides.c_str());
+    if (!meta.build_depends.empty()) printf("Build-Depends: %s\n", meta.build_depends.c_str());
+    if (!meta.build_depends_indep.empty()) printf("Build-Depends-Indep: %s\n", meta.build_depends_indep.c_str());
+    if (!meta.build_depends_arch.empty()) printf("Build-Depends-Arch: %s\n", meta.build_depends_arch.c_str());
+    if (!meta.conflicts.empty()) printf("Conflicts: %s\n", meta.conflicts.c_str());
+    if (!meta.breaks.empty()) printf("Breaks: %s\n", meta.breaks.c_str());
+    if (!meta.recommends.empty()) printf("Recommends: %s\n", meta.recommends.c_str());
+    if (!meta.suggests.empty()) printf("Suggests: %s\n", meta.suggests.c_str());
+    if (!meta.source_name.empty()) printf("Source: %s\n", meta.source_name.c_str());
+    char size_buf[32];
+    printf("Download-Size: %s\n", runepkg_util_format_size(meta.size, size_buf, sizeof(size_buf)));
+    if (!meta.installed_size.empty()) {
+        try {
+            uint64_t inst_bytes = std::stoull(meta.installed_size) * 1024;
+            char inst_buf[32];
+            printf("Installed-Size: %s\n", runepkg_util_format_size(inst_bytes, inst_buf, sizeof(inst_buf)));
+        } catch (...) {
+            printf("Installed-Size: %s KB\n", meta.installed_size.c_str());
+        }
+    }
+    printf("Section: %s\n", meta.section.empty() ? "(unknown)" : meta.section.c_str());
+    printf("Priority: %s\n", meta.priority.empty() ? "(unknown)" : meta.priority.c_str());
+    printf("Homepage: %s\n", meta.homepage.empty() ? "(unknown)" : meta.homepage.c_str());
+
+    if (runepkg_main_hash_table) {
+        PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, meta.name.c_str());
+        if (info) {
+            printf("Status: installed (version %s)\n", info->version);
+        } else {
+            printf("Status: not installed\n");
+        }
+    }
+
+    return 0;
+}
+
 extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
 
@@ -1843,12 +1908,41 @@ extern "C" int runepkg_repo_source_build_depends_download_multiple(const char **
     if (!pkg_names || count <= 0) return -1;
 
     for (int i = 0; i < count; i++) {
+        if (!pkg_names[i]) continue;
         RuneTargetPlan *plan = nullptr;
         if (runepkg_resolver_resolve_target(pkg_names[i], &plan) == 0 && plan) {
             std::vector<const char*> build_srcs;
-            for (int j = 0; j < plan->node_count; j++) {
-                build_srcs.push_back(plan->nodes[j].package_name);
+            std::unordered_set<std::string> seen;
+
+            /* Always include the target package itself */
+            build_srcs.push_back(pkg_names[i]);
+            seen.insert(pkg_names[i]);
+
+            /* Only include direct target build dependencies (pruned C/C++ libraries and primary tools) */
+            if (plan->node_count > 0 && plan->nodes[0].target_build_depends) {
+                for (int k = 0; k < plan->nodes[0].target_build_depends_count; k++) {
+                    if (plan->nodes[0].target_build_depends[k]) {
+                        std::string bd_name = plan->nodes[0].target_build_depends[k];
+                        if (seen.find(bd_name) == seen.end()) {
+                            seen.insert(bd_name);
+                            char *src_name = runepkg_repo_find_source_for_binary(bd_name.c_str());
+                            if (src_name) {
+                                build_srcs.push_back(src_name);
+                            } else {
+                                build_srcs.push_back(plan->nodes[0].target_build_depends[k]);
+                            }
+                        }
+                    }
+                }
+            } else {
+                for (int j = 0; j < plan->node_count && j < 15; j++) {
+                    if (plan->nodes[j].package_name && seen.find(plan->nodes[j].package_name) == seen.end()) {
+                        seen.insert(plan->nodes[j].package_name);
+                        build_srcs.push_back(plan->nodes[j].package_name);
+                    }
+                }
             }
+
             if (!build_srcs.empty()) {
                 runepkg_repo_source_download_multiple(build_srcs.data(), build_srcs.size());
             }
@@ -1866,12 +1960,21 @@ extern "C" int runepkg_repo_source_depends_download_multiple(const char **pkg_na
     if (!pkg_names || count <= 0) return -1;
 
     for (int i = 0; i < count; i++) {
+        if (!pkg_names[i]) continue;
         RuneTargetPlan *plan = nullptr;
-        if (runepkg_resolver_get_install_plan(pkg_names[i], &plan) == 0 && plan) {
+        /* Use resolve_target to get full dependency graph without skipping installed host packages */
+        if (runepkg_resolver_resolve_target(pkg_names[i], &plan) == 0 && plan) {
             std::vector<const char*> dep_srcs;
+            std::unordered_set<std::string> seen;
+
             for (int j = 0; j < plan->node_count; j++) {
-                dep_srcs.push_back(plan->nodes[j].package_name);
+                if (plan->nodes[j].package_name && seen.find(plan->nodes[j].package_name) == seen.end()) {
+                    seen.insert(plan->nodes[j].package_name);
+                    char *src_name = runepkg_repo_find_source_for_binary(plan->nodes[j].package_name);
+                    dep_srcs.push_back(src_name ? src_name : plan->nodes[j].package_name);
+                }
             }
+
             if (!dep_srcs.empty()) {
                 runepkg_repo_source_download_multiple(dep_srcs.data(), dep_srcs.size());
             }
@@ -1883,71 +1986,6 @@ extern "C" int runepkg_repo_source_depends_download_multiple(const char **pkg_na
 
 extern "C" int runepkg_repo_source_depends_download(const char *pkg_name) {
     return runepkg_repo_source_depends_download_multiple(&pkg_name, 1);
-}
-
-extern "C" int runepkg_repo_info(const char *pkg_name) {
-    if (!pkg_name) return -1;
-
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_index.bin";
-    if (!runepkg_util_file_exists(index_path.c_str())) {
-        std::cerr << "\033[1;31m[error]\033[0m Repository index not found. Please run 'runepkg update' first." << std::endl;
-        return -1;
-    }
-
-    PkgMetadata meta = get_package_metadata(pkg_name);
-    if (meta.url.empty()) {
-        printf("'%s' not found... did you mean?\n\n", pkg_name);
-        char suggestions[12][PATH_MAX];
-        int count = runepkg_completion_get_repo_suggestions(pkg_name, suggestions, 12);
-        if (count > 0) {
-            const char *items[12];
-            for (int i = 0; i < count; i++) items[i] = suggestions[i];
-            runepkg_util_print_columns(items, count, "    ");
-        }
-        return -1;
-    }
-
-    printf("Package: %s\n", meta.name.c_str());
-    printf("Version: %s\n", meta.version.empty() ? "(unknown)" : meta.version.c_str());
-    printf("Architecture: %s\n", meta.architecture.empty() ? "(unknown)" : meta.architecture.c_str());
-    printf("Maintainer: %s\n", meta.maintainer.empty() ? "(unknown)" : meta.maintainer.c_str());
-    printf("Description: %s\n", meta.description.empty() ? "(unknown)" : meta.description.c_str());
-    printf("Depends: %s\n", meta.depends.empty() ? "(none)" : meta.depends.c_str());
-    if (!meta.pre_depends.empty()) printf("Pre-Depends: %s\n", meta.pre_depends.c_str());
-    if (!meta.provides.empty()) printf("Provides: %s\n", meta.provides.c_str());
-    if (!meta.build_depends.empty()) printf("Build-Depends: %s\n", meta.build_depends.c_str());
-    if (!meta.build_depends_indep.empty()) printf("Build-Depends-Indep: %s\n", meta.build_depends_indep.c_str());
-    if (!meta.build_depends_arch.empty()) printf("Build-Depends-Arch: %s\n", meta.build_depends_arch.c_str());
-    if (!meta.conflicts.empty()) printf("Conflicts: %s\n", meta.conflicts.c_str());
-    if (!meta.breaks.empty()) printf("Breaks: %s\n", meta.breaks.c_str());
-    if (!meta.recommends.empty()) printf("Recommends: %s\n", meta.recommends.c_str());
-    if (!meta.suggests.empty()) printf("Suggests: %s\n", meta.suggests.c_str());
-    if (!meta.source_name.empty()) printf("Source: %s\n", meta.source_name.c_str());
-    char size_buf[32];
-    printf("Download-Size: %s\n", runepkg_util_format_size(meta.size, size_buf, sizeof(size_buf)));
-    if (!meta.installed_size.empty()) {
-        try {
-            uint64_t inst_bytes = std::stoull(meta.installed_size) * 1024;
-            char inst_buf[32];
-            printf("Installed-Size: %s\n", runepkg_util_format_size(inst_bytes, inst_buf, sizeof(inst_buf)));
-        } catch (...) {
-            printf("Installed-Size: %s KB\n", meta.installed_size.c_str());
-        }
-    }
-    printf("Section: %s\n", meta.section.empty() ? "(unknown)" : meta.section.c_str());
-    printf("Priority: %s\n", meta.priority.empty() ? "(unknown)" : meta.priority.c_str());
-    printf("Homepage: %s\n", meta.homepage.empty() ? "(unknown)" : meta.homepage.c_str());
-
-    if (runepkg_main_hash_table) {
-        PkgInfo *info = runepkg_hash_search(runepkg_main_hash_table, meta.name.c_str());
-        if (info) {
-            printf("Status: installed (version %s)\n", info->version);
-        } else {
-            printf("Status: not installed\n");
-        }
-    }
-
-    return 0;
 }
 
 extern "C" char* runepkg_repo_find_source_for_binary(const char* bin_pkg_name) {

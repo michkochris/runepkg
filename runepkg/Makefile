@@ -116,7 +116,7 @@ endif
 ifeq ($(WITH_CPP),1)
   override CFLAGS  += -DENABLE_CPP_FFI
   LDFLAGS += $(shell pkg-config --libs libcurl openssl libcrypto 2>/dev/null || echo "-lcurl -lcrypto") -lz
-  CPP_SOURCES = runepkg_security.cpp runepkg_utility.cpp runepkg_resolver.cpp runepkg_network.cpp runepkg_guard.cpp
+  CPP_SOURCES = runepkg_security.cpp runepkg_utility.cpp runepkg_resolver.cpp runepkg_network.cpp runepkg_guard.cpp runepkg_multiarch.cpp runepkg_building.cpp
   CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
   LINKER = $(CXX)
 else
@@ -134,7 +134,7 @@ OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
           runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h runepkg_state.h \
-          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp
+          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp runepkg_multiarch.hpp runepkg_building.hpp
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
@@ -152,7 +152,7 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all runas runas-install FORCE
 
 build: build-banner $(TARGET)
 
@@ -178,6 +178,21 @@ $(TARGET): $(OBJS) .config_with_cpp
 	$(Q)$(LINKER) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
 	$(E) "$(BOLD)$(GREEN)⚡ runepkg build complete: $@$(RESET)"
 
+RUNAS_TARGET = runas
+RUNAS_OBJS = runepkg_runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o runepkg_state.o
+
+runas: $(RUNAS_OBJS) .config_with_cpp
+	$(E) "  $(PURPLE)[link-runas]$(RESET) Linking target: $@"
+	$(Q)$(CXX) $(RUNAS_OBJS) -o $@ $(LDFLAGS) $(LIBS)
+	$(E) "$(BOLD)$(PURPLE)🧙 runas build complete: $@$(RESET)"
+
+runas-install: runas
+	@echo "$(CYAN)Installing $(RUNAS_TARGET) to $(DESTDIR)$(PREFIX)/bin...$(RESET)"
+	$(Q)mkdir -p $(DESTDIR)$(PREFIX)/bin
+	$(Q)cp $(RUNAS_TARGET) $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
+	$(Q)chmod 755 $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
+	@echo "$(GREEN)🧙 runas installation complete!$(RESET)"
+
 %.o: %.c $(HEADERS) .config_with_cpp
 	$(E) "  $(BLUE)[forge]$(RESET) Compiling C Rune: $<"
 	$(Q)$(CC) $(CFLAGS) -c $< -o $@
@@ -190,7 +205,7 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) *.o *.d $(TARGET) *.deb .config_with_cpp .config_with_cpp.tmp
+	$(Q)rm -f $(OBJS) $(RUNAS_OBJS) *.o *.d $(TARGET) $(RUNAS_TARGET) *.deb .config_with_cpp .config_with_cpp.tmp
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:
@@ -237,9 +252,11 @@ install-target-rules:
     fi
 
 uninstall:
-	@echo "$(BOLD)$(YELLOW)Uninstalling $(TARGET)...$(RESET)"
+	@echo "$(BOLD)$(YELLOW)Uninstalling $(TARGET) and $(RUNAS_TARGET)...$(RESET)"
 	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
 	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(TARGET)
+	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(RUNAS_TARGET)
 	@echo "$(YELLOW)Note: $(DESTDIR)$(ETCDIR)/runepkg has been preserved.$(RESET)"
 	@echo "$(GREEN)Uninstallation complete.$(RESET)"
 

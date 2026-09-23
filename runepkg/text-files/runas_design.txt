@@ -1,0 +1,87 @@
+================================================================================
+  RUNAS ENGINE ARCHITECTURAL DESIGN & MULTI-ARCH SPECIFICATION
+  Project: runepkg / runas (Debian Source & Toolchain Forge Engine)
+  Version: v1.0.4+
+  Author: michkochris@gmail.com
+================================================================================
+
+1. EXECUTIVE VISION & GOALS
+--------------------------------------------------------------------------------
+runas is the dedicated Debian Source Package & Toolchain Forge Engine for runepkg.
+While runepkg handles fast binary package management (.deb installation, updates,
+upgrades, removal, dpkg status entanglement), runas is engineered to consume
+Debian source runes (.dsc, .orig.tar.xz, .debian.tar.xz, debian/rules), resolve
+runtime/build dependency graphs, and compile Debian software natively or via
+Debian-compliant Multi-Arch cross-building into forged .deb packages.
+
+runas operates 100% within official Debian packaging standards (dpkg-source,
+dpkg-buildpackage, debian/control, debian/rules, quilt) without cutting corners.
+
+
+2. CLI COMMAND SPECIFICATION
+--------------------------------------------------------------------------------
+  runas sync                            Synchronize host package status snapshot
+  runas update                          Download repository indices & update binary graphs
+  runas source <pkg>                    Download Debian source package files (.dsc, .orig, .debian)
+  runas source-depends <pkg>            Download complete source runes for package + runtime dependencies
+  runas source-build-depends <pkg>      Download complete source runes for package + build dependencies
+  runas depends <pkg>                   Render recursive ASCII dependency tree of target package
+  runas resolve-tree <pkg>              Resolve target dependency graph for source building
+  runas build <pkg|dsc> [--arch=<arch>] Verify host build-depends and compile source package into .deb
+  runas source-build <pkg> [--arch=..]  End-to-end pipeline: fetch runes -> verify host tools -> build .deb
+  runas autocomplete <query>            Run sub-millisecond memory-mapped autocomplete lookup
+
+
+3. DEBIAN MULTI-ARCH CROSS-BUILDING FOUNDATION
+--------------------------------------------------------------------------------
+A. Architecture Mapping Table (Debian Arch <-> GNU Triplet)
+   Debian Arch   | GNU Target Triplet
+   --------------|--------------------------
+   amd64         | x86_64-linux-gnu
+   arm64         | aarch64-linux-gnu
+   armhf         | arm-linux-gnueabihf
+   riscv64       | riscv64-linux-gnu
+   i386          | i386-linux-gnu
+   loong64       | loongarch64-linux-gnu
+
+B. Multi-Arch Environment Export
+   When building with --arch=<target_arch> (e.g. --arch=arm64):
+   - DEB_BUILD_ARCH = amd64
+   - DEB_BUILD_GNU_TYPE = x86_64-linux-gnu
+   - DEB_HOST_ARCH = arm64
+   - DEB_HOST_GNU_TYPE = aarch64-linux-gnu
+   - CC = aarch64-linux-gnu-gcc
+   - CXX = aarch64-linux-gnu-g++
+   - PKG_CONFIG_PATH = /usr/lib/aarch64-linux-gnu/pkgconfig:/usr/share/pkgconfig
+
+C. Execution Command
+   dpkg-buildpackage -a<target_arch> -us -uc -b
+   or
+   debian/rules binary DEB_HOST_ARCH=<target_arch> DEB_HOST_GNU_TYPE=<gnu_triplet>
+
+
+4. HOST DEPENDENCY VERIFICATION & AUTO-HEALING
+--------------------------------------------------------------------------------
+Before compiling any source package:
+1. runas inspects debian/control for required host build tools (debhelper, dpkg-dev,
+   gcc, make, autoconf, quilt, patch).
+2. runas checks the host system dpkg status snapshot.
+3. If any host build tool is missing from the host machine, runas auto-installs
+   the missing tool via runepkg_repo_install(tool) before starting compilation.
+
+
+5. SOURCE UNPACKING, PATCHING, & FORGING PIPELINE
+--------------------------------------------------------------------------------
+1. Stage Workspace: /srv/lib/runepkg_dir/build_dir/
+2. Unpack Source: dpkg-source -x <package>.dsc or tar extraction.
+3. Apply Patches: Apply debian/patches/ series via quilt or POSIX patch.
+4. Build Execution: Execute dpkg-buildpackage -us -uc -b or debian/rules.
+5. Collect Output: Forged .deb binary packages land in /srv/lib/runepkg_dir/runepkg_debs/.
+
+
+6. CONCLUSION
+--------------------------------------------------------------------------------
+This design guarantees 100% native Debian ecosystem compatibility for runas,
+enabling clean source building and multi-arch cross-building while keeping custom
+JIT matrix engines isolated in future_cpp/ for power users.
+================================================================================

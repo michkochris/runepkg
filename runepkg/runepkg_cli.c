@@ -39,15 +39,7 @@
 #include "runepkg_cpp_ffi.h"
 #endif
 
-/* Global variables */
-bool g_verbose_mode = false;
-bool g_force_mode = false;
-bool g_completion_mode = false;
-bool g_did_install = false;
-bool g_debug_mode = false;
-bool g_auto_confirm_deps = false;
-bool g_auto_confirm_siblings = false;
-bool g_asked_siblings = false;
+/* Global variables are defined in runepkg_config.c */
 
 extern void handle_print_autopool(void);
 

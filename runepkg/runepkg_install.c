@@ -268,6 +268,15 @@ typedef struct {
 static int perform_file_install(const char *src, const char *dst) {
     extern char *g_system_install_root;
     struct stat st;
+    char *dst_copy;
+
+    /* Ensure parent directories exist inside system install root */
+    dst_copy = strdup(dst);
+    if (dst_copy) {
+        char *parent = dirname(dst_copy);
+        if (parent) runepkg_util_create_dir_recursive(parent, 0755);
+        free(dst_copy);
+    }
 
     /* Security Check: Ensure destination is within system install root */
     if (g_system_install_root && runepkg_util_is_path_under_dir(dst, g_system_install_root) == 0) {
@@ -292,7 +301,6 @@ static int perform_file_install(const char *src, const char *dst) {
         }
         chmod(dst, st.st_mode & 07777);
     } else if (S_ISREG(st.st_mode)) {
-        char *dst_copy;
         TransactionContext *ctx = runepkg_get_current_tx();
         if (ctx) {
             struct stat dst_st;
@@ -353,7 +361,7 @@ static int perform_file_install(const char *src, const char *dst) {
             }
 
             {
-                char *dst_copy = strdup(dst);
+                dst_copy = strdup(dst);
                 if (dst_copy) {
                     char *parent = dirname(dst_copy);
                     if (parent) runepkg_util_create_dir_recursive(parent, 0755);

@@ -27,7 +27,7 @@
 #define PATH_MAX 4096
 #endif
 
-/* --- Global Path Variables Definitions --- */
+/* --- Global Path & Flag Variables Definitions --- */
 char *g_runepkg_base_dir = NULL;
 char *g_control_dir = NULL;
 char *g_runepkg_db_dir = NULL;
@@ -38,6 +38,15 @@ char *g_pkglist_bin_path = NULL;
 char *g_runepkg_lists_dir = NULL;
 char *g_download_dir = NULL;
 char *g_build_dir = NULL;
+
+bool g_verbose_mode = false;
+bool g_force_mode = false;
+bool g_completion_mode = false;
+bool g_did_install = false;
+bool g_debug_mode = false;
+bool g_auto_confirm_deps = false;
+bool g_auto_confirm_siblings = false;
+bool g_asked_siblings = false;
 char *g_debs_dir = NULL;
 char *g_log_dir = NULL;
 char *g_dpkg_host = NULL;

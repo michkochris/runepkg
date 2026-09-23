@@ -422,6 +422,7 @@ int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
 
     if (!path || !dir) return -1;
 
+    runepkg_util_create_dir_recursive(dir, 0755);
     real_dir = realpath(dir, NULL);
     if (!real_dir) {
         return 1;

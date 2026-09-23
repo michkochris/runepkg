@@ -480,13 +480,31 @@ extern char *g_system_install_root;
 
 /* Internal helper to update dpkg status file by replacing/adding a package stanza */
 static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
-    const char *status_path = "/var/lib/dpkg/status";
-    char tmp_path[PATH_MAX];
+    char status_path[PATH_MAX];
+    char status_dir[PATH_MAX];
+    char tmp_path[PATH_MAX + 256];
     FILE *in, *out;
     char line[16384];
     int skip_current = 0;
 
-    if (access(status_path, R_OK) != 0) return 0; /* No status file to update */
+    const char *target_root = (g_system_install_root && strlen(g_system_install_root) > 0) ? g_system_install_root : "/";
+    if (strcmp(target_root, "/") == 0) {
+        snprintf(status_path, sizeof(status_path), "/var/lib/dpkg/status");
+        snprintf(status_dir, sizeof(status_dir), "/var/lib/dpkg");
+    } else {
+        snprintf(status_path, sizeof(status_path), "%s/var/lib/dpkg/status", target_root);
+        snprintf(status_dir, sizeof(status_dir), "%s/var/lib/dpkg", target_root);
+    }
+
+    runepkg_util_create_dir_recursive(status_dir, 0755);
+
+    /* If status file does not exist in target root, create a fresh one */
+    if (access(status_path, R_OK) != 0) {
+        out = fopen(status_path, "w");
+        if (out) {
+            fclose(out);
+        }
+    }
 
     snprintf(tmp_path, sizeof(tmp_path), "%s.runepkg.tmp", status_path);
     in = fopen(status_path, "r");
@@ -565,21 +583,32 @@ static int runepkg_host_update_status_file(const PkgInfo *pkg_info) {
 
 int runepkg_host_register_install(const PkgInfo *pkg_info) {
     char list_path[PATH_MAX + 128];
+    char info_dir[PATH_MAX];
     FILE *list_file;
     int i;
+    const char *target_root;
 
     if (!pkg_info || !pkg_info->package_name) return -1;
 
-    runepkg_util_log_verbose("[host] Registering installation & injecting into dpkg host: %s (%s)",
-                            pkg_info->package_name, pkg_info->version ? pkg_info->version : "unknown");
+    target_root = (g_system_install_root && strlen(g_system_install_root) > 0) ? g_system_install_root : "/";
 
-    /* If dpkg_host is not 'none' and we are installing to system root '/', inject into host dpkg database */
-    if ((!g_dpkg_host || strcmp(g_dpkg_host, "none") != 0) && (!g_system_install_root || strcmp(g_system_install_root, "/") == 0)) {
+    runepkg_util_log_verbose("[host] Registering installation & injecting into target dpkg (%s): %s (%s)",
+                            target_root, pkg_info->package_name, pkg_info->version ? pkg_info->version : "unknown");
+
+    /* If dpkg_host is not 'none', inject into target root's dpkg status database */
+    if (!g_dpkg_host || strcmp(g_dpkg_host, "none") != 0) {
         if (runepkg_host_update_status_file(pkg_info) == 0) {
-             runepkg_util_log_verbose("[host] Atomically updated package stanza for %s in /var/lib/dpkg/status", pkg_info->package_name);
+             runepkg_util_log_verbose("[host] Atomically updated package stanza for %s in %s/var/lib/dpkg/status", pkg_info->package_name, target_root);
         }
 
-        snprintf(list_path, sizeof(list_path), "/var/lib/dpkg/info/%s.list", pkg_info->package_name);
+        if (strcmp(target_root, "/") == 0) {
+            snprintf(info_dir, sizeof(info_dir), "/var/lib/dpkg/info");
+        } else {
+            snprintf(info_dir, sizeof(info_dir), "%s/var/lib/dpkg/info", target_root);
+        }
+        runepkg_util_create_dir_recursive(info_dir, 0755);
+
+        snprintf(list_path, sizeof(list_path), "%s/%s.list", info_dir, pkg_info->package_name);
         list_file = fopen(list_path, "w");
         if (list_file) {
             fprintf(list_file, "/.\n");
