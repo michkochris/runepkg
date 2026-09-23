@@ -191,6 +191,7 @@ runas-install: runas
 	$(Q)mkdir -p $(DESTDIR)$(PREFIX)/bin
 	$(Q)cp $(RUNAS_TARGET) $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
 	$(Q)chmod 755 $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
+	$(Q)mkdir -p $(DESTDIR)$(ETCDIR)/runepkg
 	@echo "$(GREEN)🧙 runas installation complete!$(RESET)"
 
 %.o: %.c $(HEADERS) .config_with_cpp

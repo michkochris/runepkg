@@ -18,6 +18,7 @@ extern "C" {
 
 /* Standard Debian Ecosystem Source Building Functions */
 int runepkg_building_unpack_and_patch(const char *target_or_dsc);
+int runepkg_building_list_subpackages(const char *target_or_dsc);
 int runepkg_building_debian_build(const char *target_or_dsc, bool split, const char *subpackage_target);
 int runepkg_building_source_build_pipeline(const char *pkg_name, const char *target_arch);
 

@@ -190,16 +190,26 @@ public:
 
         /* Step 3: Forge Debian .deb binary runes from temp_install */
         if (fs::exists(temp_install_dir) && !fs::is_empty(temp_install_dir)) {
-            std::vector<std::string> subpkgs = parse_debian_control_subpackages(source_tree_root / "debian" / "control");
-            if (subpkgs.empty()) {
-                subpkgs.push_back(target_path_);
+            std::vector<std::string> all_subpkgs = parse_debian_control_subpackages(source_tree_root / "debian" / "control");
+            std::vector<std::string> pkgs_to_forge;
+
+            if (target_pkg && strlen(target_pkg) > 0) {
+                /* Precise target subpackage requested: runas build <pkg> <subpkg> */
+                pkgs_to_forge.push_back(target_pkg);
+            } else if (split) {
+                /* Full split requested: runas buildpkg-split <pkg> */
+                pkgs_to_forge = all_subpkgs;
+                if (pkgs_to_forge.empty()) pkgs_to_forge.push_back(target_path_);
+            } else {
+                /* Standard build requested: runas build <pkg> (builds primary intended package) */
+                if (!all_subpkgs.empty()) {
+                    pkgs_to_forge.push_back(all_subpkgs[0]);
+                } else {
+                    pkgs_to_forge.push_back(target_path_);
+                }
             }
 
-            for (const auto& pkg_name : subpkgs) {
-                if (split && target_pkg && strlen(target_pkg) > 0 && pkg_name != target_pkg) {
-                    continue;
-                }
-
+            for (const auto& pkg_name : pkgs_to_forge) {
                 fs::path pkg_stage = temp_install_dir / "stage_" / pkg_name;
                 fs::path data_dir = pkg_stage / "data";
                 fs::path ctrl_dir = pkg_stage / "control";
@@ -369,6 +379,63 @@ extern "C" int runepkg_building_unpack_and_patch(const char *target_or_dsc) {
     return -1;
 }
 
+extern "C" int runepkg_building_list_subpackages(const char *target_or_dsc) {
+    if (!target_or_dsc) return -1;
+    std::string build_dir = g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir";
+
+    fs::path ctrl_path;
+    for (const auto& entry : fs::directory_iterator(build_dir)) {
+        if (entry.is_directory()) {
+            std::string dname = entry.path().filename().string();
+            if (dname.rfind(target_or_dsc, 0) == 0 && fs::exists(entry.path() / "debian" / "control")) {
+                ctrl_path = entry.path() / "debian" / "control";
+                break;
+            }
+        }
+    }
+
+    if (ctrl_path.empty()) {
+        runepkg_building_unpack_and_patch(target_or_dsc);
+        for (const auto& entry : fs::directory_iterator(build_dir)) {
+            if (entry.is_directory()) {
+                std::string dname = entry.path().filename().string();
+                if (dname.rfind(target_or_dsc, 0) == 0 && fs::exists(entry.path() / "debian" / "control")) {
+                    ctrl_path = entry.path() / "debian" / "control";
+                    break;
+                }
+            }
+        }
+    }
+
+    if (ctrl_path.empty()) {
+        std::cerr << "\033[1;31m[error]\033[0m Could not locate debian/control for " << target_or_dsc << std::endl;
+        return -1;
+    }
+
+    std::cout << "\033[1;35m[runas]\033[0m Subpackages available for source package '\033[1;36m" << target_or_dsc << "\033[0m':" << std::endl;
+    std::ifstream file(ctrl_path);
+    std::string line;
+    int idx = 1;
+    while (std::getline(file, line)) {
+        if (line.rfind("Package: ", 0) == 0) {
+            std::string p_name = line.substr(9);
+            p_name.erase(0, p_name.find_first_not_of(" \t\r\n"));
+            p_name.erase(p_name.find_last_not_of(" \t\r\n") + 1);
+            if (!p_name.empty()) {
+                std::cout << "  \033[1;34m*\033[0m " << p_name;
+                if (idx == 1) std::cout << " \033[1;32m(Primary Package)\033[0m";
+                else std::cout << " \033[1;33m(Subpackage)\033[0m";
+                std::cout << std::endl;
+                idx++;
+            }
+        }
+    }
+
+    std::cout << std::endl << "Build target subpackage:" << std::endl;
+    std::cout << "  runas build " << target_or_dsc << " <subpackage>" << std::endl;
+    return 0;
+}
+
 extern "C" int runepkg_building_debian_build(const char *target_or_dsc, bool split, const char *subpackage_target) {
     if (!target_or_dsc) return -1;
     StandardDebianSourceBuilder builder(target_or_dsc);
@@ -383,13 +450,27 @@ extern "C" int runepkg_building_source_build_pipeline(const char *pkg_name, cons
     DebianMultiArchEngine::export_multiarch_env(ma_config);
     DebianMultiArchEngine::print_multiarch_info(ma_config);
 
-    std::cout << "\033[1;35m[runas]\033[0m Downloading source runes for " << pkg_name << "..." << std::endl;
+    std::cout << "\033[1;35m[runas]\033[0m Stage 1/3: Downloading source runes for " << pkg_name << "..." << std::endl;
     if (runepkg_repo_source_download(pkg_name) != 0) {
         std::cerr << "\033[1;31m[error]\033[0m Failed to download source runes for " << pkg_name << std::endl;
         return -1;
     }
 
-    return runepkg_building_debian_build(pkg_name, false, nullptr);
+    std::cout << "\033[1;35m[runas]\033[0m Stage 2/3: Compiling source rune for " << pkg_name << "..." << std::endl;
+    if (runepkg_building_debian_build(pkg_name, false, nullptr) != 0) {
+        std::cerr << "\033[1;31m[error]\033[0m Source compilation failed for " << pkg_name << std::endl;
+        return -1;
+    }
+
+    std::string deb_debs_dir = std::string(g_runepkg_base_dir ? g_runepkg_base_dir : "/srv/lib/runepkg_dir") + "/runepkg_debs";
+    std::string out_deb = deb_debs_dir + "/" + pkg_name + "_1.0.0_" + ma_config.deb_host_triplet + ".deb";
+
+    if (fs::exists(out_deb)) {
+        std::cout << "\033[1;35m[runas]\033[0m Stage 3/3: Installing forged rune into target system: " << out_deb << std::endl;
+        runepkg_repo_install(pkg_name);
+    }
+
+    return 0;
 }
 
 /* -------------------------------------------------------------------------- */

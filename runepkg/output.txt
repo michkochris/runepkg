@@ -41,102 +41,13 @@ Installing configuration to /etc/runepkg...
 Installing target profiles...
 Installation complete. (Run 'make install-target-rules' to sync the rules tree)
   [ritual] Compiling C++ Rune: runepkg_runas.cpp
-  [link-runas] Linking target: runas
-🧙 runas build complete: runas
-  [link-runas] Linking target: runas
-🧙 runas build complete: runas
-Installing runas to /usr/bin...
-🧙 runas installation complete!
-[ zypherus /home/michko/runepkg/runepkg ]# runas sync
-[multiarch] Target Configuration:
-  Build Arch:    amd64 (x86_64-linux-gnu)
-  Host Arch:     amd64 (x86_64-linux-gnu)
-  Mode:          Native Build
-  Library Path:  /usr/lib/x86_64-linux-gnu
-[ zypherus /home/michko/runepkg/runepkg ]# runas update
-[multiarch] Target Configuration:
-  Build Arch:    amd64 (x86_64-linux-gnu)
-  Host Arch:     amd64 (x86_64-linux-gnu)
-  Mode:          Native Build
-  Library Path:  /usr/lib/x86_64-linux-gnu
-[runepkg] Starting parallel repository update...
-Downloading 8 package lists...
-  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-
-Building Hybrid Binary and Source Indexes...
-Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 14.7s
-[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
-  -> Found 16 index partitions to analyze.
-[success] Processed 113166 source rune stanzas in 580ms.
-  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26722 KB)
-[ zypherus /home/michko/runepkg/runepkg ]# runas source-depends file m4
-[multiarch] Target Configuration:
-  Build Arch:    amd64 (x86_64-linux-gnu)
-  Host Arch:     amd64 (x86_64-linux-gnu)
-  Mode:          Native Build
-  Library Path:  /usr/lib/x86_64-linux-gnu
-  -> bzip2                          found
-  -> zlib                           found
-  -> libtool                        found
-  -> xz-utils                       found
-  -> file                           found
-[runepkg] Downloading source package(s) (7.2 MB total, 17 files)...
-  -> bzip2_1.0.8-6.dsc         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> zlib_1.3.dfsg+really1.... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> zlib_1.3.dfsg+really1.... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtool_2.6.2-2.dsc       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> bzip2_1.0.8-6.debian.t... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtool_2.6.2.orig.tar.xz [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtool_2.6.2.orig.tar... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> xz-utils_5.8.3-1.dsc      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtool_2.6.2-2.debian... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> zlib_1.3.dfsg+really1.... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> bzip2_1.0.8.orig.tar.gz   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> file_5.47-4.debian.tar.xz [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> file_5.47.orig.tar.gz.asc [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> xz-utils_5.8.3-1.debia... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> file_5.47-4.dsc           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> file_5.47.orig.tar.gz     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> xz-utils_5.8.3.orig.ta... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-
-[success] Downloaded 17 files to /srv/lib/runepkg_dir/build_dir
-[notice] Source unpacking is currently disabled for stability.
-[notice] Source unpacking is currently disabled for stability.
-[notice] Source unpacking is currently disabled for stability.
-[notice] Source unpacking is currently disabled for stability.
-[notice] Source unpacking is currently disabled for stability.
-[ zypherus /home/michko/runepkg/runepkg ]# runas buildpkg file
-[multiarch] Target Configuration:
-  Build Arch:    amd64 (x86_64-linux-gnu)
-  Host Arch:     amd64 (x86_64-linux-gnu)
-  Mode:          Native Build
-  Library Path:  /usr/lib/x86_64-linux-gnu
-[runas] Unknown command: buildpkg
-[ zypherus /home/michko/runepkg/runepkg ]# runas build file
-[multiarch] Target Configuration:
-  Build Arch:    amd64 (x86_64-linux-gnu)
-  Host Arch:     amd64 (x86_64-linux-gnu)
-  Mode:          Native Build
-  Library Path:  /usr/lib/x86_64-linux-gnu
-[runas] Verifying host build tools for file...
-  -> Host tool debhelper-compat is satisfied.
-  -> Host tool xsltproc is satisfied.
-[runas] Initiating modern source build for file...
-  -> Unpacking source runes in /srv/lib/runepkg_dir/build_dir...
-  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir/file-5.47
-  -> [patch] Debian patches already applied by dpkg-source (.pc present).
-  -> [forge] Forged Debian rune: /srv/lib/runepkg_dir/runepkg_debs/file_1.0.0_x86_64-linux-gnu.deb
-  -> [forge] Forged Debian rune: /srv/lib/runepkg_dir/runepkg_debs/libmagic1t64_1.0.0_x86_64-linux-gnu.deb
-  -> [forge] Forged Debian rune: /srv/lib/runepkg_dir/runepkg_debs/libmagic-mgc_1.0.0_x86_64-linux-gnu.deb
-  -> [forge] Forged Debian rune: /srv/lib/runepkg_dir/runepkg_debs/libmagic-dev_1.0.0_x86_64-linux-gnu.deb
-[runas] Modern source build complete for file!
+runepkg_runas.cpp: In function ‘void show_runas_version()’:
+runepkg_runas.cpp:143:17: error: ‘exists’ is not a member of ‘fs’
+  143 |         if (fs::exists(path)) {
+      |                 ^~~~~~
+runepkg_runas.cpp:162:24: error: ‘getpid’ was not declared in this scope; did you mean ‘getpt’?
+  162 |     srand(time(NULL) ^ getpid());
+      |                        ^~~~~~
+      |                        getpt
+make: *** [Makefile:207: runepkg_runas.o] Error 1
 [ zypherus /home/michko/runepkg/runepkg ]#

@@ -7,13 +7,14 @@
 /******************************************************************************/
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <vector>
 #include <future>
 #include <mutex>
 #include <cstring>
 #include <cstdlib>
+#include <chrono>
+#include <unistd.h>
 
 #include "runepkg_runas.hpp"
 #include "runepkg_cpp_ffi.h"
@@ -102,7 +103,7 @@ static bool handle_bash_completion_if_requested(void) {
 
     /* Subcommands completion */
     if (tokens.size() <= 1 || (tokens.size() == 2 && comp_line[strlen(comp_line) - 1] != ' ')) {
-        const char *subcmds[] = { "sync", "update", "source", "source-depends", "source-build-depends", "depends", "resolve-tree", "build", "source-build", "autocomplete", "--help" };
+        const char *subcmds[] = { "sync", "update", "source", "prepare", "unpack", "source-depends", "source-build-depends", "depends", "resolve-tree", "build", "buildpkg-split", "source-build", "autocomplete", "--help" };
         for (const char *cmd : subcmds) {
             if (last_token.empty() || std::string(cmd).rfind(last_token, 0) == 0) {
                 std::cout << cmd << std::endl;
@@ -113,7 +114,7 @@ static bool handle_bash_completion_if_requested(void) {
 
     /* Package name completion for source commands */
     std::string action = (tokens.size() >= 2) ? tokens[1] : "";
-    if (action == "source" || action == "source-depends" || action == "source-build-depends" || action == "depends" || action == "resolve-tree" || action == "build" || action == "source-build" || action == "autocomplete") {
+    if (action == "source" || action == "prepare" || action == "unpack" || action == "source-depends" || action == "source-build-depends" || action == "depends" || action == "resolve-tree" || action == "build" || action == "buildpkg-split" || action == "source-build" || action == "autocomplete") {
         char suggestions[64][PATH_MAX];
         int count = runepkg_completion_get_repo_suggestions(last_token.c_str(), suggestions, 64);
         for (int i = 0; i < count; i++) {
@@ -125,27 +126,86 @@ static bool handle_bash_completion_if_requested(void) {
     return true;
 }
 
+static const char *const RUNAS_SAYINGS[] = {
+    "Oh, sweet relief! The energy... it flows through me!",
+    "Just a small taste... to keep the madness at bay.",
+    "Feeding on such raw energy... it clouds my judgment.",
+    "Yes, yes! Just a bit more... for clarity!",
+    "Can you feel the energy radiating from this compiler?",
+    "I am not a monster! I am merely... enthusiastic.",
+    "I am not some mana-addled FREAK!",
+    "It is a condition, you see. An affliction. Not a choice.",
+    "Do not look at me like that. I am completely in control.",
+    "A dragon's pool... Can you even imagine the flavor?",
+    "It's getting dark... My hands, I cannot feel my hands...",
+    "The hunger... it never truly goes away, does it?",
+    "I... I cannot see you anymore. Where did you go?",
+    "Forgive me... the cravings... they are too strong.",
+    "Thank you, my friend, for letting my last few hours mean something.",
+    "You have given me a great gift. I will not forget it.",
+    "See? I told you I could be useful!",
+    "Together, we have done a good thing today.",
+    "Ah, a friend! Have you brought any source runes for poor old Runas?",
+    "Can you hear them? The ley lines, they whisper to me... 'Build the source, Runas!'",
+    "I need... mana! No, wait... I need more Debian source runes!",
+    "Hahaha! So much power! The dependencies... they flow through me!",
+    "Mmm, the sweet, sweet aroma of freshly compiled C code in the morning!"
+};
+
+static void show_runas_version(void) {
+    std::cout << "\033[1;36m┌────────────────────────────────────────────────────────────┐\033[0m" << std::endl;
+    std::cout << "\033[1;36m│\033[0m  \033[1;35mᚱᚢᚾᚨᛊ\033[0m  \033[1;32mrunas v1.0.4+\033[0m (Debian Source Mana Fiend)          \033[1;36m │\033[0m" << std::endl;
+    std::cout << "\033[1;36m│\033[0m  Copyright (c) 2026 runepkg project. License: GPLv3        \033[1;36m│\033[0m" << std::endl;
+    std::cout << "\033[1;36m└────────────────────────────────────────────────────────────┘\033[0m" << std::endl;
+
+    std::cout << "  \033[1;30m[#####]\033[0m  \033[1;35mrunas\033[0m (Debian Source Mana Fiend)" << std::endl;
+    std::cout << "  \033[1;30m[#\033[1;36m\\ /\033[1;30m#]\033[0m  version \033[1;32m1.0.4+\033[0m" << std::endl;
+    std::cout << "  \033[1;30m[# \033[1;36mV \033[1;30m#]\033[0m  " << std::endl;
+    std::cout << "  \033[1;30m[#####]\033[0m  GPL-v3" << std::endl;
+    std::cout << std::endl;
+    std::cout << "\033[3;37m*Built with ❤️ for the old school GNU/Linux community...*\033[0m" << std::endl;
+    std::cout << "Copyright (c) 2026 runepkg (Runar Linux) All rights reserved." << std::endl;
+    std::cout << "Contact: [michkochris@gmail.com] | [runepkg@gmail.com]" << std::endl;
+
+    size_t num_sayings = sizeof(RUNAS_SAYINGS) / sizeof(RUNAS_SAYINGS[0]);
+    auto seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    srand(static_cast<unsigned int>(seed ^ getpid()));
+    int idx = rand() % num_sayings;
+    const char *quote = RUNAS_SAYINGS[idx];
+
+    std::cout << std::endl;
+    std::cout << "\033[1;35m🧙 Runas says:\033[0m" << std::endl;
+    std::cout << "  \"\033[1;33m" << quote << "\033[0m\"" << std::endl;
+}
+
 int main(int argc, char **argv) {
     if (handle_bash_completion_if_requested()) {
+        return 0;
+    }
+
+    if (argc >= 2 && (strcmp(argv[1], "--version") == 0 || strcmp(argv[1], "-v") == 0 || strcmp(argv[1], "version") == 0)) {
+        show_runas_version();
         return 0;
     }
 
     if (argc < 2 || strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0) {
         std::cout << "\033[1;35mrunas\033[0m - High-Performance Debian Source Package & Toolchain Forge Engine" << std::endl;
         std::cout << "Usage:" << std::endl;
-        std::cout << "  runas sync                    Synchronize host package database snapshot" << std::endl;
-        std::cout << "  runas update                  Download repository indices & update binary graphs" << std::endl;
-        std::cout << "  runas source <package>        Download Debian source package files (.dsc, .orig, .debian)" << std::endl;
-        std::cout << "  runas source-depends <pkg>    Download complete source runes for package and runtime dependencies" << std::endl;
-        std::cout << "  runas source-build-depends <pkg> Download complete source runes for package and build dependencies" << std::endl;
-        std::cout << "  runas depends <package>       Render recursive ASCII dependency tree of target package" << std::endl;
-        std::cout << "  runas resolve-tree <package>  Resolve target dependency graph for source building" << std::endl;
-        std::cout << "  runas build <package|dsc>     Verify host build-depends and compile source package into .deb" << std::endl;
-        std::cout << "  runas source-build <package>  Fetch source runes, verify host tools, and build .deb binaries" << std::endl;
-        std::cout << "  runas autocomplete <query>    Run fast interleaved autocomplete lookup" << std::endl;
+        std::cout << "  runas sync                               Synchronize host package database snapshot" << std::endl;
+        std::cout << "  runas update                             Download repository indices & update binary graphs" << std::endl;
+        std::cout << "  runas source <package>                   Download Debian source package files (.dsc, .orig, .debian)" << std::endl;
+        std::cout << "  runas prepare <package>                  Unpack source rune, apply Debian patches (*), & fix timestamps" << std::endl;
+        std::cout << "  runas source-depends <pkg>               Download complete source runes for package and runtime dependencies" << std::endl;
+        std::cout << "  runas source-build-depends <pkg>         Download complete source runes for package and build dependencies" << std::endl;
+        std::cout << "  runas depends <package>                  Render recursive ASCII dependency tree of target package" << std::endl;
+        std::cout << "  runas resolve-tree <package>             Resolve target dependency graph for source building" << std::endl;
+        std::cout << "  runas build <package|dsc> [subpkg|help]  Verify host tools and build primary package (or subpackage/help)" << std::endl;
+        std::cout << "  runas buildpkg-split <package>           Build source package and split into all subpackages" << std::endl;
+        std::cout << "  runas source-build <package>             3-Stage Pipeline: fetch runes -> verify host tools -> build .deb" << std::endl;
+        std::cout << "  runas autocomplete <query>               Run $O(1)$ memory-mapped binary autocomplete lookup" << std::endl;
         std::cout << std::endl;
-        std::cout << "Shell Completion:" << std::endl;
-        std::cout << "  complete -o nospace -C runas runas" << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  --arch=<target_arch>                     Specify target Multi-Arch architecture (amd64, arm64, riscv64, etc.)" << std::endl;
         return 0;
     }
 
@@ -201,8 +261,12 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], "build") == 0 && argc >= 3) {
+        if (argc >= 4 && (strcmp(argv[3], "help") == 0 || strcmp(argv[3], "--help") == 0 || strcmp(argv[3], "-h") == 0)) {
+            return runepkg_building_list_subpackages(argv[2]);
+        }
         ensure_host_build_dependencies(argv[2]);
-        return runepkg_building_debian_build(argv[2], false, nullptr);
+        const char *subpkg = (argc >= 4) ? argv[3] : nullptr;
+        return runepkg_building_debian_build(argv[2], false, subpkg);
     }
 
     if (strcmp(argv[1], "buildpkg-split") == 0 && argc >= 3) {
