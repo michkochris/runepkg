@@ -826,8 +826,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "build");
                 } else if (strcmp(tok, "-m") == 0 || strcmp(tok, "--md5check") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "md5check");
-                } else if (strcmp(tok, "source") == 0 || strcmp(tok, "source-depends") == 0 || strcmp(tok, "source-build-depends") == 0) {
-                    runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source");
                 } else if (strcmp(tok, "download-only") == 0 || strcmp(tok, "download-depends") == 0 || strcmp(tok, "download-build-depends") == 0) {
                     runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "download-only");
                 } else if (strcmp(tok, "buildpkg-split") == 0 || strcmp(tok, "--buildpkg-split") == 0) {
@@ -882,9 +880,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
                             break;
                         } else if (strcmp(t2, "-m") == 0 || strcmp(t2, "--md5check") == 0) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "md5check");
-                            break;
-                        } else if (strcmp(t2, "source") == 0 || strcmp(t2, "source-depends") == 0 || strcmp(t2, "source-build-depends") == 0) {
-                            runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "source");
                             break;
                         } else if (strcmp(t2, "download-only") == 0 || strcmp(t2, "download-depends") == 0 || strcmp(t2, "download-build-depends") == 0) {
                             runepkg_secure_strcpy(inferred_cmd, sizeof(inferred_cmd), "download-only");
@@ -975,14 +970,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
             prefix_search_and_print_ext(partial, ":pkg");
             return;
         }
-        if (strcmp(inferred_cmd, "source") == 0) {
-            if (is_path) complete_file_paths(partial);
-            else {
-                repo_src_prefix_search_and_print(partial);
-                repo_prefix_search_and_print(partial);
-            }
-            return;
-        }
         if (strcmp(inferred_cmd, "download-only") == 0) {
             if (is_path) complete_file_paths(partial);
             else repo_prefix_search_and_print(partial);
@@ -1059,11 +1046,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
             const char *sub_cmds[] = {
                 "sync", "install", "remove", "list", "status", "list-files", "search",
                 "info", "download-only", "download-depends", "download-build-depends",
-                "depends", "verify", "update", "upgrade", "source",
-                "source-depends", "source-build-depends", "buildpkg-split", "build",
+                "depends", "verify", "update", "upgrade", "buildpkg-split", "build",
                 "switch", "bootstrap", "build-toolchain", "resolve-tree", "transactions"
             };
-            for (i = 0; i < 25; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
+            for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
     } else if (partial && partial[0] == '-') {
         if (inferred_cmd[0] != '\0') {
@@ -1106,12 +1092,6 @@ void handle_binary_completion(const char *partial, const char *prev) {
         if (is_path) complete_file_paths(partial);
         else {
             prefix_search_and_print_ext(partial, ":pkg");
-            repo_prefix_search_and_print(partial);
-        }
-    } else if (strcmp(prev, "source") == 0 || strcmp(prev, "source-depends") == 0 || strcmp(prev, "source-build-depends") == 0) {
-        if (is_path) complete_file_paths(partial);
-        else {
-            repo_src_prefix_search_and_print(partial);
             repo_prefix_search_and_print(partial);
         }
     } else if (strcmp(prev, "download-only") == 0 || strcmp(prev, "download-depends") == 0 || strcmp(prev, "download-build-depends") == 0) {

@@ -23,5 +23,6 @@ alias wget="wget -U 'noleak'"
 alias curl="curl --user-agent 'noleak'"
 
 complete -o nospace -C runepkg runepkg
+complete -o nospace -C runas runas
 
 # end of file...

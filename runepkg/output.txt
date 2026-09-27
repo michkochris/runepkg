@@ -1,53 +1,80 @@
-[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
-Cleaning up build artifacts and unearthed runes...
-🧹 Clean complete. The forge is reset.
-Uninstalling runepkg and runas...
-Note: /etc/runepkg has been preserved.
-Uninstallation complete.
 [ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/
-[ zypherus /home/michko/runepkg/runepkg ]# make all && make install && make runas && make runas-install
-make[1]: Entering directory '/home/michko/runepkg/runepkg'
---------------------------------------------------------
-  Unearthing Runes: Compiling runepkg v1.0.4
---------------------------------------------------------
-  Build Mode: Extended (C++ FFI)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-  [forge] Compiling C Rune: runepkg_cli.c
-  [forge] Compiling C Rune: runepkg_handle.c
-  [forge] Compiling C Rune: runepkg_config.c
-  [forge] Compiling C Rune: runepkg_util.c
-  [forge] Compiling C Rune: runepkg_pack.c
-  [forge] Compiling C Rune: runepkg_hash.c
-  [forge] Compiling C Rune: runepkg_storage.c
-  [forge] Compiling C Rune: runepkg_defensive.c
-  [forge] Compiling C Rune: runepkg_completion.c
-  [forge] Compiling C Rune: runepkg_install.c
-  [forge] Compiling C Rune: runepkg_md5sums.c
-  [forge] Compiling C Rune: runepkg_crypto.c
-  [forge] Compiling C Rune: runepkg_host.c
-  [forge] Compiling C Rune: runepkg_state.c
-  [ritual] Compiling C++ Rune: runepkg_security.cpp
-  [ritual] Compiling C++ Rune: runepkg_utility.cpp
-  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
-  [ritual] Compiling C++ Rune: runepkg_network.cpp
-  [ritual] Compiling C++ Rune: runepkg_guard.cpp
-  [ritual] Compiling C++ Rune: runepkg_multiarch.cpp
-  [ritual] Compiling C++ Rune: runepkg_building.cpp
-  [link]  Linking target: runepkg
-⚡ runepkg build complete: runepkg
-make[1]: Leaving directory '/home/michko/runepkg/runepkg'
-Installing runepkg to /usr/bin...
-Installing configuration to /etc/runepkg...
-Installing target profiles...
-Installation complete. (Run 'make install-target-rules' to sync the rules tree)
-  [ritual] Compiling C++ Rune: runepkg_runas.cpp
-runepkg_runas.cpp: In function ‘void show_runas_version()’:
-runepkg_runas.cpp:143:17: error: ‘exists’ is not a member of ‘fs’
-  143 |         if (fs::exists(path)) {
-      |                 ^~~~~~
-runepkg_runas.cpp:162:24: error: ‘getpid’ was not declared in this scope; did you mean ‘getpt’?
-  162 |     srand(time(NULL) ^ getpid());
-      |                        ^~~~~~
-      |                        getpt
-make: *** [Makefile:207: runepkg_runas.o] Error 1
-[ zypherus /home/michko/runepkg/runepkg ]#
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 14.6s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113302 source rune stanzas in 557ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (26778 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg install file nano build-essential
+[runepkg] Planning installation for 3 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc libmagic1t64 file
+  libtinfo6 libncursesw6 nano libc-dev-bin linux-libc-dev libc6-dev libgmp10 libisl23 libmpfr6 libmpc3 libzstd1
+  cpp-16-x86-64-linux-gnu cpp-16 cpp-x86-64-linux-gnu cpp libstdc++6 libcc1-0 binutils-common libsframe3 libbinutils
+  libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu libgomp1 libitm1 libatomic1 libasan8 liblsan0 libtsan2
+  libubsan1 libhwasan0 libquadmath0 libgcc-16-dev gcc-16-x86-64-linux-gnu libgprofng0 binutils gcc-16
+  gcc-x86-64-linux-gnu gcc libstdc++-16-dev g++-16-x86-64-linux-gnu g++-16 g++-x86-64-linux-gnu g++ make libcrypt1
+  perl-base perl-modules-5.42 libdb5.3t64 libgdbm6t64 libgdbm-compat4t64 libperl5.42 perl libmd0 libpcre2-8-0
+  libselinux1 libacl1 tar dpkg libdpkg-perl bzip2 xz-utils patch dpkg-dev build-essential
+
+76 packages (282.4 MB) will be installed. Continue? [y/N] y
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncursesw6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nano                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpc3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libisl23                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpfr6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcc1-0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgomp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libitm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatomic1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libquadmath0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libubsan1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhwasan0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtsan2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libasan8                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblsan0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-16-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒ··]  90.1%

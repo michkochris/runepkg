@@ -241,7 +241,13 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], "source") == 0 && argc >= 3) {
-        return runepkg_repo_source_download(argv[2]);
+        if (argc == 3) {
+            return runepkg_repo_source_download(argv[2]);
+        } else {
+            std::vector<const char*> pkgs;
+            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            return runepkg_repo_source_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
+        }
     }
 
     if ((strcmp(argv[1], "prepare") == 0 || strcmp(argv[1], "unpack") == 0) && argc >= 3) {
@@ -249,11 +255,23 @@ int main(int argc, char **argv) {
     }
 
     if (strcmp(argv[1], "source-depends") == 0 && argc >= 3) {
-        return runepkg_repo_source_depends_download(argv[2]);
+        if (argc == 3) {
+            return runepkg_repo_source_depends_download(argv[2]);
+        } else {
+            std::vector<const char*> pkgs;
+            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            return runepkg_repo_source_depends_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
+        }
     }
 
     if (strcmp(argv[1], "source-build-depends") == 0 && argc >= 3) {
-        return runepkg_repo_source_build_depends_download(argv[2]);
+        if (argc == 3) {
+            return runepkg_repo_source_build_depends_download(argv[2]);
+        } else {
+            std::vector<const char*> pkgs;
+            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            return runepkg_repo_source_build_depends_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
+        }
     }
 
     if ((strcmp(argv[1], "depends") == 0 || strcmp(argv[1], "resolve-tree") == 0) && argc >= 3) {

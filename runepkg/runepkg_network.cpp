@@ -10,6 +10,7 @@
 #include "runepkg_security.hpp"
 #include "runepkg_utility.hpp"
 #include "runepkg_guard.hpp"
+#include "runepkg_building.hpp"
 #include "runepkg_config.h"
 #include <iostream>
 #include <vector>
@@ -36,6 +37,9 @@
 #include <condition_variable>
 #include <functional>
 #include <type_traits>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 extern "C" {
     #include "runepkg_util.h"
@@ -197,12 +201,20 @@ size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
     return fwrite(ptr, size, nmemb, stream);
 }
 
+struct ProgressContext {
+    std::string pkg_name;
+    curl_off_t initial_offset = 0;
+};
+
 int curl_progress_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
-    std::string *name = (std::string*)clientp;
-    if (dltotal > 0) {
-        update_progress(*name, (double)dlnow / dltotal);
+    ProgressContext *ctx = (ProgressContext*)clientp;
+    if (!ctx) return 0;
+    curl_off_t total = ctx->initial_offset + dltotal;
+    curl_off_t current = ctx->initial_offset + dlnow;
+    if (total > 0) {
+        update_progress(ctx->pkg_name, (double)current / total);
     } else if (ultotal > 0) {
-        update_progress(*name + " [UP]", (double)ulnow / ultotal);
+        update_progress(ctx->pkg_name + " [UP]", (double)ulnow / ultotal);
     }
     return 0;
 }
@@ -242,27 +254,56 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
 
     update_progress(pkg_name, 0.0);
 
-    const int MAX_RETRIES = 3;
+    const int MAX_RETRIES = 5;
     for (int attempt = 1; attempt <= MAX_RETRIES; ++attempt) {
         CURL *curl = curl_easy_init();
         if (!curl) return false;
 
-        FILE *fp = fopen(dest_path.c_str(), "wb");
+        curl_off_t existing_size = 0;
+        struct stat st;
+        if (!force_refresh && stat(dest_path.c_str(), &st) == 0 && st.st_size > 0) {
+            if (expected_size > 0 && (size_t)st.st_size == expected_size) {
+                curl_easy_cleanup(curl);
+                update_progress(pkg_name, 1.0);
+                return true;
+            }
+            if (expected_size == 0 || (size_t)st.st_size < expected_size) {
+                existing_size = (curl_off_t)st.st_size;
+            } else {
+                unlink(dest_path.c_str());
+            }
+        } else if (force_refresh) {
+            unlink(dest_path.c_str());
+        }
+
+        FILE *fp = fopen(dest_path.c_str(), existing_size > 0 ? "ab" : "wb");
         if (!fp) {
             curl_easy_cleanup(curl);
             return false;
         }
 
+        ProgressContext prog_ctx{pkg_name, existing_size};
+
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
         curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);               // Max overall transfer duration
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 15L);          // Max connection establishment time (15s)
+        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_LIMIT, 1000L);       // Minimum speed requirement: 1 KB/s
+        curl_easy_setopt(curl, CURLOPT_LOW_SPEED_TIME, 15L);         // Abort if stalled < 1 KB/s for 15s
+        curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);           // Enable TCP Keep-Alive
+        curl_easy_setopt(curl, CURLOPT_TCP_KEEPIDLE, 15L);           // Send keepalive probes after 15s idle
+        curl_easy_setopt(curl, CURLOPT_TCP_KEEPINTVL, 5L);           // Send keepalive probes every 5s
         curl_easy_setopt(curl, CURLOPT_USERAGENT, "runepkg/1.0");
         curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_progress_cb);
-        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &pkg_name);
+        curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &prog_ctx);
         curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
         curl_easy_setopt(curl, CURLOPT_FAILONERROR, 1L);
+
+        if (existing_size > 0) {
+            curl_easy_setopt(curl, CURLOPT_RESUME_FROM_LARGE, existing_size);
+        }
 
         CURLcode res = curl_easy_perform(curl);
         if (res == CURLE_OK) {
@@ -274,11 +315,10 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
 
         if (res == CURLE_OK) {
             if (expected_size > 0) {
-                struct stat st;
                 if (stat(dest_path.c_str(), &st) == 0 && (size_t)st.st_size != expected_size) {
                     if (attempt < MAX_RETRIES) {
                         unlink(dest_path.c_str());
-                        usleep(500000 * attempt);
+                        usleep(1000000 * attempt);
                         continue;
                     }
                     unlink(dest_path.c_str());
@@ -289,7 +329,7 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
                 if (!runepkg::security::verify_sha256_checksum(dest_path, expected_sha256)) {
                     unlink(dest_path.c_str());
                     if (attempt < MAX_RETRIES) {
-                        usleep(500000 * attempt);
+                        usleep(1000000 * attempt);
                         continue;
                     }
                     return false;
@@ -300,8 +340,10 @@ bool download_file(const std::string& url, const std::string& dest_path, size_t 
         }
 
         if (attempt < MAX_RETRIES) {
-            unlink(dest_path.c_str());
-            usleep(500000 * attempt);
+            if (res == CURLE_HTTP_RETURNED_ERROR || res == CURLE_RANGE_ERROR) {
+                unlink(dest_path.c_str());
+            }
+            usleep(1000000 * attempt);
             continue;
         }
     }
@@ -1862,13 +1904,31 @@ extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int
 
     ParallelExecutor pool(8);
     for (const auto& meta : all_meta) {
+        /* Purge existing polluted unpacked source tree workspace if present */
+        if (g_build_dir && !meta.name.empty()) {
+            std::error_code ec;
+            if (fs::exists(g_build_dir, ec)) {
+                for (const auto& entry : fs::directory_iterator(g_build_dir, ec)) {
+                    if (entry.is_directory(ec)) {
+                        std::string dname = entry.path().filename().string();
+                        std::string prefix = meta.name + "-";
+                        if (dname == meta.name || dname.rfind(prefix, 0) == 0) {
+                            std::cout << "  -> \033[1;33m[clean]\033[0m Purging polluted source workspace: " << dname << std::endl;
+                            fs::remove_all(entry.path(), ec);
+                        }
+                    }
+                }
+            }
+        }
+
         for (size_t idx = 0; idx < meta.files.size(); idx++) {
             std::string url = meta.base_url + "/" + meta.files[idx].filename;
             std::string dest = std::string(g_build_dir) + "/" + meta.files[idx].filename;
             size_t size = meta.files[idx].size;
             std::string filename = meta.files[idx].filename;
             futures.push_back(pool.enqueue([url, dest, size, filename]() {
-                return download_file(url, dest, size, filename);
+                /* Pass force_refresh = true to overwrite existing source files */
+                return download_file(url, dest, size, filename, true);
             }));
         }
     }
@@ -1889,7 +1949,9 @@ extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int
                 }
             }
             if (!dsc_path.empty()) {
-                printf("\033[1;34m[notice]\033[0m Source unpacking is currently disabled for stability.\n");
+                if (runepkg_building_unpack_only(meta.name.c_str()) != 0) {
+                    unpack_success = false;
+                }
             }
         }
         runepkg_storage_build_autocomplete_index();

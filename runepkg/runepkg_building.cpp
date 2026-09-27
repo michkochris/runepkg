@@ -73,6 +73,55 @@ public:
     }
 };
 
+static bool extract_source_archives(const std::string& build_dir, const std::string& pkg_str) {
+    fs::path orig_tarball;
+    fs::path debian_tarball;
+
+    for (const auto& entry : fs::directory_iterator(build_dir)) {
+        if (!entry.is_regular_file()) continue;
+        std::string fname = entry.path().filename().string();
+        if (fname.rfind(pkg_str, 0) == 0 || fname.find(pkg_str) != std::string::npos) {
+            std::string ext = entry.path().extension().string();
+            if (ext == ".asc" || ext == ".sig" || ext == ".dsc") continue;
+
+            if (fname.find(".orig.tar.") != std::string::npos || (fname.find(".tar.") != std::string::npos && fname.find(".debian.") == std::string::npos && fname.find(".diff.") == std::string::npos)) {
+                orig_tarball = entry.path();
+            } else if (fname.find(".debian.tar.") != std::string::npos || fname.find(".diff.") != std::string::npos) {
+                debian_tarball = entry.path();
+            }
+        }
+    }
+
+    if (orig_tarball.empty()) return false;
+
+    /* Extract upstream orig tarball into build_dir using native tar */
+    std::string cmd1 = "tar -xf " + orig_tarball.string() + " -C " + build_dir + " > /dev/null 2>&1";
+    if (system(cmd1.c_str()) != 0) return false;
+
+    /* Find the extracted source directory */
+    fs::path extracted_dir;
+    for (const auto& entry : fs::directory_iterator(build_dir)) {
+        if (entry.is_directory()) {
+            std::string dname = entry.path().filename().string();
+            if (dname == pkg_str || dname.rfind(pkg_str + "-", 0) == 0 || dname.rfind(pkg_str + "_", 0) == 0) {
+                extracted_dir = entry.path();
+                break;
+            }
+        }
+    }
+
+    if (extracted_dir.empty()) return false;
+
+    /* Extract debian overlay tarball into source directory if present */
+    if (!debian_tarball.empty()) {
+        std::string cmd2 = "tar -xf " + debian_tarball.string() + " -C " + extracted_dir.string() + " > /dev/null 2>&1";
+        int res2 = system(cmd2.c_str());
+        (void)res2;
+    }
+
+    return true;
+}
+
 class StandardDebianSourceBuilder {
 public:
     StandardDebianSourceBuilder(const std::string& target_or_dsc) : target_path_(target_or_dsc) {}
@@ -103,14 +152,7 @@ public:
         /* Auto-extract if source directory is not yet unpacked */
         if (source_tree_root.empty()) {
             std::cout << "  -> Unpacking source runes in " << build_dir << "..." << std::endl;
-            for (const auto& entry : fs::directory_iterator(build_dir)) {
-                if (entry.path().extension() == ".dsc") {
-                    std::string cmd = "cd " + build_dir + " && dpkg-source -x " + entry.path().filename().string() + " > /dev/null 2>&1";
-                    if (system(cmd.c_str()) == 0) {
-                        break;
-                    }
-                }
-            }
+            extract_source_archives(build_dir, target_path_);
             /* Re-check source tree after extraction */
             for (const auto& entry : fs::directory_iterator(build_dir)) {
                 if (entry.is_directory()) {
@@ -338,6 +380,21 @@ private:
     }
 };
 
+extern "C" int runepkg_building_unpack_only(const char *target_or_dsc) {
+    if (!target_or_dsc) return -1;
+    std::string build_dir = g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir";
+    fs::create_directories(build_dir);
+
+    std::string pkg_str = target_or_dsc;
+    bool extracted = extract_source_archives(build_dir, pkg_str);
+    if (extracted) {
+        std::cout << "  -> \033[1;32m[unpack]\033[0m Raw source runes extracted in " << build_dir << std::endl;
+        return 0;
+    }
+    std::cerr << "\033[1;31m[error]\033[0m Could not extract raw source runes for " << pkg_str << " in " << build_dir << std::endl;
+    return -1;
+}
+
 extern "C" int runepkg_building_unpack_and_patch(const char *target_or_dsc) {
     if (!target_or_dsc) return -1;
     std::string build_dir = g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir";
@@ -346,21 +403,12 @@ extern "C" int runepkg_building_unpack_and_patch(const char *target_or_dsc) {
     std::string pkg_str = target_or_dsc;
     std::cout << "\033[1;35m[runas]\033[0m Unpacking and applying Debian patches for " << pkg_str << "..." << std::endl;
 
-    bool extracted = false;
-    for (const auto& entry : fs::directory_iterator(build_dir)) {
-        if (entry.path().extension() == ".dsc" && entry.path().filename().string().rfind(pkg_str, 0) == 0) {
-            std::string cmd = "cd " + build_dir + " && dpkg-source -x " + entry.path().filename().string() + " > /dev/null 2>&1";
-            if (system(cmd.c_str()) == 0) {
-                extracted = true;
-                break;
-            }
-        }
-    }
+    bool extracted = extract_source_archives(build_dir, pkg_str);
 
     for (const auto& entry : fs::directory_iterator(build_dir)) {
         if (entry.is_directory()) {
             std::string dname = entry.path().filename().string();
-            if (dname.rfind(pkg_str, 0) == 0 && fs::exists(entry.path() / "debian")) {
+            if ((dname == pkg_str || dname.rfind(pkg_str + "-", 0) == 0 || dname.rfind(pkg_str + "_", 0) == 0) && fs::exists(entry.path() / "debian")) {
                 StandardDebianSourceBuilder builder(pkg_str);
                 builder.apply_debian_patches(entry.path());
                 builder.sanitize_autotools_timestamps(entry.path());
@@ -375,7 +423,7 @@ extern "C" int runepkg_building_unpack_and_patch(const char *target_or_dsc) {
         return 0;
     }
 
-    std::cerr << "\033[1;31m[error]\033[0m Could not locate .dsc rune for " << pkg_str << " in " << build_dir << std::endl;
+    std::cerr << "\033[1;31m[error]\033[0m Could not extract source runes for " << pkg_str << " in " << build_dir << std::endl;
     return -1;
 }
 
