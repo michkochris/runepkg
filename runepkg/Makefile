@@ -152,7 +152,7 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all runas runas-install FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all runas-install FORCE
 
 build: build-banner $(TARGET)
 
@@ -184,7 +184,7 @@ RUNAS_OBJS = runepkg_runas.o runepkg_multiarch.o runepkg_building.o runepkg_netw
 runas: $(RUNAS_OBJS) .config_with_cpp
 	$(E) "  $(PURPLE)[link-runas]$(RESET) Linking target: $@"
 	$(Q)$(CXX) $(RUNAS_OBJS) -o $@ $(LDFLAGS) $(LIBS)
-	$(E) "$(BOLD)$(PURPLE)🧙 runas build complete: $@$(RESET)"
+	$(E) "$(BOLD)$(PURPLE)⚡ runas build complete: $@$(RESET)"
 
 runas-install: runas
 	@echo "$(CYAN)Installing $(RUNAS_TARGET) to $(DESTDIR)$(PREFIX)/bin...$(RESET)"
@@ -239,7 +239,7 @@ install: $(TARGET)
           fi; \
        fi; \
     fi
-	@echo "$(GREEN)Installation complete. (Run 'make install-target-rules' to sync the rules tree)$(RESET)"
+	@echo "$(GREEN)🧙 runepkg installation complete!$(RESET)"
 
 install-target-rules:
 	@if [ -d target-rules ]; then \
