@@ -1937,29 +1937,14 @@ extern "C" int runepkg_repo_source_download_multiple(const char **pkg_names, int
     for (size_t idx = 0; idx < futures.size(); idx++) if (futures[idx].get()) downloaded++;
     curl_global_cleanup();
 
-    bool unpack_success = true;
     if (downloaded == (int)total_files) {
         std::cout << std::endl << "\033[1;32m[success]\033[0m Downloaded " << downloaded << " files to " << g_build_dir << std::endl;
-        for (const auto& meta : all_meta) {
-            std::string dsc_path;
-            for (const auto& sf : meta.files) {
-                if (sf.filename.size() > 4 && sf.filename.substr(sf.filename.size() - 4) == ".dsc") {
-                    dsc_path = std::string(g_build_dir) + "/" + sf.filename;
-                    break;
-                }
-            }
-            if (!dsc_path.empty()) {
-                if (runepkg_building_unpack_only(meta.name.c_str()) != 0) {
-                    unpack_success = false;
-                }
-            }
-        }
         runepkg_storage_build_autocomplete_index();
+        return 0;
     } else {
         std::cout << std::endl << "\033[1;31m[error]\033[0m Failed to download source package files (" << downloaded << "/" << total_files << " ok)." << std::endl;
         return -1;
     }
-    return unpack_success ? 0 : -1;
 }
 
 extern "C" int runepkg_repo_source_download(const char *pkg_name) {
