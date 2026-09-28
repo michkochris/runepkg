@@ -47,6 +47,7 @@ extern "C" int runepkg_runas_interleaved_autocomplete(const char *query, char su
     return count;
 }
 
+#ifndef RUNEPKG_BUILD
 /* Ensure missing host-level binary build tools are installed before compilation */
 static int ensure_host_build_dependencies(const char *pkg_name) {
     if (!pkg_name) return -1;
@@ -221,7 +222,6 @@ int main(int argc, char **argv) {
 
     DebianMultiArchConfig ma_config = DebianMultiArchEngine::configure_multiarch(target_arch);
     DebianMultiArchEngine::export_multiarch_env(ma_config);
-    DebianMultiArchEngine::print_multiarch_info(ma_config);
 
     if (strcmp(argv[1], "sync") == 0) {
         return runepkg_host_sync();
@@ -282,18 +282,21 @@ int main(int argc, char **argv) {
         if (argc >= 4 && (strcmp(argv[3], "help") == 0 || strcmp(argv[3], "--help") == 0 || strcmp(argv[3], "-h") == 0)) {
             return runepkg_building_list_subpackages(argv[2]);
         }
+        DebianMultiArchEngine::print_multiarch_info(ma_config);
         ensure_host_build_dependencies(argv[2]);
         const char *subpkg = (argc >= 4) ? argv[3] : nullptr;
         return runepkg_building_debian_build(argv[2], false, subpkg);
     }
 
     if (strcmp(argv[1], "buildpkg-split") == 0 && argc >= 3) {
+        DebianMultiArchEngine::print_multiarch_info(ma_config);
         ensure_host_build_dependencies(argv[2]);
         const char *subpkg = (argc >= 4) ? argv[3] : nullptr;
         return runepkg_building_debian_build(argv[2], true, subpkg);
     }
 
     if (strcmp(argv[1], "source-build") == 0 && argc >= 3) {
+        DebianMultiArchEngine::print_multiarch_info(ma_config);
         ensure_host_build_dependencies(argv[2]);
         return runepkg_building_source_build_pipeline(argv[2], target_arch.c_str());
     }
@@ -301,3 +304,4 @@ int main(int argc, char **argv) {
     std::cerr << "\033[1;31m[runas]\033[0m Unknown command: " << argv[1] << std::endl;
     return -1;
 }
+#endif
