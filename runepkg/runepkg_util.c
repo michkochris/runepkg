@@ -164,42 +164,48 @@ char *runepkg_util_concat_path(const char *dir, const char *file) {
     return runepkg_secure_path_concat(dir, file);
 }
 
-/* --- Version Comparison --- */
+/* --- Version Comparison (C89) --- */
 
 /* Debian character weights: ~ < (nothing) < letters < non-letters */
 static int vercmp_weight(int c) {
+    unsigned char uc = (unsigned char)c;
     if (c == '~') return -1;
     if (c == 0) return 0;
-    if (!isdigit(c) && !isalpha(c)) return c + 256;
-    return c;
+    if (!isdigit(uc) && !isalpha(uc)) return (int)uc + 256;
+    return (int)uc;
 }
 
 /* Helper: Compare two version parts using Debian collation rules */
 static int compare_collation(const char *a, const char *b) {
-    const char *pa = a, *pb = b;
+    const char *pa = a ? a : "";
+    const char *pb = b ? b : "";
+
     while (*pa || *pb) {
         /* Lexical part (up to first digit) */
         while ((*pa && !isdigit((unsigned char)*pa)) || (*pb && !isdigit((unsigned char)*pb))) {
-            int wa = vercmp_weight((*pa && !isdigit((unsigned char)*pa)) ? *pa : 0);
-            int wb = vercmp_weight((*pb && !isdigit((unsigned char)*pb)) ? *pb : 0);
+            int wa = vercmp_weight((*pa && !isdigit((unsigned char)*pa)) ? (unsigned char)*pa : 0);
+            int wb = vercmp_weight((*pb && !isdigit((unsigned char)*pb)) ? (unsigned char)*pb : 0);
             if (wa != wb) return (wa < wb) ? -1 : 1;
             if (*pa && !isdigit((unsigned char)*pa)) pa++;
             if (*pb && !isdigit((unsigned char)*pb)) pb++;
         }
 
         /* Numerical part */
-        if (isdigit((unsigned char)*pa) || isdigit((unsigned char)*pb)) {
+        if ((*pa && isdigit((unsigned char)*pa)) || (*pb && isdigit((unsigned char)*pb))) {
             size_t len_a, len_b;
             const char *start_a, *start_b;
+
             while (*pa == '0') pa++;
             while (*pb == '0') pb++;
-            start_a = pa;
-            while (isdigit((unsigned char)*pa)) pa++;
-            start_b = pb;
-            while (isdigit((unsigned char)*pb)) pb++;
 
-            len_a = pa - start_a;
-            len_b = pb - start_b;
+            start_a = pa;
+            while (*pa && isdigit((unsigned char)*pa)) pa++;
+
+            start_b = pb;
+            while (*pb && isdigit((unsigned char)*pb)) pb++;
+
+            len_a = (size_t)(pa - start_a);
+            len_b = (size_t)(pb - start_b);
             if (len_a < len_b) return -1;
             if (len_a > len_b) return 1;
             {
@@ -217,13 +223,22 @@ static void parse_version(const char *version, long *epoch, char *upstream, char
     char *dash;
 
     *epoch = 0;
-    runepkg_secure_strcpy(upstream, 256, version);
+    runepkg_secure_strcpy(upstream, 256, version ? version : "");
     revision[0] = '\0';
 
     colon = strchr(upstream, ':');
     if (colon) {
+        char *endptr = NULL;
+        long parsed_epoch;
+
         *colon = '\0';
-        *epoch = strtol(upstream, NULL, 10);
+        errno = 0;
+        if (upstream[0] != '\0') {
+            parsed_epoch = strtol(upstream, &endptr, 10);
+            if (errno == 0 && endptr != upstream && *endptr == '\0' && parsed_epoch >= 0) {
+                *epoch = parsed_epoch;
+            }
+        }
         memmove(upstream, colon + 1, strlen(colon + 1) + 1);
     }
 
@@ -254,7 +269,7 @@ int runepkg_util_compare_versions(const char *v1, const char *v2) {
     return compare_collation(rev1, rev2);
 }
 
-/* --- Dependency Parsing --- */
+/* --- Dependency Parsing (C89) --- */
 
 int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint) {
     char *cons;
@@ -268,7 +283,6 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
 
     if (!installed_version || !constraint) return -1;
 
-    /* Make a trimmed copy of the constraint to simplify parsing and logging */
     cons = strdup(constraint);
     if (!cons) return -1;
     cons_trim = runepkg_util_trim_whitespace(cons);
@@ -284,7 +298,6 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
         cons_trim = runepkg_util_trim_whitespace(cons_trim);
     }
 
-    /* Parse operator and version from the trimmed copy */
     op_len = strcspn(cons_trim, " 0123456789");
     if (op_len == 0 || op_len > 2) {
         free(cons);
@@ -295,7 +308,6 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
     memcpy(op, cons_trim, op_len);
     op[op_len] = '\0';
 
-    memset(ver, 0, sizeof(ver));
     if (strlen(cons_trim + op_len) >= sizeof(ver)) {
         free(cons);
         return -1;
@@ -307,14 +319,11 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
 
     if (strcmp(op, ">=") == 0) result = (cmp >= 0);
     else if (strcmp(op, "<=") == 0) result = (cmp <= 0);
-    else if (strcmp(op, "==") == 0) result = (cmp == 0);
-    else if (strcmp(op, "=") == 0) result = (cmp == 0);  /* Debian uses = for exact match */
+    else if (strcmp(op, "==") == 0 || strcmp(op, "=") == 0) result = (cmp == 0);
     else if (strcmp(op, "!=") == 0) result = (cmp != 0);
-    else if (strcmp(op, ">") == 0) result = (cmp > 0);
-    else if (strcmp(op, "<") == 0) result = (cmp < 0);
-    else if (strcmp(op, "<<") == 0) result = (cmp < 0);  /* dpkg uses << for strict less */
-    else if (strcmp(op, ">>") == 0) result = (cmp > 0);  /* dpkg uses >> for strict greater */
-    else result = -1;  /* Unknown op */
+    else if (strcmp(op, ">") == 0 || strcmp(op, ">>") == 0) result = (cmp > 0);
+    else if (strcmp(op, "<") == 0 || strcmp(op, "<<") == 0) result = (cmp < 0);
+    else result = -1;
 
     runepkg_util_log_debug("check_version_constraint(installed='%s', constraint='%s') -> op='%s' ver='%s' cmp=%d result=%d\n",
         installed_version, cons_trim, op, ver_trim, cmp, result);
@@ -337,7 +346,7 @@ Dependency **parse_depends_with_constraints(const char *depends) {
         if (*p == ',') count++;
     }
 
-    result = calloc(count + 1, sizeof(Dependency*));
+    result = calloc((size_t)count + 1, sizeof(Dependency *));
     if (!result) return NULL;
 
     copy = strdup(depends);
@@ -391,10 +400,10 @@ Dependency **parse_depends_with_constraints(const char *depends) {
 
                 inner = paren + 1;
                 while (*inner && (*inner == ' ' || *inner == '(')) inner++;
-                end = inner + strlen(inner) - 1;
-                while (end > inner && (*end == ' ' || *end == ')')) {
-                    *end = '\0';
+                end = inner + strlen(inner);
+                while (end > inner && (end[-1] == ' ' || end[-1] == ')')) {
                     end--;
+                    *end = '\0';
                 }
                 result[i]->constraint = strdup(inner);
             } else {
@@ -414,35 +423,97 @@ Dependency **parse_depends_with_constraints(const char *depends) {
     return result;
 }
 
+/* --- Path Containment Check (C89, normalizes '.' and '..') --- */
+
+static int normalize_path_segments(const char *input, char *out, size_t out_sz) {
+    char buf[PATH_MAX * 2];
+    char *segs[256];
+    int depth = 0;
+    char *tok;
+    size_t pos = 0;
+    int k;
+
+    if (!input || !out || out_sz == 0) return -1;
+    if (strlen(input) >= sizeof(buf)) return -1;
+
+    strcpy(buf, input);
+    tok = strtok(buf, "/");
+    while (tok) {
+        if (strcmp(tok, ".") == 0 || tok[0] == '\0') {
+            /* skip */
+        } else if (strcmp(tok, "..") == 0) {
+            if (depth > 0) {
+                depth--;
+            } else {
+                return -1; /* escaped above root/base */
+            }
+        } else {
+            if (depth >= 256) return -1;
+            segs[depth++] = tok;
+        }
+        tok = strtok(NULL, "/");
+    }
+
+    out[0] = '\0';
+    if (depth == 0) {
+        if (out_sz < 2) return -1;
+        out[0] = '/';
+        out[1] = '\0';
+        return 0;
+    }
+
+    for (k = 0; k < depth; k++) {
+        size_t slen = strlen(segs[k]);
+        if (pos + 1 + slen >= out_sz) return -1;
+        out[pos++] = '/';
+        memcpy(out + pos, segs[k], slen);
+        pos += slen;
+    }
+    out[pos] = '\0';
+    return 0;
+}
+
 int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
     char *real_dir;
-    size_t dir_len;
-    char cleaned_path[PATH_MAX * 2];
     char resolved_dir[PATH_MAX];
+    char raw_target[PATH_MAX * 2];
+    char norm_target[PATH_MAX * 2];
+    size_t dir_len;
 
     if (!path || !dir) return -1;
 
     runepkg_util_create_dir_recursive(dir, 0755);
     real_dir = realpath(dir, NULL);
     if (!real_dir) {
-        return 1;
+        return -1;
     }
-    strncpy(resolved_dir, real_dir, sizeof(resolved_dir) - 1);
-    resolved_dir[sizeof(resolved_dir) - 1] = '\0';
+    if (strlen(real_dir) >= sizeof(resolved_dir)) {
+        free(real_dir);
+        return -1;
+    }
+    strcpy(resolved_dir, real_dir);
     free(real_dir);
 
-    if (path[0] != '/') {
-        snprintf(cleaned_path, sizeof(cleaned_path), "%s/%s", resolved_dir, path);
+    if (path[0] == '/') {
+        if (strlen(path) >= sizeof(raw_target)) return -1;
+        strcpy(raw_target, path);
     } else {
-        strncpy(cleaned_path, path, sizeof(cleaned_path) - 1);
-        cleaned_path[sizeof(cleaned_path) - 1] = '\0';
+        int written = snprintf(raw_target, sizeof(raw_target), "%s/%s", resolved_dir, path);
+        if (written < 0 || (size_t)written >= sizeof(raw_target)) return -1;
+    }
+
+    if (normalize_path_segments(raw_target, norm_target, sizeof(norm_target)) != 0) {
+        return 0;
     }
 
     dir_len = strlen(resolved_dir);
-    if (strncmp(cleaned_path, resolved_dir, dir_len) != 0) {
+    if (strcmp(resolved_dir, "/") == 0) {
+        return 1;
+    }
+    if (strncmp(norm_target, resolved_dir, dir_len) != 0) {
         return 0;
     }
-    if (resolved_dir[dir_len - 1] != '/' && cleaned_path[dir_len] != '\0' && cleaned_path[dir_len] != '/') {
+    if (norm_target[dir_len] != '\0' && norm_target[dir_len] != '/') {
         return 0;
     }
 
