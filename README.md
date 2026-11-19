@@ -337,5 +337,5 @@ Developed from years of experience with Custom Cross Linux From Scratch (CLFS), 
 
 ---
 
-### In Memoriam & Dedication: Ian Murdock (1973–2015)
+### 🪦 In Memoriam & Dedication: Ian Murdock (1973–2015)
 *Founder of the Debian Project. Without his vision, leadership, and the enduring standards he established, the Debian ecosystem—and tools like **runepkg** built upon it—would not exist. Rest in peace, Ian.*
