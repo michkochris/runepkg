@@ -19,6 +19,13 @@
 
 ---
 
+## 🧙 Contributions & The Wizard's Badge
+
+**runepkg** is built on the shoulders of giants and the dedication of passionate open-source engineers. Contributions to **runepkg** are governed by a tradition of profound respect and recognition:
+
+- **🧙 The Wizard's Badge of Honor:** Any worthy developer, maintenance person, or key contributor who leaves their mark on **runepkg** has their email proudly listed on the wizard emoji (`🧙`) line. The wizard emoji is a badge of honor that you earn—a precious, invaluable stamp of approval recognizing true craftsmanship and dedication to the project.
+- **🪦 In Memoriam & Dedication:** Any worthy developer, maintainer, or contributor who passes away shall be forever remembered and included in our In Memoriam & Dedication section.
+
 > [!NOTE]
 > **Production Stability & Vision:** **runepkg** is declared **Stable** and battle-tested across Linux distributions for deploying standard `.deb` packages to root or alternate install locations. Ongoing refinements focus on documenting retro-style finite state machine (FSM) transaction logs (tracking exactly what packages were installed at what time). Meanwhile, **runas** needs more attention from me when real life permits: the vision is to eventually extend it via `runas source-build` so it could make Debian feel like a source-based Linux distribution (similar to Gentoo), and perhaps explore a raw-dog Debian JIT matrix engine for embedded cross-compilation. Building that out properly takes immense time and a Custom Linux From Scratch (CLFS) based environment—which I wish I had endless time for, but real life gets in the way!
 
@@ -333,7 +340,7 @@ Developed from years of experience with Custom Cross Linux From Scratch (CLFS), 
   <img src="./runepkg/runepkg_logo.svg" width="300" alt="runepkg Logo">
 </p>
 
-[michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
+🧙 [michkochris@gmail.com](mailto:michkochris@gmail.com) | [runepkg@gmail.com](mailto:runepkg@gmail.com)
 
 ---
 

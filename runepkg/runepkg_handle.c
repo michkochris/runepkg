@@ -1396,7 +1396,11 @@ void handle_version(void) {
     printf("  \033[1;30m[#####]\033[0m  GPL-V3\n\n");
     printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
     printf("Copyright (c) 2026 runepkg (Runar Linux) All rights reserved.\n");
-    printf("Contact: [michkochris@gmail.com] | [runepkg@gmail.com]\n");
+    printf("🧙 [michkochris@gmail.com] | [runepkg@gmail.com]\n\n");
+    printf("🪦 In Memoriam & Dedication: Ian Murdock (1973–2015)\n");
+    printf("   Founder of the Debian Project. Without his vision, leadership, and the\n");
+    printf("   enduring standards he established, the Debian ecosystem—and tools like\n");
+    printf("   runepkg built upon it—would not exist. Rest in peace, Ian.\n");
 }
 
 void handle_verify_package(const char *package_name) {
