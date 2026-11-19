@@ -11,19 +11,21 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** was never conceived to simply compete with `dpkg`, `apt`, or `busybox dpkg` tools, it was engineered from the very foundatiion to surpass them in every aspect on a higher level. Originally envisioned as a high-grade computer science project engineered to meet the high software requirements standards of NASA or similar, **runepkg** is built specifically for the **Debian ecosystem** to deliver bare-metal .deb's with lightning fast binary speed, zero bloat.
+**runepkg** was never conceived to simply compete with `dpkg`, `apt`, or `busybox dpkg`; it was engineered from the very foundation to surpass them across every dimension. Originally envisioned as an uncompromising, high-grade computer science project built to meet the rigorous software reliability standards of NASA or similar mission-critical organizations, **runepkg** is engineered specifically for the **Debian ecosystem** to deliver bare-metal `.deb` packages with lightning-fast binary speed and zero bloat.
 
-**runepkg** is a high-performance hybrid C89/C++ package manager engineered specifically for the **Debian ecosystem.** Treating the entire Debian universe as a universal supply chain, runepkg enables developers to unearth and deploy .deb software from any Debian repository or historical archive, .ie `runes` or `.deb's` with extreme speed and with scientific detail. Designed around a dual-tier architecture, The full extended C++ version of **runepkg** makes installing, preparing, building, and staging packages either on a host or intentionally for a targeted embedded `Debian` system a possibility. On your main computer you use the full extended runepkg and runas companion executable to stage and deploy an embeedded debian system which will be managed by using the low-level C89 `runepkg` for core functions similar to `dpkg` or `busybox dpkg`, minimal footprint, tiny in size, c89 compliant, `runepkg` for functionality similar to `busybox dpkg`. The **Extended C++ Suite** acts as the power house for lightning fast repository downloads and dependency resolution pruning of typical debian dependency hell, massive tree's of unwanted or undesired dependencies. While on the destination device, the **Minimal C89 Core** operates as an ultra-compact package manager—similar in functionality as to `dpkg` or `busybox dpkg`—written in pure ISO C89/C90 for zero-dependency, cross compiled static `musl` `libc`.
+**runepkg** is a high-performance hybrid C89/C++ package manager engineered for the **Debian ecosystem**. Treating the entire Debian universe as a universal supply chain, **runepkg** enables developers to unearth and deploy software—affectionately referred to as `runes` or `.deb`s—from any Debian repository or historical archive with extreme speed and precision. Built around a robust dual-tier workflow, you use the full **Extended C++ Suite** and companion `runas` on your host computer to stage, prepare, build, and deploy an embedded Debian system. Once deployed to the destination device, everything is managed by the ultra-compact **Minimal C89 Core**—a tiny **~417 KB to ~536 KB zero-dependency static binary** providing low-level core installation and extraction comparable to `dpkg` or `busybox dpkg`.
 
 **runas** is a companion executable for the extended C++ version of **runepkg**. Serving as a Debian source package builder—a Debian Source package Mana Fiend named after *Runas the Shamed* from *World of Warcraft*—**runas** builds and splits standard Debian-compatible source packages into fully compliant `.deb` binaries, adhering strictly to official Debian policy standards.
 
 ---
 
-> [!TIP]
-> **Production Stability:** **runepkg** is declared **Stable** and battle-tested across Linux distributions for what it does install or deploy standard debian .deb's to root or alternate install location of choice. Some finial improvements are needed for high standard of software like correct logging of FULL FSM finate state machine operations. And runas the debian source package builder needs and deserves some time from me, its just i got side tracked with real life problems.  
-> 
+> [!NOTE]
+> **Production Stability & Vision:** **runepkg** is declared **Stable** and battle-tested across Linux distributions for deploying standard `.deb` packages to root or alternate install locations. Ongoing refinements focus on documenting retro-style finite state machine (FSM) transaction logs (tracking exactly what packages were installed at what time). Meanwhile, **runas** needs more attention from me when real life permits: the vision is to eventually extend it via `runas source-build` so it could make Debian feel like a source-based Linux distribution (similar to Gentoo), and perhaps explore a raw-dog Debian JIT matrix engine for embedded cross-compilation. Building that out properly takes immense time and a Custom Linux From Scratch (CLFS) based environment—which I wish I had endless time for, but real life gets in the way!
+
+> [!NOTE]
 > **dpkg "Quantum Entanglement" (Native):** **runepkg** maintains native, real-time compatibility with **dpkg**. Installing or removing packages directly updates `/var/lib/dpkg/status` stanzas and generates `/var/lib/dpkg/info/*.list` files with full POSIX and Debian policy compliance, guaranteeing that `dpkg` system state remains 100% harmonized.
->
+
+> [!NOTE]
 > **apt Interoperability (Conditional):** **runepkg** offers high conditional interoperability alongside **apt**. Because `apt` maintains its own isolated higher-level state cache, coexisting workflows are supported, though occasional conflict resolution (e.g., `apt --fix-broken install`) may be required depending on repository package diversions and cache states.
 
 ---
@@ -74,7 +76,7 @@ Starting from its lowest C89 core up to the C++ FFI forge, **runepkg** is engine
 - **Security-Hardened Perimeter:** Features `secure_malloc` zero-wiping, path traversal jail protection (`..`), POSIX `rlimit` extraction bounds (preventing zip bombs), sandboxed worker privilege dropping (`_apt`), and OpenPGP `InRelease` signature verification.
 - **Native Source-to-Binary Toolchain Forging (`runas`):** Seamlessly integrates the companion `runas` engine to ingest Debian source packages (`.dsc`, `.orig.tar`), inspect and auto-install host build toolchains, apply Debian patches, and compile 100% Debian-compatible `.deb` packages directly from source.
 
-> 🎩 **Dive Deeper into the Architecture:** For a complete technical deep-dive into the FNV-1a hash engine, binary storage models, 4-stage hermetic toolchain forging, and low-level C89/C++ FFI mechanics, read the full 🎩 [DESIGN.md](./docs/DESIGN.md) specification.
+> 🎩 **Dive Deeper into the Architecture:** For a complete technical deep-dive into the FNV-1a hash engine, binary storage models, 4-stage hermetic toolchain forging, and low-level C89/C++ FFI mechanics, read the full [DESIGN.md](./docs/DESIGN.md) specification.
 
 ---
 
@@ -186,7 +188,7 @@ make clean-all && make musl-all && sudo make install && sudo make install-runas
 make clean && make MUSL=1 LDFLAGS="-static" runepkg && sudo make install
 ```
 
-> 🏆 **The Holy Grail of Systems Programming:** `make musl-all` fetches an isolated `musl` toolchain and compiles `libcurl` and `zlib` from source, producing an indestructible static package manager binary that runs across any Linux distribution with zero shared library dependencies. For an in-depth guide on static musl deployment, see 🏆 [HOLY_GRAIL.md](./docs/HOLY_GRAIL.md).
+> 🏆 **The Holy Grail of Systems Programming:** `make musl-all` fetches an isolated `musl` toolchain and compiles `libcurl` and `zlib` from source, producing an indestructible static package manager binary that runs across any Linux distribution with zero shared library dependencies. For an in-depth guide on static musl deployment, see [HOLY_GRAIL.md](./docs/HOLY_GRAIL.md).
 
 ---
 
