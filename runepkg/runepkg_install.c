@@ -103,10 +103,10 @@ int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pk
     if (!script_path || !runepkg_util_file_exists(script_path)) return 0;
 
     /* Smart check: Only execute scripts if we are installing to the actual system root.
-     * In LFS/ISO creation scenarios (alternate root), we skip them to avoid breakage. */
+     * In LFS/ISO creation scenarios (alternate root), we skip them silently to maintain clean zero-warning output. */
     if (!g_system_install_root || strcmp(g_system_install_root, "/") != 0) {
         script_name = basename((char*)script_path);
-        printf("\033[1;33m[warning]\033[0m Non-root: skipping %s for %s\n",
+        runepkg_util_log_verbose("Skipping maintainer script %s for %s (alternate root)\n",
                script_name, pkg_info->package_name);
         return 0;
     }
@@ -353,9 +353,9 @@ static int perform_file_install(const char *src, const char *dst) {
             link_target[len] = '\0';
 
             /* Security: Block absolute symlinks unless g_system_install_root is "/"
-             * User preference: Change to a warning in non-root mode instead of a fatal error. */
+             * Alternate root mode: logged via verbose channel to keep installation output pristine and zero-warning. */
             if (link_target[0] == '/' && g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
-                printf("\033[1;33m[warning]\033[0m Non-root: absolute symlink: %s -> %s\n", dst, link_target);
+                runepkg_util_log_verbose("Alternate root absolute symlink: %s -> %s\n", dst, link_target);
             } else if (strstr(link_target, "..")) {
                 runepkg_util_log_verbose("Warning: Relative symlink contains '..': %s -> %s\n", dst, link_target);
             }
