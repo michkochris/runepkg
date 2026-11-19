@@ -1,0 +1,172 @@
+================================================================================
+          HOLY PALADIN PVP, GEMS, ENCHANTS & GEARING GUIDE (ILLUMINUX)
+================================================================================
+
+--------------------------------------------------------------------------------
+ 0. THE GOLDEN RULE FOR BEGINNERS
+--------------------------------------------------------------------------------
+ Only gem, enchant, and socket your PERMANENT Conquest or Crafted PvP gear!
+ Save your gold while wearing starter Honor gear—you will replace it quickly.
+
+--------------------------------------------------------------------------------
+ 1. STAT PRIORITY (PVP)
+--------------------------------------------------------------------------------
+ 1. Intellect    : Primary stat — increases all healing and damage output.
+ 2. Versatility  : Target 30%+ — boosts healing/damage AND reduces damage taken.
+ 3. Mastery      : Mastery: Lightbringer — increases healing based on proximity.
+ 4. Haste        : Faster cast times and shorter global cooldowns (GCD).
+ 5. Crit         : Lowest priority due to the PvP critical strike damage nerf.
+
+ Core Tip: Focus on Versatility until surviving enemy burst feels comfortable,
+ then pour remaining stats into Mastery for maximum healing throughput.
+
+--------------------------------------------------------------------------------
+ 2. PVP GEMS & SOCKET SYSTEM
+--------------------------------------------------------------------------------
+ Sockets do not drop naturally on PvP gear; you add them manually.
+
+ Adding Sockets:
+   - Buy Jeweler's Settings from the PvP Vendor using Honor, Bloody Tokens,
+     or Conquest.
+   - Socketable slots: Helm, Neck, Bracers, Belt, and Rings.
+   - Crafted Necks and Rings AUTOMATICALLY include sockets!
+
+ How to Insert Gems:
+   - Hold SHIFT + Right-Click gear in your character pane to open socket window.
+   - Drag gem from inventory into socket slot and click Apply.
+
+ Meta Gem (Limit: 1 UNIQUE per entire gear set):
+   * Cognitive Heliotrope  : Grants Precognition (Interrupt/CC immunity if enemy
+                             kicks you while you aren't casting).
+   * Enduring Heliotrope   : Passive damage reduction while stunned or CC'd.
+
+ Standard Gems (Fill ALL remaining sockets):
+   * Flawless Masterful Lapis    : +Mastery (For higher healing throughput)
+   * Flawless Versatile Amethyst : +Versatility (For extra survivability)
+
+ Socket Priority Order:
+   1. Socket #1 (Neck or Ring) -> Insert Meta Gem immediately.
+   2. Jewelry (Neck & both Rings) -> Up to 2 sockets per piece.
+   3. Armor Slots (Helm, Bracers, Belt) -> 1 socket per piece.
+
+--------------------------------------------------------------------------------
+ 3. BEST ENCHANTS (AUCTION HOUSE - BUY RANK 3 / GOLD STAR)
+--------------------------------------------------------------------------------
+ Gear Slot   | Recommended Enchant                     | Primary Effect
+ ------------+-----------------------------------------+------------------------
+ Weapon      | Enchant Weapon - Acuity of the Ren'dorei | +Intellect / Healing proc
+ Head        | Enchant Helm - Hex of Leeching           | Extra Self-Healing
+             | (Alt: Empowered Blessing of Speed)      | (+Movement Speed)
+ Shoulders   | Enchant Shoulders - Silvermoon's Mending| Extra Healing
+             | (Alt: Akil'zon's Swiftness)             | (+Movement Speed)
+ Chest       | Enchant Chest - Mark of the Magister    | +Intellect & Mana Pool
+ Legs        | Arcanoweave Spellthread                 | +Intellect & Stamina
+ Boots       | Enchant Boots - Farstrider's Hunt       | +Movement Speed
+             | (Alt: Shaladrassil's Roots)             | (+Survivability)
+ Rings (x2)  | Enchant Ring - Silvermoon's Tenacity    | +Versatility (Defense)
+             | (Alt: Enchant Ring - Zul'jin's Mastery) | (+Mastery / Healing)
+
+ * Note: Off-hand Shields do NOT take weapon enchants in Retail WoW.
+
+--------------------------------------------------------------------------------
+ 4. CRAFTED PVP GEAR & EMBELLISHMENTS
+--------------------------------------------------------------------------------
+ You can equip up to TWO Embellishments (special passive armor procs) at once.
+ Crafted PvP gear scales up to maximum Conquest item level in Arenas/BGs.
+
+ Top Embellishments:
+   - 2x Blessed Pango Charm  : Procs extra Versatility for you and allies.
+   - 2x Arcanoweave Lining   : Increases Intellect/Primary stat for team.
+
+ Recommended Slots to Craft (Thalassian Competitor's items):
+   - Neck, Rings, Cloak, or Boots.
+   - (Neck and Rings automatically include sockets!).
+   - Avoid crafting in Tier slots (Helm, Chest, Gloves, Legs).
+
+ How to Place a Crafting Order (Silvermoon City):
+   1. Step 1 (Mats)    : Go to Crafting Order NPC in Silvermoon, find item,
+                         click "Track Recipe", buy materials from AH.
+   2. Step 2 (Reagents): Buy 2x Missive of the Harmonious (Mastery + Vers)
+                         and your 2x Embellishments on AH.
+   3. Step 3 (Submit)  : Add Gladiator's Heraldry (from win quest or Conquest
+                         vendor), Missive, and Embellishment. Add a gold tip
+                         and submit a Public Order.
+
+--------------------------------------------------------------------------------
+ 5. 4-PIECE TIER SET & MATRIX CATALYST GUIDE
+--------------------------------------------------------------------------------
+ Get 4 pieces out of 5 available slots. Skip Shoulders!
+
+ Recommended Tier Slots (Buy Conquest pieces -> Convert at Catalyst):
+   - Helm   : Venomous Gladiator's Plate Helm       -> Warhelm of Consecrated Flame
+   - Chest  : Venomous Gladiator's Chestplate       -> Bulwark of Consecrated Flame
+   - Gloves : Venomous Gladiator's Plate Handguards -> Gauntlets of Consecrated Flame
+   - Legs   : Venomous Gladiator's Plate Tasses     -> Greaves of Consecrated Flame
+   - Shoulders: Keep non-tier with Mastery/Vers (e.g. Crafted Pauldrons).
+
+ How to Convert at Matrix Catalyst:
+   - Location: Silvermoon City (/way 40.6 64.6 or /way 70.0 83.3).
+   - Console: Right-click console, place Conquest piece, click Transform.
+   - Uses 1x Dawnlight Manaflux charge (keeps full PvP iLvl scaling).
+
+--------------------------------------------------------------------------------
+ 6. COMPLETE CONQUEST GEAR PURCHASING ROADMAP
+--------------------------------------------------------------------------------
+ Order of spending Conquest points:
+   1. Weapon & Shield:
+      * Venomous Gladiator's Cudgel (1H Mace) + Spikeshield.
+      * TIP: Earning 2,500 total Conquest in a season gives a free Weapon token!
+   2. PvP Trinket 2-Piece Bonus:
+      * Venomous Gladiator's Medallion (Stun Break) + Insignia of Alacrity.
+      * Equipping 2 PvP trinkets gives a huge hidden stat + Stamina bonus.
+   3. 4-Piece Tier Slots:
+      * Helm, Chest, Gloves, Legs -> Convert at Catalyst.
+   4. Remaining Off-Pieces:
+      * Wristguards (Bracers) and Girdle (Belt).
+   5. Crafted Slots:
+      * Neck, Rings, Cloak, Boots, Shoulders.
+
+--------------------------------------------------------------------------------
+ 7. HERO TALENTS & PVP TALENTS (LIGHTSMITH)
+--------------------------------------------------------------------------------
+ Hero Talent Tree: Lightsmith
+   - Synergizes with 4-piece Tier Set, triggers extra Infusion of Light procs,
+     and reduces Lay on Hands cooldown.
+   - Gameplay Loop: Keep Beacon active -> Generate 3 Holy Power with Holy Shock
+     -> Spend on Word of Glory -> Weave Infusion procs (Flash of Light /
+     Greater Judgment).
+
+ Recommended PvP Talents (Pick 3):
+   1. Divine Vision           : MANDATORY (+30yd Aura range, -60s Aura Mastery CD)
+   2. Blessing of Spellwarding: MANDATORY vs Casters (Spell immunity)
+   3. Searing Glare / Cleanse :
+      - Searing Glare vs Melee/Caster burst windows (causes misses).
+      - Cleanse the Weak vs Heavy magic/poison dispel teams (Aff Warlock/SPriest).
+
+--------------------------------------------------------------------------------
+ 8. FAST SOLO CONQUEST FARMING METHODS
+--------------------------------------------------------------------------------
+ 1. War Mode Supply Crates (Zero Gear Needed / Easiest):
+    - Turn on War Mode in Silvermoon.
+    - Premade Groups -> Custom -> Search "Crate".
+    - Join shard-hopping raid group. Each crate = 60 Conquest, 150 Honor,
+      50 Bloody Tokens.
+
+ 2. Solo Shuffle (Fastest Healer Queues):
+    - Instant queues for healers. 3/6 wins awards Conquest + bonus supply boxes.
+
+ 3. Daily First Wins & Weekly Quests:
+    - Grab weeklies from Zerella in Silvermoon.
+    - Win 1x Random BG, 1x Epic BG, and 1x Arena Skirmish daily for first win bonus.
+    - Win 1 non-training BG for free 9x Gladiator's Heraldries quest item.
+
+--------------------------------------------------------------------------------
+ 9. QUICK GEAR CHECKLIST BEFORE QUEUING
+--------------------------------------------------------------------------------
+ [ ] 2x PvP Trinkets Equipped (Activates massive hidden stat & Stamina bonus)
+ [ ] Every slot shows "Equip: Increases item level to XXX in Arenas/BGs"
+ [ ] Meta Gem inserted into first socket (Cognitive or Enduring Heliotrope)
+ [ ] Weapon & Armor enchanted with Rank 3 AH enchants
+ [ ] 4-Piece Tier Set active via Matrix Catalyst
+ [ ] 2x Embellished Crafted pieces equipped
+================================================================================

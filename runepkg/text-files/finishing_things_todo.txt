@@ -1,0 +1,17 @@
+
+im writing this file to tell ai android studio of what runepkg needs still, even though im not in a position to work on code today or anytime soon, i will be exploring a runepkg description facelift to more align with my original asperations.
+
+but runepkg still needs to draw the line a clear separation between linux and wsl, i think i reduced all malformations its just the line between wsl and real linux as i describe
+
+runepkg needs to update its retro style logging system reminds you of the original alien movie with the primitive computer screen output.
+there is already a logging  system and a stable FSM all that needs to be done is document what happens, so to say like who what pkg's were installed at what time.
+
+after that runepkg itself goes under testing and testing and testing to find and make it more stable
+
+runas on the other hand is the companion exe his purpose is to be the debian source package mana fiend like from the popular video game.
+any way i just dont  have time for that right now, he compiles and builds and packages standard debian source and builds .deb's even splits pkgs, with the potentiol to one day make debian like a source linux distribution, i even got a jit matrix engine  in place for raw dog debian source, cross compiling for embedded, this is an extension  to the already easy peezy standard debian source and packageing. this raw dog extension would be for some weird  other cross compiled embedded purpose but i have alot to do with runas and like i said i dont really have the time or  patience for that right now.
+
+this is statement of my last know progress checkpoint and functionality of runepkg and runas. 
+today i will be focased on the many many attempts to accuretly describe runepkg, what im trying to say is i never meant to compete with dpkg apt or busybox dpkg i meant to blow them out the water and create something on a computer science level that could possibly live up to the standards of NASA.
+
+this this is what ive been having a hard time explaining and the multiple descriptions of runepkg it still does not live up to it.
