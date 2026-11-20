@@ -10,19 +10,24 @@ Because **runepkg** is engineered exclusively and unconditionally for the **Debi
 
 By leveraging this certainty, **runepkg** becomes "psychic"—anticipating missing structural scaffolding, resolving virtual package loops, and projecting multi-arch target sysroots *before* extraction failures or dependency dead-ends occur.
 
-2. Dual-Root Configuration Architecture (The Foundation)
-------------------------------------------------------
-To make multi-arch staging rock-solid, `runepkg` introduces a second install root variable in `runepkgconfig`:
+2. Dual-Root Configuration Architecture & Explicit Design
+--------------------------------------------------------
+To make multi-arch staging rock-solid without hidden "under-the-hood" magic, `runepkg` adheres strictly to traditional Unix/Debian explicitness:
 - **`install_dir`**: The primary host / default staging root.
 - **`target_install_dir` (or `sysroot_dir`)**: The dedicated cross-arch embedded target sysroot.
-
-This completely separates host operations from target cross-staging, ensuring `runepkg_psychic` knows precisely where to anchor dynamic linkers and multi-arch library directories.
+- **`target_arch`**: Explicitly declared in `runepkgconfig` using a colon-delimited format:
+  ```ini
+  target_arch=<debian_arch>:<gnu_triplet>
+  # Example: target_arch=arm64:aarch64-linux-gnu
+  ```
+  - **Before the colon (`arm64`)**: Instructs the repository downloader and resolver which package index architecture to fetch (`binary-arm64`).
+  - **After the colon (`aarch64-linux-gnu`)**: Instructs the FHS prophecy engine which multi-arch tuple and dynamic linkers to project into `target_install_dir`.
 
 3. Hermetic Isolation & Dpkg/Apt Interoperability
 -------------------------------------------------
 A critical challenge in alternate root staging is avoiding host state contamination. By decoupling `target_install_dir` from the host:
 - Host/native alternate root operations (`install_dir`) can optionally participate in **dpkg Quantum Entanglement** (`dpkg_host=auto`) when architectures match.
-- Cross-architecture embedded target sysroots (`target_install_dir`) operate under **strict hermetic isolation**, bypassing host `dpkg`/`apt` entanglement entirely. This prevents cross-contamination of host package registries with foreign architecture stanzas (e.g., staging `arm64` on an `amd64` host).
+- Cross-architecture embedded target sysroots (`target_install_dir`) operate under **strict hermetic isolation**, bypassing host `dpkg`/`apt` entanglement entirely. This prevents cross-contamination of host package registries with foreign architecture stanzas.
 
 4. Debian Multi-Arch Staging & Cross-Architectural Facilitation Pipeline
 ---------------------------------------------------------------------
@@ -39,9 +44,9 @@ Below is the ASCII telemetry graph tracking the head (ingestion & prophecy) and 
            ▼
  [ ORACLE PROPHECY LAYER: runepkg_psychic ]
            │
-           ├─> Target Sysroot Routing (target_install_dir / sysroot_dir)
-           ├─> Predict Target Architecture (arm64, riscv64, etc.)
-           ├─> Project Multi-Arch FHS Tree (/lib/<arch>-linux-gnu, /usr/lib/...)
+           ├─> Target Sysroot Routing (target_install_dir)
+           ├─> Explicit Target Arch Parsing (target_arch=arm64:aarch64-linux-gnu)
+           ├─> Project Multi-Arch FHS Tree (/lib/aarch64-linux-gnu, /usr/lib/...)
            ├─> Anchor Dynamic Linkers & libc Runtime Symlinks
            ├─> Resolve Virtual Package Telepathy (default-mta, libc-dev)
            │
@@ -61,6 +66,6 @@ Below is the ASCII telemetry graph tracking the head (ingestion & prophecy) and 
 5. Architectural Benefits
 -------------------------
 - **Zero-Friction Cross-Staging**: Eliminates manual chroot scaffolding when preparing embedded target filesystems.
+- **Explicit & Transparent**: Zero hidden magic; developers declare exact package architectures and GNU triplets.
 - **Proactive Healing**: Automatically provisions missing runtime linkers and library directories during pre-flight checks.
-- **Deterministic Resolution**: Bypasses complex virtual package dead-ends using hardcoded Debian ecosystem clairvoyance.
 - **Flawless Isolation**: Prevents host dpkg/apt entanglement collisions during cross-architecture staging.
