@@ -4,32 +4,27 @@ IMPLEMENTATION PLAN: THE PSYCHIC DEBIAN SUBSYSTEM (runepkg_psychic)
 
 1. Overview
 -----------
-This implementation plan outlines the systematic rollout of the `runepkg_psychic_*` subsystem, transforming runepkg into an intelligent, deterministic Debian multi-arch staging and prophecy engine backed by a dual-root configuration architecture, explicit colon-delimited architecture parsing, and strict hermetic isolation for dpkg/apt safety.
+This implementation plan outlines the systematic rollout of the `runepkg_psychic_*` subsystem, transforming runepkg into an intelligent, deterministic Debian multi-arch staging and prophecy engine.
 
 2. Phased Rollout Roadmap
 -------------------------
 
-### Phase 1: Dual-Root & Explicit Architecture Configuration (`runepkgconfig`, `runepkg_config.c`/`.h`)
-- Add `target_install_dir` and `target_arch` to `runepkgconfig`.
-- Implement explicit parsing for colon-delimited `target_arch=<deb_arch>:<gnu_tuple>` (e.g. `target_arch=arm64:aarch64-linux-gnu`) to cleanly separate repository index architecture from compiler tuple.
-- Enforce automatic hermetic isolation for `target_install_dir` workflows to prevent host apt/dpkg registry pollution.
-
-### Phase 2: Subsystem Scaffolding (`runepkg_psychic.h` & `runepkg_psychic.c`)
+### Phase 1: Subsystem Scaffolding (`runepkg_psychic.h` & `runepkg_psychic.c`)
 - Create standard ISO C89 module interfaces for psychic prophecy and multi-arch pre-flight staging.
-- Implement target architecture fingerprinting and explicit normalization.
+- Implement target architecture fingerprinting (amd64, arm64, riscv64, armhf, i386).
 
-### Phase 3: Pre-Flight Scaffolding Prophecy (`runepkg_psychic_prophecy_check`)
-- Automatically project required Debian Multi-Arch directories inside `target_install_dir` using the parsed GNU tuple (`/lib/<gnu_tuple>`, `/usr/lib/<gnu_tuple>`).
+### Phase 2: Pre-Flight Scaffolding Prophecy (`runepkg_psychic_prophecy_check`)
+- Automatically project required Debian Multi-Arch directories inside alternate roots (`/lib/<arch>-linux-gnu`, `/usr/lib/<arch>-linux-gnu`).
 - Anchor essential dynamic linker symlinks (`ld-linux-*`) and runtime `libc` paths before package extraction.
 
-### Phase 4: Virtual Package Telepathy (`runepkg_psychic_resolve_virtual`)
+### Phase 3: Virtual Package Telepathy (`runepkg_psychic_resolve_virtual`)
 - Integrate hardcoded Debian virtual package resolution tables into the C++ resolver (`runepkg_resolver.cpp`).
 - Eliminate recursive dependency dead-ends for common virtual requirements (`default-mta`, `libc-dev`, `mail-transport-agent`).
 
-### Phase 5: Dual-Track State Harmonization & Retro FSM Telemetry
-- Synchronize native hierarchical binary metadata (`pkginfo.bin`) with target-isolated state.
-- Integrate retro FSM flight-recorder telemetry logging (`runepkg transactions`) with psychic prophecy events targeting `target_install_dir`.
+### Phase 4: Dual-Track State Harmonization
+- Synchronize native hierarchical binary metadata (`pkginfo.bin`) with host/target `/var/lib/dpkg/status` stanzas.
+- Integrate retro FSM flight-recorder telemetry logging (`runepkg transactions`) with psychic prophecy events.
 
-### Phase 6: Verification & Integration Testing
-- Build cross-arch staging test harnesses using `target_install_dir` and explicit `target_arch` specs.
-- Verify zero warnings, pristine alternate root deployment, and correct multi-arch linkage without host dpkg entanglement bleed.
+### Phase 5: Verification & Integration Testing
+- Build cross-arch staging test harnesses.
+- Verify zero warnings, pristine alternate root deployment, and correct multi-arch linkage.
