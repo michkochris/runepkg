@@ -38,9 +38,25 @@ extern "C" {
 // Architecture - dynamic lookup from host integration or active profile
 static const char* get_effective_arch() {
     extern char *g_target_arch;
+    static std::string cached_target_arch;
     if (g_target_arch && g_target_arch[0] != '\0') {
+        RunePkgTargetSpec spec;
+        if (runepkg_psychic_parse_target_arch(g_target_arch, &spec) == 0 && spec.deb_arch) {
+            cached_target_arch = runepkg_psychic_normalize_deb_arch(spec.deb_arch);
+            runepkg_psychic_free_target_spec(&spec);
+            return cached_target_arch.c_str();
+        }
         return runepkg_psychic_normalize_deb_arch(g_target_arch);
     }
+    if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {
+        return runepkg_psychic_normalize_deb_arch(g_active_profile->deb_host_arch);
+    }
+    const char* arch = runepkg_host_get_architecture();
+    if (arch && std::strcmp(arch, "unknown") != 0) return runepkg_psychic_normalize_deb_arch(arch);
+    return "amd64";
+}
+
+static const char* get_effective_host_arch() {
     if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {
         return runepkg_psychic_normalize_deb_arch(g_active_profile->deb_host_arch);
     }
@@ -68,6 +84,7 @@ struct RuneGraphEntry {
     std::string package;
     std::string version;
     std::string arch;
+    std::string multi_arch; // "same", "foreign", "allowed", "no", or empty
     std::string directory;  // for source
     std::string filename;   // for binary (relative to repo root)
     std::string source_pkg; // cross-reference to source name (for binary pkgs)
@@ -411,7 +428,6 @@ private:
         seen.insert(pkg);
 
         std::vector<std::string> deps;
-        /* For build tree, we focus on target build depends */
         if (pkg.rfind("src:", 0) == 0) {
             deps = it->second.target_build_depends;
         } else {
@@ -419,7 +435,6 @@ private:
             for (const auto& pd : it->second.pre_depends) deps.push_back(pd);
         }
 
-        /* Clean and resolve dependencies to their real names in graph */
         std::vector<std::string> resolved_deps;
         for (const auto& d : deps) {
             std::string cd = clean_package_key(d);
@@ -433,7 +448,6 @@ private:
         }
     }
 
-private:
     std::set<std::string> host_tools_set_;
     std::vector<std::string> bloat_prefixes_;
 
@@ -447,6 +461,25 @@ private:
         res.erase(0, res.find_first_not_of(" \t\r\n"));
         res.erase(res.find_last_not_of(" \t\r\n") + 1);
         return res;
+    }
+
+    static std::string extract_qualifier_string(const std::string& raw) {
+        std::string pkg_tok = raw;
+        size_t ver_pos = pkg_tok.find_first_of(" (<[=");
+        if (ver_pos != std::string::npos) pkg_tok = pkg_tok.substr(0, ver_pos);
+        pkg_tok.erase(0, pkg_tok.find_first_not_of(" \t\r\n"));
+        pkg_tok.erase(pkg_tok.find_last_not_of(" \t\r\n") + 1);
+        if (pkg_tok.rfind("src:", 0) == 0) pkg_tok = pkg_tok.substr(4);
+
+        char *out_pkg = NULL;
+        char *out_qual = NULL;
+        std::string qual;
+        if (runepkg_psychic_parse_qualifier(pkg_tok.c_str(), &out_pkg, &out_qual) == 0) {
+            if (out_qual) qual = out_qual;
+            free(out_pkg);
+            free(out_qual);
+        }
+        return qual;
     }
 
     void init_filter_tables() {
@@ -479,10 +512,23 @@ private:
     std::vector<std::string> parse_depends_vector(const std::string& raw) {
         std::vector<std::string> result;
         if (raw.empty()) return result;
-        char **parsed = parse_depends(raw.c_str());
+        Dependency **parsed = parse_depends_with_constraints(raw.c_str());
         if (parsed) {
             for (int i = 0; parsed[i]; i++) {
-                result.push_back(parsed[i]);
+                std::string entry_str = parsed[i]->package ? parsed[i]->package : "";
+                if (!entry_str.empty()) {
+                    if (parsed[i]->qualifier && parsed[i]->qualifier[0] != '\0') {
+                        entry_str += ":";
+                        entry_str += parsed[i]->qualifier;
+                    }
+                    if (parsed[i]->constraint && parsed[i]->constraint[0] != '\0') {
+                        entry_str += " (";
+                        entry_str += parsed[i]->constraint;
+                        entry_str += ")";
+                    }
+                    result.push_back(entry_str);
+                }
+                runepkg_util_free_dependency(parsed[i]);
                 free(parsed[i]);
             }
             free(parsed);
@@ -543,18 +589,25 @@ private:
         std::string line;
         RuneGraphEntry current;
         bool in_entry = false;
+        const char* target_arch = get_effective_arch();
+        const char* host_arch = get_effective_host_arch();
+
+        auto maybe_insert = [&]() {
+            if (!in_entry || current.package.empty()) return;
+            RunePkgMultiArchMode mode = runepkg_psychic_parse_multiarch_mode(current.multi_arch.c_str());
+            std::string cand_arch = current.arch.empty() ? target_arch : current.arch;
+            if (cand_arch == "all" || cand_arch == target_arch ||
+                (mode == RUNEPKG_MA_FOREIGN && cand_arch == host_arch)) {
+                graph[current.package] = current;
+            }
+        };
 
         while (std::getline(file, line)) {
             if (!line.empty() && line.back() == '\r') line.pop_back();
 
             if (line.compare(0, 9, "Package: ") == 0) {
-                if (in_entry && !current.package.empty()) {
-                    const char* target_arch = get_effective_arch();
-                    if (current.arch == "all" || current.arch == target_arch || current.arch.empty()) {
-                        graph[current.package] = current;
-                    }
-                    current = RuneGraphEntry();
-                }
+                maybe_insert();
+                current = RuneGraphEntry();
                 in_entry = true;
                 current.package = line.substr(9);
                 current.package.erase(0, current.package.find_first_not_of(" \t"));
@@ -569,6 +622,10 @@ private:
                 current.version = line.substr(9);
             } else if (line.compare(0, 14, "Architecture: ") == 0) {
                 current.arch = line.substr(14);
+            } else if (line.compare(0, 12, "Multi-Arch: ") == 0) {
+                current.multi_arch = line.substr(12);
+                current.multi_arch.erase(0, current.multi_arch.find_first_not_of(" \t"));
+                current.multi_arch.erase(current.multi_arch.find_last_not_of(" \t") + 1);
             } else if (line.compare(0, 10, "Filename: ") == 0) {
                 current.filename = line.substr(10);
             } else if (line.compare(0, 6, "Size: ") == 0) {
@@ -594,15 +651,10 @@ private:
                 }
             }
         }
-        if (in_entry && !current.package.empty()) {
-            const char* target_arch = get_effective_arch();
-            if (current.arch == "all" || current.arch == target_arch || current.arch.empty()) {
-                graph[current.package] = current;
-            }
-        }
+        maybe_insert();
     }
 
-    void parse_sources_file(const std::string& path, std::unordered_map<std::string, RuneGraphEntry>& graph) {
+void parse_sources_file(const std::string& path, std::unordered_map<std::string, RuneGraphEntry>& graph) {
         std::ifstream file(path);
         if (!file.is_open()) return;
 
@@ -686,10 +738,23 @@ private:
         return "";
     }
 
+    static bool candidate_satisfies_psychic(const RuneGraphEntry& candidate, const std::string& qual) {
+        RunePkgMultiArchMode mode = runepkg_psychic_parse_multiarch_mode(candidate.multi_arch.c_str());
+        const char* cand_arch = candidate.arch.empty() ? get_effective_arch() : candidate.arch.c_str();
+        return runepkg_psychic_is_multiarch_satisfied(
+            cand_arch,
+            mode,
+            qual.empty() ? NULL : qual.c_str(),
+            get_effective_arch(),
+            get_effective_host_arch()
+        ) != 0;
+    }
+
     static bool is_installed_satisfied(const std::string& dep_raw,
                                        const std::unordered_map<std::string, std::string>& host_installed_map,
                                        const std::unordered_map<std::string, RuneGraphEntry>& graph) {
         std::string key = clean_package_key(dep_raw);
+        std::string qual = extract_qualifier_string(dep_raw);
         std::string constraint = extract_constraint_string(dep_raw);
 
         auto it = host_installed_map.find(key);
@@ -697,12 +762,24 @@ private:
             return false;
         }
 
-        /* Ground Truth: If repository graph has a newer version than host, dependency is NOT satisfied */
         auto g_it = graph.find(key);
-        if (g_it != graph.end() && !g_it->second.version.empty() && !it->second.empty()) {
-            if (runepkg_util_compare_versions(g_it->second.version.c_str(), it->second.c_str()) > 0) {
+        if (g_it != graph.end()) {
+            if (!candidate_satisfies_psychic(g_it->second, qual)) {
                 return false;
             }
+            if (!g_it->second.version.empty() && !it->second.empty()) {
+                if (runepkg_util_compare_versions(g_it->second.version.c_str(), it->second.c_str()) > 0) {
+                    return false;
+                }
+            }
+        } else if (!qual.empty() && qual != "native") {
+            /* Without a stanza confirming Multi-Arch satisfaction, don't assume cross-arch match */
+            const char* host_arch = get_effective_host_arch();
+            const char* target_arch = get_effective_arch();
+            if (qual == "any") {
+                return std::strcmp(host_arch, target_arch) == 0;
+            }
+            return std::strcmp(host_arch, runepkg_psychic_normalize_deb_arch(qual.c_str())) == 0;
         }
 
         if (constraint.empty()) {
@@ -729,7 +806,6 @@ private:
             real_pkg = virtual_to_real.at(real_pkg);
         }
 
-        /* If package is NOT in explicit_targets and is already satisfied on host, skip it */
         if (!is_root_target &&
             explicit_targets.find(check_name) == explicit_targets.end() &&
             explicit_targets.find(real_pkg) == explicit_targets.end() &&
@@ -767,7 +843,6 @@ private:
         return true;
     }
 
-private:
     void resolve_dep_node(const std::string& dep,
                           ResolveMode mode,
                           const std::unordered_map<std::string, RuneGraphEntry>& graph,
@@ -778,12 +853,12 @@ private:
                           std::set<std::string>& visiting,
                           std::vector<RuneGraphEntry>& order) {
         std::string target_key = clean_package_key(dep);
+        std::string qual = extract_qualifier_string(dep);
         std::string real_key = target_key;
         if (graph.find(real_key) == graph.end() && virtual_to_real.count(real_key)) {
             real_key = virtual_to_real.at(real_key);
         }
 
-        /* If dependency is NOT in explicit_targets and is already satisfied on host, skip it */
         if (explicit_targets.find(target_key) == explicit_targets.end() &&
             explicit_targets.find(real_key) == explicit_targets.end()) {
             if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
@@ -823,23 +898,29 @@ private:
         }
 
         if (graph.count(target_key)) {
-            dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
+            const RuneGraphEntry& cand = graph.at(target_key);
+            if (target_key.rfind("src:", 0) == 0 || candidate_satisfies_psychic(cand, qual)) {
+                dfs_resolve_v2(target_key, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
+            }
         } else if (virtual_to_real.count(target_key)) {
-            dfs_resolve_v2(virtual_to_real.at(target_key), mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
+            const std::string& vreal = virtual_to_real.at(target_key);
+            auto vit = graph.find(vreal);
+            if (vit == graph.end() || vreal.rfind("src:", 0) == 0 || candidate_satisfies_psychic(vit->second, qual)) {
+                dfs_resolve_v2(vreal, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
+            }
         } else {
-            /* Vigilant Version Sifting:
-             * If target_key is name-version (e.g. perlapi-5.42.2), sift through available
-             * providers of 'name-*' if the exact version isn't found.
-             */
             size_t dash_pos = target_key.find_last_of('-');
             if (dash_pos != std::string::npos && dash_pos > 0) {
-                std::string prefix = target_key.substr(0, dash_pos + 1); /* includes the dash */
+                std::string prefix = target_key.substr(0, dash_pos + 1);
                 for (const auto& [v_name, r_name] : virtual_to_real) {
                     if (v_name.compare(0, prefix.length(), prefix) == 0) {
-                         runepkg_util_log_verbose("[resolver] Vigilant substitution: requested %s, found %s (provided by %s)\n",
-                                                  target_key.c_str(), v_name.c_str(), r_name.c_str());
-                         dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
-                         return;
+                        auto rit = graph.find(r_name);
+                        if (rit == graph.end() || r_name.rfind("src:", 0) == 0 || candidate_satisfies_psychic(rit->second, qual)) {
+                            runepkg_util_log_verbose("[resolver] Vigilant substitution: requested %s, found %s (provided by %s)\n",
+                                                     target_key.c_str(), v_name.c_str(), r_name.c_str());
+                            dfs_resolve_v2(r_name, mode, graph, virtual_to_real, host_installed_map, explicit_targets, visited, visiting, order);
+                            return;
+                        }
                     }
                 }
             }
@@ -860,6 +941,7 @@ private:
             write_string(out, node.package);
             write_string(out, node.version);
             write_string(out, node.arch);
+            write_string(out, node.multi_arch);
             write_string(out, node.directory);
             write_string(out, node.filename);
             write_string(out, node.source_pkg);
@@ -911,6 +993,7 @@ private:
             node.package = read_string(in);
             node.version = read_string(in);
             node.arch = read_string(in);
+            node.multi_arch = read_string(in);
             node.directory = read_string(in);
             node.filename = read_string(in);
             node.source_pkg = read_string(in);

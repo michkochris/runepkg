@@ -127,14 +127,21 @@ int runepkg_util_check_version_constraint(const char *installed_version, const c
 
 typedef struct {
     char *package;
+    char *qualifier;   /* "any", "native", "<arch>", or NULL if unqualified */
     char *constraint;  /* e.g., ">= 2.15" or NULL if no constraint */
 } Dependency;
 
 /* --- Dependency Parsing --- */
 
 /**
+ * @brief Frees fields inside a Dependency struct and sets pointers to NULL.
+ * @param dep Dependency struct to clean up.
+ */
+void runepkg_util_free_dependency(Dependency *dep);
+
+/**
  * @brief Parses a depends string into an array of Dependency structs.
- * @param depends The depends string, e.g., "libc6 (>= 2.15), libssl".
+ * @param depends The depends string, e.g., "libc6 (>= 2.15), libssl:any".
  * @return Array of Dependency pointers, NULL-terminated.
  */
 Dependency **parse_depends_with_constraints(const char *depends);

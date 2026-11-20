@@ -56,7 +56,14 @@ extern "C" {
 // Architecture - dynamic lookup from host integration or active profile
 static const char* get_effective_arch() {
     extern char *g_target_arch;
+    static std::string cached_target_arch;
     if (g_target_arch && g_target_arch[0] != '\0') {
+        RunePkgTargetSpec spec;
+        if (runepkg_psychic_parse_target_arch(g_target_arch, &spec) == 0 && spec.deb_arch) {
+            cached_target_arch = runepkg_psychic_normalize_deb_arch(spec.deb_arch);
+            runepkg_psychic_free_target_spec(&spec);
+            return cached_target_arch.c_str();
+        }
         return runepkg_psychic_normalize_deb_arch(g_target_arch);
     }
     if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {

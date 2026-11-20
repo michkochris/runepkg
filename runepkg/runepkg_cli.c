@@ -287,6 +287,9 @@ int main(int argc, char *argv[]) {
                 if (repo_pkg_count > 0) {
                     if (runepkg_repo_install_multiple(repo_pkgs, repo_pkg_count) == 0) {
                         g_did_install = true;
+                        if (g_system_install_root) {
+                            runepkg_psychic_prophecy_check(g_system_install_root, g_target_arch);
+                        }
                     } else {
                         cli_failed = 1;
                     }

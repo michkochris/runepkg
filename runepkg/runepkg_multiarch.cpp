@@ -61,13 +61,21 @@ DebianMultiArchConfig DebianMultiArchEngine::configure_multiarch(const std::stri
     config.deb_build_arch = get_host_native_deb_arch();
     config.deb_build_triplet = deb_arch_to_gnu_triplet(config.deb_build_arch);
 
-    if (target_arch.empty() || target_arch == config.deb_build_arch) {
+    std::string eff_arch = target_arch;
+    std::string explicit_triplet = "";
+    size_t colon_pos = target_arch.find(':');
+    if (colon_pos != std::string::npos) {
+        eff_arch = target_arch.substr(0, colon_pos);
+        explicit_triplet = target_arch.substr(colon_pos + 1);
+    }
+
+    if (eff_arch.empty() || eff_arch == config.deb_build_arch) {
         config.deb_host_arch = config.deb_build_arch;
-        config.deb_host_triplet = config.deb_build_triplet;
-        config.is_cross_compiling = false;
+        config.deb_host_triplet = explicit_triplet.empty() ? config.deb_build_triplet : explicit_triplet;
+        config.is_cross_compiling = (config.deb_build_arch != config.deb_host_arch);
     } else {
-        config.deb_host_arch = target_arch;
-        config.deb_host_triplet = deb_arch_to_gnu_triplet(target_arch);
+        config.deb_host_arch = eff_arch;
+        config.deb_host_triplet = explicit_triplet.empty() ? deb_arch_to_gnu_triplet(eff_arch) : explicit_triplet;
         config.is_cross_compiling = true;
     }
 

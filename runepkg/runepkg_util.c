@@ -6,8 +6,8 @@
  * LICENSE:     GPL v3
  * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
  * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
- * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
- * ANY LATER VERSION.
+ * Software Foundation, either version 3 of the License, or (at your option)
+ * any later version.
  * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
  * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ***************************************************************************/
@@ -271,6 +271,16 @@ int runepkg_util_compare_versions(const char *v1, const char *v2) {
 
 /* --- Dependency Parsing (C89) --- */
 
+void runepkg_util_free_dependency(Dependency *dep) {
+    if (!dep) return;
+    free(dep->package);
+    free(dep->qualifier);
+    free(dep->constraint);
+    dep->package = NULL;
+    dep->qualifier = NULL;
+    dep->constraint = NULL;
+}
+
 int runepkg_util_check_version_constraint(const char *installed_version, const char *constraint) {
     char *cons;
     char *cons_trim;
@@ -358,6 +368,12 @@ Dependency **parse_depends_with_constraints(const char *depends) {
     token = strtok(copy, ",");
     while (token && i < count) {
         char *pipe;
+        char *paren;
+        char *pkg_part;
+        char *extra;
+        char *colon;
+        char *qual_part;
+
         while (*token == ' ' || *token == '\t') token++;
         if (*token == '\0') {
             token = strtok(NULL, ",");
@@ -371,8 +387,7 @@ Dependency **parse_depends_with_constraints(const char *depends) {
         if (!result[i]) {
             int j;
             for (j = 0; j < i; j++) {
-                free(result[j]->package);
-                free(result[j]->constraint);
+                runepkg_util_free_dependency(result[j]);
                 free(result[j]);
             }
             free(result);
@@ -380,39 +395,64 @@ Dependency **parse_depends_with_constraints(const char *depends) {
             return NULL;
         }
 
-        {
-            char *paren = strchr(token, '(');
-            if (paren) {
-                char *pkg_part;
-                char *extra;
-                char *inner;
-                char *end;
-                char *close;
+        qual_part = NULL;
+        paren = strchr(token, '(');
+        if (paren) {
+            char *inner;
+            char *end;
+            char *close;
 
-                *paren = '\0';
-                close = strchr(paren + 1, ')');
-                if (close) *close = '\0';
+            *paren = '\0';
+            close = strchr(paren + 1, ')');
+            if (close) *close = '\0';
 
-                pkg_part = token;
-                extra = strpbrk(pkg_part, ":[<");
-                if (extra) *extra = '\0';
-                result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+            pkg_part = runepkg_util_trim_whitespace(token);
+            extra = strpbrk(pkg_part, "[<");
+            if (extra) *extra = '\0';
 
-                inner = paren + 1;
-                while (*inner && (*inner == ' ' || *inner == '(')) inner++;
-                end = inner + strlen(inner);
-                while (end > inner && (end[-1] == ' ' || end[-1] == ')')) {
-                    end--;
-                    *end = '\0';
-                }
-                result[i]->constraint = strdup(inner);
-            } else {
-                char *pkg_part = token;
-                char *extra = strpbrk(pkg_part, ":[<");
-                if (extra) *extra = '\0';
-                result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
-                result[i]->constraint = NULL;
+            colon = strchr(pkg_part, ':');
+            if (colon) {
+                *colon = '\0';
+                qual_part = runepkg_util_trim_whitespace(colon + 1);
             }
+
+            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+            result[i]->qualifier = (qual_part && *qual_part) ? strdup(qual_part) : NULL;
+
+            inner = paren + 1;
+            while (*inner && (*inner == ' ' || *inner == '(')) inner++;
+            end = inner + strlen(inner);
+            while (end > inner && (end[-1] == ' ' || end[-1] == ')')) {
+                end--;
+                *end = '\0';
+            }
+            result[i]->constraint = strdup(inner);
+        } else {
+            pkg_part = runepkg_util_trim_whitespace(token);
+            extra = strpbrk(pkg_part, "[<");
+            if (extra) *extra = '\0';
+
+            colon = strchr(pkg_part, ':');
+            if (colon) {
+                *colon = '\0';
+                qual_part = runepkg_util_trim_whitespace(colon + 1);
+            }
+
+            result[i]->package = strdup(runepkg_util_trim_whitespace(pkg_part));
+            result[i]->qualifier = (qual_part && *qual_part) ? strdup(qual_part) : NULL;
+            result[i]->constraint = NULL;
+        }
+
+        if (!result[i]->package || (qual_part && *qual_part && !result[i]->qualifier) ||
+            (paren && !result[i]->constraint)) {
+            int j;
+            for (j = 0; j <= i; j++) {
+                runepkg_util_free_dependency(result[j]);
+                free(result[j]);
+            }
+            free(result);
+            free(copy);
+            return NULL;
         }
 
         i++;
