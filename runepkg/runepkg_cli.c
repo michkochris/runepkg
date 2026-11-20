@@ -34,6 +34,7 @@
 #include "runepkg_handle.h"
 #include "runepkg_completion.h"
 #include "runepkg_host.h"
+#include "runepkg_psychic.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -84,6 +85,8 @@ void usage(void) {
     printf("  download-build-depends <pkg>...         Download binary .debs required to build a source package.\n\n");
 
     printf("Maintenance & Diagnostics:\n");
+    printf("      --target                            Switch from host install_dir to target_install_dir sysroot\n");
+    printf("                                          and execute psychic pre-flight prophecy checks.\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
@@ -122,6 +125,9 @@ int main(int argc, char *argv[]) {
             g_debug_mode = true;
             continue;
         }
+        if (strcmp(argv[i], "--target") == 0) {
+            continue;
+        }
     }
     
     runepkg_log_verbose("=== RUNEPKG STARTUP ANALYSIS ===\n");
@@ -154,6 +160,22 @@ int main(int argc, char *argv[]) {
         runepkg_log_verbose("Critical error during program initialization. Exiting.\n");
         runepkg_cleanup();
         return EXIT_FAILURE;
+    }
+
+    for (i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--target") == 0) {
+            extern char *g_target_install_dir;
+            extern char *g_system_install_root;
+            extern char *g_target_arch;
+            if (g_target_install_dir && g_target_install_dir[0] != '\0') {
+                if (g_system_install_root) free(g_system_install_root);
+                g_system_install_root = strdup(g_target_install_dir);
+                printf("\033[1;36m[psychic]\033[0m Target Sysroot Activated: %s (Arch: %s)\n",
+                    g_system_install_root, g_target_arch ? g_target_arch : "amd64");
+                runepkg_psychic_prophecy_check(g_system_install_root, g_target_arch);
+            }
+            break;
+        }
     }
 
     for (i = 1; i < argc; ++i) {
@@ -658,7 +680,8 @@ int main(int argc, char *argv[]) {
             }
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0 ||
                    strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0 ||
-                   strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
+                   strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0 ||
+                   strcmp(argv[i], "--target") == 0) {
             /* Already handled in first pass */
         } else {
             cli_failed = 1;

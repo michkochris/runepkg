@@ -48,6 +48,8 @@ bool g_auto_confirm_deps = false;
 bool g_auto_confirm_siblings = false;
 bool g_asked_siblings = false;
 char *g_debs_dir = NULL;
+char *g_target_install_dir = NULL;
+char *g_target_arch = NULL;
 char *g_log_dir = NULL;
 char *g_dpkg_host = NULL;
 bool g_md5_checks = true;
@@ -482,6 +484,9 @@ int runepkg_config_load(void) {
         if (!g_debs_dir && g_runepkg_base_dir) g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
         g_log_dir = runepkg_util_get_config_value(config_file_path, "log_dir", '=');
         if (!g_log_dir && g_runepkg_base_dir) g_log_dir = runepkg_util_concat_path(g_runepkg_base_dir, "log_dir");
+        g_target_install_dir = runepkg_util_get_config_value(config_file_path, "target_install_dir", '=');
+        if (!g_target_install_dir && g_runepkg_base_dir) g_target_install_dir = runepkg_util_concat_path(g_runepkg_base_dir, "target_install_dir");
+        g_target_arch = runepkg_util_get_config_value(config_file_path, "target_arch", '=');
         g_dpkg_host = runepkg_util_get_config_value(config_file_path, "dpkg_host", '=');
 
         cleanup_val = runepkg_util_get_config_value(config_file_path, "cleanup", '=');
@@ -510,6 +515,8 @@ void runepkg_config_cleanup(void) {
     runepkg_util_free_and_null(&g_build_dir);
     runepkg_util_free_and_null(&g_debs_dir);
     runepkg_util_free_and_null(&g_log_dir);
+    runepkg_util_free_and_null(&g_target_install_dir);
+    runepkg_util_free_and_null(&g_target_arch);
     runepkg_util_free_and_null(&g_dpkg_host);
 
     if (g_sources) {

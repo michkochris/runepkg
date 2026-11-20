@@ -32,6 +32,8 @@ extern char *g_download_dir;
 extern char *g_build_dir;
 extern char *g_debs_dir;
 extern char *g_log_dir;
+extern char *g_target_install_dir;
+extern char *g_target_arch;
 extern char *g_dpkg_host;
 extern bool g_md5_checks;
 extern bool g_verify_signatures;

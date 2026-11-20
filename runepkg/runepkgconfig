@@ -45,6 +45,14 @@ control_dir=/srv/lib/runepkg_dir/control_dir
 #install_dir=/
 install_dir=/srv/lib/runepkg_dir/install_dir
 
+# [target_install_dir]
+# Dedicated cross-arch embedded target sysroot for runepkg_psychic multi-arch staging.
+target_install_dir=/srv/lib/runepkg_dir/target_install_dir
+
+# [target_arch]
+# Explicit target architecture for multi-arch cross-staging (e.g. amd64, arm64, riscv64).
+target_arch=aarch64
+
 # [runepkg_db]
 # Persistent storage for the package manager's state.
 runepkg_db=/srv/lib/runepkg_dir/runepkg_db

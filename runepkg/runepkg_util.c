@@ -474,46 +474,79 @@ static int normalize_path_segments(const char *input, char *out, size_t out_sz) 
 }
 
 int runepkg_util_is_path_under_dir(const char *path, const char *dir) {
-    char *real_dir;
     char resolved_dir[PATH_MAX];
-    char raw_target[PATH_MAX * 2];
-    char norm_target[PATH_MAX * 2];
+    char target_path[PATH_MAX * 2];
+    char work_path[PATH_MAX * 2];
+    char resolved_parent[PATH_MAX];
+    char canonical_target[PATH_MAX * 2];
+    char *real_dir;
+    char *real_parent;
+    char *last_slash;
     size_t dir_len;
 
     if (!path || !dir) return -1;
 
     runepkg_util_create_dir_recursive(dir, 0755);
+
     real_dir = realpath(dir, NULL);
-    if (!real_dir) {
-        return -1;
-    }
+    if (!real_dir) return 0;
     if (strlen(real_dir) >= sizeof(resolved_dir)) {
         free(real_dir);
-        return -1;
+        return 0;
     }
     strcpy(resolved_dir, real_dir);
     free(real_dir);
 
     if (path[0] == '/') {
-        if (strlen(path) >= sizeof(raw_target)) return -1;
-        strcpy(raw_target, path);
+        if (strlen(path) >= sizeof(target_path)) return 0;
+        strcpy(target_path, path);
     } else {
-        int written = snprintf(raw_target, sizeof(raw_target), "%s/%s", resolved_dir, path);
-        if (written < 0 || (size_t)written >= sizeof(raw_target)) return -1;
+        int written = snprintf(target_path, sizeof(target_path), "%s/%s", resolved_dir, path);
+        if (written < 0 || (size_t)written >= sizeof(target_path)) return 0;
     }
 
-    if (normalize_path_segments(raw_target, norm_target, sizeof(norm_target)) != 0) {
-        return 0;
+    strcpy(work_path, target_path);
+    real_parent = NULL;
+    while (1) {
+        real_parent = realpath(work_path, NULL);
+        if (real_parent) {
+            break;
+        }
+        last_slash = strrchr(work_path, '/');
+        if (!last_slash || last_slash == work_path) {
+            break;
+        }
+        *last_slash = '\0';
+    }
+
+    if (real_parent) {
+        if (strlen(real_parent) >= sizeof(resolved_parent)) {
+            free(real_parent);
+            return 0;
+        }
+        strcpy(resolved_parent, real_parent);
+        free(real_parent);
+
+        {
+            size_t parent_len = strlen(work_path);
+            const char *remainder = target_path + parent_len;
+            int written = snprintf(canonical_target, sizeof(canonical_target), "%s%s", resolved_parent, remainder);
+            if (written < 0 || (size_t)written >= sizeof(canonical_target)) return 0;
+        }
+    } else {
+        if (normalize_path_segments(target_path, canonical_target, sizeof(canonical_target)) != 0) {
+            return 0;
+        }
     }
 
     dir_len = strlen(resolved_dir);
     if (strcmp(resolved_dir, "/") == 0) {
         return 1;
     }
-    if (strncmp(norm_target, resolved_dir, dir_len) != 0) {
+    if (strncmp(canonical_target, resolved_dir, dir_len) != 0) {
         return 0;
     }
-    if (norm_target[dir_len] != '\0' && norm_target[dir_len] != '/') {
+    if (canonical_target[dir_len] != '\0' && canonical_target[dir_len] != '/') {
         return 0;
     }
 
@@ -2022,7 +2055,14 @@ int runepkg_log_init(const char *log_dir, const char *timestamp)
         return -1;
     }
 
-    fprintf(g_tx_log_fp, "[INIT] Transaction log initialized at %s\n", timestamp);
+    {
+        extern char *g_system_install_root;
+        fprintf(g_tx_log_fp, "========================================================================\n");
+        fprintf(g_tx_log_fp, "VESSEL/ROOT : %s\n", g_system_install_root ? g_system_install_root : "/");
+        fprintf(g_tx_log_fp, "TXN_SERIAL  : %s\n", timestamp);
+        fprintf(g_tx_log_fp, "FSM_MODE    : EXTENDED_FFI // HERMETIC_STAGING\n");
+        fprintf(g_tx_log_fp, "------------------------------------------------------------------------\n");
+    }
     fflush(g_tx_log_fp);
     return 0;
 }
@@ -2085,6 +2125,13 @@ void runepkg_log_fail(const char *err_msg, const char *log_dir)
 void runepkg_log_close(int clean_up_enabled)
 {
     if (g_tx_log_fp) {
+        fprintf(g_tx_log_fp, "------------------------------------------------------------------------\n");
+        if (!clean_up_enabled) {
+            fprintf(g_tx_log_fp, "END_OF_RECORD // CLEAN_HALT (EXIT CODE: 0)\n");
+        } else {
+            fprintf(g_tx_log_fp, "END_OF_RECORD // CLEAN_HALT (CLEANED_UP)\n");
+        }
+        fprintf(g_tx_log_fp, "========================================================================\n");
         fclose(g_tx_log_fp);
         g_tx_log_fp = NULL;
     }

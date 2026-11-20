@@ -614,7 +614,20 @@ int runepkg_fsm_list_transactions(void)
             struct stat st;
             runepkg_secure_snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, entry->d_name);
             if (stat(full_path, &st) == 0) {
-                printf("  [log] %-35s (%ld bytes)\n", entry->d_name, (long)st.st_size);
+                FILE *log_fp = fopen(full_path, "r");
+                int clean_halt = 0;
+                if (log_fp) {
+                    char buf[512];
+                    while (fgets(buf, sizeof(buf), log_fp)) {
+                        if (strstr(buf, "END_OF_RECORD // CLEAN_HALT")) {
+                            clean_halt = 1;
+                        }
+                    }
+                    fclose(log_fp);
+                }
+                printf("  [log] %-30s (%8ld bytes)  [STATUS: %s]\n",
+                    entry->d_name, (long)st.st_size,
+                    clean_halt ? "CLEAN_HALT" : "⚠️ UNTERMINATED_FAULT // CRASH_DETECTED");
                 count++;
             }
         }
@@ -655,7 +668,8 @@ int runepkg_fsm_inspect_transaction(const char *target)
         return -1;
     }
 
-    printf("Inspecting Transaction Log: %s\n", log_path);
+    printf("========================================================================\n");
+    printf("CRSF/FLIGHT-RECORDER TELEMETRY INSPECTION : %s\n", log_path);
     printf("========================================================================\n");
 
     while (fgets(line, sizeof(line), fp)) {

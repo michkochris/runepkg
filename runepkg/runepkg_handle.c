@@ -904,6 +904,14 @@ void handle_print_config(void) {
     else printf("  Build Directory:     (not set)\n");
     if (g_debs_dir) printf("  Debs Directory:      %s\n", g_debs_dir);
     else printf("  Debs Directory:      (not set)\n");
+    {
+        extern char *g_target_install_dir;
+        extern char *g_target_arch;
+        if (g_target_install_dir) printf("  Target Install Dir:  %s\n", g_target_install_dir);
+        else printf("  Target Install Dir:  (not set)\n");
+        if (g_target_arch) printf("  Target Architecture: %s\n", g_target_arch);
+        else printf("  Target Architecture: (not set)\n");
+    }
 
     printf("  Cleanup: %s\n", g_cleanup_extract_dirs ? "yes" : "no");
     {

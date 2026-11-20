@@ -131,13 +131,13 @@ RUNAS_TARGET = runas
 C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
             runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c \
             runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c \
-            runepkg_host.c runepkg_state.c
+            runepkg_host.c runepkg_state.c runepkg_psychic.c
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
-RUNAS_OBJS = runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o runepkg_state.o
+RUNAS_OBJS = runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o runepkg_state.o runepkg_psychic.o
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
           runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h runepkg_state.h \
-          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp runepkg_multiarch.hpp runepkg_building.hpp
+          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp runepkg_multiarch.hpp runepkg_building.hpp runepkg_psychic.h
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)

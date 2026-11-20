@@ -35,44 +35,56 @@ static int compare_packages(const void *a, const void *b) {
 
 /* --- Public Storage Functions --- */
 
+static const char *get_effective_db_dir(void) {
+    static char target_db_path[PATH_MAX];
+    if (g_target_arch && g_target_arch[0] != '\0' && g_runepkg_db_dir) {
+        snprintf(target_db_path, sizeof(target_db_path), "%s/targets/%s", g_runepkg_db_dir, g_target_arch);
+        runepkg_util_create_dir_recursive(target_db_path, 0755);
+        return target_db_path;
+    }
+    return g_runepkg_db_dir;
+}
+
 /**
  * @brief Gets the full path to a package directory
  */
 int runepkg_storage_get_package_path(const char *pkg_name, const char *pkg_version, 
                                     char *path_buffer) {
+    const char *db_root;
     if (!pkg_name || !path_buffer) {
         return -1;
     }
 
-    if (!g_runepkg_db_dir) {
+    db_root = get_effective_db_dir();
+    if (!db_root) {
         printf("Error: runepkg database directory not configured.\n");
         return -1;
     }
 
     if (pkg_version && pkg_version[0] != '\0') {
-        snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        runepkg_secure_snprintf(path_buffer, PATH_MAX, "%s/%s-%s", db_root, pkg_name, pkg_version);
         if (runepkg_util_file_exists(path_buffer)) return 0;
 
-        snprintf(path_buffer, PATH_MAX, "%s/host/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        runepkg_secure_snprintf(path_buffer, PATH_MAX, "%s/host/%s-%s", db_root, pkg_name, pkg_version);
         if (runepkg_util_file_exists(path_buffer)) return 0;
 
         /* When pkg_version is specified, do NOT return a different version's directory! */
-        snprintf(path_buffer, PATH_MAX, "%s/%s-%s", g_runepkg_db_dir, pkg_name, pkg_version);
+        runepkg_secure_snprintf(path_buffer, PATH_MAX, "%s/%s-%s", db_root, pkg_name, pkg_version);
         return 0;
     }
 
     /* Only if pkg_version is NULL / empty, check unversioned paths or scan for installed version */
-    snprintf(path_buffer, PATH_MAX, "%s/%s", g_runepkg_db_dir, pkg_name);
+    runepkg_secure_snprintf(path_buffer, PATH_MAX, "%s/%s", db_root, pkg_name);
     if (runepkg_util_file_exists(path_buffer)) return 0;
 
-    snprintf(path_buffer, PATH_MAX, "%s/host/%s", g_runepkg_db_dir, pkg_name);
+    runepkg_secure_snprintf(path_buffer, PATH_MAX, "%s/host/%s", db_root, pkg_name);
     if (runepkg_util_file_exists(path_buffer)) return 0;
 
     {
         const char *db_dirs[2];
         int d;
-        db_dirs[0] = g_runepkg_db_dir;
-        db_dirs[1] = runepkg_util_concat_path(g_runepkg_db_dir, "host");
+        db_dirs[0] = db_root;
+        db_dirs[1] = runepkg_util_concat_path(db_root, "host");
 
         for (d = 0; d < 2; d++) {
             const char *cdir = db_dirs[d];

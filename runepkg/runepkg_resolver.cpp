@@ -32,15 +32,20 @@ extern "C" {
     #include "runepkg_util.h"
     #include "runepkg_storage.h"
     #include "runepkg_host.h"
+    #include "runepkg_psychic.h"
 }
 
 // Architecture - dynamic lookup from host integration or active profile
 static const char* get_effective_arch() {
+    extern char *g_target_arch;
+    if (g_target_arch && g_target_arch[0] != '\0') {
+        return runepkg_psychic_normalize_deb_arch(g_target_arch);
+    }
     if (g_active_profile && g_active_profile->deb_host_arch && g_active_profile->deb_host_arch[0]) {
-        return g_active_profile->deb_host_arch;
+        return runepkg_psychic_normalize_deb_arch(g_active_profile->deb_host_arch);
     }
     const char* arch = runepkg_host_get_architecture();
-    if (arch && std::strcmp(arch, "unknown") != 0) return arch;
+    if (arch && std::strcmp(arch, "unknown") != 0) return runepkg_psychic_normalize_deb_arch(arch);
     return "amd64";
 }
 

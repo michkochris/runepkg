@@ -1,0 +1,66 @@
+================================================================================
+THEORY: THE PSYCHIC DEBIAN PACKAGE MANAGER (runepkg_psychic)
+================================================================================
+
+1. Core Premise
+----------------
+Traditional package managers treat every operating system and package repository as an unknown black box, relying on reactive error handling, generic heuristics, and trial-and-error resolution.
+
+Because **runepkg** is engineered exclusively and unconditionally for the **Debian ecosystem**, it does not need to guess. The Debian universe is deterministic: its FHS hierarchy, Multi-Arch directory standards, dynamic linker naming conventions (`ld-linux-*`), virtual package topologies, and maintainer script lifecycles are immutable invariants.
+
+By leveraging this certainty, **runepkg** becomes "psychic"—anticipating missing structural scaffolding, resolving virtual package loops, and projecting multi-arch target sysroots *before* extraction failures or dependency dead-ends occur.
+
+2. Dual-Root Configuration Architecture (The Foundation)
+------------------------------------------------------
+To make multi-arch staging rock-solid, `runepkg` introduces a second install root variable in `runepkgconfig`:
+- **`install_dir`**: The primary host / default staging root.
+- **`target_install_dir` (or `sysroot_dir`)**: The dedicated cross-arch embedded target sysroot.
+
+This completely separates host operations from target cross-staging, ensuring `runepkg_psychic` knows precisely where to anchor dynamic linkers and multi-arch library directories.
+
+3. Hermetic Isolation & Dpkg/Apt Interoperability
+-------------------------------------------------
+A critical challenge in alternate root staging is avoiding host state contamination. By decoupling `target_install_dir` from the host:
+- Host/native alternate root operations (`install_dir`) can optionally participate in **dpkg Quantum Entanglement** (`dpkg_host=auto`) when architectures match.
+- Cross-architecture embedded target sysroots (`target_install_dir`) operate under **strict hermetic isolation**, bypassing host `dpkg`/`apt` entanglement entirely. This prevents cross-contamination of host package registries with foreign architecture stanzas (e.g., staging `arm64` on an `amd64` host).
+
+4. Debian Multi-Arch Staging & Cross-Architectural Facilitation Pipeline
+---------------------------------------------------------------------
+When operating across architectures, managing the head and tail of the packaging pipeline requires precise state tracking.
+
+Below is the ASCII telemetry graph tracking the head (ingestion & prophecy) and tail (delivery & dual-track harmonization) of Debian Multi-Arch staging:
+
+```text
+ [ HOST INGESTION HEAD ]
+           │
+           ├─> runas (Debian Source Forge) ──> Ingests .dsc / .orig / patches
+           ├─> runepkg FFI (Extended C++)  ──> Multi-threaded libcurl download
+           │
+           ▼
+ [ ORACLE PROPHECY LAYER: runepkg_psychic ]
+           │
+           ├─> Target Sysroot Routing (target_install_dir / sysroot_dir)
+           ├─> Predict Target Architecture (arm64, riscv64, etc.)
+           ├─> Project Multi-Arch FHS Tree (/lib/<arch>-linux-gnu, /usr/lib/...)
+           ├─> Anchor Dynamic Linkers & libc Runtime Symlinks
+           ├─> Resolve Virtual Package Telepathy (default-mta, libc-dev)
+           │
+           ▼
+ [ DUAL-TRACK STATE & RESOLVER PRUNING ]
+           │
+           ├─> Prune Undesirable Dependency Hell (Hermetic Graph Reduction)
+           ├─> Dual-Track State: Binary Serialization (pkginfo.bin) + Isolated State
+           │
+           ▼
+ [ TARGET EMBEDDED DELIVERY TAIL ]
+           │
+           └─> target_install_dir (Alternate Root / Hermetic Target Sysroot)
+               └─> Retro FSM Flight-Recorder Telemetry Log (Nostromo CRT Audit Trail)
+```
+
+5. Architectural Benefits
+-------------------------
+- **Zero-Friction Cross-Staging**: Eliminates manual chroot scaffolding when preparing embedded target filesystems.
+- **Proactive Healing**: Automatically provisions missing runtime linkers and library directories during pre-flight checks.
+- **Deterministic Resolution**: Bypasses complex virtual package dead-ends using hardcoded Debian ecosystem clairvoyance.
+- **Flawless Isolation**: Prevents host dpkg/apt entanglement collisions during cross-architecture staging.
