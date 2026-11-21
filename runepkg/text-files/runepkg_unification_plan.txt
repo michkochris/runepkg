@@ -1,0 +1,181 @@
+Implementation Plan: runepkg & runas Target Unification & Per-Profile Architecture
+This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (runepkg_db/<profile>), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
+User Review Required & Design Invariants
+Important
+Canonical Profile Name vs. deb_host_arch (arm64 vs. aarch64-linux-gnu): runepkg_psychic_parse_target_arch() populates both fields side-by-side in TargetProfile:
+•
+deb_host_arch (arm64): Used for Debian repository queries, stanza matching, and package qualifiers (:arm64).
+•
+triplet (aarch64-linux-gnu): Canonical profile identifier used for sysroot directory pathing (/mnt/runepkg/aarch64-linux-gnu), multi-arch header paths (/usr/include/aarch64-linux-gnu), library paths (/usr/lib/aarch64-linux-gnu), and dynamic linkers.
+•
+runepkg_config_get_profile_paths() strictly uses canonical triplet for path generation and never confuses deb_host_arch with triplet.
+Important
+Order of Operations & Teardown Safety:
+1.
+Write Ordering for psychic_matrix.bin: During package installation/removal in a target sysroot (runepkg --target=... -i <pkg>), psychic_matrix.bin is updated/regenerated AFTER package extraction and runepkg_psychic_anchor_dynamic_linker() complete so the binary index reflects the final staged state (including dynamic linker symlinks).
+2.
+Teardown Safety Guardrail: runepkg -r --remove-profile <profile> strictly validates the resolved sysroot path (verifying it is non-empty, contains /mnt/runepkg/, and is NOT /, /mnt, or /mnt/runepkg) before executing recursive removal to prevent accidental host system deletion.
+Important
+C89 vs. C++17 Boundary & Atomic State Activation:
+1.
+Strict C89 Header Standard: All declarations in runepkg_config.h and runepkg_psychic.h remain strictly C89-compliant (/* */ comments, top-of-block variable declarations, wrapped in extern "C" when included by .cpp files).
+2.
+Atomic Profile Activation: runepkg_config_activate_profile() sets g_active_profile, g_target_sysroot, and g_runepkg_db_dir atomically in one entry point before any C++ runas module (runepkg_building.cpp, runepkg_matrix.cpp) accesses target context.
+Important
+Strict Database Tracking Rule: Host Root vs. Alternate install_dir:
+•
+Host Root Installation (install_dir = /): The host root database at /srv/lib/runepkg_dir/runepkg_db ONLY tracks host-specific packages installed directly to / root.
+•
+Alternate install_dir (anything other than / root): When install_dir is set to any directory other than / (e.g. /srv/lib/runepkg_dir/install_dir or custom directory), runepkg abandons tracking in the host root database.
+•
+Self-Contained Database Insertion: Instead, runepkg inserts a self-contained database directly inside that install location at: <install_dir>/srv/lib/runepkg_dir/runepkg_db
+•
+Target Profile Sysroots: Target profiles insert their database inside: <target_sysroot>/srv/lib/runepkg_dir/runepkg_db (e.g. /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db).
+Important
+4-Tier Target Precedence Order: Target context resolution in runepkg_config.c strictly follows this 4-tier hierarchy:
+1.
+CLI Flag (--target=<profile>) — Highest precedence; overrides session and config for the invocation.
+2.
+Active Session State (active_target.conf) — Created/managed via switch <profile> and cleared via switch --reset.
+3.
+Config File Defaults (runepkgconfig) — Reads target_arch / target_sysroot if present.
+4.
+Host Mode (x86_64-linux-gnu, /) — Fallback when no target is specified anywhere. Invariance Rule: switch commands only write active_target.conf and NEVER modify runepkgconfig on disk.
+Important
+psychic_matrix.bin Sysroot Inventory vs. Prophecy Mapping:
+•
+Sysroot Inventory (psychic_matrix.bin): O(1) binary index of what is currently staged inside the sysroot (/lib, /usr/lib, /usr/lib/<triplet>, /usr/include, /usr/include/<triplet>).
+•
+Header/Library-to-Debian Prophecy Mapping: Cross-references binary repo indices (repo_index.bin / harvested Contents-<arch> metadata) to resolve missing headers (e.g. <zlib.h>) or missing link flags (e.g. -lz) to candidate Debian .deb packages (e.g. zlib1g-dev:arm64).
+Important
+Preserving runas build-toolchain & UsrMerge Dynamic Linkers:
+•
+Legacy Preservation: Raw CLFS cross-toolchain build code (runas build-toolchain) is preserved intact and isolated for specialized edge cases (uClibc, bare metal) without altering its code path.
+•
+Standard Debian Build Flow: Standard runas --target=<profile> build <pkg> defaults to the staged sysroot (/mnt/runepkg/<profile>) + standard Debian build flow.
+•
+UsrMerge Dynamic Linkers: runepkg_psychic_anchor_dynamic_linker() checks and anchors dynamic linkers at both /lib/ld-linux-aarch64.so.1 and /lib/aarch64-linux-gnu/ld-linux-aarch64.so.1 pointing into usr/lib/aarch64-linux-gnu/.
+Proposed Changes
+Component 1: Unified Target / Profile Metadata Structure & Resolution (psychic + runas + runepkg_config)
+[MODIFY]  runepkg_config.h
+•
+Unify TargetProfile as the single authoritative C89/C++ struct across runepkg, psychic, and runas (following the unified PkgInfo struct pattern).
+•
+Ensure strict C89 syntax (/* */ comments, top-of-block variable declarations, extern "C" wrappers).
+•
+Rename extern char *g_target_install_dir; to extern char *g_target_sysroot; (supporting legacy g_target_install_dir alias if required).
+•
+Add helper declaration: int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz);.
+•
+Codify 4-tier target precedence resolution (runepkg_config_resolve_target()).
+[MODIFY]  runepkg_psychic.h &  runepkg_psychic.c
+•
+Align RunePkgTargetSpec (deb_arch, gnu_triplet) directly with TargetProfile (deb_host_arch, triplet).
+•
+Bind runepkg_psychic_parse_target_arch() to resolve and normalize raw inputs (e.g. arm64:aarch64-linux-gnu -> deb_host_arch=arm64, triplet=aarch64-linux-gnu, canonical profile=aarch64-linux-gnu).
+•
+Expand runepkg_psychic_anchor_dynamic_linker() to verify and link both /lib/ld-linux-aarch64.so.1 and /lib/<triplet>/ld-linux-aarch64.so.1 into usr/lib/<triplet>/ under UsrMerge layouts.
+[MODIFY] runepkgconfig
+•
+Rename target_install_dir key to target_sysroot (commented out by default).
+•
+Document 4-tier resolution and defaulting rule to /mnt/runepkg/<profile>.
+[MODIFY]  runepkg_config.c
+•
+Implement runepkg_config_get_profile_paths() to centralize sysroot and DB path derivation using canonical triplet.
+•
+Implement 4-tier target resolution order in runepkg_config_load().
+•
+Implement atomic target activation in runepkg_config_activate_profile().
+•
+Enforce strict database path assignment rule:
+◦
+If install_dir == "/": g_runepkg_db_dir = /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed to /).
+◦
+If install_dir != "/": runepkg abandons host database tracking in /srv/lib/runepkg_dir/runepkg_db and sets g_runepkg_db_dir = <install_dir>/srv/lib/runepkg_dir/runepkg_db.
+◦
+If operating under a target profile (target_sysroot): g_runepkg_db_dir = <target_sysroot>/srv/lib/runepkg_dir/runepkg_db.
+•
+Ensure runepkg_config_save_active_state() only updates active_target.conf without touching runepkgconfig.
+Component 2: CLI Profile Arguments & Per-Profile Database Isolation (/srv/lib/runepkg_dir/runepkg_db)
+[MODIFY]  runepkg_cli.c
+•
+Add command-line flag handling for --target=<profile> (e.g. runepkg --target=aarch64-linux-gnu -i libtool).
+•
+Implement target precedence override logic: --target=<profile> CLI flag dynamically overrides runepkgconfig settings (target_arch / target_sysroot) for the execution.
+•
+Support normalization of input profile names via psychic so --target=arm64 maps to canonical profile aarch64-linux-gnu.
+•
+Add profile teardown command runepkg -r --remove-profile <profile> (or runepkg --target=<profile> --purge-profile) with path safety validation (verifying target is under /mnt/runepkg/ and NOT /, /mnt, or root directory).
+•
+When --target or --target=<profile> is specified, invoke unified atomic target activation to set g_active_profile and g_target_sysroot, and update g_runepkg_db_dir dynamically to point strictly to <target_sysroot>/srv/lib/runepkg_dir/runepkg_db.
+•
+Ensure runepkg --target -l queries installed packages directly from the target profile database.
+[MODIFY]  runepkg_storage.c
+•
+Ensure package metadata operations (pkginfo.bin, status, available, installed file lists) strictly respect g_runepkg_db_dir (which points to <install_dir_or_sysroot>/srv/lib/runepkg_dir/runepkg_db when operating in alternate install or target profile mode).
+•
+Abandon host database fallback scanning during non-root install_dir or target profile operations to prevent host state leaking into alternate queries.
+Component 3: Standard Debian Compatibility First in runas & Target Matrix Unification
+[MODIFY]  runepkg_matrix.cpp
+•
+Update RuneMatrixEngine::parse_profile() to directly bind to g_active_profile (TargetProfile) loaded by runepkg_config_load_profile().
+[MODIFY]  runepkg_building.cpp
+•
+Update default sysroot references in build workflows from /mnt/clfs/ to /mnt/runepkg/.
+•
+Preserve legacy raw cross-toolchain build code (runas build-toolchain) intact for special edge cases (uClibc).
+•
+Enhance standard runas --target=<profile> build <pkg> to cross-compile against staged sysroots at /mnt/runepkg/<profile>.
+[MODIFY]  runepkg_resolver.cpp
+•
+Align target profile resolution with runepkg_config 4-tier target loading logic.
+Component 4: Predictive psychic Binary Matrix (psychic_matrix.bin) & Prophecy Mapping
+[MODIFY]  runepkg_state.c
+•
+Implement Head (intent/pre-state snapshot) and Tail (resulting post-state snapshot) state logging in FSM transactions.
+•
+Write transition head/tail log records to g_log_dir/fsm_journal.log.
+[MODIFY]  runepkg_psychic.c &  runepkg_psychic.h
+•
+Implement psychic_matrix.bin generator and binary reader:
+◦
+Indexes staged C/C++ shared libraries (/lib, /usr/lib, /usr/lib/<gnu_triplet>) and header files (/usr/include, /usr/include/<gnu_triplet>) inside <sysroot>.
+◦
+Serializes binary index to <sysroot>/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin.
+◦
+Regenerated/updated AFTER package extraction and runepkg_psychic_anchor_dynamic_linker() complete.
+•
+Implement Header/Library-to-Debian Prophecy Mapping:
+◦
+Cross-references missing build symbols/headers against binary repository index (repo_index.bin / Recommends / Suggests / Build-Depends metadata) to recommend missing .deb packages (e.g. zlib1g-dev:arm64).
+•
+Expand runepkg_psychic_prophecy_check() to inspect psychic_matrix.bin and verify dynamic linkers, libc headers, and compiler availability before runas executes a build.
+Verification Plan
+Automated Tests & Sanity Script
+1.
+Run target build compilation using Makefile:
+make clean && make
+2.
+Test CLI --target=<profile> resolution and listing:
+./runepkg --target=arm64:aarch64-linux-gnu -l
+3.
+Test per-profile DB isolation & psychic_matrix.bin:
+◦
+Verify /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin creation and binary serialization.
+4.
+Test profile teardown / removal safety:
+◦
+Run profile removal command and verify /mnt/runepkg/aarch64-linux-gnu clean removal, and test that invalid/root paths are rejected.
+5.
+Test 4-tier precedence:
+◦
+Test CLI --target overriding active_target.conf and runepkgconfig.
+6.
+Run existing sanity bash script:
+./test_fsm_chaos.sh
+Manual Verification
+•
+Verify that runepkg --target=arm64:aarch64-linux-gnu -i libtool populates /mnt/runepkg/aarch64-linux-gnu sysroot correctly.
+•
+Verify runas --target=aarch64-linux-gnu recognizes /mnt/runepkg/aarch64-linux-gnu sysroot setup and uses psychic_matrix.bin for Multi-Arch recommendations.

@@ -1,0 +1,110 @@
+================================================================================
+runepkg_unification.txt
+Architectural Specification & Implementation To-Do List (Last Working State -> Target Unification)
+================================================================================
+
+1. PROJECT OVERVIEW & DESIGN PHILOSOPHY
+   - `runepkg` has been developed over time as a high-grade computer science
+     project from the beginning.
+   - A foundational highlight of the codebase is the unified `pkginfo` struct
+     for package metadata; this same clean, single-source-of-truth unification
+     pattern should now be extended across target handling, toolchain paths,
+     and per-profile state tracking.
+   - Purpose of this document: Capture the last verified working state of
+     `runepkg` and `runas`, along with the developer's architectural intent,
+     as a clear specification for AI-assisted implementation in Android Studio.
+
+2. LAST VERIFIED WORKING STATE
+   - `runepkg --target -i libtool` (with full `target_arch` including qualifier)
+     successfully resolves and installs packages, and linkage, `libc` presence,
+     and working dynamic-linker symlinks have been verified.
+   - New `psychic` scaffolding is in place in `runepkg`.
+   - FSM logging scaffolding is in place, though active head/tail state
+     tracking is not yet wired up.
+   - Current Gaps / Not Yet Implemented:
+       * `runepkg --target=<profile>` is not yet implemented (currently relies
+         on the master `target_arch` setting in `runepkgconfig`).
+       * Per-profile package tracking (`runepkg_db/<profile>`) is not yet
+         created/populated (dual tracking is not active yet).
+       * `runepkg --target -l` does not work yet because per-profile tracking
+         is not yet wired up.
+
+3. `runas` TOOLCHAIN SHIFT: STANDARD DEBIAN COMPATIBILITY FIRST
+   - Current state: `runas` has a destructible multi-toolchain builder
+     (`runas build-toolchain --target=<profile> <pkgs>`), which currently
+     relies on custom "raw" cross-compilation flows originally rooted in CLFS
+     experiments.
+   - Direction:
+       * Move primary workflows away from custom raw cross-bootstrapping and
+         prioritize **ultimate standard Debian compatibility** right out of the
+         bat.
+       * **Do NOT delete** the existing custom cross-compiler `runas build-toolchain`
+         code—set it aside for rare/specialized edge cases (e.g., custom `uClibc`
+         or non-standard embedded toolchains).
+       * Relocate toolchain/sysroot directories out of `/mnt/clfs/<profile>` and
+         into a unified, professional layout under `/mnt/runepkg/<profile>`.
+       * Target `runas` workflow: Allow `runas --target=<profile> build <somepkg>`
+         to build standard Debian-compatible packages immediately against a
+         `<profile>` sysroot staged via `runepkg --target -i gcc` (and related
+         build dependencies).
+
+4. UNIFYING `psychic` & `runas` TARGETS + CONFIG RULES
+   - `psychic` is more than a standard Debian Multi-Arch and qualifier parser
+     (`:any`, `:native`, `:arch`); its design draws deeply from Cross Linux
+     From Scratch (CLFS) invariants—bridging what a cross-build environment
+     expects with what Debian repositories and layouts actually provide.
+   - Target Unification:
+       * Unify target definitions across `psychic` (`runepkg`) and `runas`,
+         conjoining operations such as `runepkg --target update` and
+         `runepkg --target -i <pkg>` with `runas --target=<profile>`.
+   - `runepkgconfig` & `target_install_dir` Rule:
+       * Keep `target_install_dir` commented out (or blank) by default in
+         `runepkgconfig`.
+       * When `target_install_dir` is commented out/blank, default to assuming
+         a destructible toolchain/sysroot environment under `/mnt/runepkg/<profile>`.
+       * When `target_install_dir` is explicitly set to a path, honor that
+         explicit directory instead of auto-provisioning a destructible profile
+         tree.
+   - Disposable Mindset & Profile Removal:
+       * Treat `/mnt/runepkg/<profile>` as a disposable/destructible workspace
+         that can be cleanly torn down at any time via `runepkg -r --remove <profile>`
+         (or equivalent profile removal flow) without risking host state.
+
+5. PER-PROFILE TRACKING (`runepkg_db/<profile>`) & THE "INCLUDE DIRECTIVE"
+   - Spidering `runepkg_db`:
+       * Create and maintain per-profile tracking directories under
+         `runepkg_db/<profile>` so multiple target profiles can coexist cleanly.
+       * Wire up `runepkg --target -l` to list installed packages from
+         `runepkg_db/<profile>`.
+   - The "Include Directive" Principle (Single Source of Truth):
+       * Everything recorded inside `runepkg_db/<profile>` and staged by
+         `runepkg --target` is treated as authoritative truth—functioning like
+         a C `#include` directive for downstream `psychic` logic and `runas`
+         builds.
+
+6. PREDICTIVE `psychic` & FSM HEAD-TO-TAIL TRACKING
+   - Wire up the existing FSM logging scaffolding to track the **head** (entry
+     intent/pre-state) and **tail** (resulting post-state) of operations.
+   - Combine head/tail operation tracking with active sysroot verification
+     (checking `/mnt/runepkg/<profile>` for toolchain presence, verifying
+     working symlinks, and inspecting linkage) so `psychic` can accurately
+     predict system/sysroot readiness before builds run.
+
+7. IMPLEMENTATION TO-DO CHECKLIST (FOR ANDROID STUDIO AI)
+   - [ ] Define a unified Target/Profile struct shared between `runepkg`
+         (`psychic`) and `runas` (following the unified `pkginfo` struct pattern).
+   - [ ] Implement `runepkg --target=<profile>` profile resolution alongside
+         `runepkgconfig` (`target_arch` and commented-out `target_install_dir`
+         defaulting to `/mnt/runepkg/<profile>`).
+   - [ ] Relocate toolchain/sysroot paths from `/mnt/clfs/<profile>` to
+         `/mnt/runepkg/<profile>`.
+   - [ ] Preserve existing `runas build-toolchain` code for special/rare cases,
+         while enabling standard Debian-compatible `runas --target=<profile> build <pkg>`
+         using sysroots staged via `runepkg --target -i ...`.
+   - [ ] Implement per-profile package state tracking in `runepkg_db/<profile>`
+         and enable `runepkg --target -l`.
+   - [ ] Implement profile teardown/cleanup (`runepkg -r --remove <profile>`).
+   - [ ] Activate FSM head/tail operation tracking and sysroot sanity probes
+         (symlink and toolchain verification in `/mnt/runepkg/<profile>`) to
+         power `psychic` predictions.
+================================================================================

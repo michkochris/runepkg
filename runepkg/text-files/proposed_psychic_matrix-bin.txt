@@ -1,0 +1,12 @@
+
+
+this whole unification of runepkg has been alot choosing and aggreeing with every little detail, but made me
+remember my psychic vision, and though of something similar to "put aside" jit matrix of having alibrary of user editable build scripts for rare custom cross compiles separete from debian.
+
+this made me think of a psychic_matrix.bin which be located in /srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin
+
+this is just theory but we could binary track what c libraries exsist in whatever "/lib" and what development headers exsist in "/usr/include" ?
+
+how does this theory hold up, its still fresh in mind but this could make automated runepkg psychic actions or recomendations
+
+realling interesting?
