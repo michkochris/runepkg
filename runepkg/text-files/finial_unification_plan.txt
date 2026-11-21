@@ -1,6 +1,18 @@
 Implementation Plan: runepkg & runas Target Unification & Per-Profile Architecture
-This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (runepkg_db/<profile>), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
+This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (<sysroot>/srv/lib/runepkg_dir/runepkg_db), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
 User Review Required & Design Invariants
+Important
+Single Authoritative DB Path Function (runepkg_config_get_effective_db_dir): Host runepkg computes g_runepkg_db_dir strictly based on the active install root / target sysroot:
+•
+Host Root Installation (install_dir = /): Returns /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed directly to /).
+•
+Target Profile Mode (target_sysroot = /mnt/runepkg/<profile>): Host runepkg reaches directly into the target sysroot: /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db
+•
+No Dual/External Host Tracking: Host runepkg does NOT keep a separate DB at /srv/lib/runepkg_dir/runepkg_db/<profile>. The database lives 100% inside the target sysroot itself.
+•
+Self-Contained & Chroot Native: If /mnt/runepkg/<profile> is chrooted or booted into, runepkg running natively inside finds its database at /srv/lib/runepkg_dir/runepkg_db.
+•
+Single-Step Teardown: Deleting /mnt/runepkg/<profile> via runepkg -r --remove-profile <profile> automatically deletes both the sysroot and its database in a single rm -rf step with zero host residue.
 Important
 Staged Execution Phases:
 1.
@@ -17,14 +29,6 @@ C89 Memory & Pointer Ownership Rule (const char *):
 Managed Pointer Ownership: runepkg_config_get_effective_db_dir() returns a const char * pointer to managed memory (g_runepkg_db_dir), valid for the process lifetime. Callers do not free this pointer.
 •
 Buffer Filling Convention: Helpers that format path strings (e.g. runepkg_config_get_profile_paths(profile_name, out_sysroot, sysroot_sz, out_db_dir, db_sz)) write into caller-supplied stack buffers, completely eliminating heap allocation leaks in C89.
-Important
-Single Authoritative DB Path Function (runepkg_config_get_effective_db_dir): A single function runepkg_config_get_effective_db_dir() calculates and sets the active database directory:
-•
-Host Root (install_dir = /): Returns /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed directly to /).
-•
-Alternate install_dir or Target Sysroot (target_sysroot): Returns <install_dir_or_sysroot>/srv/lib/runepkg_dir/runepkg_db.
-•
-Zero Host Fallback: Completely eliminates competing DB paths or host fallback during target profile queries.
 Important
 Binary Format Bounds & Struct Safety (psychic_matrix.bin):
 •
@@ -92,7 +96,7 @@ If install_dir == "/": g_runepkg_db_dir = /srv/lib/runepkg_dir/runepkg_db (track
 ◦
 If install_dir != "/": runepkg abandons host database tracking in /srv/lib/runepkg_dir/runepkg_db and sets g_runepkg_db_dir = <install_dir>/srv/lib/runepkg_dir/runepkg_db.
 ◦
-If operating under a target profile (target_sysroot): g_runepkg_db_dir = <target_sysroot>/srv/lib/runepkg_dir/runepkg_db.
+If operating under a target profile (target_sysroot): g_runepkg_db_dir = /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db.
 •
 Ensure runepkg_config_save_active_state() only updates active_target.conf without touching runepkgconfig.
 [MODIFY] runepkgconfig
@@ -116,7 +120,7 @@ Validates realpath() boundary (verifying target is strictly under /mnt/runepkg/ 
 •
 When --target or --target=<profile> is specified, invoke unified atomic target activation to set g_active_profile and g_target_sysroot, and update g_runepkg_db_dir dynamically via runepkg_config_get_effective_db_dir().
 •
-Ensure runepkg --target -l queries installed packages directly from the target profile database.
+Ensure runepkg --target -l queries installed packages directly from /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db.
 [MODIFY]  runepkg_storage.c
 •
 Ensure package metadata operations (pkginfo.bin, status, available, installed file lists) strictly respect runepkg_config_get_effective_db_dir().
