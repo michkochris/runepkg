@@ -2,6 +2,22 @@ Implementation Plan: runepkg & runas Target Unification & Per-Profile Architectu
 This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (runepkg_db/<profile>), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
 User Review Required & Design Invariants
 Important
+Minimalist In-Place Binary Indexing (Zero Temp-File Bloat):
+•
+Direct In-Place Write: psychic_matrix.bin is written/overwritten directly in-place inside <sysroot>/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin at the end of a completed target operation—completely avoiding temporary (.tmp) files to keep C89 code lean, fast, and simple.
+•
+Magic Version Header: Contains a 4-byte magic header (0x50535943 / "PSYC") and 32-bit version field at the top of the file so psychic can validate binary integrity in O(1) time.
+Important
+Strict Read/Write Boundary Invariant (Zero Host DB Fallback):
+•
+Host Root Installation (install_dir = /): Reads and writes host-specific packages strictly in /srv/lib/runepkg_dir/runepkg_db.
+•
+Non-Host Target or Alternate Root (install_dir != / or target_sysroot):
+◦
+Both writing artifacts and reading back tracked target packages belong strictly to that target's self-contained database: <install_dir_or_sysroot>/srv/lib/runepkg_dir/runepkg_db
+◦
+Zero Fallback: Target queries (runepkg --target -l) NEVER fall back to host package lists or host / database as if they were installed in the target.
+Important
 Canonical Profile Name vs. deb_host_arch (arm64 vs. aarch64-linux-gnu): runepkg_psychic_parse_target_arch() populates both fields side-by-side in TargetProfile:
 •
 deb_host_arch (arm64): Used for Debian repository queries, stanza matching, and package qualifiers (:arm64).
@@ -12,7 +28,7 @@ runepkg_config_get_profile_paths() strictly uses canonical triplet for path gene
 Important
 Order of Operations & Teardown Safety:
 1.
-Write Ordering for psychic_matrix.bin: During package installation/removal in a target sysroot (runepkg --target=... -i <pkg>), psychic_matrix.bin is updated/regenerated AFTER package extraction and runepkg_psychic_anchor_dynamic_linker() complete so the binary index reflects the final staged state (including dynamic linker symlinks).
+Write Ordering: psychic_matrix.bin is written directly in-place AFTER package extraction and runepkg_psychic_anchor_dynamic_linker() complete so all symlinks and headers are indexed in their final staged state.
 2.
 Teardown Safety Guardrail: runepkg -r --remove-profile <profile> strictly validates the resolved sysroot path (verifying it is non-empty, contains /mnt/runepkg/, and is NOT /, /mnt, or /mnt/runepkg) before executing recursive removal to prevent accidental host system deletion.
 Important
@@ -20,17 +36,7 @@ C89 vs. C++17 Boundary & Atomic State Activation:
 1.
 Strict C89 Header Standard: All declarations in runepkg_config.h and runepkg_psychic.h remain strictly C89-compliant (/* */ comments, top-of-block variable declarations, wrapped in extern "C" when included by .cpp files).
 2.
-Atomic Profile Activation: runepkg_config_activate_profile() sets g_active_profile, g_target_sysroot, and g_runepkg_db_dir atomically in one entry point before any C++ runas module (runepkg_building.cpp, runepkg_matrix.cpp) accesses target context.
-Important
-Strict Database Tracking Rule: Host Root vs. Alternate install_dir:
-•
-Host Root Installation (install_dir = /): The host root database at /srv/lib/runepkg_dir/runepkg_db ONLY tracks host-specific packages installed directly to / root.
-•
-Alternate install_dir (anything other than / root): When install_dir is set to any directory other than / (e.g. /srv/lib/runepkg_dir/install_dir or custom directory), runepkg abandons tracking in the host root database.
-•
-Self-Contained Database Insertion: Instead, runepkg inserts a self-contained database directly inside that install location at: <install_dir>/srv/lib/runepkg_dir/runepkg_db
-•
-Target Profile Sysroots: Target profiles insert their database inside: <target_sysroot>/srv/lib/runepkg_dir/runepkg_db (e.g. /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db).
+Atomic Profile Activation: runepkg_config_activate_profile() sets g_active_profile, g_target_sysroot, and g_runepkg_db_dir atomically in one entry point before any C++ runas module accesses target context.
 Important
 4-Tier Target Precedence Order: Target context resolution in runepkg_config.c strictly follows this 4-tier hierarchy:
 1.
@@ -110,7 +116,7 @@ Add profile teardown command runepkg -r --remove-profile <profile> (or runepkg -
 •
 When --target or --target=<profile> is specified, invoke unified atomic target activation to set g_active_profile and g_target_sysroot, and update g_runepkg_db_dir dynamically to point strictly to <target_sysroot>/srv/lib/runepkg_dir/runepkg_db.
 •
-Ensure runepkg --target -l queries installed packages directly from the target profile database.
+Ensure runepkg --target -l queries installed packages directly from the target profile database without host fallback.
 [MODIFY]  runepkg_storage.c
 •
 Ensure package metadata operations (pkginfo.bin, status, available, installed file lists) strictly respect g_runepkg_db_dir (which points to <install_dir_or_sysroot>/srv/lib/runepkg_dir/runepkg_db when operating in alternate install or target profile mode).
@@ -138,13 +144,13 @@ Implement Head (intent/pre-state snapshot) and Tail (resulting post-state snapsh
 Write transition head/tail log records to g_log_dir/fsm_journal.log.
 [MODIFY]  runepkg_psychic.c &  runepkg_psychic.h
 •
-Implement psychic_matrix.bin generator and binary reader:
+Implement direct in-place psychic_matrix.bin generator and binary reader (no .tmp file overhead):
+◦
+Includes a 4-byte magic header (0x50535943 / "PSYC") and 32-bit version field.
 ◦
 Indexes staged C/C++ shared libraries (/lib, /usr/lib, /usr/lib/<gnu_triplet>) and header files (/usr/include, /usr/include/<gnu_triplet>) inside <sysroot>.
 ◦
-Serializes binary index to <sysroot>/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin.
-◦
-Regenerated/updated AFTER package extraction and runepkg_psychic_anchor_dynamic_linker() complete.
+Serializes binary index directly in-place to <sysroot>/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin after package extraction completes.
 •
 Implement Header/Library-to-Debian Prophecy Mapping:
 ◦
@@ -160,9 +166,9 @@ make clean && make
 Test CLI --target=<profile> resolution and listing:
 ./runepkg --target=arm64:aarch64-linux-gnu -l
 3.
-Test per-profile DB isolation & psychic_matrix.bin:
+Test per-profile DB isolation & in-place psychic_matrix.bin:
 ◦
-Verify /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin creation and binary serialization.
+Verify /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin direct in-place creation and header validation ("PSYC").
 4.
 Test profile teardown / removal safety:
 ◦
