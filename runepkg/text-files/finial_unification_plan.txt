@@ -2,15 +2,15 @@ Implementation Plan: runepkg & runas Target Unification & Per-Profile Architectu
 This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (<sysroot>/srv/lib/runepkg_dir/runepkg_db), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
 User Review Required & Design Invariants
 Important
-Single Authoritative DB Path Function (runepkg_config_get_effective_db_dir): Host runepkg computes g_runepkg_db_dir strictly based on the active install root / target sysroot:
+Single Authoritative DB Path Formula (runepkg_config_get_effective_db_dir): Host runepkg computes g_runepkg_db_dir using one single formula across all execution modes:
 •
-Host Root Installation (install_dir = /): Returns /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed directly to /).
+If <root> == / (Host Root): Returns /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed directly to /).
 •
-Target Profile Mode (target_sysroot = /mnt/runepkg/<profile>): Host runepkg reaches directly into the target sysroot: /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db
+If <root> != / (Alternate install_dir OR Target Profile target_sysroot): Returns <root>/srv/lib/runepkg_dir/runepkg_db (e.g. /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db or /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db).
 •
-No Dual/External Host Tracking: Host runepkg does NOT keep a separate DB at /srv/lib/runepkg_dir/runepkg_db/<profile>. The database lives 100% inside the target sysroot itself.
+Unified Maintenance: One single path formula maintains database isolation for both alternate install locations and cross-target sysroots.
 •
-Self-Contained & Chroot Native: If /mnt/runepkg/<profile> is chrooted or booted into, runepkg running natively inside finds its database at /srv/lib/runepkg_dir/runepkg_db.
+Self-Contained & Chroot Native: If <root> is chrooted or booted into, runepkg running natively inside finds its database at /srv/lib/runepkg_dir/runepkg_db.
 •
 Single-Step Teardown: Deleting /mnt/runepkg/<profile> via runepkg -r --remove-profile <profile> automatically deletes both the sysroot and its database in a single rm -rf step with zero host residue.
 Important
@@ -82,21 +82,17 @@ int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot
 Codify 4-tier target precedence resolution (runepkg_config_resolve_target()).
 [MODIFY]  runepkg_config.c
 •
-Implement runepkg_config_get_effective_db_dir() as the single authoritative DB path derivation function (returning managed g_runepkg_db_dir).
+Implement runepkg_config_get_effective_db_dir() using the single formula rule:
+◦
+If <root> == "/": returns /srv/lib/runepkg_dir/runepkg_db.
+◦
+If <root> != "/" (alternate install_dir or target_sysroot): returns <root>/srv/lib/runepkg_dir/runepkg_db.
 •
 Implement runepkg_config_get_profile_paths() to centralize sysroot and DB path derivation using canonical triplet and stack buffers.
 •
 Implement 4-tier target resolution order in runepkg_config_load().
 •
 Implement atomic target activation in runepkg_config_activate_profile().
-•
-Enforce strict database path assignment rule:
-◦
-If install_dir == "/": g_runepkg_db_dir = /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed to /).
-◦
-If install_dir != "/": runepkg abandons host database tracking in /srv/lib/runepkg_dir/runepkg_db and sets g_runepkg_db_dir = <install_dir>/srv/lib/runepkg_dir/runepkg_db.
-◦
-If operating under a target profile (target_sysroot): g_runepkg_db_dir = /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db.
 •
 Ensure runepkg_config_save_active_state() only updates active_target.conf without touching runepkgconfig.
 [MODIFY] runepkgconfig
