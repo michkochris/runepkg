@@ -2,6 +2,16 @@ Implementation Plan: runepkg & runas Target Unification & Per-Profile Architectu
 This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (runepkg_db/<profile>), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
 User Review Required & Design Invariants
 Important
+Staged Execution Phases:
+1.
+Phase 1 (Pass One - Core Isolation): Unify TargetProfile struct, implement 4-tier target precedence, single effective DB path helper (runepkg_config_get_effective_db_dir), CLI --target=<profile> flag, and safe teardown (remove-profile).
+2.
+Phase 2 (Debian-First runas): Bind runas matrix parsing to TargetProfile, update sysroot build paths to /mnt/runepkg/<profile>, wire Multi-Arch dependency filters, and preserve legacy runas build-toolchain intact.
+3.
+Phase 3 (psychic_matrix.bin & Prophecy): Implement psychic_matrix.bin binary serialization with "PSYC" header bounds checking, header/library-to-Debian prophecy mapping, and pre-flight sysroot probes.
+4.
+Phase 4 (FSM Head/Tail Tracking): Wire head/tail transaction state logging in runepkg_state.c.
+Important
 C89 Memory & Pointer Ownership Rule (const char *):
 •
 Managed Pointer Ownership: runepkg_config_get_effective_db_dir() returns a const char * pointer to managed memory (g_runepkg_db_dir), valid for the process lifetime. Callers do not free this pointer.
@@ -50,7 +60,7 @@ Config File Defaults (runepkgconfig) — Reads target_arch / target_sysroot if p
 4.
 Host Mode (x86_64-linux-gnu, /) — Fallback when no target is specified anywhere. Invariance Rule: switch commands only write active_target.conf and NEVER modify runepkgconfig on disk.
 Proposed Changes
-Component 1: Unified Target / Profile Metadata Structure & Resolution (psychic + runas + runepkg_config)
+Phase 1: Core Target Profile Unification, Precedence & DB Isolation
 [MODIFY]  runepkg_config.h
 •
 Unify TargetProfile as the single authoritative C89/C++ struct across runepkg, psychic, and runas (following the unified PkgInfo struct pattern).
@@ -66,18 +76,6 @@ const char *runepkg_config_get_effective_db_dir(void); (returns managed string; 
 int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz); (fills stack buffers)
 •
 Codify 4-tier target precedence resolution (runepkg_config_resolve_target()).
-[MODIFY]  runepkg_psychic.h &  runepkg_psychic.c
-•
-Align RunePkgTargetSpec (deb_arch, gnu_triplet) directly with TargetProfile (deb_host_arch, triplet).
-•
-Bind runepkg_psychic_parse_target_arch() to resolve and normalize raw inputs (e.g. arm64:aarch64-linux-gnu -> deb_host_arch=arm64, triplet=aarch64-linux-gnu, canonical profile=aarch64-linux-gnu).
-•
-Expand runepkg_psychic_anchor_dynamic_linker() to verify and link both /lib/ld-linux-aarch64.so.1 and /lib/<triplet>/ld-linux-aarch64.so.1 into usr/lib/<triplet>/ under UsrMerge layouts.
-[MODIFY] runepkgconfig
-•
-Rename target_install_dir key to target_sysroot (commented out by default).
-•
-Document 4-tier resolution and defaulting rule to /mnt/runepkg/<profile>.
 [MODIFY]  runepkg_config.c
 •
 Implement runepkg_config_get_effective_db_dir() as the single authoritative DB path derivation function (returning managed g_runepkg_db_dir).
@@ -88,8 +86,20 @@ Implement 4-tier target resolution order in runepkg_config_load().
 •
 Implement atomic target activation in runepkg_config_activate_profile().
 •
+Enforce strict database path assignment rule:
+◦
+If install_dir == "/": g_runepkg_db_dir = /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed to /).
+◦
+If install_dir != "/": runepkg abandons host database tracking in /srv/lib/runepkg_dir/runepkg_db and sets g_runepkg_db_dir = <install_dir>/srv/lib/runepkg_dir/runepkg_db.
+◦
+If operating under a target profile (target_sysroot): g_runepkg_db_dir = <target_sysroot>/srv/lib/runepkg_dir/runepkg_db.
+•
 Ensure runepkg_config_save_active_state() only updates active_target.conf without touching runepkgconfig.
-Component 2: CLI Profile Arguments & Per-Profile Database Isolation (/srv/lib/runepkg_dir/runepkg_db)
+[MODIFY] runepkgconfig
+•
+Rename target_install_dir key to target_sysroot (commented out by default).
+•
+Document 4-tier resolution and defaulting rule to /mnt/runepkg/<profile>.
 [MODIFY]  runepkg_cli.c
 •
 Add command-line flag handling for --target=<profile> (e.g. runepkg --target=aarch64-linux-gnu -i libtool).
@@ -112,7 +122,7 @@ Ensure runepkg --target -l queries installed packages directly from the target p
 Ensure package metadata operations (pkginfo.bin, status, available, installed file lists) strictly respect runepkg_config_get_effective_db_dir().
 •
 Abandon host database fallback scanning during non-root install_dir or target profile operations to prevent host state leaking into alternate queries.
-Component 3: Standard Debian Compatibility First in runas & Target Matrix Unification
+Phase 2: Standard Debian Compatibility First in runas & Target Matrix Unification
 [MODIFY]  runepkg_matrix.cpp
 •
 Update RuneMatrixEngine::parse_profile() to directly bind to g_active_profile (TargetProfile) loaded by runepkg_config_load_profile().
@@ -126,13 +136,14 @@ Enhance standard runas --target=<profile> build <pkg> to cross-compile against s
 [MODIFY]  runepkg_resolver.cpp
 •
 Align target profile resolution with runepkg_config 4-tier target loading logic.
-Component 4: Predictive psychic Binary Matrix (psychic_matrix.bin) & Prophecy Mapping
-[MODIFY]  runepkg_state.c
+Phase 3: Predictive psychic Binary Matrix (psychic_matrix.bin) & Prophecy Mapping
+[MODIFY]  runepkg_psychic.h &  runepkg_psychic.c
 •
-Implement Head (intent/pre-state snapshot) and Tail (resulting post-state snapshot) state logging in FSM transactions.
+Align RunePkgTargetSpec (deb_arch, gnu_triplet) directly with TargetProfile (deb_host_arch, triplet).
 •
-Write transition head/tail log records to g_log_dir/fsm_journal.log.
-[MODIFY]  runepkg_psychic.c &  runepkg_psychic.h
+Bind runepkg_psychic_parse_target_arch() to resolve and normalize raw inputs (e.g. arm64:aarch64-linux-gnu -> deb_host_arch=arm64, triplet=aarch64-linux-gnu, canonical profile=aarch64-linux-gnu).
+•
+Expand runepkg_psychic_anchor_dynamic_linker() to verify and link both /lib/ld-linux-aarch64.so.1 and /lib/<triplet>/ld-linux-aarch64.so.1 into usr/lib/<triplet>/ under UsrMerge layouts.
 •
 Implement psychic_matrix.bin binary serialization and reader with strict bounds checking:
 ◦
@@ -147,6 +158,12 @@ Implement Header/Library-to-Debian Prophecy Mapping:
 Cross-references missing build symbols/headers against binary repository index (repo_index.bin / Recommends / Suggests / Build-Depends metadata) to recommend missing .deb packages (e.g. zlib1g-dev:arm64).
 •
 Expand runepkg_psychic_prophecy_check() to inspect psychic_matrix.bin and verify dynamic linkers, libc headers, and compiler availability before runas executes a build.
+Phase 4: Predictive FSM Head/Tail Tracking
+[MODIFY]  runepkg_state.c
+•
+Implement Head (intent/pre-state snapshot) and Tail (resulting post-state snapshot) state logging in FSM transactions.
+•
+Write transition head/tail log records to g_log_dir/fsm_journal.log.
 Verification Plan
 Automated Tests & Sanity Script
 1.
