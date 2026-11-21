@@ -2,6 +2,14 @@ Implementation Plan: runepkg & runas Target Unification & Per-Profile Architectu
 This plan specifies the technical implementation details for unifying target profiles, toolchain sysroot paths (target_sysroot), per-profile package state tracking (<sysroot>/srv/lib/runepkg_dir/runepkg_db), disposable profile management, predictive psychic_matrix.bin sysroot indexing, C89/C++17 boundary safety, and predictive FSM head/tail tracking across runepkg (psychic) and runas.
 User Review Required & Design Invariants
 Important
+Self-Contained Target Config Provisioning (<sysroot>/etc/runepkg/): When a target sysroot /mnt/runepkg/<profile> is staged or initialized:
+•
+Native Config Provisioning: runepkg provisions <sysroot>/etc/runepkg/runepkgconfig and <sysroot>/etc/runepkg/config_registry.txt pre-configured for native operation (install_dir=/, runepkg_db=/srv/lib/runepkg_dir/runepkg_db).
+•
+Chroot & Boot Readiness: If /mnt/runepkg/<profile> is chrooted or booted on real hardware, runepkg running natively inside finds its own valid /etc/runepkg/runepkgconfig and runepkg_db in place.
+•
+Active State Entanglement: <sysroot>/etc/runepkg/active_target.conf is written with ACTIVE_TARGET=<profile> so native target tools recognize their sysroot identity.
+Important
 Single Authoritative DB Path Formula (runepkg_config_get_effective_db_dir): Host runepkg computes g_runepkg_db_dir using one single formula across all execution modes:
 •
 If <root> == / (Host Root): Returns /srv/lib/runepkg_dir/runepkg_db (tracks ONLY host packages installed directly to /).
@@ -16,7 +24,7 @@ Single-Step Teardown: Deleting /mnt/runepkg/<profile> via runepkg -r --remove-pr
 Important
 Staged Execution Phases:
 1.
-Phase 1 (Pass One - Core Isolation): Unify TargetProfile struct, implement 4-tier target precedence, single effective DB path helper (runepkg_config_get_effective_db_dir), CLI --target=<profile> flag, and safe teardown (remove-profile).
+Phase 1 (Pass One - Core Isolation): Unify TargetProfile struct, implement 4-tier target precedence, single effective DB path helper (runepkg_config_get_effective_db_dir), CLI --target=<profile> flag, safe teardown (remove-profile), and target /etc/runepkg/ config provisioning.
 2.
 Phase 2 (Debian-First runas): Bind runas matrix parsing to TargetProfile, update sysroot build paths to /mnt/runepkg/<profile>, wire Multi-Arch dependency filters, and preserve legacy runas build-toolchain intact.
 3.
@@ -79,6 +87,8 @@ const char *runepkg_config_get_effective_db_dir(void); (returns managed string; 
 ◦
 int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz); (fills stack buffers)
 •
+Add target config provisioning prototype: int runepkg_config_provision_target_sysroot_config(const char *sysroot_path, const TargetProfile *profile);.
+•
 Codify 4-tier target precedence resolution (runepkg_config_resolve_target()).
 [MODIFY]  runepkg_config.c
 •
@@ -89,6 +99,8 @@ If <root> == "/": returns /srv/lib/runepkg_dir/runepkg_db.
 If <root> != "/" (alternate install_dir or target_sysroot): returns <root>/srv/lib/runepkg_dir/runepkg_db.
 •
 Implement runepkg_config_get_profile_paths() to centralize sysroot and DB path derivation using canonical triplet and stack buffers.
+•
+Implement runepkg_config_provision_target_sysroot_config() to generate <target_sysroot>/etc/runepkg/runepkgconfig, <target_sysroot>/etc/runepkg/config_registry.txt, and <target_sysroot>/etc/runepkg/active_target.conf during sysroot initialization.
 •
 Implement 4-tier target resolution order in runepkg_config_load().
 •
@@ -114,7 +126,7 @@ Handles nonexistent path cleanly (returns success immediately if runepkg_util_fi
 ◦
 Validates realpath() boundary (verifying target is strictly under /mnt/runepkg/ and NOT /, /mnt, or root directory).
 •
-When --target or --target=<profile> is specified, invoke unified atomic target activation to set g_active_profile and g_target_sysroot, and update g_runepkg_db_dir dynamically via runepkg_config_get_effective_db_dir().
+When --target or --target=<profile> is specified, invoke unified atomic target activation to set g_active_profile and g_target_sysroot, provision target config via runepkg_config_provision_target_sysroot_config(), and update g_runepkg_db_dir dynamically via runepkg_config_get_effective_db_dir().
 •
 Ensure runepkg --target -l queries installed packages directly from /mnt/runepkg/<profile>/srv/lib/runepkg_dir/runepkg_db.
 [MODIFY]  runepkg_storage.c
@@ -173,9 +185,9 @@ make clean && make
 Test CLI --target=<profile> resolution and listing:
 ./runepkg --target=arm64:aarch64-linux-gnu -l
 3.
-Test per-profile DB isolation & in-place psychic_matrix.bin:
+Test per-profile DB isolation & target config provisioning:
 ◦
-Verify /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin header validation ("PSYC", version, total bytes) and binary serialization.
+Verify /mnt/runepkg/aarch64-linux-gnu/etc/runepkg/runepkgconfig, config_registry.txt, active_target.conf, and psychic_matrix.bin creation.
 4.
 Test profile teardown / removal safety:
 ◦
@@ -191,6 +203,6 @@ Run existing sanity bash script:
 ./test_fsm_chaos.sh
 Manual Verification
 •
-Verify that runepkg --target=arm64:aarch64-linux-gnu -i libtool populates /mnt/runepkg/aarch64-linux-gnu sysroot correctly.
+Verify that runepkg --target=arm64:aarch64-linux-gnu -i libtool populates /mnt/runepkg/aarch64-linux-gnu sysroot and provisions <target_sysroot>/etc/runepkg/ correctly.
 •
 Verify runas --target=aarch64-linux-gnu recognizes /mnt/runepkg/aarch64-linux-gnu sysroot setup and uses psychic_matrix.bin for Multi-Arch recommendations.
