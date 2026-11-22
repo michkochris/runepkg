@@ -51,7 +51,8 @@ install_dir=/srv/lib/runepkg_dir/install_dir
 
 # [target_arch]
 # Explicit target architecture for multi-arch cross-staging (e.g. amd64, arm64, riscv64).
-target_arch=arm64:aarch64-linux-gnu
+target_arch=amd64:x86_64-linux-gnu
+#target_arch=arm64:aarch64-linux-gnu
 
 # [runepkg_db]
 # Persistent storage for the package manager's state.
