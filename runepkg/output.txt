@@ -1,0 +1,437 @@
+[ zypherus /home/michko/runepkg/runepkg ]# ls
+bashrc                    runepkg_completion.h  runepkg_hash.c         runepkg_pack.c        runepkg_storage.h
+copy_makefile.sh          runepkgconfig         runepkg_hash.h         runepkg_pack.h        runepkg_util.c
+debian-depends.sh         runepkg_config.c      runepkg_host.c         runepkg_portable.h    runepkg_util.h
+forge-musl-all.sh         runepkg_config.h      runepkg_host.h         runepkg_psychic.c     runepkg_utility.cpp
+future_cpp                runepkg_cpp_ffi.h     runepkg_icon.svg       runepkg_psychic.h     runepkg_utility.hpp
+gemini-svg.svg            runepkg_crypto.c      runepkg_install.c      runepkg_resolver.cpp  rune-tests
+Makefile                  runepkg_crypto.h      runepkg_install.h      runepkg_runas.cpp     run_unification_tests.sh
+make_runepkg_deb.sh       runepkg_defensive.c   runepkg_logo.svg       runepkg_runas.hpp     target-runes
+retro-log-next-thing.txt  runepkg_defensive.h   runepkg_md5sums.c      runepkg_security.cpp  targets
+runepkg_building.cpp      runepkg_guard.cpp     runepkg_md5sums.h      runepkg_security.hpp  test_fsm_chaos.sh
+runepkg_building.hpp      runepkg_guard.hpp     runepkg_multiarch.cpp  runepkg_state.c       text-files
+runepkg_cli.c             runepkg_handle.c      runepkg_multiarch.hpp  runepkg_state.h       version-check.sh
+runepkg_completion.c      runepkg_handle.h      runepkg_network.cpp    runepkg_storage.c     vrunepkg_config
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg/
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg and runas...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [forge] Compiling C Rune: runepkg_psychic.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_utility.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [ritual] Compiling C++ Rune: runepkg_multiarch.cpp
+  [ritual] Compiling C++ Rune: runepkg_building.cpp
+  [ritual] Compiling C++ Rune: runepkg_runas.cpp
+  [link]  Linking binaries: runepkg runas
+⚡ runepkg build complete: runepkg runas
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+🧙 runepkg installation complete!
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  Base Directory:      /srv/lib/runepkg_dir
+  Control Directory:   /srv/lib/runepkg_dir/control_dir
+  Install Directory:   /srv/lib/runepkg_dir/install_dir
+  System Install Root: /srv/lib/runepkg_dir/install_dir
+  Database Directory:  /srv/lib/runepkg_dir/runepkg_db
+  Download Directory:  /srv/lib/runepkg_dir/download_dir
+  Build Directory:     /srv/lib/runepkg_dir/build_dir
+  Debs Directory:      /srv/lib/runepkg_dir/runepkg_debs
+  Target Install Dir:  (not set)
+  Target Architecture: amd64:x86_64-linux-gnu
+  Cleanup: no
+  MD5 Checks: yes
+
+Configured Sources:
+==================
+  [1] deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+  [2] deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 12.9s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 114269 source rune stanzas in 664ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29872 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i file
+[runepkg] Planning installation for 1 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc libmagic1t64 file
+
+10 packages (3.9 MB) will be installed. Continue? [y/N] y
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-3)
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -l
+Reading package data: 13 packages, 24.7 MB used, 952.8 GB available
+Listing installed packages...
+
+file (1:5.47-4)                    gcc-16-base (16.2.0-4)             libbz2-1.0-1.0.8 (6+b2)
+libc-gconv-modules-extra (2.43-7)  libc6 (2.43-7)                     libgcc-s1 (16.2.0-4)
+liblzma5 (5.8.4-1)                 libmagic-mgc (1:5.47-4)            libmagic1t64 (1:5.47-4)
+zlib1g (1:1.3.dfsg+really1.3.2-3)
+[ zypherus /home/michko/runepkg/runepkg ]# file /srv/lib/runepkg_dir/install_dir/usr/bin/file
+/srv/lib/runepkg_dir/install_dir/usr/bin/file: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=98a15508c04ad36cf241483aee8953e8cd2542dd, for GNU/Linux 3.2.0, stripped
+[ zypherus /home/michko/runepkg/runepkg ]# ldd /srv/lib/runepkg_dir/install_dir/usr/bin/file
+        linux-vdso.so.1 (0x00007ffef0936000)
+        libmagic.so.1 => /usr/lib/x86_64-linux-gnu/libmagic.so.1 (0x00007e3c1e05c000)
+        libc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x00007e3c1de66000)
+        liblzma.so.5 => /usr/lib/x86_64-linux-gnu/liblzma.so.5 (0x00007e3c1de35000)
+        libbz2.so.1.0 => /usr/lib/x86_64-linux-gnu/libbz2.so.1.0 (0x00007e3c1de21000)
+        libz.so.1 => /usr/lib/x86_64-linux-gnu/libz.so.1 (0x00007e3c1de02000)
+        /lib64/ld-linux-x86-64.so.2 (0x00007e3c1e09a000)
+[ zypherus /home/michko/runepkg/runepkg ]# readelf -d /srv/lib/runepkg_dir/install_dir/usr/bin/file
+
+Dynamic section at offset 0x5c60 contains 28 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libmagic.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x000000000000000c (INIT)               0x2000
+ 0x000000000000000d (FINI)               0x3d14
+ 0x0000000000000019 (INIT_ARRAY)         0x6790
+ 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x6798
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x390
+ 0x0000000000000005 (STRTAB)             0x8b0
+ 0x0000000000000006 (SYMTAB)             0x3d0
+ 0x000000000000000a (STRSZ)              614 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000015 (DEBUG)              0x0
+ 0x0000000000000003 (PLTGOT)             0x6e60
+ 0x0000000000000002 (PLTRELSZ)           984 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x1318
+ 0x0000000000000007 (RELA)               0xbe0
+ 0x0000000000000008 (RELASZ)             1848 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x000000000000001e (FLAGS)              BIND_NOW
+ 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE
+ 0x000000006ffffffe (VERNEED)            0xb80
+ 0x000000006fffffff (VERNEEDNUM)         1
+ 0x000000006ffffff0 (VERSYM)             0xb16
+ 0x000000006ffffff9 (RELACOUNT)          67
+ 0x0000000000000000 (NULL)               0x0
+[ zypherus /home/michko/runepkg/runepkg ]# objdump -p /srv/lib/runepkg_dir/install_dir/usr/bin/file
+
+/srv/lib/runepkg_dir/install_dir/usr/bin/file:     file format elf64-x86-64
+
+Program Header:
+    PHDR off    0x0000000000000040 vaddr 0x0000000000000040 paddr 0x0000000000000040 align 2**3
+         filesz 0x0000000000000310 memsz 0x0000000000000310 flags r--
+  INTERP off    0x0000000000000374 vaddr 0x0000000000000374 paddr 0x0000000000000374 align 2**0
+         filesz 0x000000000000001c memsz 0x000000000000001c flags r--
+    LOAD off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**12
+         filesz 0x00000000000016f0 memsz 0x00000000000016f0 flags r--
+    LOAD off    0x0000000000002000 vaddr 0x0000000000002000 paddr 0x0000000000002000 align 2**12
+         filesz 0x0000000000001d1d memsz 0x0000000000001d1d flags r-x
+    LOAD off    0x0000000000004000 vaddr 0x0000000000004000 paddr 0x0000000000004000 align 2**12
+         filesz 0x0000000000001570 memsz 0x0000000000001570 flags r--
+    LOAD off    0x0000000000005790 vaddr 0x0000000000006790 paddr 0x0000000000006790 align 2**12
+         filesz 0x0000000000000a28 memsz 0x0000000000000aa0 flags rw-
+ DYNAMIC off    0x0000000000005c60 vaddr 0x0000000000006c60 paddr 0x0000000000006c60 align 2**3
+         filesz 0x0000000000000200 memsz 0x0000000000000200 flags rw-
+    NOTE off    0x0000000000000350 vaddr 0x0000000000000350 paddr 0x0000000000000350 align 2**2
+         filesz 0x0000000000000024 memsz 0x0000000000000024 flags r--
+    NOTE off    0x0000000000005530 vaddr 0x0000000000005530 paddr 0x0000000000005530 align 2**3
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+    NOTE off    0x0000000000005550 vaddr 0x0000000000005550 paddr 0x0000000000005550 align 2**2
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+0x6474e553 off    0x0000000000005530 vaddr 0x0000000000005530 paddr 0x0000000000005530 align 2**3
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+EH_FRAME off    0x0000000000005140 vaddr 0x0000000000005140 paddr 0x0000000000005140 align 2**2
+         filesz 0x0000000000000094 memsz 0x0000000000000094 flags r--
+   STACK off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**4
+         filesz 0x0000000000000000 memsz 0x0000000000000000 flags rw-
+   RELRO off    0x0000000000005790 vaddr 0x0000000000006790 paddr 0x0000000000006790 align 2**0
+         filesz 0x0000000000000870 memsz 0x0000000000000870 flags r--
+
+Dynamic Section:
+  NEEDED               libmagic.so.1
+  NEEDED               libc.so.6
+  INIT                 0x0000000000002000
+  FINI                 0x0000000000003d14
+  INIT_ARRAY           0x0000000000006790
+  INIT_ARRAYSZ         0x0000000000000008
+  FINI_ARRAY           0x0000000000006798
+  FINI_ARRAYSZ         0x0000000000000008
+  GNU_HASH             0x0000000000000390
+  STRTAB               0x00000000000008b0
+  SYMTAB               0x00000000000003d0
+  STRSZ                0x0000000000000266
+  SYMENT               0x0000000000000018
+  DEBUG                0x0000000000000000
+  PLTGOT               0x0000000000006e60
+  PLTRELSZ             0x00000000000003d8
+  PLTREL               0x0000000000000007
+  JMPREL               0x0000000000001318
+  RELA                 0x0000000000000be0
+  RELASZ               0x0000000000000738
+  RELAENT              0x0000000000000018
+  FLAGS                0x0000000000000008
+  FLAGS_1              0x0000000008000001
+  VERNEED              0x0000000000000b80
+  VERNEEDNUM           0x0000000000000001
+  VERSYM               0x0000000000000b16
+  RELACOUNT            0x0000000000000043
+
+Version References:
+  required from libc.so.6:
+    0x069691b8 0x00 06 GLIBC_2.38
+    0x0d696914 0x00 05 GLIBC_2.4
+    0x069691b4 0x00 04 GLIBC_2.34
+    0x09691974 0x00 03 GLIBC_2.3.4
+    0x09691a75 0x00 02 GLIBC_2.2.5
+
+[ zypherus /home/michko/runepkg/runepkg ]# ls -la /srv/lib/runepkg_dir/install_dir/lib
+total 8
+drwxr-xr-x 2 root root 4096 Nov 22 17:47 .
+drwxr-xr-x 8 root root 4096 Nov 22 17:47 ..
+lrwxrwxrwx 1 root root   48 Nov 22 17:47 ld-linux-x86-64.so.2 -> ../usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+lrwxrwxrwx 1 root root   27 Nov 22 17:47 x86_64-linux-gnu -> ../usr/lib/x86_64-linux-gnu
+[ zypherus /home/michko/runepkg/runepkg ]# file /srv/lib/runepkg_dir/install_dir/lib/ld-linux-x86-64.so.2
+/srv/lib/runepkg_dir/install_dir/lib/ld-linux-x86-64.so.2: symbolic link to ../usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 13.6s
+[harvest] Starting parallel graph analysis on: /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113395 source rune stanzas in 696ms.
+  -> Serialized binary graph to /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29636 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu -i file
+[runepkg] Planning installation for 1 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc libmagic1t64 file
+
+10 packages (3.5 MB) will be installed. Continue? [y/N] y
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-3)
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/michko/runepkg/runepkg ]# file /mnt/runepkg/aarch64-linux-gnu/usr/bin/file
+/mnt/runepkg/aarch64-linux-gnu/usr/bin/file: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=a25312b65e63045295cffb4579e84fe56e9caba9, for GNU/Linux 3.7.0, stripped
+[ zypherus /home/michko/runepkg/runepkg ]# ldd /mnt/runepkg/aarch64-linux-gnu/usr/bin/file
+        not a dynamic executable
+[ zypherus /home/michko/runepkg/runepkg ]# readelf -d /mnt/runepkg/aarch64-linux-gnu/usr/bin/file
+
+Dynamic section at offset 0xfc00 contains 30 entries:
+  Tag        Type                         Name/Value
+ 0x0000000000000001 (NEEDED)             Shared library: [libmagic.so.1]
+ 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
+ 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
+ 0x000000000000000c (INIT)               0x1758
+ 0x000000000000000d (FINI)               0x3730
+ 0x0000000000000019 (INIT_ARRAY)         0x1f740
+ 0x000000000000001b (INIT_ARRAYSZ)       8 (bytes)
+ 0x000000000000001a (FINI_ARRAY)         0x1f748
+ 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
+ 0x000000006ffffef5 (GNU_HASH)           0x320
+ 0x0000000000000005 (STRTAB)             0x880
+ 0x0000000000000006 (SYMTAB)             0x340
+ 0x000000000000000a (STRSZ)              637 (bytes)
+ 0x000000000000000b (SYMENT)             24 (bytes)
+ 0x0000000000000015 (DEBUG)              0x0
+ 0x0000000000000003 (PLTGOT)             0x1fe20
+ 0x0000000000000002 (PLTRELSZ)           1080 (bytes)
+ 0x0000000000000014 (PLTREL)             RELA
+ 0x0000000000000017 (JMPREL)             0x1320
+ 0x0000000000000007 (RELA)               0xbd0
+ 0x0000000000000008 (RELASZ)             1872 (bytes)
+ 0x0000000000000009 (RELAENT)            24 (bytes)
+ 0x0000000070000001 (AARCH64_BTI_PLT)
+ 0x000000000000001e (FLAGS)              BIND_NOW
+ 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE
+ 0x000000006ffffffe (VERNEED)            0xb70
+ 0x000000006fffffff (VERNEEDNUM)         2
+ 0x000000006ffffff0 (VERSYM)             0xafe
+ 0x000000006ffffff9 (RELACOUNT)          68
+ 0x0000000000000000 (NULL)               0x0
+[ zypherus /home/michko/runepkg/runepkg ]# objdump -p /mnt/runepkg/aarch64-linux-gnu/usr/bin/file
+
+/mnt/runepkg/aarch64-linux-gnu/usr/bin/file:     file format elf64-little
+
+Program Header:
+    PHDR off    0x0000000000000040 vaddr 0x0000000000000040 paddr 0x0000000000000040 align 2**3
+         filesz 0x00000000000002a0 memsz 0x00000000000002a0 flags r--
+  INTERP off    0x0000000000000304 vaddr 0x0000000000000304 paddr 0x0000000000000304 align 2**0
+         filesz 0x000000000000001b memsz 0x000000000000001b flags r--
+    LOAD off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**16
+         filesz 0x0000000000004e68 memsz 0x0000000000004e68 flags r-x
+    LOAD off    0x000000000000f740 vaddr 0x000000000001f740 paddr 0x000000000001f740 align 2**16
+         filesz 0x0000000000000a68 memsz 0x0000000000000a90 flags rw-
+ DYNAMIC off    0x000000000000fc00 vaddr 0x000000000001fc00 paddr 0x000000000001fc00 align 2**3
+         filesz 0x0000000000000220 memsz 0x0000000000000220 flags rw-
+    NOTE off    0x00000000000002e0 vaddr 0x00000000000002e0 paddr 0x00000000000002e0 align 2**2
+         filesz 0x0000000000000024 memsz 0x0000000000000024 flags r--
+    NOTE off    0x0000000000004e28 vaddr 0x0000000000004e28 paddr 0x0000000000004e28 align 2**3
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+    NOTE off    0x0000000000004e48 vaddr 0x0000000000004e48 paddr 0x0000000000004e48 align 2**2
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+0x6474e553 off    0x0000000000004e28 vaddr 0x0000000000004e28 paddr 0x0000000000004e28 align 2**3
+         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
+EH_FRAME off    0x00000000000049f8 vaddr 0x00000000000049f8 paddr 0x00000000000049f8 align 2**2
+         filesz 0x00000000000000a4 memsz 0x00000000000000a4 flags r--
+   STACK off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**4
+         filesz 0x0000000000000000 memsz 0x0000000000000000 flags rw-
+   RELRO off    0x000000000000f740 vaddr 0x000000000001f740 paddr 0x000000000001f740 align 2**0
+         filesz 0x00000000000008c0 memsz 0x00000000000008c0 flags r--
+
+Dynamic Section:
+  NEEDED               libmagic.so.1
+  NEEDED               libc.so.6
+  NEEDED               ld-linux-aarch64.so.1
+  INIT                 0x0000000000001758
+  FINI                 0x0000000000003730
+  INIT_ARRAY           0x000000000001f740
+  INIT_ARRAYSZ         0x0000000000000008
+  FINI_ARRAY           0x000000000001f748
+  FINI_ARRAYSZ         0x0000000000000008
+  GNU_HASH             0x0000000000000320
+  STRTAB               0x0000000000000880
+  SYMTAB               0x0000000000000340
+  STRSZ                0x000000000000027d
+  SYMENT               0x0000000000000018
+  DEBUG                0x0000000000000000
+  PLTGOT               0x000000000001fe20
+  PLTRELSZ             0x0000000000000438
+  PLTREL               0x0000000000000007
+  JMPREL               0x0000000000001320
+  RELA                 0x0000000000000bd0
+  RELASZ               0x0000000000000750
+  RELAENT              0x0000000000000018
+  0x70000001           0x0000000000000000
+  FLAGS                0x0000000000000008
+  FLAGS_1              0x0000000008000001
+  VERNEED              0x0000000000000b70
+  VERNEEDNUM           0x0000000000000002
+  VERSYM               0x0000000000000afe
+  RELACOUNT            0x0000000000000044
+
+Version References:
+  required from ld-linux-aarch64.so.1:
+    0x06969197 0x00 04 GLIBC_2.17
+  required from libc.so.6:
+    0x069691b8 0x00 05 GLIBC_2.38
+    0x069691b4 0x00 03 GLIBC_2.34
+    0x06969197 0x00 02 GLIBC_2.17
+
+[ zypherus /home/michko/runepkg/runepkg ]# ls -la /mnt/runepkg/aarch64-linux-gnu/lib/
+total 8
+drwxr-xr-x 2 root root 4096 Nov 22 17:50 .
+drwxr-xr-x 7 root root 4096 Nov 22 17:49 ..
+lrwxrwxrwx 1 root root   28 Nov 22 17:49 aarch64-linux-gnu -> ../usr/lib/aarch64-linux-gnu
+lrwxrwxrwx 1 root root   50 Nov 22 17:50 ld-linux-aarch64.so.1 -> ../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+[ zypherus /home/michko/runepkg/runepkg ]# file /mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1
+/mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1: symbolic link to ../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+[ zypherus /home/michko/runepkg/runepkg ]#
