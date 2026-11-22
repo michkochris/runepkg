@@ -263,14 +263,33 @@ int runepkg_fsm_init(TransactionContext *ctx, const char *pkg_name, const char *
 
 RunepkgState runepkg_fsm_transition(TransactionContext *ctx, RunepkgState next_state)
 {
+    char journal_log_path[PATH_MAX];
+    FILE *f;
+    RunepkgState prev_state;
+
     if (!ctx) return RUNEPKG_STATE_FAILED;
 
     runepkg_fsm_check_signals(ctx);
 
+    prev_state = ctx->state;
+
     runepkg_log_write("FSM", "Transition: %s -> %s [Package: %s]",
-        runepkg_state_to_string(ctx->state),
+        runepkg_state_to_string(prev_state),
         runepkg_state_to_string(next_state),
         ctx->package_name);
+
+    /* Write Head/Tail transaction state pair to fsm_journal.log */
+    runepkg_secure_snprintf(journal_log_path, sizeof(journal_log_path), "%s/fsm_journal.log", ctx->log_dir);
+    f = fopen(journal_log_path, "a");
+    if (f) {
+        fprintf(f, "[%s] HEAD: %s | TAIL: %s | Package: %s (%s)\n",
+            ctx->timestamp[0] ? ctx->timestamp : "NOW",
+            runepkg_state_to_string(prev_state),
+            runepkg_state_to_string(next_state),
+            ctx->package_name,
+            ctx->version);
+        fclose(f);
+    }
 
     ctx->state = next_state;
     return ctx->state;

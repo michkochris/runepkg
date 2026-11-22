@@ -1,15 +1,15 @@
 /******************************************************************************
- * Filename:    runepkg_cli.c
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-26
- * Description: Command-line interface for runepkg package manager
- * LICENSE:     GPL v3
- * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
- * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
- * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
- * ANY LATER VERSION.
- * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
- * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
+- Filename:    runepkg_cli.c
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-26
+- Description: Command-line interface for runepkg package manager
+- LICENSE:     GPL v3
+- THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
+- THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
+- SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
+- ANY LATER VERSION.
+- THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
+- GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
  ******************************************************************************/
 /* keep this file minimal: only usage() and main() */
 
@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <errno.h>
 #include <sys/mman.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -85,8 +86,9 @@ void usage(void) {
     printf("  download-build-depends <pkg>...         Download binary .debs required to build a source package.\n\n");
 
     printf("Maintenance & Diagnostics:\n");
-    printf("      --target                            Switch from host install_dir to target_install_dir sysroot\n");
+    printf("      --target[=<profile>]                Switch sysroot to target profile (e.g. arm64:aarch64-linux-gnu)\n");
     printf("                                          and execute psychic pre-flight prophecy checks.\n");
+    printf("  -r --remove-profile <profile>           Safely teardown and purge target sysroot and self-contained DB.\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
@@ -101,9 +103,62 @@ void usage(void) {
     handle_version();
 }
 
+static int handle_remove_profile(const char *profile_arg) {
+    RunePkgTargetSpec spec;
+    char canonical_profile[256];
+    char sysroot_path[PATH_MAX];
+    char db_dir[PATH_MAX];
+    char real_sysroot[PATH_MAX];
+
+    if (!profile_arg || profile_arg[0] == '\0') {
+        fprintf(stderr, "\033[1;31mError:\033[0m Target profile name required for removal.\n");
+        return -1;
+    }
+
+    memset(&spec, 0, sizeof(spec));
+    if (runepkg_psychic_parse_target_arch(profile_arg, &spec) == 0 && spec.gnu_triplet) {
+        snprintf(canonical_profile, sizeof(canonical_profile), "%s", spec.gnu_triplet);
+        runepkg_psychic_free_target_spec(&spec);
+    } else {
+        snprintf(canonical_profile, sizeof(canonical_profile), "%s", profile_arg);
+    }
+
+    runepkg_config_get_profile_paths(canonical_profile, sysroot_path, sizeof(sysroot_path), db_dir, sizeof(db_dir));
+
+    if (!runepkg_util_file_exists(sysroot_path)) {
+        printf("\033[1;34m[profile]\033[0m Profile '%s' at %s is already absent (clean no-op).\n", canonical_profile, sysroot_path);
+        return 0;
+    }
+
+    if (!realpath(sysroot_path, real_sysroot)) {
+        fprintf(stderr, "\033[1;31mError:\033[0m Failed to resolve realpath for %s: %s\n", sysroot_path, strerror(errno));
+        return -1;
+    }
+
+    /* Boundary Check: realpath MUST start with /mnt/runepkg/ and NOT be /, /mnt, or /mnt/runepkg */
+    if (strcmp(real_sysroot, "/") == 0 || strcmp(real_sysroot, "/mnt") == 0 ||
+        strcmp(real_sysroot, "/mnt/runepkg") == 0 || strcmp(real_sysroot, "/mnt/runepkg/") == 0 ||
+        strncmp(real_sysroot, "/mnt/runepkg/", 13) != 0) {
+        fprintf(stderr, "\033[1;31mError:\033[0m Refusing to remove dangerous path: %s\n", real_sysroot);
+        return -1;
+    }
+
+    printf("\033[1;33m[purge-profile]\033[0m Removing target sysroot and self-contained DB: %s\n", real_sysroot);
+    if (runepkg_storage_remove_directory_tree(real_sysroot) == 0) {
+        printf("\033[1;32m[purge-profile]\033[0m Profile '%s' cleanly removed.\n", canonical_profile);
+        return 0;
+    } else {
+        fprintf(stderr, "\033[1;31mError:\033[0m Failed to remove directory: %s\n", real_sysroot);
+        return -1;
+    }
+}
+
 int main(int argc, char *argv[]) {
     int i;
     int cli_failed = 0;
+
+    printf("[ENTRY] main started with argc=%d\n", argc);
+    fflush(stdout);
 
     if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
         g_completion_mode = true;
@@ -125,11 +180,11 @@ int main(int argc, char *argv[]) {
             g_debug_mode = true;
             continue;
         }
-        if (strcmp(argv[i], "--target") == 0) {
+        if (strcmp(argv[i], "--target") == 0 || strncmp(argv[i], "--target=", 9) == 0) {
             continue;
         }
     }
-    
+
     runepkg_log_verbose("=== RUNEPKG STARTUP ANALYSIS ===\n");
     runepkg_log_verbose("Command line arguments: %d\n", argc);
     if (g_verbose_mode) {
@@ -154,7 +209,41 @@ int main(int argc, char *argv[]) {
         usage();
         return EXIT_FAILURE;
     }
-    
+
+    /* Target Activation Pass: MUST execute before runepkg_init() so DB pathing is set */
+    for (i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--target") == 0 || strncmp(argv[i], "--target=", 9) == 0) {
+            const char *target_val = NULL;
+            if (strncmp(argv[i], "--target=", 9) == 0) {
+                target_val = argv[i] + 9;
+            } else if (i + 1 < argc && argv[i+1][0] != '-') {
+                target_val = argv[i+1];
+                i++;
+            }
+            if (target_val && target_val[0] != '\0') {
+                RunePkgTargetSpec spec;
+                char canonical_profile[256];
+                memset(&spec, 0, sizeof(spec));
+                if (runepkg_psychic_parse_target_arch(target_val, &spec) == 0 && spec.gnu_triplet) {
+                    snprintf(canonical_profile, sizeof(canonical_profile), "%s", spec.gnu_triplet);
+                    runepkg_psychic_free_target_spec(&spec);
+                } else {
+                    snprintf(canonical_profile, sizeof(canonical_profile), "%s", target_val);
+                }
+                runepkg_config_activate_profile(canonical_profile);
+            }
+            if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+                const char *prophecy_arch = g_active_profile ? g_active_profile->deb_host_arch : g_target_arch;
+                if (g_system_install_root) free(g_system_install_root);
+                g_system_install_root = strdup(g_target_sysroot);
+                printf("\033[1;36m[psychic]\033[0m Target Sysroot Activated: %s (Arch: %s)\n",
+                    g_system_install_root, prophecy_arch ? prophecy_arch : "amd64");
+                runepkg_psychic_prophecy_check(g_system_install_root, prophecy_arch);
+            }
+            break;
+        }
+    }
+
     runepkg_log_verbose("Starting runepkg with %d arguments\n", argc);
     if (runepkg_init() != 0) {
         runepkg_log_verbose("Critical error during program initialization. Exiting.\n");
@@ -163,22 +252,8 @@ int main(int argc, char *argv[]) {
     }
 
     for (i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--target") == 0) {
-            extern char *g_target_install_dir;
-            extern char *g_system_install_root;
-            extern char *g_target_arch;
-            if (g_target_install_dir && g_target_install_dir[0] != '\0') {
-                if (g_system_install_root) free(g_system_install_root);
-                g_system_install_root = strdup(g_target_install_dir);
-                printf("\033[1;36m[psychic]\033[0m Target Sysroot Activated: %s (Arch: %s)\n",
-                    g_system_install_root, g_target_arch ? g_target_arch : "amd64");
-                runepkg_psychic_prophecy_check(g_system_install_root, g_target_arch);
-            }
-            break;
-        }
-    }
-
-    for (i = 1; i < argc; ++i) {
+        /* Debug trace */
+        runepkg_log_verbose("[DEBUG-CLI-LOOP] i=%d argv[%d]='%s'\n", i, i, argv[i]);
         if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
 #ifdef ENABLE_CPP_FFI
             const char *repo_pkgs[1024];
@@ -288,7 +363,8 @@ int main(int argc, char *argv[]) {
                     if (runepkg_repo_install_multiple(repo_pkgs, repo_pkg_count) == 0) {
                         g_did_install = true;
                         if (g_system_install_root) {
-                            runepkg_psychic_prophecy_check(g_system_install_root, g_target_arch);
+                            const char *prophecy_arch = g_active_profile ? g_active_profile->deb_host_arch : g_target_arch;
+                            runepkg_psychic_prophecy_check(g_system_install_root, prophecy_arch);
                         }
                     } else {
                         cli_failed = 1;
@@ -326,82 +402,105 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: --md5check requires a package name.\n");
+                cli_failed = 1;
+            }
+        } else if (strcmp(argv[i], "--remove-profile") == 0 || strcmp(argv[i], "--purge-profile") == 0 || strcmp(argv[i], "remove-profile") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                if (handle_remove_profile(argv[i+1]) != 0) {
+                    cli_failed = 1;
+                }
+                i++;
+            } else {
+                fprintf(stderr, "\033[1;31mError:\033[0m remove-profile requires a target profile name (e.g. arm64:aarch64-linux-gnu).\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "-r") == 0 || strcmp(argv[i], "--remove") == 0 || strcmp(argv[i], "remove") == 0) {
-            char *removed_packages[100];
-            int removed_count = 0;
-            char *failed_packages[100];
-            int failed_count = 0;
-            int j;
-
-            if (i + 1 < argc) {
-                while (i + 1 < argc) {
-                    char *next_arg = argv[i+1];
-                    if (strcmp(next_arg, "-") == 0) {
-                        i++;
-                        handle_remove_stdin();
-                        break;
+            if (i + 1 < argc && (strcmp(argv[i+1], "--remove-profile") == 0 || strcmp(argv[i+1], "profile") == 0)) {
+                if (i + 2 < argc && argv[i+2][0] != '-') {
+                    if (handle_remove_profile(argv[i+2]) != 0) {
+                        cli_failed = 1;
                     }
-                    if (next_arg[0] == '@') {
-                        i++;
-                        handle_remove_listfile(next_arg + 1);
-                        break;
-                    }
-                    if (next_arg[0] == '-') {
-                        break;
-                    }
-                    {
-                        int ret = handle_remove(next_arg);
-                        if (ret == 0) {
-                            if (removed_count < 100) {
-                                removed_packages[removed_count++] = strdup(next_arg);
-                            }
-                        } else if (ret == -2) {
-                        } else if (ret != 0) {
-                            cli_failed = 1;
-                            if (failed_count < 100) {
-                                failed_packages[failed_count++] = strdup(next_arg);
-                            }
-                        }
-                    }
-                    i++;
+                    i += 2;
+                } else {
+                    fprintf(stderr, "\033[1;31mError:\033[0m -r --remove-profile requires a target profile name.\n");
+                    cli_failed = 1;
                 }
             } else {
-                if (isatty(STDIN_FILENO)) {
-                    fprintf(stderr, "\033[1;31mError:\033[0m remove command requires a package name or '-' for stdin.\n");
-                    cli_failed = 1;
-                } else {
-                    handle_remove_stdin();
-                }
-            }
-            if (removed_count > 0) {
-                printf("Successfully removed packages:\n");
-                for(j = 0; j < removed_count; j++) {
-                    if(j > 0) printf(" ");
-                    printf("%s", removed_packages[j]);
-                    free(removed_packages[j]);
-                }
-                printf("\n");
-            }
-            if (failed_count > 0) {
-                printf("Failed to find packages:\n");
-                for(j = 0; j < failed_count; j++) {
-                    char suggestions[10][PATH_MAX];
-                    int suggestion_count;
+                char *removed_packages[100];
+                int removed_count = 0;
+                char *failed_packages[100];
+                int failed_count = 0;
+                int j;
 
-                    printf("'%s' not installed... did you mean?\n\n", failed_packages[j]);
-                    
-                    suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
-                    if (suggestion_count > 0) {
-                        const char *items[10];
-                        int k;
-                        for (k = 0; k < suggestion_count; k++) {
-                            items[k] = suggestions[k];
+                if (i + 1 < argc) {
+                    while (i + 1 < argc) {
+                        char *next_arg = argv[i+1];
+                        if (strcmp(next_arg, "-") == 0) {
+                            i++;
+                            handle_remove_stdin();
+                            break;
                         }
-                        runepkg_util_print_columns(items, suggestion_count, "    ");
+                        if (next_arg[0] == '@') {
+                            i++;
+                            handle_remove_listfile(next_arg + 1);
+                            break;
+                        }
+                        if (next_arg[0] == '-') {
+                            break;
+                        }
+                        {
+                            int ret = handle_remove(next_arg);
+                            if (ret == 0) {
+                                if (removed_count < 100) {
+                                    removed_packages[removed_count++] = strdup(next_arg);
+                                }
+                            } else if (ret == -2) {
+                            } else if (ret != 0) {
+                                cli_failed = 1;
+                                if (failed_count < 100) {
+                                    failed_packages[failed_count++] = strdup(next_arg);
+                                }
+                            }
+                        }
+                        i++;
                     }
-                    
-                    free(failed_packages[j]);
+                } else {
+                    if (isatty(STDIN_FILENO)) {
+                        fprintf(stderr, "\033[1;31mError:\033[0m remove command requires a package name or '-' for stdin.\n");
+                        cli_failed = 1;
+                    } else {
+                        handle_remove_stdin();
+                    }
+                }
+                if (removed_count > 0) {
+                    printf("Successfully removed packages:\n");
+                    for (j = 0; j < removed_count; j++) {
+                        if (j > 0) printf(" ");
+                        printf("%s", removed_packages[j]);
+                        free(removed_packages[j]);
+                    }
+                    printf("\n");
+                }
+                if (failed_count > 0) {
+                    printf("Failed to find packages:\n");
+                    for (j = 0; j < failed_count; j++) {
+                        char suggestions[10][PATH_MAX];
+                        int suggestion_count;
+
+                        printf("'%s' not installed... did you mean?\n\n", failed_packages[j]);
+
+                        suggestion_count = runepkg_util_get_package_suggestions(failed_packages[j], g_runepkg_db_dir, suggestions, 10);
+                        if (suggestion_count > 0) {
+                            const char *items[10];
+                            int k;
+                            for (k = 0; k < suggestion_count; k++) {
+                                items[k] = suggestions[k];
+                            }
+                            runepkg_util_print_columns(items, suggestion_count, "    ");
+                        }
+
+                        free(failed_packages[j]);
+                    }
                 }
             }
         } else if (strcmp(argv[i], "-l") == 0 || strcmp(argv[i], "--list") == 0 || strcmp(argv[i], "list") == 0) {
@@ -497,6 +596,7 @@ int main(int argc, char *argv[]) {
                 i++;
             } else {
                 printf("Error: Search command requires a pattern (e.g., 'runepkg search <pattern>').\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "-b") == 0 || strcmp(argv[i], "--build") == 0 || strcmp(argv[i], "build") == 0) {
             const char *src_arg = ".";
@@ -527,13 +627,15 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "download-only") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                const char *pkgs[1024]; int pkg_count = 0;
+                const char *pkgs[1024];
+                int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
                     i++;
                 }
                 if (pkg_count > 0) {
-                    bool old_force = g_force_mode; g_force_mode = true;
+                    bool old_force = g_force_mode;
+                    g_force_mode = true;
                     if (runepkg_repo_download_multiple(pkgs, pkg_count, false) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
@@ -544,17 +646,20 @@ int main(int argc, char *argv[]) {
 #endif
             } else {
                 printf("Error: Download-only command requires a package name.\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "download-build-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                const char *pkgs[1024]; int pkg_count = 0;
+                const char *pkgs[1024];
+                int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
                     i++;
                 }
                 if (pkg_count > 0) {
-                    bool old_force = g_force_mode; g_force_mode = true;
+                    bool old_force = g_force_mode;
+                    g_force_mode = true;
                     if (runepkg_repo_build_depends_download_multiple(pkgs, pkg_count) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
@@ -565,17 +670,20 @@ int main(int argc, char *argv[]) {
 #endif
             } else {
                 printf("Error: Download-build-depends command requires a package name.\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "download-depends") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
 #ifdef ENABLE_CPP_FFI
-                const char *pkgs[1024]; int pkg_count = 0;
+                const char *pkgs[1024];
+                int pkg_count = 0;
                 while (i + 1 < argc && argv[i+1][0] != '-') {
                     if (pkg_count < 1024) pkgs[pkg_count++] = argv[i+1];
                     i++;
                 }
                 if (pkg_count > 0) {
-                    bool old_force = g_force_mode; g_force_mode = true;
+                    bool old_force = g_force_mode;
+                    g_force_mode = true;
                     if (runepkg_repo_download_multiple(pkgs, pkg_count, true) != 0) cli_failed = 1;
                     g_force_mode = old_force;
                 }
@@ -586,14 +694,16 @@ int main(int argc, char *argv[]) {
 #endif
             } else {
                 printf("Error: Download-depends command requires a package name.\n");
+                cli_failed = 1;
             }
-        } else if (strcmp(argv[i], "depends") == 0) {
+        } else if (strcmp(argv[i], "depends") == 0 || strcmp(argv[i], "resolve-tree") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 while (i + 1 < argc && argv[i+1][0] != '-') {
-                    handle_resolve_tree(argv[++i]);
+                    if (handle_resolve_tree(argv[++i]) != 0) cli_failed = 1;
                 }
             } else {
-                printf("Error: depends command requires a package name.\n");
+                printf("Error: %s requires a package name.\n", argv[i]);
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "verify") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
@@ -603,6 +713,7 @@ int main(int argc, char *argv[]) {
                 }
             } else {
                 printf("Error: verify command requires a package name.\n");
+                cli_failed = 1;
             }
         } else if (strcmp(argv[i], "update") == 0) {
 #ifdef ENABLE_CPP_FFI
@@ -671,24 +782,22 @@ int main(int argc, char *argv[]) {
                 }
             } else {
                 printf("Error: info command requires a package name.\n");
-            }
-        } else if (strcmp(argv[i], "resolve-tree") == 0 || strcmp(argv[i], "depends") == 0) {
-            if (i + 1 < argc && argv[i+1][0] != '-') {
-                while (i + 1 < argc && argv[i+1][0] != '-') {
-                    if (handle_resolve_tree(argv[++i]) != 0) cli_failed = 1;
-                }
-            } else {
-                printf("Error: %s requires a package name.\n", argv[i]);
                 cli_failed = 1;
             }
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0 ||
                    strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0 ||
-                   strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0 ||
-                   strcmp(argv[i], "--target") == 0) {
-            /* Already handled in first pass */
+                   strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
+            /* Handled in first pass */
+        } else if (strcmp(argv[i], "--target") == 0) {
+            if (i + 1 < argc && argv[i+1][0] != '-') {
+                i++;
+            }
+        } else if (strncmp(argv[i], "--target=", 9) == 0) {
+            printf("[DEBUG-MATCH] --target= matched for argv[%d]='%s'\n", i, argv[i]);
+            /* Handled in first pass */
         } else {
             cli_failed = 1;
-            fprintf(stderr, "\033[1;31mError:\033[0m Unknown argument or command: %s\n", argv[i]);
+            fprintf(stderr, "\033[1;31mError:\033[0m Unknown argument or command: i=%d argv[%d]='%s'\n", i, i, argv[i]);
             break;
         }
 

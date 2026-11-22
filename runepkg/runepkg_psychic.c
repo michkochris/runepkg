@@ -1,20 +1,29 @@
 /******************************************************************************
- * Filename:    runepkg_psychic.c
- * Author:      <michkochris@gmail.com>
- * Date:        2026-09-04
- * Description: Implementation of the Psychic Debian Subsystem (runepkg_psychic)
- * LICENSE:     GPL v3
+- Filename:    runepkg_psychic.c
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-04
+- Description: Implementation of the Psychic Debian Subsystem (runepkg_psychic)
+- LICENSE:     GPL v3
  ******************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <limits.h>
 
 #include "runepkg_psychic.h"
 #include "runepkg_util.h"
+
+#define PSYCHIC_MAX_MATRIX_ENTRIES 512
+
+typedef struct {
+    char name[220];
+    int status;
+} PsychicMatrixRecord;
 
 static const char *default_triplet_for_deb_arch(const char *deb_arch) {
     if (!deb_arch) {
@@ -47,6 +56,16 @@ static char *dup_range(const char *start, size_t len) {
     memcpy(out, start, len);
     out[len] = '\0';
     return out;
+}
+
+static void trim_line_endings(char *s) {
+    size_t len;
+    if (!s) return;
+    len = strlen(s);
+    while (len > 0 && (s[len - 1] == '\n' || s[len - 1] == '\r' ||
+                       isspace((unsigned char)s[len - 1]))) {
+        s[--len] = '\0';
+    }
 }
 
 void runepkg_psychic_free_target_spec(RunePkgTargetSpec *spec) {
@@ -92,6 +111,17 @@ int runepkg_psychic_parse_target_arch(const char *raw_target_arch, RunePkgTarget
         out_spec->deb_arch = dup_range(norm_arch, strlen(norm_arch));
         free(raw_left);
         out_spec->gnu_triplet = dup_range(colon + 1, right_len);
+        if (!out_spec->deb_arch || !out_spec->gnu_triplet) {
+            runepkg_psychic_free_target_spec(out_spec);
+            return -1;
+        }
+        return 0;
+    }
+
+    if (strchr(raw_target_arch, '-') != NULL) {
+        norm_arch = runepkg_psychic_normalize_deb_arch(raw_target_arch);
+        out_spec->deb_arch = dup_range(norm_arch, strlen(norm_arch));
+        out_spec->gnu_triplet = dup_range(raw_target_arch, strlen(raw_target_arch));
         if (!out_spec->deb_arch || !out_spec->gnu_triplet) {
             runepkg_psychic_free_target_spec(out_spec);
             return -1;
@@ -250,7 +280,6 @@ int runepkg_psychic_is_multiarch_satisfied(const char *candidate_arch,
 int runepkg_psychic_detect_target_arch(const char *sysroot_path, char *arch_buf, size_t buf_sz) {
     char marker_path[PATH_MAX];
     FILE *f;
-    char *nl;
 
     if (!arch_buf || buf_sz == 0) return -1;
 
@@ -261,8 +290,7 @@ int runepkg_psychic_detect_target_arch(const char *sysroot_path, char *arch_buf,
             f = fopen(marker_path, "r");
             if (f) {
                 if (fgets(arch_buf, (int)buf_sz, f)) {
-                    nl = strchr(arch_buf, '\n');
-                    if (nl) *nl = '\0';
+                    trim_line_endings(arch_buf);
                     fclose(f);
                     return 0;
                 }
@@ -425,6 +453,9 @@ int runepkg_psychic_prophecy_check(const char *sysroot_path, const char *target_
     /* 2. Anchor Multi-Arch FHS Symlinks and Dynamic Linker */
     runepkg_psychic_anchor_dynamic_linker(sysroot_path, spec.deb_arch, spec.gnu_triplet);
 
+    /* 3. Scan actual sysroot state and write psychic_matrix.bin + psychic_matrix.txt */
+    runepkg_psychic_build_matrix_bin(sysroot_path, spec.gnu_triplet);
+
     runepkg_psychic_free_target_spec(&spec);
     runepkg_util_log_verbose("[psychic] Pre-flight prophecy check completed successfully.\n");
     return 0;
@@ -464,6 +495,25 @@ int runepkg_psychic_resolve_virtual(const char *virtual_pkg, char *concrete_buf,
     return -1;
 }
 
+static int prefix_has_token(const char *s, size_t len, const char *token) {
+    size_t tlen;
+    size_t i;
+
+    if (!s || !token || len == 0) {
+        return 0;
+    }
+    tlen = strlen(token);
+    if (tlen == 0 || tlen > len) {
+        return 0;
+    }
+    for (i = 0; i + tlen <= len; i++) {
+        if (strncmp(s + i, token, tlen) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 const char *runepkg_psychic_normalize_deb_arch(const char *arch) {
     const char *colon;
     size_t len;
@@ -472,13 +522,39 @@ const char *runepkg_psychic_normalize_deb_arch(const char *arch) {
 
     colon = strchr(arch, ':');
     if (colon) {
+        const char *left = arch;
         len = (size_t)(colon - arch);
         if (len == 0) return "amd64";
-        if ((len == 7 && strncmp(arch, "aarch64", 7) == 0) || (len == 5 && strncmp(arch, "arm64", 5) == 0)) return "arm64";
-        if ((len == 6 && strncmp(arch, "x86_64", 6) == 0) || (len == 5 && strncmp(arch, "amd64", 5) == 0)) return "amd64";
-        if (len == 7 && strncmp(arch, "riscv64", 7) == 0) return "riscv64";
-        if ((len == 5 && strncmp(arch, "armhf", 5) == 0) || (len == 6 && strncmp(arch, "armv7l", 6) == 0)) return "armhf";
-        if ((len == 4 && strncmp(arch, "i386", 4) == 0) || (len == 4 && strncmp(arch, "i686", 4) == 0)) return "i386";
+
+        if ((len == 7 && strncmp(left, "aarch64", 7) == 0) ||
+            (len == 5 && strncmp(left, "arm64", 5) == 0) ||
+            prefix_has_token(left, len, "aarch64") ||
+            prefix_has_token(left, len, "arm64")) {
+            return "arm64";
+        }
+        if ((len == 6 && strncmp(left, "x86_64", 6) == 0) ||
+            (len == 5 && strncmp(left, "amd64", 5) == 0) ||
+            prefix_has_token(left, len, "x86_64") ||
+            prefix_has_token(left, len, "amd64")) {
+            return "amd64";
+        }
+        if ((len == 7 && strncmp(left, "riscv64", 7) == 0) ||
+            prefix_has_token(left, len, "riscv64")) {
+            return "riscv64";
+        }
+        if ((len == 5 && strncmp(left, "armhf", 5) == 0) ||
+            (len == 6 && strncmp(left, "armv7l", 6) == 0) ||
+            prefix_has_token(left, len, "armhf") ||
+            prefix_has_token(left, len, "armv7") ||
+            prefix_has_token(left, len, "gnueabihf")) {
+            return "armhf";
+        }
+        if ((len == 4 && strncmp(left, "i386", 4) == 0) ||
+            (len == 4 && strncmp(left, "i686", 4) == 0) ||
+            prefix_has_token(left, len, "i386") ||
+            prefix_has_token(left, len, "i686")) {
+            return "i386";
+        }
 
         {
             static char ring[4][64];
@@ -493,10 +569,357 @@ const char *runepkg_psychic_normalize_deb_arch(const char *arch) {
         }
     }
 
-    if (strcmp(arch, "aarch64") == 0 || strcmp(arch, "arm64") == 0) return "arm64";
-    if (strcmp(arch, "x86_64") == 0 || strcmp(arch, "amd64") == 0) return "amd64";
-    if (strcmp(arch, "riscv64") == 0) return "riscv64";
-    if (strcmp(arch, "armhf") == 0 || strcmp(arch, "armv7l") == 0) return "armhf";
-    if (strcmp(arch, "i386") == 0 || strcmp(arch, "i686") == 0) return "i386";
+    if (strcmp(arch, "aarch64") == 0 || strcmp(arch, "arm64") == 0 ||
+        strstr(arch, "aarch64") || strstr(arch, "arm64")) {
+        return "arm64";
+    }
+    if (strcmp(arch, "x86_64") == 0 || strcmp(arch, "amd64") == 0 ||
+        strstr(arch, "x86_64") || strstr(arch, "amd64")) {
+        return "amd64";
+    }
+    if (strcmp(arch, "riscv64") == 0 || strstr(arch, "riscv64")) {
+        return "riscv64";
+    }
+    if (strcmp(arch, "armhf") == 0 || strcmp(arch, "armv7l") == 0 ||
+        strstr(arch, "armhf") || strstr(arch, "armv7") || strstr(arch, "gnueabihf")) {
+        return "armhf";
+    }
+    if (strcmp(arch, "i386") == 0 || strcmp(arch, "i686") == 0 ||
+        strstr(arch, "i386") || strstr(arch, "i686")) {
+        return "i386";
+    }
     return arch;
+}
+
+/* --- psychic_matrix.bin & psychic_matrix.txt Sysroot Scanner --- */
+
+static void psychic_add_record(PsychicMatrixRecord *records,
+                               size_t *count,
+                               size_t max_count,
+                               const char *name,
+                               int status) {
+    size_t i;
+    if (!records || !count || !name || name[0] == '\0') return;
+    if (*count >= max_count) return;
+
+    for (i = 0; i < *count; i++) {
+        if (strcmp(records[i].name, name) == 0) {
+            if (status != 0) {
+                records[i].status = status;
+            }
+            return;
+        }
+    }
+
+    runepkg_util_safe_strncpy(records[*count].name, name, sizeof(records[*count].name));
+    records[*count].status = status;
+    (*count)++;
+}
+
+static void psychic_scan_include_tree(const char *base_dir,
+                                      const char *prefix,
+                                      PsychicMatrixRecord *records,
+                                      size_t *count,
+                                      size_t max_count) {
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!base_dir || !records || !count || *count >= max_count) return;
+    dir = opendir(base_dir);
+    if (!dir) return;
+
+    while ((entry = readdir(dir)) != NULL && *count < max_count) {
+        char full_path[PATH_MAX * 2];
+        char rel_name[220];
+        struct stat st;
+
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, entry->d_name);
+        if (stat(full_path, &st) != 0) continue;
+
+        if (prefix && prefix[0] != '\0') {
+            snprintf(rel_name, sizeof(rel_name), "%.100s/%.100s", prefix, entry->d_name);
+        } else {
+            snprintf(rel_name, sizeof(rel_name), "%.219s", entry->d_name);
+        }
+
+        if (S_ISDIR(st.st_mode)) {
+            psychic_scan_include_tree(full_path, rel_name, records, count, max_count);
+        } else if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
+            psychic_add_record(records, count, max_count, rel_name, 1);
+        }
+    }
+
+    closedir(dir);
+}
+
+static void psychic_scan_flat_dir(const char *dir_path,
+                                  PsychicMatrixRecord *records,
+                                  size_t *count,
+                                  size_t max_count) {
+    DIR *dir;
+    struct dirent *entry;
+
+    if (!dir_path || !records || !count || *count >= max_count) return;
+    dir = opendir(dir_path);
+    if (!dir) return;
+
+    while ((entry = readdir(dir)) != NULL && *count < max_count) {
+        char full_path[PATH_MAX * 2];
+        struct stat st;
+
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+        if (stat(full_path, &st) == 0 && (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))) {
+            psychic_add_record(records, count, max_count, entry->d_name, 1);
+        }
+    }
+
+    closedir(dir);
+}
+
+static void psychic_scan_installed_pkgs(const char *db_dir,
+                                        PsychicMatrixRecord *records,
+                                        size_t *count,
+                                        size_t max_count) {
+    char status_path[PATH_MAX + 64];
+    FILE *sf;
+    char line[512];
+
+    if (!db_dir || !records || !count || *count >= max_count) return;
+
+    snprintf(status_path, sizeof(status_path), "%.*s/installed_packages.txt",
+             (int)(PATH_MAX - 1), db_dir);
+    sf = fopen(status_path, "r");
+    if (!sf) return;
+
+    while (fgets(line, sizeof(line), sf) != NULL && *count < max_count) {
+        char *sep;
+        trim_line_endings(line);
+        if (line[0] == '\0' || line[0] == '#') continue;
+        sep = strchr(line, ':');
+        if (sep) {
+            *sep = '\0';
+        }
+        if (line[0] != '\0') {
+            char pkg_entry[220];
+            snprintf(pkg_entry, sizeof(pkg_entry), "pkg:%.210s", line);
+            psychic_add_record(records, count, max_count, pkg_entry, 1);
+        }
+    }
+
+    fclose(sf);
+}
+
+static void write_psychic_matrix_txt(const char *txt_path,
+                                     const char *sysroot_path,
+                                     const char *gnu_triplet,
+                                     const PsychicMatrixRecord *records,
+                                     size_t count) {
+    FILE *tf;
+    size_t i;
+
+    if (!txt_path || !records) return;
+
+    tf = fopen(txt_path, "w");
+    if (!tf) return;
+
+    fprintf(tf, "# psychic_matrix.txt (live sysroot scan)\n");
+    fprintf(tf, "# sysroot=%s\n", sysroot_path ? sysroot_path : "");
+    fprintf(tf, "# triplet=%s\n", gnu_triplet ? gnu_triplet : "");
+    fprintf(tf, "# entries=%lu\n", (unsigned long)count);
+
+    if (count == 0) {
+        fprintf(tf, "# empty sysroot scan\n");
+    } else {
+        for (i = 0; i < count; i++) {
+            fprintf(tf, "%s:%d\n", records[i].name, records[i].status);
+        }
+    }
+
+    fclose(tf);
+}
+
+int runepkg_psychic_build_matrix_bin(const char *sysroot_path, const char *gnu_triplet) {
+    char db_dir[PATH_MAX + 64];
+    char bin_path[PATH_MAX + 128];
+    char txt_path[PATH_MAX + 128];
+    char scan_dir[PATH_MAX + 128];
+    FILE *f;
+    PsychicMatrixHeader hdr;
+    PsychicMatrixRecord *records;
+    size_t count = 0;
+    size_t i;
+
+    if (!sysroot_path || sysroot_path[0] == '\0') return -1;
+
+    snprintf(db_dir, sizeof(db_dir), "%.*s/srv/lib/runepkg_dir/runepkg_db",
+             (int)(PATH_MAX - 64), sysroot_path);
+    runepkg_util_create_dir_recursive(db_dir, 0755);
+
+    snprintf(bin_path, sizeof(bin_path), "%.*s/psychic_matrix.bin",
+             (int)PATH_MAX, db_dir);
+    snprintf(txt_path, sizeof(txt_path), "%.*s/psychic_matrix.txt",
+             (int)PATH_MAX, db_dir);
+
+    records = (PsychicMatrixRecord *)calloc(PSYCHIC_MAX_MATRIX_ENTRIES, sizeof(PsychicMatrixRecord));
+    if (!records) return -1;
+
+    psychic_scan_installed_pkgs(db_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
+
+    snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/include", (int)(PATH_MAX - 32), sysroot_path);
+    psychic_scan_include_tree(scan_dir, "", records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
+
+    if (gnu_triplet && gnu_triplet[0] != '\0') {
+        snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/include/%.*s",
+                 (int)(PATH_MAX / 2), sysroot_path, 128, gnu_triplet);
+        psychic_scan_include_tree(scan_dir, "", records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
+
+        snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/lib/%.*s",
+                 (int)(PATH_MAX / 2), sysroot_path, 128, gnu_triplet);
+        psychic_scan_flat_dir(scan_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
+    }
+
+    snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/bin", (int)(PATH_MAX - 32), sysroot_path);
+    psychic_scan_flat_dir(scan_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
+
+    hdr.magic[0] = 'P';
+    hdr.magic[1] = 'S';
+    hdr.magic[2] = 'Y';
+    hdr.magic[3] = 'C';
+    hdr.version = PSYCHIC_MATRIX_VERSION;
+    hdr.entry_count = (unsigned int)count;
+    hdr.total_bytes = sizeof(PsychicMatrixHeader) + (count * 256);
+
+    f = fopen(bin_path, "wb");
+    if (!f) {
+        free(records);
+        return -1;
+    }
+
+    if (fwrite(&hdr, sizeof(PsychicMatrixHeader), 1, f) != 1) {
+        fclose(f);
+        free(records);
+        return -1;
+    }
+
+    for (i = 0; i < count; i++) {
+        char entry_buf[256];
+        memset(entry_buf, 0, sizeof(entry_buf));
+        snprintf(entry_buf, sizeof(entry_buf), "%.220s:%d", records[i].name, records[i].status);
+        fwrite(entry_buf, 256, 1, f);
+    }
+
+    fclose(f);
+    write_psychic_matrix_txt(txt_path, sysroot_path, gnu_triplet, records, count);
+    free(records);
+
+    runepkg_util_log_verbose("[psychic] Scanned sysroot and serialized psychic_matrix.bin + psychic_matrix.txt (%lu entries)\n",
+                             (unsigned long)count);
+    return 0;
+}
+
+int runepkg_psychic_query_matrix_bin(const char *sysroot_path, const char *file_name) {
+    char bin_path[PATH_MAX + 64];
+    FILE *f;
+    PsychicMatrixHeader hdr;
+    struct stat st;
+    size_t i;
+
+    if (!sysroot_path || !file_name || file_name[0] == '\0') return -1;
+
+    snprintf(bin_path, sizeof(bin_path), "%.*s/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin",
+             (int)(PATH_MAX - 64), sysroot_path);
+    if (stat(bin_path, &st) != 0) return 0;
+
+    f = fopen(bin_path, "rb");
+    if (!f) return 0;
+
+    if (fread(&hdr, sizeof(PsychicMatrixHeader), 1, f) != 1) {
+        fclose(f);
+        return 0;
+    }
+
+    if (memcmp(hdr.magic, "PSYC", 4) != 0 || hdr.version != PSYCHIC_MATRIX_VERSION) {
+        fclose(f);
+        return 0;
+    }
+
+    if (st.st_size < (off_t)hdr.total_bytes) {
+        fclose(f);
+        return 0;
+    }
+
+    for (i = 0; i < hdr.entry_count; i++) {
+        char entry_buf[256];
+        char *colon;
+        if (fread(entry_buf, 256, 1, f) != 1) break;
+        entry_buf[255] = '\0';
+        colon = strrchr(entry_buf, ':');
+        if (colon && colon != entry_buf) {
+            *colon = '\0';
+            if (strcmp(entry_buf, file_name) == 0) {
+                int status = atoi(colon + 1);
+                fclose(f);
+                return status;
+            }
+        }
+    }
+
+    fclose(f);
+    return 0;
+}
+
+int runepkg_psychic_prophesy_missing_package(const char *sysroot_path,
+                                              const char *missing_item,
+                                              const char *deb_arch,
+                                              char *out_pkg_buf,
+                                              size_t buf_sz) {
+    const char *norm_arch;
+    char clean_item[256];
+    const char *cand_pkg = NULL;
+    (void)sysroot_path;
+
+    if (!missing_item || !out_pkg_buf || buf_sz == 0) return -1;
+    norm_arch = runepkg_psychic_normalize_deb_arch(deb_arch);
+
+    /* Normalize missing_item string (e.g. "<zlib.h>" -> "zlib.h", "-lz" -> "zlib.h") */
+    if (missing_item[0] == '<') {
+        size_t len = strlen(missing_item);
+        if (len > 2 && missing_item[len - 1] == '>') {
+            snprintf(clean_item, sizeof(clean_item), "%.*s", (int)(len - 2), missing_item + 1);
+        } else {
+            snprintf(clean_item, sizeof(clean_item), "%s", missing_item);
+        }
+    } else if (strcmp(missing_item, "-lz") == 0) {
+        snprintf(clean_item, sizeof(clean_item), "%s", "zlib.h");
+    } else if (strcmp(missing_item, "-lssl") == 0 || strcmp(missing_item, "-lcrypto") == 0) {
+        snprintf(clean_item, sizeof(clean_item), "%s", "openssl/ssl.h");
+    } else {
+        snprintf(clean_item, sizeof(clean_item), "%s", missing_item);
+    }
+
+    if (strcmp(clean_item, "zlib.h") == 0) cand_pkg = "zlib1g-dev";
+    else if (strcmp(clean_item, "openssl/ssl.h") == 0) cand_pkg = "libssl-dev";
+    else if (strcmp(clean_item, "sqlite3.h") == 0) cand_pkg = "libsqlite3-dev";
+    else if (strcmp(clean_item, "curl/curl.h") == 0) cand_pkg = "libcurl4-openssl-dev";
+    else if (strcmp(clean_item, "ffi.h") == 0) cand_pkg = "libffi-dev";
+    else if (strcmp(clean_item, "glib.h") == 0) cand_pkg = "libglib2.0-dev";
+    else if (strcmp(clean_item, "libtool") == 0) cand_pkg = "libtool";
+    else if (strcmp(clean_item, "m4") == 0) cand_pkg = "m4";
+
+    if (cand_pkg) {
+        snprintf(out_pkg_buf, buf_sz, "%s:%s", cand_pkg, norm_arch);
+        printf("\033[1;36m[psychic prophecy]\033[0m Missing item '%s'. Recommended Debian package: %s\n",
+            missing_item, out_pkg_buf);
+        return 0;
+    }
+
+    return -1;
 }

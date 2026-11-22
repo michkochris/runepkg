@@ -32,7 +32,8 @@ extern char *g_download_dir;
 extern char *g_build_dir;
 extern char *g_debs_dir;
 extern char *g_log_dir;
-extern char *g_target_install_dir;
+extern char *g_target_sysroot;
+extern char *g_target_install_dir; /* Legacy alias for g_target_sysroot */
 extern char *g_target_arch;
 extern char *g_dpkg_host;
 extern bool g_md5_checks;
@@ -112,5 +113,12 @@ TargetProfile *runepkg_config_load_profile(const char *profile_name);
 void runepkg_config_free_profile(TargetProfile *profile);
 int runepkg_config_save_active_state(const TargetProfile *profile);
 int runepkg_config_load_active_state(void);
+
+/* Managed Pointer & Path Helper Prototypes */
+const char *runepkg_config_get_effective_db_dir(void);
+int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz);
+int runepkg_config_provision_target_sysroot_config(const char *sysroot_path, const TargetProfile *profile);
+int runepkg_config_activate_profile(const char *profile_name);
+const char *runepkg_config_resolve_target(const char *cli_target);
 
 #endif /* RUNEPKG_CONFIG_H */

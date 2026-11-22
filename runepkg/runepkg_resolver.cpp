@@ -1049,8 +1049,9 @@ void parse_sources_file(const std::string& path, std::unordered_map<std::string,
 
 extern "C" int runepkg_resolver_harvest_graph(const char *sources_dir, const char *out_db_path) {
     try {
-        std::string s_dir = sources_dir ? sources_dir : (g_runepkg_lists_dir ? g_runepkg_lists_dir : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/lists" : "/var/lib/runepkg_dir/runepkg_db/lists"));
-        std::string o_path = out_db_path ? out_db_path : (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/runes_graph.bin" : "/var/lib/runepkg_dir/runepkg_db/runes_graph.bin");
+        const char *eff_db = runepkg_config_get_effective_db_dir();
+        std::string s_dir = sources_dir ? sources_dir : (g_runepkg_lists_dir ? g_runepkg_lists_dir : (eff_db ? std::string(eff_db) + "/lists" : "/srv/lib/runepkg_dir/runepkg_db/lists"));
+        std::string o_path = out_db_path ? out_db_path : (eff_db ? std::string(eff_db) + "/runes_graph.bin" : "/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin");
 
         RuneResolverEngine engine;
         return engine.harvest(s_dir, o_path);

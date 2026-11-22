@@ -1,9 +1,9 @@
 /******************************************************************************
- * Filename:    runepkg_config.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Configuration parsing and path setup helpers for runepkg
- * LICENSE:     GPL v3
+- Filename:    runepkg_config.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Configuration parsing and path setup helpers for runepkg
+- LICENSE:     GPL v3
  ******************************************************************************/
 
 #include "runepkg_portable.h"
@@ -21,6 +21,7 @@
 
 #include "runepkg_util.h"
 #include "runepkg_config.h"
+#include "runepkg_psychic.h"
 
 /* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
@@ -48,7 +49,8 @@ bool g_auto_confirm_deps = false;
 bool g_auto_confirm_siblings = false;
 bool g_asked_siblings = false;
 char *g_debs_dir = NULL;
-char *g_target_install_dir = NULL;
+char *g_target_sysroot = NULL;
+char *g_target_install_dir = NULL; /* Legacy alias pointing to g_target_sysroot */
 char *g_target_arch = NULL;
 char *g_log_dir = NULL;
 char *g_dpkg_host = NULL;
@@ -65,9 +67,7 @@ struct runepkg_hash_table *g_batch_planned_packages = NULL;
 
 ActiveState g_active_state = {NULL, NULL, NULL, NULL, 0};
 TargetProfile *g_active_profile = NULL;
-
-/* --- External Global Variables --- */
-extern bool g_verbose_mode;
+static char *s_cli_pinned_profile = NULL;
 
 /* --- Internal Function Declarations --- */
 void runepkg_config_cleanup(void);
@@ -76,22 +76,193 @@ char *runepkg_config_get_registry_path(const char *preferred_config);
 char *runepkg_config_find_in_registry(void);
 void runepkg_config_register_directory(const char *config_path);
 
+static void sync_db_derived_paths(void) {
+    if (!g_runepkg_db_dir || g_runepkg_db_dir[0] == '\0') return;
+    runepkg_util_free_and_null(&g_pkglist_txt_path);
+    runepkg_util_free_and_null(&g_pkglist_bin_path);
+    runepkg_util_free_and_null(&g_runepkg_lists_dir);
+    g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
+    g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.bin");
+    g_runepkg_lists_dir = runepkg_util_concat_path(g_runepkg_db_dir, "lists");
+}
+
+/* --- Path & Database Helper Functions --- */
+
+const char *runepkg_config_get_effective_db_dir(void) {
+    static char s_db_buf[PATH_MAX];
+    const char *root = NULL;
+
+    if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+        root = g_target_sysroot;
+    } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
+        root = g_active_profile->sysroot;
+    } else if (g_install_dir_internal && strcmp(g_install_dir_internal, "/") != 0) {
+        root = g_install_dir_internal;
+    }
+
+    if (!root || strcmp(root, "/") == 0) {
+        if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
+            return g_runepkg_db_dir;
+        }
+        return "/srv/lib/runepkg_dir/runepkg_db";
+    }
+
+    /* Single Formula for Non-Root Root: <root>/srv/lib/runepkg_dir/runepkg_db */
+    snprintf(s_db_buf, sizeof(s_db_buf), "%s/srv/lib/runepkg_dir/runepkg_db", root);
+
+    if (g_runepkg_db_dir) {
+        free(g_runepkg_db_dir);
+    }
+    g_runepkg_db_dir = strdup(s_db_buf);
+    return g_runepkg_db_dir;
+}
+
+int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz) {
+    if (!profile_name || profile_name[0] == '\0') return -1;
+
+    if (out_sysroot && sysroot_sz > 0) {
+        snprintf(out_sysroot, sysroot_sz, "/mnt/runepkg/%s", profile_name);
+    }
+    if (out_db_dir && db_sz > 0) {
+        snprintf(out_db_dir, db_sz, "/mnt/runepkg/%s/srv/lib/runepkg_dir/runepkg_db", profile_name);
+    }
+    return 0;
+}
+
+int runepkg_config_provision_target_sysroot_config(const char *sysroot_path, const TargetProfile *profile) {
+    char etc_dir[PATH_MAX];
+    char config_file[PATH_MAX];
+    char registry_file[PATH_MAX];
+    char active_file[PATH_MAX];
+    FILE *f;
+
+    if (!sysroot_path || sysroot_path[0] == '\0') return -1;
+
+    snprintf(etc_dir, sizeof(etc_dir), "%.*s/etc/runepkg", (int)(sizeof(etc_dir) - 64), sysroot_path);
+    runepkg_util_create_dir_recursive(etc_dir, 0755);
+
+    /* Provision <sysroot>/etc/runepkg/runepkgconfig */
+    snprintf(config_file, sizeof(config_file), "%.*s/runepkgconfig", (int)(sizeof(config_file) - 32), etc_dir);
+    if (!runepkg_util_file_exists(config_file)) {
+        f = fopen(config_file, "w");
+        if (f) {
+            fprintf(f, "# Target Sysroot Self-Contained runepkg Configuration\n");
+            fprintf(f, "runepkg_dir=/srv/lib/runepkg_dir\n");
+            fprintf(f, "control_dir=/srv/lib/runepkg_dir/control_dir\n");
+            fprintf(f, "install_dir=/\n");
+            fprintf(f, "runepkg_db=/srv/lib/runepkg_dir/runepkg_db\n");
+            fprintf(f, "download_dir=/srv/lib/runepkg_dir/download_dir\n");
+            fprintf(f, "build_dir=/srv/lib/runepkg_dir/build_dir\n");
+            fprintf(f, "runepkg_debs=/srv/lib/runepkg_dir/runepkg_debs\n");
+            fprintf(f, "cleanup=yes\n");
+            fprintf(f, "md5_checks=yes\n");
+            fclose(f);
+        }
+    }
+
+    /* Provision <sysroot>/etc/runepkg/config_registry.txt */
+    snprintf(registry_file, sizeof(registry_file), "%.*s/config_registry.txt", (int)(sizeof(registry_file) - 32), etc_dir);
+    if (!runepkg_util_file_exists(registry_file)) {
+        f = fopen(registry_file, "w");
+        if (f) {
+            fprintf(f, "%s = %s\n", sysroot_path, "/etc/runepkg/runepkgconfig");
+            fclose(f);
+        }
+    }
+
+    /* Provision <sysroot>/etc/runepkg/active_target.conf */
+    snprintf(active_file, sizeof(active_file), "%.*s/active_target.conf", (int)(sizeof(active_file) - 32), etc_dir);
+    f = fopen(active_file, "w");
+    if (f) {
+        fprintf(f, "ACTIVE_TARGET=%s\n", (profile && profile->name) ? profile->name : "native");
+        fprintf(f, "ACTIVE_TRIPLET=%s\n", (profile && profile->triplet) ? profile->triplet : "");
+        fprintf(f, "ACTIVE_SYSROOT=/\n");
+        fprintf(f, "ACTIVATED_AT=%ld\n", (long)time(NULL));
+        fclose(f);
+    }
+
+    return 0;
+}
+
+int runepkg_config_activate_profile(const char *profile_name) {
+    TargetProfile *profile;
+    char sysroot_buf[PATH_MAX];
+    char db_buf[PATH_MAX];
+
+    if (!profile_name || profile_name[0] == '\0') return -1;
+
+    profile = runepkg_config_load_profile(profile_name);
+    if (!profile) return -1;
+
+    if (s_cli_pinned_profile != profile_name) {
+        runepkg_util_free_and_null(&s_cli_pinned_profile);
+        s_cli_pinned_profile = strdup(profile->name ? profile->name : profile_name);
+    }
+
+    if (g_active_profile) {
+        runepkg_config_free_profile(g_active_profile);
+    }
+    g_active_profile = profile;
+
+    if (profile->deb_host_arch && profile->deb_host_arch[0] != '\0') {
+        runepkg_util_free_and_null(&g_target_arch);
+        g_target_arch = strdup(profile->deb_host_arch);
+    }
+
+    runepkg_config_get_profile_paths(profile->name, sysroot_buf, sizeof(sysroot_buf), db_buf, sizeof(db_buf));
+
+    runepkg_util_free_and_null(&g_target_sysroot);
+    g_target_sysroot = strdup(sysroot_buf);
+    g_target_install_dir = g_target_sysroot; /* Sync legacy alias */
+
+    runepkg_util_free_and_null(&g_runepkg_db_dir);
+    g_runepkg_db_dir = strdup(db_buf);
+    sync_db_derived_paths();
+
+    runepkg_util_create_dir_recursive(g_target_sysroot, 0755);
+    runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
+    if (g_runepkg_lists_dir) {
+        runepkg_util_create_dir_recursive(g_runepkg_lists_dir, 0755);
+    }
+
+    runepkg_config_provision_target_sysroot_config(g_target_sysroot, g_active_profile);
+    return 0;
+}
+
+const char *runepkg_config_resolve_target(const char *cli_target) {
+    if (cli_target && cli_target[0] != '\0') {
+        return cli_target;
+    }
+    if (g_active_state.active_target && g_active_state.active_target[0] != '\0') {
+        return g_active_state.active_target;
+    }
+    if (g_target_arch && g_target_arch[0] != '\0') {
+        return g_target_arch;
+    }
+    return NULL;
+}
+
+/* --- External Global Variables --- */
+extern bool g_verbose_mode;
+
 /* --- Profile Management --- */
 
 TargetProfile *runepkg_config_load_profile(const char *profile_name) {
     char *profiles_dir;
     char profile_path[PATH_MAX];
     TargetProfile *profile;
+    RunePkgTargetSpec spec;
 
-    if (!profile_name) return NULL;
+    if (!profile_name || profile_name[0] == '\0') return NULL;
 
+    profile_path[0] = '\0';
     profiles_dir = runepkg_config_resolve_path(NULL, 2);
-    if (!profiles_dir) return NULL;
+    if (profiles_dir) {
+        snprintf(profile_path, sizeof(profile_path), "%s/%s.conf", profiles_dir, profile_name);
+        free(profiles_dir);
+    }
 
-    snprintf(profile_path, sizeof(profile_path), "%s/%s.conf", profiles_dir, profile_name);
-    free(profiles_dir);
-
-    if (!runepkg_util_file_exists(profile_path)) {
+    if (profile_path[0] == '\0' || !runepkg_util_file_exists(profile_path)) {
         if (access("/etc/runepkg/targets/", R_OK) == 0) {
             snprintf(profile_path, sizeof(profile_path), "/etc/runepkg/targets/%s.conf", profile_name);
         }
@@ -100,37 +271,55 @@ TargetProfile *runepkg_config_load_profile(const char *profile_name) {
                 snprintf(profile_path, sizeof(profile_path), "targets/%s.conf", profile_name);
             }
         }
-        if (!runepkg_util_file_exists(profile_path)) return NULL;
     }
 
     profile = (TargetProfile *)calloc(1, sizeof(TargetProfile));
     if (!profile) return NULL;
 
-    profile->name = strdup(profile_name);
-    profile->arch = runepkg_util_get_config_value(profile_path, "arch", '=');
-    profile->subarch = runepkg_util_get_config_value(profile_path, "subarch", '=');
-    profile->abi = runepkg_util_get_config_value(profile_path, "abi", '=');
-    profile->float_type = runepkg_util_get_config_value(profile_path, "float", '=');
-    profile->libc = runepkg_util_get_config_value(profile_path, "libc", '=');
-    profile->triplet = runepkg_util_get_config_value(profile_path, "triplet", '=');
-    profile->deb_host_arch = runepkg_util_get_config_value(profile_path, "deb_host_arch", '=');
+    if (runepkg_util_file_exists(profile_path)) {
+        profile->name = strdup(profile_name);
+        profile->arch = runepkg_util_get_config_value(profile_path, "arch", '=');
+        profile->subarch = runepkg_util_get_config_value(profile_path, "subarch", '=');
+        profile->abi = runepkg_util_get_config_value(profile_path, "abi", '=');
+        profile->float_type = runepkg_util_get_config_value(profile_path, "float", '=');
+        profile->libc = runepkg_util_get_config_value(profile_path, "libc", '=');
+        profile->triplet = runepkg_util_get_config_value(profile_path, "triplet", '=');
+        profile->deb_host_arch = runepkg_util_get_config_value(profile_path, "deb_host_arch", '=');
+        profile->sysroot = runepkg_util_get_config_value(profile_path, "sysroot", '=');
+        profile->crosstools = runepkg_util_get_config_value(profile_path, "crosstools", '=');
+        profile->cross_bin = runepkg_util_get_config_value(profile_path, "cross_bin", '=');
 
-    profile->sysroot = runepkg_util_get_config_value(profile_path, "sysroot", '=');
-    profile->crosstools = runepkg_util_get_config_value(profile_path, "crosstools", '=');
-    profile->cross_bin = runepkg_util_get_config_value(profile_path, "cross_bin", '=');
+        profile->cc = runepkg_util_get_config_value(profile_path, "CC", '=');
+        profile->cxx = runepkg_util_get_config_value(profile_path, "CXX", '=');
+        profile->ld = runepkg_util_get_config_value(profile_path, "LD", '=');
+        profile->ar = runepkg_util_get_config_value(profile_path, "AR", '=');
+        profile->ranlib = runepkg_util_get_config_value(profile_path, "RANLIB", '=');
+        profile->strip = runepkg_util_get_config_value(profile_path, "STRIP", '=');
+        profile->readelf = runepkg_util_get_config_value(profile_path, "READELF", '=');
+        profile->cflags = runepkg_util_get_config_value(profile_path, "CFLAGS", '=');
+        profile->cxxflags = runepkg_util_get_config_value(profile_path, "CXXFLAGS", '=');
+        profile->ldflags = runepkg_util_get_config_value(profile_path, "LDFLAGS", '=');
+        profile->pkg_config_sysroot_dir = runepkg_util_get_config_value(profile_path, "PKG_CONFIG_SYSROOT_DIR", '=');
+        profile->pkg_config_libdir = runepkg_util_get_config_value(profile_path, "PKG_CONFIG_LIBDIR", '=');
+    } else {
+        memset(&spec, 0, sizeof(spec));
+        if (runepkg_psychic_parse_target_arch(profile_name, &spec) == 0 && spec.gnu_triplet) {
+            profile->name = strdup(spec.gnu_triplet);
+            profile->deb_host_arch = strdup(spec.deb_arch);
+            profile->triplet = strdup(spec.gnu_triplet);
+            runepkg_psychic_free_target_spec(&spec);
+        } else {
+            profile->name = strdup(profile_name);
+            profile->triplet = strdup(profile_name);
+            profile->deb_host_arch = strdup("amd64");
+        }
+    }
 
-    profile->cc = runepkg_util_get_config_value(profile_path, "CC", '=');
-    profile->cxx = runepkg_util_get_config_value(profile_path, "CXX", '=');
-    profile->ld = runepkg_util_get_config_value(profile_path, "LD", '=');
-    profile->ar = runepkg_util_get_config_value(profile_path, "AR", '=');
-    profile->ranlib = runepkg_util_get_config_value(profile_path, "RANLIB", '=');
-    profile->strip = runepkg_util_get_config_value(profile_path, "STRIP", '=');
-    profile->readelf = runepkg_util_get_config_value(profile_path, "READELF", '=');
-    profile->cflags = runepkg_util_get_config_value(profile_path, "CFLAGS", '=');
-    profile->cxxflags = runepkg_util_get_config_value(profile_path, "CXXFLAGS", '=');
-    profile->ldflags = runepkg_util_get_config_value(profile_path, "LDFLAGS", '=');
-    profile->pkg_config_sysroot_dir = runepkg_util_get_config_value(profile_path, "PKG_CONFIG_SYSROOT_DIR", '=');
-    profile->pkg_config_libdir = runepkg_util_get_config_value(profile_path, "PKG_CONFIG_LIBDIR", '=');
+    if (!profile->sysroot) {
+        char sysroot_buf[PATH_MAX];
+        snprintf(sysroot_buf, sizeof(sysroot_buf), "/mnt/runepkg/%s", profile->name ? profile->name : profile_name);
+        profile->sysroot = strdup(sysroot_buf);
+    }
 
     return profile;
 }
@@ -176,13 +365,15 @@ int runepkg_config_load_active_state(void) {
 
     free(state_path);
 
-    if (g_active_profile) {
-        runepkg_config_free_profile(g_active_profile);
-        g_active_profile = NULL;
-    }
+    if (!s_cli_pinned_profile) {
+        if (g_active_profile) {
+            runepkg_config_free_profile(g_active_profile);
+            g_active_profile = NULL;
+        }
 
-    if (g_active_state.active_target) {
-        g_active_profile = runepkg_config_load_profile(g_active_state.active_target);
+        if (g_active_state.active_target) {
+            g_active_profile = runepkg_config_load_profile(g_active_state.active_target);
+        }
     }
 
     return 0;
@@ -446,10 +637,12 @@ char *runepkg_get_config_file_path(void) {
 int runepkg_config_load(void) {
     char *config_file_path = runepkg_get_config_file_path();
     const char *home = getenv("HOME");
+    char *saved_cli_profile = s_cli_pinned_profile ? strdup(s_cli_pinned_profile) : NULL;
 
     if (!config_file_path) {
         if (!home) {
             fprintf(stderr, "Error: HOME environment variable not set.\n");
+            free(saved_cli_profile);
             return -1;
         }
         g_runepkg_base_dir = runepkg_util_concat_path(home, "runepkg_dir");
@@ -457,9 +650,7 @@ int runepkg_config_load(void) {
         g_runepkg_db_dir = runepkg_util_concat_path(home, "runepkg_dir/runepkg_db");
         g_install_dir_internal = runepkg_util_concat_path(home, "runepkg_dir/install_dir");
         g_system_install_root = strdup(g_install_dir_internal);
-        g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
-        g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.bin");
-        g_runepkg_lists_dir = runepkg_util_concat_path(g_runepkg_db_dir, "lists");
+        sync_db_derived_paths();
         g_download_dir = runepkg_util_concat_path(g_runepkg_base_dir, "download_dir");
         g_build_dir = runepkg_util_concat_path(g_runepkg_base_dir, "build_dir");
         g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
@@ -472,10 +663,11 @@ int runepkg_config_load(void) {
         g_control_dir = runepkg_util_get_config_value(config_file_path, "control_dir", '=');
         g_runepkg_db_dir = runepkg_util_get_config_value(config_file_path, "runepkg_db", '=');
         g_install_dir_internal = runepkg_util_get_config_value(config_file_path, "install_dir", '=');
+        if (!g_install_dir_internal) {
+            g_install_dir_internal = strdup("/");
+        }
         g_system_install_root = strdup(g_install_dir_internal);
-        g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
-        g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.bin");
-        g_runepkg_lists_dir = runepkg_util_concat_path(g_runepkg_db_dir, "lists");
+        sync_db_derived_paths();
         g_download_dir = runepkg_util_get_config_value(config_file_path, "download_dir", '=');
         if (!g_download_dir && g_runepkg_base_dir) g_download_dir = runepkg_util_concat_path(g_runepkg_base_dir, "download_dir");
         g_build_dir = runepkg_util_get_config_value(config_file_path, "build_dir", '=');
@@ -484,8 +676,13 @@ int runepkg_config_load(void) {
         if (!g_debs_dir && g_runepkg_base_dir) g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
         g_log_dir = runepkg_util_get_config_value(config_file_path, "log_dir", '=');
         if (!g_log_dir && g_runepkg_base_dir) g_log_dir = runepkg_util_concat_path(g_runepkg_base_dir, "log_dir");
-        g_target_install_dir = runepkg_util_get_config_value(config_file_path, "target_install_dir", '=');
-        if (!g_target_install_dir && g_runepkg_base_dir) g_target_install_dir = runepkg_util_concat_path(g_runepkg_base_dir, "target_install_dir");
+
+        g_target_sysroot = runepkg_util_get_config_value(config_file_path, "target_sysroot", '=');
+        if (!g_target_sysroot) {
+            g_target_sysroot = runepkg_util_get_config_value(config_file_path, "target_install_dir", '=');
+        }
+        g_target_install_dir = g_target_sysroot; /* Sync legacy alias */
+
         g_target_arch = runepkg_util_get_config_value(config_file_path, "target_arch", '=');
         g_dpkg_host = runepkg_util_get_config_value(config_file_path, "dpkg_host", '=');
 
@@ -498,11 +695,22 @@ int runepkg_config_load(void) {
         free(cleanup_val); free(md5_checks_val); free(verify_sigs_val);
         runepkg_config_load_sources(config_file_path);
     }
+
+    if (saved_cli_profile) {
+        s_cli_pinned_profile = saved_cli_profile;
+        runepkg_config_activate_profile(s_cli_pinned_profile);
+        if (g_system_install_root && g_target_sysroot) {
+            free(g_system_install_root);
+            g_system_install_root = strdup(g_target_sysroot);
+        }
+    }
+
     free(config_file_path);
     return 0;
 }
 
 void runepkg_config_cleanup(void) {
+    runepkg_util_free_and_null(&s_cli_pinned_profile);
     runepkg_util_free_and_null(&g_runepkg_base_dir);
     runepkg_util_free_and_null(&g_control_dir);
     runepkg_util_free_and_null(&g_runepkg_db_dir);
@@ -515,7 +723,8 @@ void runepkg_config_cleanup(void) {
     runepkg_util_free_and_null(&g_build_dir);
     runepkg_util_free_and_null(&g_debs_dir);
     runepkg_util_free_and_null(&g_log_dir);
-    runepkg_util_free_and_null(&g_target_install_dir);
+    runepkg_util_free_and_null(&g_target_sysroot);
+    g_target_install_dir = NULL;
     runepkg_util_free_and_null(&g_target_arch);
     runepkg_util_free_and_null(&g_dpkg_host);
 
@@ -597,9 +806,11 @@ void runepkg_init_paths(void) {
     }
     if (!runepkg_util_file_exists(g_control_dir)) runepkg_util_create_dir_recursive(g_control_dir, 0755);
     if (!runepkg_util_file_exists(g_runepkg_db_dir)) runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
-    if (!runepkg_util_file_exists(g_runepkg_lists_dir)) runepkg_util_create_dir_recursive(g_runepkg_lists_dir, 0755);
-    if (!runepkg_util_file_exists(g_download_dir)) runepkg_util_create_dir_recursive(g_download_dir, 0755);
-    if (!runepkg_util_file_exists(g_build_dir)) runepkg_util_create_dir_recursive(g_build_dir, 0755);
-    if (!runepkg_util_file_exists(g_debs_dir)) runepkg_util_create_dir_recursive(g_debs_dir, 0755);
+    if (g_runepkg_lists_dir && !runepkg_util_file_exists(g_runepkg_lists_dir)) {
+        runepkg_util_create_dir_recursive(g_runepkg_lists_dir, 0755);
+    }
+    if (g_download_dir && !runepkg_util_file_exists(g_download_dir)) runepkg_util_create_dir_recursive(g_download_dir, 0755);
+    if (g_build_dir && !runepkg_util_file_exists(g_build_dir)) runepkg_util_create_dir_recursive(g_build_dir, 0755);
+    if (g_debs_dir && !runepkg_util_file_exists(g_debs_dir)) runepkg_util_create_dir_recursive(g_debs_dir, 0755);
     if (g_log_dir && !runepkg_util_file_exists(g_log_dir)) runepkg_util_create_dir_recursive(g_log_dir, 0755);
 }

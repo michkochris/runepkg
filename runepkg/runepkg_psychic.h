@@ -112,6 +112,49 @@ int runepkg_psychic_is_multiarch_satisfied(const char *candidate_arch,
                                            const char *target_arch,
                                            const char *host_arch);
 
+/* --- psychic_matrix.bin Binary Format & Prophecy Declarations --- */
+
+#define PSYCHIC_MATRIX_MAGIC 0x50535943 /* "PSYC" */
+#define PSYCHIC_MATRIX_VERSION 1
+
+typedef struct {
+    char magic[4];        /* "PSYC" */
+    unsigned int version; /* 1 */
+    unsigned int entry_count;
+    unsigned long total_bytes;
+} PsychicMatrixHeader;
+
+/**
+ * @brief Generates and serializes psychic_matrix.bin in-place inside target DB directory.
+ * @param sysroot_path Sysroot path (e.g. "/mnt/runepkg/aarch64-linux-gnu").
+ * @param gnu_triplet Triplet string (e.g. "aarch64-linux-gnu").
+ * @return 0 on success, -1 on failure.
+ */
+int runepkg_psychic_build_matrix_bin(const char *sysroot_path, const char *gnu_triplet);
+
+/**
+ * @brief Queries psychic_matrix.bin to check if a header or library file exists inside sysroot.
+ * @param sysroot_path Sysroot path.
+ * @param file_name Relative file path or header name (e.g. "zlib.h" or "libssl.so").
+ * @return 1 if present, 0 if absent/missing, -1 on error.
+ */
+int runepkg_psychic_query_matrix_bin(const char *sysroot_path, const char *file_name);
+
+/**
+ * @brief Prophesies missing Debian package for missing build headers or library links.
+ * @param sysroot_path Target sysroot path.
+ * @param missing_item Missing header/link (e.g. "<zlib.h>" or "-lz").
+ * @param deb_arch Target Debian architecture (e.g. "arm64").
+ * @param out_pkg_buf Output buffer for recommended package string.
+ * @param buf_sz Size of output buffer.
+ * @return 0 on successful prophecy, -1 if no candidate found.
+ */
+int runepkg_psychic_prophesy_missing_package(const char *sysroot_path,
+                                              const char *missing_item,
+                                              const char *deb_arch,
+                                              char *out_pkg_buf,
+                                              size_t buf_sz);
+
 #ifdef __cplusplus
 }
 #endif

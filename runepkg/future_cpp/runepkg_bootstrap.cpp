@@ -1078,18 +1078,17 @@ extern "C" int handle_switch(const char *target) {
 
     std::cout << "\033[1;34m[switch]\033[0m Activating profile: " << profile_name << std::endl;
 
-    profile = runepkg_config_load_profile(profile_name);
-    if (!profile) {
+    if (runepkg_config_activate_profile(profile_name) != 0) {
         std::cerr << "\033[1;31mError:\033[0m Profile '" << profile_name << "' not found in system or user locations." << std::endl;
         return -1;
     }
+    profile = g_active_profile;
 
-    if (profile->sysroot) runepkg_util_create_dir_recursive(profile->sysroot, 0755);
-    if (profile->crosstools) runepkg_util_create_dir_recursive(profile->crosstools, 0755);
+    if (profile && profile->sysroot) runepkg_util_create_dir_recursive(profile->sysroot, 0755);
+    if (profile && profile->crosstools) runepkg_util_create_dir_recursive(profile->crosstools, 0755);
 
     if (runepkg_config_save_active_state(profile) != 0) {
         std::cerr << "Error: Failed to atomically save active target state." << std::endl;
-        runepkg_config_free_profile(profile);
         return -1;
     }
 

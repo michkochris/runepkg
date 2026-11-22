@@ -161,8 +161,8 @@ ProfileMatrix RuneMatrixEngine::parse_profile(const std::string& name) {
     m.is_static = (name.find("static") != std::string::npos);
     m.is_pie = (name.find("pie") != std::string::npos);
 
-    // Direct mapping from active targets/*.conf if loaded
-    if (g_active_profile && name == (g_active_profile->name ? g_active_profile->name : "")) {
+    // Direct mapping from active TargetProfile if loaded
+    if (g_active_profile && (name.empty() || name == (g_active_profile->name ? g_active_profile->name : "") || name == (g_active_profile->triplet ? g_active_profile->triplet : ""))) {
         if (g_active_profile->arch) m.arch = g_active_profile->arch;
         if (g_active_profile->libc) m.libc = g_active_profile->libc;
         if (g_active_profile->triplet) m.triplet = g_active_profile->triplet;

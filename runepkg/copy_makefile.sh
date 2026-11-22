@@ -1,5 +1,4 @@
 cat << 'EOF' > Makefile
-#
 # ******************************************************************************
 # * Filename:    Makefile
 # * Author:      <michkochris@gmail.com>
@@ -116,8 +115,9 @@ endif
 # --- Apply Configuration ---
 ifeq ($(WITH_CPP),1)
   override CFLAGS  += -DENABLE_CPP_FFI
-  LDFLAGS += $(shell pkg-config --libs libcurl 2>/dev/null || echo "-lcurl") -lz
-  CPP_SOURCES = runepkg_network.cpp runepkg_building.cpp runepkg_bootstrap.cpp runepkg_resolver.cpp runepkg_host_dpkg.cpp runepkg_matrix.cpp
+  override CXXFLAGS += -DRUNEPKG_BUILD
+  LDFLAGS += $(shell pkg-config --libs libcurl openssl libcrypto 2>/dev/null || echo "-lcurl -lcrypto") -lz
+  CPP_SOURCES = runepkg_security.cpp runepkg_utility.cpp runepkg_resolver.cpp runepkg_network.cpp runepkg_guard.cpp runepkg_multiarch.cpp runepkg_building.cpp runepkg_runas.cpp
   CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
   LINKER = $(CXX)
 else
@@ -127,13 +127,17 @@ else
 endif
 
 TARGET = runepkg
+RUNAS_TARGET = runas
 C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
             runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c \
-            runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c
+            runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c \
+            runepkg_host.c runepkg_state.c runepkg_psychic.c
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
+RUNAS_OBJS = runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o runepkg_state.o runepkg_psychic.o
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
-          runepkg_crypto.h runepkg_cpp_ffi.h
+          runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h runepkg_state.h \
+          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp runepkg_multiarch.hpp runepkg_building.hpp runepkg_psychic.h
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
@@ -151,9 +155,11 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install debug run termux-install uninstall test info with-cpp build-banner musl-all FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all install-runas FORCE
 
-build: build-banner $(TARGET)
+build: build-banner $(TARGET) $(RUNAS_TARGET)
+	$(E) "  $(GREEN)[link]$(RESET)  Linking binaries: $(TARGET) $(RUNAS_TARGET)"
+	$(E) "$(BOLD)$(GREEN)⚡ runepkg build complete: $(TARGET) $(RUNAS_TARGET)$(RESET)"
 
 musl-all:
 	@chmod +x forge-musl-all.sh
@@ -173,9 +179,21 @@ with-all:
 	$(Q)$(MAKE) WITH_CPP=1 build
 
 $(TARGET): $(OBJS) .config_with_cpp
-	$(E) "  $(GREEN)[link]$(RESET)  Linking target: $@"
 	$(Q)$(LINKER) $(OBJS) -o $@ $(LDFLAGS) $(LIBS)
-	$(E) "$(BOLD)$(GREEN)⚡ runepkg build complete: $@$(RESET)"
+
+runas.o: runepkg_runas.cpp $(HEADERS) .config_with_cpp
+	$(Q)$(CXX) $(CXXFLAGS) -U_RUNEPKG_BUILD -URUNEPKG_BUILD -c $< -o $@
+
+$(RUNAS_TARGET): $(RUNAS_OBJS) .config_with_cpp
+	$(Q)$(CXX) $(RUNAS_OBJS) -o $@ $(LDFLAGS) $(LIBS)
+
+install-runas:
+	@echo "$(CYAN)Installing $(RUNAS_TARGET) to $(DESTDIR)$(PREFIX)/bin...$(RESET)"
+	$(Q)mkdir -p $(DESTDIR)$(PREFIX)/bin
+	$(Q)cp $(RUNAS_TARGET) $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
+	$(Q)chmod 755 $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
+	$(Q)mkdir -p $(DESTDIR)$(ETCDIR)/runepkg
+	@echo "$(GREEN)🧙 runas installation complete!$(RESET)"
 
 %.o: %.c $(HEADERS) .config_with_cpp
 	$(E) "  $(BLUE)[forge]$(RESET) Compiling C Rune: $<"
@@ -189,7 +207,7 @@ $(TARGET): $(OBJS) .config_with_cpp
 
 clean:
 	@echo "$(YELLOW)Cleaning up build artifacts and unearthed runes...$(RESET)"
-	$(Q)rm -f $(OBJS) *.o *.d $(TARGET) *.deb .config_with_cpp .config_with_cpp.tmp
+	$(Q)rm -f $(OBJS) $(RUNAS_OBJS) *.o *.d $(TARGET) $(RUNAS_TARGET) *.deb .config_with_cpp .config_with_cpp.tmp
 	@echo "$(GREEN)🧹 Clean complete. The forge is reset.$(RESET)"
 
 clean-extended:
@@ -203,7 +221,7 @@ clean-forge:
 
 clean-all: clean clean-extended clean-forge
 
-install: $(TARGET)
+install:
 	@echo "$(CYAN)Installing $(TARGET) to $(DESTDIR)$(PREFIX)/bin...$(RESET)"
 	$(Q)mkdir -p $(DESTDIR)$(PREFIX)/bin
 	$(Q)cp $(TARGET) $(DESTDIR)$(PREFIX)/bin/$(TARGET)
@@ -222,13 +240,26 @@ install: $(TARGET)
           fi; \
        fi; \
     fi
-	@echo "$(GREEN)Installation complete.$(RESET)"
+	@echo "$(GREEN)🧙 runepkg installation complete!$(RESET)"
+
+install-target-rules:
+	@if [ -d target-rules ]; then \
+       echo "$(CYAN)Installing target rules to $(DESTDIR)$(ETCDIR)/runepkg/target-rules...$(RESET)"; \
+       mkdir -p $(DESTDIR)$(ETCDIR)/runepkg/target-rules; \
+       cp -r target-rules/* $(DESTDIR)$(ETCDIR)/runepkg/target-rules/; \
+       echo "$(GREEN)Target rules installed.$(RESET)"; \
+    else \
+       echo "$(RED)Error: target-rules directory not found.$(RESET)"; \
+       exit 1; \
+    fi
 
 uninstall:
-	@echo "$(BOLD)$(YELLOW)Uninstalling $(TARGET)...$(RESET)"
+	@echo "$(BOLD)$(YELLOW)Uninstalling $(TARGET) and $(RUNAS_TARGET)...$(RESET)"
 	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
+	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
 	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(TARGET)
-	$(Q)rm -rf $(DESTDIR)$(ETCDIR)/runepkg
+	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(RUNAS_TARGET)
+	@echo "$(YELLOW)Note: $(DESTDIR)$(ETCDIR)/runepkg has been preserved.$(RESET)"
 	@echo "$(GREEN)Uninstallation complete.$(RESET)"
 
 debug: CFLAGS += -DDEBUG -O0
@@ -237,6 +268,20 @@ debug: runepkg
 
 test: $(TARGET)
 	$(Q)./$(TARGET) --help
+
+static-analysis:
+	@echo "$(CYAN)Running static analysis with cppcheck...$(RESET)"
+	@if command -v cppcheck >/dev/null 2>&1; then \
+		cppcheck --enable=warning,style,performance,portability --error-exitcode=1 $(C_SOURCES) $(CPP_SOURCES) || echo "$(YELLOW)cppcheck found warnings.$(RESET)"; \
+	else \
+		echo "$(YELLOW)cppcheck not found. Install cppcheck for static analysis.$(RESET)"; \
+	fi
+	@if command -v scan-build >/dev/null 2>&1; then \
+		echo "$(CYAN)Running clang scan-build...$(RESET)"; \
+		scan-build $(MAKE) clean all; \
+	else \
+		echo "$(YELLOW)scan-build not found. Install clang-tools for compiler static analysis.$(RESET)"; \
+	fi
 
 info:
 	@echo "=== Build Information ==="

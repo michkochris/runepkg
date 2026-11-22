@@ -36,13 +36,7 @@ static int compare_packages(const void *a, const void *b) {
 /* --- Public Storage Functions --- */
 
 static const char *get_effective_db_dir(void) {
-    static char target_db_path[PATH_MAX];
-    if (g_target_arch && g_target_arch[0] != '\0' && g_runepkg_db_dir) {
-        snprintf(target_db_path, sizeof(target_db_path), "%s/targets/%s", g_runepkg_db_dir, g_target_arch);
-        runepkg_util_create_dir_recursive(target_db_path, 0755);
-        return target_db_path;
-    }
-    return g_runepkg_db_dir;
+    return runepkg_config_get_effective_db_dir();
 }
 
 /**
