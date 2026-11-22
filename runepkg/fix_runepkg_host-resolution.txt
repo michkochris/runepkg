@@ -1,0 +1,113 @@
+Now that all three files (runepkg_config.c, runepkg_resolver.cpp, and runepkg_network.cpp) are in front of us, the full chain for why host mode failed to produce runes_graph.bin is completely clear:
+
+Path Escalation in runepkg_config.c: runepkg_config_get_effective_db_dir() fell back to g_install_dir_internal (/srv/lib/runepkg_dir/install_dir) when no target sysroot/profile was set, double-nesting <root>/srv/lib/runepkg_dir/runepkg_db instead of using g_runepkg_db_dir (/srv/lib/runepkg_dir/runepkg_db).
+
+Silent Failure in save_binary_graph() (runepkg_resolver.cpp): If out.is_open() failed (for example, due to a missing parent path or mismatch), it returned -1 silently without printing an error, and get_default_db_path() / get_default_host_db_path() / dump_tree_view() fell back to /var/lib/runepkg_dir/....
+
+Inconsistent Path Fallbacks (runepkg_network.cpp): Index loading, mapping, runepkg_update, and install/download routines fell back to /var/lib/runepkg_dir/runepkg_db instead of runepkg_config_get_effective_db_dir(), and runepkg_repo_find_source_for_binary() results in batch source downloads weren't freed.
+
+1. Patch for runepkg_config_get_effective_db_dir() in runepkg_config.c
+Restrict non-root <root>/srv/lib/runepkg_dir/runepkg_db derivation strictly to active target profiles/sysroots (g_target_sysroot or g_active_profile->sysroot), return g_runepkg_db_dir (defaulting to /srv/lib/runepkg_dir/runepkg_db) in host mode, and ensure the directory exists:
+
+const char *runepkg_config_get_effective_db_dir(void) {
+    static char s_db_buf[PATH_MAX];
+    const char *target_root = NULL;
+
+    if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+        target_root = g_target_sysroot;
+    } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
+        target_root = g_active_profile->sysroot;
+    }
+
+    if (target_root && strcmp(target_root, "/") != 0) {
+        snprintf(s_db_buf, sizeof(s_db_buf), "%s/srv/lib/runepkg_dir/runepkg_db", target_root);
+        runepkg_util_create_dir_recursive(s_db_buf, 0755);
+        if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, s_db_buf) != 0) {
+            if (g_runepkg_db_dir) {
+                free(g_runepkg_db_dir);
+            }
+            g_runepkg_db_dir = strdup(s_db_buf);
+        }
+        return g_runepkg_db_dir;
+    }
+
+    if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
+        runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
+        return g_runepkg_db_dir;
+    }
+
+    runepkg_util_create_dir_recursive("/srv/lib/runepkg_dir/runepkg_db", 0755);
+    return "/srv/lib/runepkg_dir/runepkg_db";
+}
+
+2. Patch for runepkg_resolver.cpp
+Align DB & lists paths with runepkg_config_get_effective_db_dir() in get_default_db_path(), get_default_host_db_path(), and dump_tree_view():
+
+std::string get_default_db_path() {
+        const char *eff_db = runepkg_config_get_effective_db_dir();
+        if (eff_db && eff_db[0] != '\0') return std::string(eff_db) + "/runes_graph.bin";
+        return "/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin";
+    }
+
+    std::string get_default_host_db_path() {
+        const char *eff_db = runepkg_config_get_effective_db_dir();
+        if (eff_db && eff_db[0] != '\0') return std::string(eff_db) + "/runes_host.bin";
+        return "/srv/lib/runepkg_dir/runepkg_db/runes_host.bin";
+    }
+
+And in dump_tree_view():
+
+if (load_binary_graph(db_path, graph) != 0) {
+            const char *eff_db = runepkg_config_get_effective_db_dir();
+            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir :
+                                   (eff_db ? std::string(eff_db) + "/lists" : "/srv/lib/runepkg_dir/runepkg_db/lists");
+            harvest(lists_dir, db_path);
+            load_binary_graph(db_path, graph);
+        }
+
+Create parent directories and log explicit errors in save_binary_graph():
+
+int save_binary_graph(const std::string& out_path, const std::unordered_map<std::string, RuneGraphEntry>& graph) {
+        std::error_code ec;
+        fs::path p(out_path);
+        if (p.has_parent_path()) {
+            fs::create_directories(p.parent_path(), ec);
+        }
+
+        std::ofstream out(out_path, std::ios::binary);
+        if (!out.is_open()) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed to open binary graph for writing: " << out_path << std::endl;
+            return -1;
+        }
+
+And right before std::cout << "  -> Serialized binary graph to ...":
+
+out.flush();
+        if (!out.good()) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed while writing binary graph to: " << out_path << std::endl;
+            return -1;
+        }
+
+        std::cout << "  -> Serialized binary graph to " << out_path << " (" << (out.tellp() / 1024) << " KB)" << std::endl;
+        return 0;
+
+Key Path & Memory Fixes for runepkg_network.cpp
+Use a small helper in runepkg_network.cpp for the effective DB directory instead of "/var/lib/runepkg_dir/runepkg_db":
+
+static std::string effective_db_dir_str() {
+    const char *eff = runepkg_config_get_effective_db_dir();
+    if (eff && eff[0] != '\0') return std::string(eff);
+    if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') return std::string(g_runepkg_db_dir);
+    return "/srv/lib/runepkg_dir/runepkg_db";
+}
+
+Use effective_db_dir_str() in ensure_index_loaded, ensure_repo_mapping_loaded, get_latest_versions, runepkg_update (for db_dir_str and lists fallback), runepkg_repo_install_multiple, runepkg_repo_download_multiple, runepkg_repo_build_depends_download_multiple, and runepkg_repo_info.
+
+In runepkg_repo_source_build_depends_download_multiple and runepkg_repo_source_depends_download_multiple, track std::vector<char*> allocated_names; so any strdup'd strings from runepkg_repo_find_source_for_binary(...) are freed cleanly before returning.
+
+Quick Verification Steps
+Rebuild (make in /home/michko/runepkg/runepkg) and confirm /etc/runepkg/runepkgconfig has #target_arch=... commented out unless intentionally overridden.
+
+Run host runepkg update and verify Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (...) appears and runes_graph.bin exists in /srv/lib/runepkg_dir/runepkg_db.
+
+Run host runepkg -i go and target runepkg --target=arm64:aarch64-linux-gnu --print-config to verify both host and cross-target DB paths stay isolated and clean.

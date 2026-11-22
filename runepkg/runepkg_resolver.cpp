@@ -379,8 +379,9 @@ public:
         std::unordered_map<std::string, RuneGraphEntry> graph;
 
         if (load_binary_graph(db_path, graph) != 0) {
+            const char *eff_db = runepkg_config_get_effective_db_dir();
             std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir :
-                                   (g_runepkg_db_dir ? std::string(g_runepkg_db_dir) + "/lists" : "/var/lib/runepkg_dir/runepkg_db/lists");
+                                   (eff_db ? std::string(eff_db) + "/lists" : "/srv/lib/runepkg_dir/runepkg_db/lists");
             harvest(lists_dir, db_path);
             load_binary_graph(db_path, graph);
         }
@@ -500,13 +501,15 @@ private:
     }
 
     std::string get_default_db_path() {
-        if (g_runepkg_db_dir) return std::string(g_runepkg_db_dir) + "/runes_graph.bin";
-        return "/var/lib/runepkg_dir/runepkg_db/runes_graph.bin";
+        const char *eff_db = runepkg_config_get_effective_db_dir();
+        if (eff_db && eff_db[0] != '\0') return std::string(eff_db) + "/runes_graph.bin";
+        return "/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin";
     }
 
     std::string get_default_host_db_path() {
-        if (g_runepkg_db_dir) return std::string(g_runepkg_db_dir) + "/runes_host.bin";
-        return "/var/lib/runepkg_dir/runepkg_db/runes_host.bin";
+        const char *eff_db = runepkg_config_get_effective_db_dir();
+        if (eff_db && eff_db[0] != '\0') return std::string(eff_db) + "/runes_host.bin";
+        return "/srv/lib/runepkg_dir/runepkg_db/runes_host.bin";
     }
 
     std::vector<std::string> parse_depends_vector(const std::string& raw) {
@@ -928,8 +931,17 @@ void parse_sources_file(const std::string& path, std::unordered_map<std::string,
     }
 
     int save_binary_graph(const std::string& out_path, const std::unordered_map<std::string, RuneGraphEntry>& graph) {
+        std::error_code ec;
+        fs::path graph_path(out_path);
+        if (graph_path.has_parent_path()) {
+            fs::create_directories(graph_path.parent_path(), ec);
+        }
+
         std::ofstream out(out_path, std::ios::binary);
-        if (!out.is_open()) return -1;
+        if (!out.is_open()) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed to open binary graph for writing: " << out_path << std::endl;
+            return -1;
+        }
 
         const char magic[8] = {'R', 'U', 'N', 'E', 'G', 'R', 'P', 'H'};
         out.write(magic, 8);
@@ -971,6 +983,12 @@ void parse_sources_file(const std::string& path, std::unordered_map<std::string,
 
             uint8_t dom = (uint8_t)node.domain;
             out.write(reinterpret_cast<const char*>(&dom), sizeof(dom));
+        }
+
+        out.flush();
+        if (!out.good()) {
+            std::cerr << "\033[1;31m[error]\033[0m Failed while writing binary graph to: " << out_path << std::endl;
+            return -1;
         }
 
         std::cout << "  -> Serialized binary graph to " << out_path << " (" << (out.tellp() / 1024) << " KB)" << std::endl;

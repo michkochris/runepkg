@@ -1,57 +1,26 @@
-[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /mnt/runepkg/ /srv/lib/runepkg_dir/
-[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
-Cleaning up build artifacts and unearthed runes...
-🧹 Clean complete. The forge is reset.
-Uninstalling runepkg and runas...
-Note: /etc/runepkg has been preserved.
-Uninstallation complete.
-[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
-make[1]: Entering directory '/home/michko/runepkg/runepkg'
---------------------------------------------------------
-  Unearthing Runes: Compiling runepkg v1.0.4
---------------------------------------------------------
-  Build Mode: Extended (C++ FFI)
-
-  [forge] Compiling C Rune: runepkg_cli.c
-  [forge] Compiling C Rune: runepkg_handle.c
-  [forge] Compiling C Rune: runepkg_config.c
-  [forge] Compiling C Rune: runepkg_util.c
-  [forge] Compiling C Rune: runepkg_pack.c
-  [forge] Compiling C Rune: runepkg_hash.c
-  [forge] Compiling C Rune: runepkg_storage.c
-  [forge] Compiling C Rune: runepkg_defensive.c
-  [forge] Compiling C Rune: runepkg_completion.c
-  [forge] Compiling C Rune: runepkg_install.c
-  [forge] Compiling C Rune: runepkg_md5sums.c
-  [forge] Compiling C Rune: runepkg_crypto.c
-  [forge] Compiling C Rune: runepkg_host.c
-  [forge] Compiling C Rune: runepkg_state.c
-  [forge] Compiling C Rune: runepkg_psychic.c
-  [ritual] Compiling C++ Rune: runepkg_security.cpp
-  [ritual] Compiling C++ Rune: runepkg_utility.cpp
-  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
-  [ritual] Compiling C++ Rune: runepkg_network.cpp
-  [ritual] Compiling C++ Rune: runepkg_guard.cpp
-  [ritual] Compiling C++ Rune: runepkg_multiarch.cpp
-  [ritual] Compiling C++ Rune: runepkg_building.cpp
-  [ritual] Compiling C++ Rune: runepkg_runas.cpp
-  [link]  Linking binaries: runepkg runas
-⚡ runepkg build complete: runepkg runas
-make[1]: Leaving directory '/home/michko/runepkg/runepkg'
-Installing runepkg to /usr/bin...
-Installing configuration to /etc/runepkg...
-Installing target profiles...
-🧙 runepkg installation complete!
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu update
-[ENTRY] main started with argc=3
-[psychic] Target Sysroot Activated: /mnt/runepkg/aarch64-linux-gnu (Arch: arm64)
-[DEBUG-MATCH] --target= matched for argv[1]='--target=arm64:aarch64-linux-gnu'
+[ zypherus /home/michko/runepkg/runepkg ]# ls
+bashrc                    runepkg_completion.c  runepkg_handle.c       runepkg_network.cpp   runepkg_storage.c
+copy_makefile.sh          runepkg_completion.h  runepkg_handle.h       runepkg_pack.c        runepkg_storage.h
+debian-depends.sh         runepkgconfig         runepkg_hash.c         runepkg_pack.h        runepkg_util.c
+forge-musl-all.sh         runepkg_config.bac    runepkg_hash.h         runepkg_portable.h    runepkg_util.h
+future_cpp                runepkg_config.c      runepkg_host.c         runepkg_psychic.bac   runepkg_utility.cpp
+gemini-svg.svg            runepkg_config.h      runepkg_host.h         runepkg_psychic.c     runepkg_utility.hpp
+Makefile                  runepkg_cpp_ffi.h     runepkg_icon.svg       runepkg_psychic.h     rune-tests
+make_runepkg_deb.sh       runepkg_crypto.c      runepkg_install.c      runepkg_resolver.cpp  run_unification_tests.sh
+output.txt                runepkg_crypto.h      runepkg_install.h      runepkg_runas.cpp     target-runes
+retro-log-next-thing.txt  runepkg_defensive.c   runepkg_logo.svg       runepkg_runas.hpp     targets
+runepkg_building.cpp      runepkg_defensive.h   runepkg_md5sums.c      runepkg_security.cpp  test_fsm_chaos.sh
+runepkg_building.hpp      runepkg_guard.cpp     runepkg_md5sums.h      runepkg_security.hpp  text-files
+runepkg_cli.bac           runepkg_guard.hpp     runepkg_multiarch.cpp  runepkg_state.c       version-check.sh
+runepkg_cli.c             runepkg_handle.bac    runepkg_multiarch.hpp  runepkg_state.h       vrunepkg_config
+[ zypherus /home/michko/runepkg/runepkg ]# nano /etc/runepkg/runepkgconfig
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
 [runepkg] Starting parallel repository update...
 Downloading 8 package lists...
   -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
@@ -60,93 +29,129 @@ Downloading 8 package lists...
 
 Building Hybrid Binary and Source Indexes...
 Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 23.0s
-[harvest] Starting parallel graph analysis on: /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 40.1s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
   -> Found 16 index partitions to analyze.
-[success] Processed 113395 source rune stanzas in 637ms.
-  -> Serialized binary graph to /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29636 KB)
-[ zypherus /home/michko/runepkg/runepkg ]# cat /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.txt
-# psychic_matrix.txt (live sysroot scan)
-# sysroot=/mnt/runepkg/aarch64-linux-gnu
-# triplet=aarch64-linux-gnu
-# entries=0
-# empty sysroot scan
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu -i libtool
-[ENTRY] main started with argc=4
-[psychic] Target Sysroot Activated: /mnt/runepkg/aarch64-linux-gnu (Arch: arm64)
-[DEBUG-MATCH] --target= matched for argv[1]='--target=arm64:aarch64-linux-gnu'
+[success] Processed 114269 source rune stanzas in 625ms.
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i go
+[error] Dependency graph not found. Please run 'runepkg update' first.
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db
+conflicts-breaks.bin  lists           repo_index.bin      repo_src_index.bin    runepkg_autocomplete.bin
+conflicts-breaks.txt  repo_files.txt  repo_src_files.txt  repo_url_mapping.txt
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  Base Directory:      /srv/lib/runepkg_dir
+  Control Directory:   /srv/lib/runepkg_dir/control_dir
+  Install Directory:   /srv/lib/runepkg_dir/install_dir
+  System Install Root: /srv/lib/runepkg_dir/install_dir
+  Database Directory:  /srv/lib/runepkg_dir/runepkg_db
+  Download Directory:  /srv/lib/runepkg_dir/download_dir
+  Build Directory:     /srv/lib/runepkg_dir/build_dir
+  Debs Directory:      /srv/lib/runepkg_dir/runepkg_debs
+  Target Install Dir:  (not set)
+  Target Architecture: amd64:x86_64-linux-gnu
+  Cleanup: no
+  MD5 Checks: yes
+
+Configured Sources:
+==================
+  [1] deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+  [2] deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=amd64:x86_64-linux-gnu update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 47.1s
+[harvest] Starting parallel graph analysis on: /mnt/runepkg/x86_64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 114269 source rune stanzas in 626ms.
+  -> Serialized binary graph to /mnt/runepkg/x86_64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29872 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=amd64:x86_64-linux-gnu -i libtool
 [runepkg] Planning installation for 1 package(s)...
   gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libgmp10 libisl23 libmpfr6 libmpc3 libzstd1 zlib1g
-  cpp-16-aarch64-linux-gnu cpp-16 cpp-aarch64-linux-gnu cpp libstdc++6 libcc1-0 binutils-common libsframe3 libbinutils
-  libctf-nobfd0 libctf0 libjansson4 binutils-aarch64-linux-gnu libgomp1 libitm1 libatomic1 libasan8 liblsan0 libtsan2
-  libubsan1 libhwasan0 libgcc-16-dev gcc-16-aarch64-linux-gnu libgprofng0 binutils gcc-16 gcc-aarch64-linux-gnu gcc
-  libc-dev-bin linux-libc-dev libc6-dev libbz2-1.0 liblzma5 libmagic-mgc libmagic1t64 file autotools-dev libcrypt1
-  perl-base perl-modules-5.42 libdb5.3t64 libgdbm6t64 libgdbm-compat4t64 libperl5.42 perl m4 debianutils autoconf
-  automake libtool
+  cpp-16-x86-64-linux-gnu cpp-16 cpp-x86-64-linux-gnu cpp libstdc++6 libcc1-0 binutils-common libsframe3 libbinutils
+  libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu libgomp1 libitm1 libatomic1 libasan8 liblsan0 libtsan2
+  libubsan1 libhwasan0 libquadmath0 libgcc-16-dev gcc-16-x86-64-linux-gnu libgprofng0 binutils gcc-16
+  gcc-x86-64-linux-gnu gcc libc-dev-bin linux-libc-dev libc6-dev libbz2-1.0 liblzma5 libmagic-mgc libmagic1t64 file
+  autotools-dev libcrypt1 perl-base perl-modules-5.42 libdb5.3t64 libgdbm6t64 libgdbm-compat4t64 libperl5.42 perl m4
+  debianutils autoconf automake libtool
 
-60 packages (70.8 MB) will be installed. Continue? [y/N] y
+61 packages (79.9 MB) will be installed. Continue? [y/N] y
   -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmpc3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmpfr6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpc3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libisl23                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpfr6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> cpp-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> cpp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> cpp-aarch64-linux-gnu     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libcc1-0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libatomic1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgomp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libitm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> binutils-aarch64-linux... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> liblsan0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libubsan1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgcc-16-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtsan2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc-aarch64-linux-gnu     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgomp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libitm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatomic1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhwasan0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblsan0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libquadmath0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtsan2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libubsan1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-16-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> gcc-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libhwasan0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> autotools-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libcrypt1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgdbm6t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libasan8                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> cpp-16-aarch64-linux-gnu  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libdb5.3t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libgdbm-compat4t64        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm6t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-modules-5.42         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> perl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> debianutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> m4                        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debianutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> autoconf                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libtool                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> perl-modules-5.42         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> automake                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libperl5.42               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc-16-aarch64-linux-gnu  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-16-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-[success] Downloaded 60 packages to /srv/lib/runepkg_dir/download_dir
+[success] Downloaded 61 packages to /srv/lib/runepkg_dir/download_dir
 [md5sums] Passed for gcc-16-base
 [runepkg] Installing gcc-16-base (16.2.0-4)
 [md5sums] Passed for libgcc-s1
@@ -167,12 +172,12 @@ Update complete! Binary/Source indexes updated. 0 upgradable. Time: 23.0s
 [runepkg] Installing libzstd1 (1.5.7+dfsg-4)
 [md5sums] Passed for zlib1g
 [runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-3)
-[md5sums] Passed for cpp-16-aarch64-linux-gnu
-[runepkg] Installing cpp-16-aarch64-linux-gnu (16.2.0-4)
+[md5sums] Passed for cpp-16-x86-64-linux-gnu
+[runepkg] Installing cpp-16-x86-64-linux-gnu (16.2.0-4)
 [md5sums] Passed for cpp-16
 [runepkg] Installing cpp-16 (16.2.0-4)
-[md5sums] Passed for cpp-aarch64-linux-gnu
-[runepkg] Installing cpp-aarch64-linux-gnu (4:16.1.0-3)
+[md5sums] Passed for cpp-x86-64-linux-gnu
+[runepkg] Installing cpp-x86-64-linux-gnu (4:16.1.0-3)
 [md5sums] Passed for cpp
 [runepkg] Installing cpp (4:16.1.0-3)
 [md5sums] Passed for libstdc++6
@@ -191,8 +196,8 @@ Update complete! Binary/Source indexes updated. 0 upgradable. Time: 23.0s
 [runepkg] Installing libctf0 (2.47.50.20261021-1)
 [md5sums] Passed for libjansson4
 [runepkg] Installing libjansson4 (2.15.1-1)
-[md5sums] Passed for binutils-aarch64-linux-gnu
-[runepkg] Installing binutils-aarch64-linux-gnu (2.47.50.20261021-1)
+[md5sums] Passed for binutils-x86-64-linux-gnu
+[runepkg] Installing binutils-x86-64-linux-gnu (2.47.50.20261021-1)
 [md5sums] Passed for libgomp1
 [runepkg] Installing libgomp1 (16.2.0-4)
 [md5sums] Passed for libitm1
@@ -209,18 +214,20 @@ Update complete! Binary/Source indexes updated. 0 upgradable. Time: 23.0s
 [runepkg] Installing libubsan1 (16.2.0-4)
 [md5sums] Passed for libhwasan0
 [runepkg] Installing libhwasan0 (16.2.0-4)
+[md5sums] Passed for libquadmath0
+[runepkg] Installing libquadmath0 (16.2.0-4)
 [md5sums] Passed for libgcc-16-dev
 [runepkg] Installing libgcc-16-dev (16.2.0-4)
-[md5sums] Passed for gcc-16-aarch64-linux-gnu
-[runepkg] Installing gcc-16-aarch64-linux-gnu (16.2.0-4)
+[md5sums] Passed for gcc-16-x86-64-linux-gnu
+[runepkg] Installing gcc-16-x86-64-linux-gnu (16.2.0-4)
 [md5sums] Passed for libgprofng0
 [runepkg] Installing libgprofng0 (2.47.50.20261021-1)
 [md5sums] Passed for binutils
 [runepkg] Installing binutils (2.47.50.20261021-1)
 [md5sums] Passed for gcc-16
 [runepkg] Installing gcc-16 (16.2.0-4)
-[md5sums] Passed for gcc-aarch64-linux-gnu
-[runepkg] Installing gcc-aarch64-linux-gnu (4:16.1.0-3)
+[md5sums] Passed for gcc-x86-64-linux-gnu
+[runepkg] Installing gcc-x86-64-linux-gnu (4:16.1.0-3)
 [md5sums] Passed for gcc
 [runepkg] Installing gcc (4:16.1.0-3)
 [md5sums] Passed for libc-dev-bin
@@ -267,678 +274,33 @@ Update complete! Binary/Source indexes updated. 0 upgradable. Time: 23.0s
 [runepkg] Installing automake (1:1.19-3)
 [md5sums] Passed for libtool
 [runepkg] Installing libtool (2.6.2-3)
-[ zypherus /home/michko/runepkg/runepkg ]# file /mnt/runepkg/aarch64-linux-gnu/usr/bin/m4
-/mnt/runepkg/aarch64-linux-gnu/usr/bin/m4: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=71bb84c81241772a5c16aa93b416a979b8634dd4, for GNU/Linux 3.7.0, stripped
-[ zypherus /home/michko/runepkg/runepkg ]# readelf -d /mnt/runepkg/aarch64-linux-gnu/usr/bin/m4
-
-Dynamic section at offset 0x3fc38 contains 28 entries:
-  Tag        Type                         Name/Value
- 0x0000000000000001 (NEEDED)             Shared library: [libc.so.6]
- 0x0000000000000001 (NEEDED)             Shared library: [ld-linux-aarch64.so.1]
- 0x000000000000000c (INIT)               0x41c8
- 0x000000000000000d (FINI)               0x295d4
- 0x0000000000000019 (INIT_ARRAY)         0x4f188
- 0x000000000000001b (INIT_ARRAYSZ)       16 (bytes)
- 0x000000000000001a (FINI_ARRAY)         0x4f198
- 0x000000000000001c (FINI_ARRAYSZ)       8 (bytes)
- 0x000000006ffffef5 (GNU_HASH)           0x320
- 0x0000000000000005 (STRTAB)             0x1290
- 0x0000000000000006 (SYMTAB)             0x360
- 0x000000000000000a (STRSZ)              1811 (bytes)
- 0x000000000000000b (SYMENT)             24 (bytes)
- 0x0000000000000015 (DEBUG)              0x0
- 0x0000000000000003 (PLTGOT)             0x4ffe8
- 0x0000000000000002 (PLTRELSZ)           3336 (bytes)
- 0x0000000000000014 (PLTREL)             RELA
- 0x0000000000000017 (JMPREL)             0x34c0
- 0x0000000000000007 (RELA)               0x1b88
- 0x0000000000000008 (RELASZ)             6456 (bytes)
- 0x0000000000000009 (RELAENT)            24 (bytes)
- 0x0000000070000001 (AARCH64_BTI_PLT)
- 0x000000006ffffffb (FLAGS_1)            Flags: PIE
- 0x000000006ffffffe (VERNEED)            0x1ae8
- 0x000000006fffffff (VERNEEDNUM)         2
- 0x000000006ffffff0 (VERSYM)             0x19a4
- 0x000000006ffffff9 (RELACOUNT)          254
- 0x0000000000000000 (NULL)               0x0
-[ zypherus /home/michko/runepkg/runepkg ]# objdump -p /mnt/runepkg/aarch64-linux-gnu/usr/bin/m4
-
-/mnt/runepkg/aarch64-linux-gnu/usr/bin/m4:     file format elf64-little
-
-Program Header:
-    PHDR off    0x0000000000000040 vaddr 0x0000000000000040 paddr 0x0000000000000040 align 2**3
-         filesz 0x00000000000002a0 memsz 0x00000000000002a0 flags r--
-  INTERP off    0x0000000000000304 vaddr 0x0000000000000304 paddr 0x0000000000000304 align 2**0
-         filesz 0x000000000000001b memsz 0x000000000000001b flags r--
-    LOAD off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**16
-         filesz 0x0000000000034008 memsz 0x0000000000034008 flags r-x
-    LOAD off    0x000000000003f188 vaddr 0x000000000004f188 paddr 0x000000000004f188 align 2**16
-         filesz 0x00000000000013b0 memsz 0x00000000000185e0 flags rw-
- DYNAMIC off    0x000000000003fc38 vaddr 0x000000000004fc38 paddr 0x000000000004fc38 align 2**3
-         filesz 0x0000000000000200 memsz 0x0000000000000200 flags rw-
-    NOTE off    0x00000000000002e0 vaddr 0x00000000000002e0 paddr 0x00000000000002e0 align 2**2
-         filesz 0x0000000000000024 memsz 0x0000000000000024 flags r--
-    NOTE off    0x0000000000033fc8 vaddr 0x0000000000033fc8 paddr 0x0000000000033fc8 align 2**3
-         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
-    NOTE off    0x0000000000033fe8 vaddr 0x0000000000033fe8 paddr 0x0000000000033fe8 align 2**2
-         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
-0x6474e553 off    0x0000000000033fc8 vaddr 0x0000000000033fc8 paddr 0x0000000000033fc8 align 2**3
-         filesz 0x0000000000000020 memsz 0x0000000000000020 flags r--
-EH_FRAME off    0x000000000002ced4 vaddr 0x000000000002ced4 paddr 0x000000000002ced4 align 2**2
-         filesz 0x0000000000000f8c memsz 0x0000000000000f8c flags r--
-   STACK off    0x0000000000000000 vaddr 0x0000000000000000 paddr 0x0000000000000000 align 2**4
-         filesz 0x0000000000000000 memsz 0x0000000000000000 flags rw-
-   RELRO off    0x000000000003f188 vaddr 0x000000000004f188 paddr 0x000000000004f188 align 2**0
-         filesz 0x0000000000000e78 memsz 0x0000000000000e78 flags r--
-
-Dynamic Section:
-  NEEDED               libc.so.6
-  NEEDED               ld-linux-aarch64.so.1
-  INIT                 0x00000000000041c8
-  FINI                 0x00000000000295d4
-  INIT_ARRAY           0x000000000004f188
-  INIT_ARRAYSZ         0x0000000000000010
-  FINI_ARRAY           0x000000000004f198
-  FINI_ARRAYSZ         0x0000000000000008
-  GNU_HASH             0x0000000000000320
-  STRTAB               0x0000000000001290
-  SYMTAB               0x0000000000000360
-  STRSZ                0x0000000000000713
-  SYMENT               0x0000000000000018
-  DEBUG                0x0000000000000000
-  PLTGOT               0x000000000004ffe8
-  PLTRELSZ             0x0000000000000d08
-  PLTREL               0x0000000000000007
-  JMPREL               0x00000000000034c0
-  RELA                 0x0000000000001b88
-  RELASZ               0x0000000000001938
-  RELAENT              0x0000000000000018
-  0x70000001           0x0000000000000000
-  FLAGS_1              0x0000000008000000
-  VERNEED              0x0000000000001ae8
-  VERNEEDNUM           0x0000000000000002
-  VERSYM               0x00000000000019a4
-  RELACOUNT            0x00000000000000fe
-
-Version References:
-  required from ld-linux-aarch64.so.1:
-    0x06969197 0x00 06 GLIBC_2.17
-  required from libc.so.6:
-    0x06969189 0x00 09 GLIBC_2.29
-    0x06969185 0x00 08 GLIBC_2.25
-    0x069691b8 0x00 07 GLIBC_2.38
-    0x069691b3 0x00 05 GLIBC_2.33
-    0x069691b2 0x00 04 GLIBC_2.32
-    0x069691b4 0x00 03 GLIBC_2.34
-    0x06969197 0x00 02 GLIBC_2.17
-
-[ zypherus /home/michko/runepkg/runepkg ]# ls -la /mnt/runepkg/aarch64-linux-gnu/lib/
-total 8
-drwxr-xr-x 2 root root 4096 Nov 21 20:35 .
-drwxr-xr-x 7 root root 4096 Nov 21 20:33 ..
-lrwxrwxrwx 1 root root   28 Nov 21 20:33 aarch64-linux-gnu -> ../usr/lib/aarch64-linux-gnu
-lrwxrwxrwx 1 root root   50 Nov 21 20:35 ld-linux-aarch64.so.1 -> ../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
-[ zypherus /home/michko/runepkg/runepkg ]# file /mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1
-/mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1: symbolic link to ../usr/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
-[ zypherus /home/michko/runepkg/runepkg ]# ls /mnt/runepkg/aarch64-linux-gnu/lib/
-aarch64-linux-gnu/     ld-linux-aarch64.so.1
-[ zypherus /home/michko/runepkg/runepkg ]# ls /mnt/runepkg/aarch64-linux-gnu/lib/aarch64-linux-gnu
-audit                              libdl.so.2               libnss_compat.so
-bfd-plugins                        libg.a                   libnss_compat.so.2
-crt1.o                             libgcc_s.so.1            libnss_dns.so.2
-crti.o                             libgdbm_compat.so.4      libnss_files.so.2
-crtn.o                             libgdbm_compat.so.4.0.0  libnss_hesiod.so
-gconv                              libgdbm.so.6             libnss_hesiod.so.2
-gcrt1.o                            libgdbm.so.6.0.0         libopcodes-2.47.50-system.20261021.so
-gprofng                            libgmp.so.10             libpcprofile.so
-grcrt1.o                           libgmp.so.10.5.0         libperl.so.5.42
-ld-linux-aarch64.so.1              libgomp.so.1             libperl.so.5.42.3
-ldscripts                          libgomp.so.1.0.0         libpthread.a
-libanl.a                           libgprofng.so.0          libpthread_nonshared.a
-libanl.so                          libgprofng.so.0.0.0      libpthread.so.0
-libanl.so.1                        libhwasan.so.0           libresolv.a
-libasan.so.8                       libhwasan.so.0.0.0       libresolv.so
-libasan.so.8.0.0                   libisl.so.23             libresolv.so.2
-libatomic.so.1                     libisl.so.23.5.0         librt.a
-libatomic.so.1.2.0                 libitm.so.1              librt.so.1
-libbfd-2.47.50-system.20261021.so  libitm.so.1.0.0          libsframe.so.3
-libBrokenLocale.a                  libjansson.so.4          libsframe.so.3.0.0
-libBrokenLocale.so                 libjansson.so.4.15.1     libstdc++.so.6
-libBrokenLocale.so.1               liblsan.so.0             libstdc++.so.6.0.36
-libbz2.so.1                        liblsan.so.0.0.0         libthread_db.so
-libbz2.so.1.0                      liblzma.so.5             libthread_db.so.1
-libbz2.so.1.0.4                    liblzma.so.5.8.4         libtsan.so.2
-libc.a                             libm-2.43.a              libtsan.so.2.0.0
-libcc1.so.0                        libm.a                   libubsan.so.1
-libcc1.so.0.0.0                    libmagic.so.1            libubsan.so.1.0.0
-libc_malloc_debug.so               libmagic.so.1.0.0        libutil.a
-libc_malloc_debug.so.0             libmcheck.a              libutil.so.1
-libc_nonshared.a                   libmemusage.so           libz.so.1
-libcrypt.so.1                      libmpc.so.3              libz.so.1.3.2
-libcrypt.so.1.1.0                  libmpc.so.3.3.1          libzstd.so.1
-libc.so                            libmpfr.so.6             libzstd.so.1.5.7
-libc.so.6                          libmpfr.so.6.2.2         Mcrt1.o
-libctf-nobfd.so.0                  libm.so                  perl
-libctf-nobfd.so.0.0.0              libm.so.6                perl-base
-libctf.so.0                        libmvec.a                rcrt1.o
-libctf.so.0.0.0                    libmvec.so               Scrt1.o
-libdb-5.3.so                       libmvec.so.1
-libdl.a                            libnsl.so.1
-[ zypherus /home/michko/runepkg/runepkg ]# cat /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.txt
-# psychic_matrix.txt (live sysroot scan)
-# sysroot=/mnt/runepkg/aarch64-linux-gnu
-# triplet=aarch64-linux-gnu
-# entries=512
-wordexp.h:1
-netiucv/iucv.h:1
-assert.h:1
-endian.h:1
-aio.h:1
-dirent.h:1
-stdlib.h:1
-semaphore.h:1
-values.h:1
-protocols/timed.h:1
-protocols/rwhod.h:1
-protocols/routed.h:1
-protocols/talkd.h:1
-pwd.h:1
-fmtmsg.h:1
-loongarch64-linux-gnu/asm/auxvec.h:1
-loongarch64-linux-gnu/asm/sembuf.h:1
-loongarch64-linux-gnu/asm/unistd_32.h:1
-loongarch64-linux-gnu/asm/errno.h:1
-loongarch64-linux-gnu/asm/break.h:1
-loongarch64-linux-gnu/asm/termbits.h:1
-loongarch64-linux-gnu/asm/byteorder.h:1
-loongarch64-linux-gnu/asm/types.h:1
-loongarch64-linux-gnu/asm/swab.h:1
-loongarch64-linux-gnu/asm/hwcap.h:1
-loongarch64-linux-gnu/asm/reg.h:1
-loongarch64-linux-gnu/asm/ipcbuf.h:1
-loongarch64-linux-gnu/asm/poll.h:1
-loongarch64-linux-gnu/asm/sockios.h:1
-loongarch64-linux-gnu/asm/shmbuf.h:1
-loongarch64-linux-gnu/asm/mman.h:1
-loongarch64-linux-gnu/asm/termios.h:1
-loongarch64-linux-gnu/asm/signal.h:1
-loongarch64-linux-gnu/asm/setup.h:1
-loongarch64-linux-gnu/asm/siginfo.h:1
-loongarch64-linux-gnu/asm/param.h:1
-loongarch64-linux-gnu/asm/unistd.h:1
-loongarch64-linux-gnu/asm/resource.h:1
-loongarch64-linux-gnu/asm/kvm.h:1
-loongarch64-linux-gnu/asm/bitsperlong.h:1
-loongarch64-linux-gnu/asm/ioctls.h:1
-loongarch64-linux-gnu/asm/sigcontext.h:1
-loongarch64-linux-gnu/asm/posix_types.h:1
-loongarch64-linux-gnu/asm/fcntl.h:1
-loongarch64-linux-gnu/asm/ioctl.h:1
-loongarch64-linux-gnu/asm/kvm_para.h:1
-loongarch64-linux-gnu/asm/ptrace.h:1
-loongarch64-linux-gnu/asm/perf_regs.h:1
-loongarch64-linux-gnu/asm/bpf_perf_event.h:1
-loongarch64-linux-gnu/asm/ucontext.h:1
-loongarch64-linux-gnu/asm/stat.h:1
-loongarch64-linux-gnu/asm/unistd_64.h:1
-loongarch64-linux-gnu/asm/statfs.h:1
-loongarch64-linux-gnu/asm/msgbuf.h:1
-loongarch64-linux-gnu/asm/socket.h:1
-utmp.h:1
-errno.h:1
-sysexits.h:1
-regulator/regulator.h:1
-iconv.h:1
-mips-linux-gnu/asm/auxvec.h:1
-mips-linux-gnu/asm/sembuf.h:1
-mips-linux-gnu/asm/errno.h:1
-mips-linux-gnu/asm/break.h:1
-mips-linux-gnu/asm/termbits.h:1
-mips-linux-gnu/asm/byteorder.h:1
-mips-linux-gnu/asm/unistd_n32.h:1
-mips-linux-gnu/asm/types.h:1
-mips-linux-gnu/asm/swab.h:1
-mips-linux-gnu/asm/hwcap.h:1
-mips-linux-gnu/asm/sgidefs.h:1
-mips-linux-gnu/asm/reg.h:1
-mips-linux-gnu/asm/ipcbuf.h:1
-mips-linux-gnu/asm/poll.h:1
-mips-linux-gnu/asm/sockios.h:1
-mips-linux-gnu/asm/shmbuf.h:1
-mips-linux-gnu/asm/mman.h:1
-mips-linux-gnu/asm/termios.h:1
-mips-linux-gnu/asm/signal.h:1
-mips-linux-gnu/asm/setup.h:1
-mips-linux-gnu/asm/siginfo.h:1
-mips-linux-gnu/asm/param.h:1
-mips-linux-gnu/asm/unistd.h:1
-mips-linux-gnu/asm/resource.h:1
-mips-linux-gnu/asm/kvm.h:1
-mips-linux-gnu/asm/bitsperlong.h:1
-mips-linux-gnu/asm/ioctls.h:1
-mips-linux-gnu/asm/unistd_n64.h:1
-mips-linux-gnu/asm/sigcontext.h:1
-mips-linux-gnu/asm/sysmips.h:1
-mips-linux-gnu/asm/posix_types.h:1
-mips-linux-gnu/asm/fcntl.h:1
-mips-linux-gnu/asm/ioctl.h:1
-mips-linux-gnu/asm/bitfield.h:1
-mips-linux-gnu/asm/kvm_para.h:1
-mips-linux-gnu/asm/unistd_o32.h:1
-mips-linux-gnu/asm/ptrace.h:1
-mips-linux-gnu/asm/inst.h:1
-mips-linux-gnu/asm/perf_regs.h:1
-mips-linux-gnu/asm/cachectl.h:1
-mips-linux-gnu/asm/bpf_perf_event.h:1
-mips-linux-gnu/asm/ucontext.h:1
-mips-linux-gnu/asm/stat.h:1
-mips-linux-gnu/asm/statfs.h:1
-mips-linux-gnu/asm/msgbuf.h:1
-mips-linux-gnu/asm/socket.h:1
-stdio_ext.h:1
-execinfo.h:1
-netipx/ipx.h:1
-uchar.h:1
-err.h:1
-powerpc64-linux-gnu/asm/auxvec.h:1
-powerpc64-linux-gnu/asm/sembuf.h:1
-powerpc64-linux-gnu/asm/unistd_32.h:1
-powerpc64-linux-gnu/asm/errno.h:1
-powerpc64-linux-gnu/asm/termbits.h:1
-powerpc64-linux-gnu/asm/byteorder.h:1
-powerpc64-linux-gnu/asm/types.h:1
-powerpc64-linux-gnu/asm/swab.h:1
-powerpc64-linux-gnu/asm/nvram.h:1
-powerpc64-linux-gnu/asm/eeh.h:1
-powerpc64-linux-gnu/asm/spu_info.h:1
-powerpc64-linux-gnu/asm/opal-prd.h:1
-powerpc64-linux-gnu/asm/elf.h:1
-powerpc64-linux-gnu/asm/ipcbuf.h:1
-powerpc64-linux-gnu/asm/tm.h:1
-powerpc64-linux-gnu/asm/bootx.h:1
-powerpc64-linux-gnu/asm/poll.h:1
-powerpc64-linux-gnu/asm/sockios.h:1
-powerpc64-linux-gnu/asm/shmbuf.h:1
-powerpc64-linux-gnu/asm/vas-api.h:1
-powerpc64-linux-gnu/asm/mman.h:1
-powerpc64-linux-gnu/asm/papr-vpd.h:1
-powerpc64-linux-gnu/asm/epapr_hcalls.h:1
-powerpc64-linux-gnu/asm/termios.h:1
-powerpc64-linux-gnu/asm/signal.h:1
-powerpc64-linux-gnu/asm/setup.h:1
-powerpc64-linux-gnu/asm/papr-indices.h:1
-powerpc64-linux-gnu/asm/siginfo.h:1
-powerpc64-linux-gnu/asm/param.h:1
-powerpc64-linux-gnu/asm/unistd.h:1
-powerpc64-linux-gnu/asm/resource.h:1
-powerpc64-linux-gnu/asm/kvm.h:1
-powerpc64-linux-gnu/asm/bitsperlong.h:1
-powerpc64-linux-gnu/asm/ioctls.h:1
-powerpc64-linux-gnu/asm/sigcontext.h:1
-powerpc64-linux-gnu/asm/papr-hvpipe.h:1
-powerpc64-linux-gnu/asm/posix_types.h:1
-powerpc64-linux-gnu/asm/fcntl.h:1
-powerpc64-linux-gnu/asm/ioctl.h:1
-powerpc64-linux-gnu/asm/kvm_para.h:1
-powerpc64-linux-gnu/asm/ptrace.h:1
-powerpc64-linux-gnu/asm/cputable.h:1
-powerpc64-linux-gnu/asm/perf_regs.h:1
-powerpc64-linux-gnu/asm/papr-miscdev.h:1
-powerpc64-linux-gnu/asm/bpf_perf_event.h:1
-powerpc64-linux-gnu/asm/ucontext.h:1
-powerpc64-linux-gnu/asm/ps3fb.h:1
-powerpc64-linux-gnu/asm/papr-sysparm.h:1
-powerpc64-linux-gnu/asm/stat.h:1
-powerpc64-linux-gnu/asm/unistd_64.h:1
-powerpc64-linux-gnu/asm/papr-platform-dump.h:1
-powerpc64-linux-gnu/asm/statfs.h:1
-powerpc64-linux-gnu/asm/msgbuf.h:1
-powerpc64-linux-gnu/asm/perf_event.h:1
-powerpc64-linux-gnu/asm/papr-physical-attestation.h:1
-powerpc64-linux-gnu/asm/socket.h:1
-resolv.h:1
-dlfcn.h:1
-fnmatch.h:1
-gconv.h:1
-mntent.h:1
-mtd/mtd-user.h:1
-mtd/inftl-user.h:1
-mtd/mtd-abi.h:1
-mtd/nftl-user.h:1
-mtd/ubi-user.h:1
-locale.h:1
-libgen.h:1
-net/route.h:1
-net/if.h:1
-net/if_ppp.h:1
-net/if_shaper.h:1
-net/ppp-comp.h:1
-net/if_arp.h:1
-net/ppp_defs.h:1
-net/ethernet.h:1
-net/if_slip.h:1
-net/if_packet.h:1
-complex.h:1
-sh4-linux-gnu/asm/auxvec.h:1
-sh4-linux-gnu/asm/sembuf.h:1
-sh4-linux-gnu/asm/unistd_32.h:1
-sh4-linux-gnu/asm/posix_types_32.h:1
-sh4-linux-gnu/asm/errno.h:1
-sh4-linux-gnu/asm/termbits.h:1
-sh4-linux-gnu/asm/byteorder.h:1
-sh4-linux-gnu/asm/types.h:1
-sh4-linux-gnu/asm/swab.h:1
-sh4-linux-gnu/asm/cpu-features.h:1
-sh4-linux-gnu/asm/ipcbuf.h:1
-sh4-linux-gnu/asm/poll.h:1
-sh4-linux-gnu/asm/sockios.h:1
-sh4-linux-gnu/asm/shmbuf.h:1
-sh4-linux-gnu/asm/mman.h:1
-sh4-linux-gnu/asm/termios.h:1
-sh4-linux-gnu/asm/signal.h:1
-sh4-linux-gnu/asm/setup.h:1
-sh4-linux-gnu/asm/siginfo.h:1
-sh4-linux-gnu/asm/param.h:1
-sh4-linux-gnu/asm/unistd.h:1
-sh4-linux-gnu/asm/resource.h:1
-sh4-linux-gnu/asm/bitsperlong.h:1
-sh4-linux-gnu/asm/ioctls.h:1
-sh4-linux-gnu/asm/ptrace_32.h:1
-sh4-linux-gnu/asm/sigcontext.h:1
-sh4-linux-gnu/asm/posix_types.h:1
-sh4-linux-gnu/asm/fcntl.h:1
-sh4-linux-gnu/asm/ioctl.h:1
-sh4-linux-gnu/asm/ptrace.h:1
-sh4-linux-gnu/asm/cachectl.h:1
-sh4-linux-gnu/asm/hw_breakpoint.h:1
-sh4-linux-gnu/asm/bpf_perf_event.h:1
-sh4-linux-gnu/asm/ucontext.h:1
-sh4-linux-gnu/asm/stat.h:1
-sh4-linux-gnu/asm/statfs.h:1
-sh4-linux-gnu/asm/msgbuf.h:1
-sh4-linux-gnu/asm/socket.h:1
-pty.h:1
-argp.h:1
-aliases.h:1
-obstack.h:1
-nss.h:1
-grp.h:1
-limits.h:1
-mips64el-linux-gnuabi64/asm/auxvec.h:1
-mips64el-linux-gnuabi64/asm/sembuf.h:1
-mips64el-linux-gnuabi64/asm/errno.h:1
-mips64el-linux-gnuabi64/asm/break.h:1
-mips64el-linux-gnuabi64/asm/termbits.h:1
-mips64el-linux-gnuabi64/asm/byteorder.h:1
-mips64el-linux-gnuabi64/asm/unistd_n32.h:1
-mips64el-linux-gnuabi64/asm/types.h:1
-mips64el-linux-gnuabi64/asm/swab.h:1
-mips64el-linux-gnuabi64/asm/hwcap.h:1
-mips64el-linux-gnuabi64/asm/sgidefs.h:1
-mips64el-linux-gnuabi64/asm/reg.h:1
-mips64el-linux-gnuabi64/asm/ipcbuf.h:1
-mips64el-linux-gnuabi64/asm/poll.h:1
-mips64el-linux-gnuabi64/asm/sockios.h:1
-mips64el-linux-gnuabi64/asm/shmbuf.h:1
-mips64el-linux-gnuabi64/asm/mman.h:1
-mips64el-linux-gnuabi64/asm/termios.h:1
-mips64el-linux-gnuabi64/asm/signal.h:1
-mips64el-linux-gnuabi64/asm/setup.h:1
-mips64el-linux-gnuabi64/asm/siginfo.h:1
-mips64el-linux-gnuabi64/asm/param.h:1
-mips64el-linux-gnuabi64/asm/unistd.h:1
-mips64el-linux-gnuabi64/asm/resource.h:1
-mips64el-linux-gnuabi64/asm/kvm.h:1
-mips64el-linux-gnuabi64/asm/bitsperlong.h:1
-mips64el-linux-gnuabi64/asm/ioctls.h:1
-mips64el-linux-gnuabi64/asm/unistd_n64.h:1
-mips64el-linux-gnuabi64/asm/sigcontext.h:1
-mips64el-linux-gnuabi64/asm/sysmips.h:1
-mips64el-linux-gnuabi64/asm/posix_types.h:1
-mips64el-linux-gnuabi64/asm/fcntl.h:1
-mips64el-linux-gnuabi64/asm/ioctl.h:1
-mips64el-linux-gnuabi64/asm/bitfield.h:1
-mips64el-linux-gnuabi64/asm/kvm_para.h:1
-mips64el-linux-gnuabi64/asm/unistd_o32.h:1
-mips64el-linux-gnuabi64/asm/ptrace.h:1
-mips64el-linux-gnuabi64/asm/inst.h:1
-mips64el-linux-gnuabi64/asm/perf_regs.h:1
-mips64el-linux-gnuabi64/asm/cachectl.h:1
-mips64el-linux-gnuabi64/asm/bpf_perf_event.h:1
-mips64el-linux-gnuabi64/asm/ucontext.h:1
-mips64el-linux-gnuabi64/asm/stat.h:1
-mips64el-linux-gnuabi64/asm/statfs.h:1
-mips64el-linux-gnuabi64/asm/msgbuf.h:1
-mips64el-linux-gnuabi64/asm/socket.h:1
-syslog.h:1
-stdio.h:1
-elf.h:1
-arm-linux-gnueabi/asm/auxvec.h:1
-arm-linux-gnueabi/asm/sembuf.h:1
-arm-linux-gnueabi/asm/errno.h:1
-arm-linux-gnueabi/asm/termbits.h:1
-arm-linux-gnueabi/asm/byteorder.h:1
-arm-linux-gnueabi/asm/types.h:1
-arm-linux-gnueabi/asm/swab.h:1
-arm-linux-gnueabi/asm/hwcap.h:1
-arm-linux-gnueabi/asm/ipcbuf.h:1
-arm-linux-gnueabi/asm/poll.h:1
-arm-linux-gnueabi/asm/sockios.h:1
-arm-linux-gnueabi/asm/shmbuf.h:1
-arm-linux-gnueabi/asm/mman.h:1
-arm-linux-gnueabi/asm/unistd-eabi.h:1
-arm-linux-gnueabi/asm/termios.h:1
-arm-linux-gnueabi/asm/signal.h:1
-arm-linux-gnueabi/asm/setup.h:1
-arm-linux-gnueabi/asm/siginfo.h:1
-arm-linux-gnueabi/asm/param.h:1
-arm-linux-gnueabi/asm/unistd.h:1
-arm-linux-gnueabi/asm/resource.h:1
-arm-linux-gnueabi/asm/bitsperlong.h:1
-arm-linux-gnueabi/asm/ioctls.h:1
-arm-linux-gnueabi/asm/sigcontext.h:1
-arm-linux-gnueabi/asm/posix_types.h:1
-arm-linux-gnueabi/asm/fcntl.h:1
-arm-linux-gnueabi/asm/ioctl.h:1
-arm-linux-gnueabi/asm/unistd-oabi.h:1
-arm-linux-gnueabi/asm/kvm_para.h:1
-arm-linux-gnueabi/asm/ptrace.h:1
-arm-linux-gnueabi/asm/perf_regs.h:1
-arm-linux-gnueabi/asm/bpf_perf_event.h:1
-arm-linux-gnueabi/asm/stat.h:1
-arm-linux-gnueabi/asm/statfs.h:1
-arm-linux-gnueabi/asm/msgbuf.h:1
-arm-linux-gnueabi/asm/socket.h:1
-search.h:1
-printf.h:1
-neteconet/ec.h:1
-hppa-linux-gnu/asm/auxvec.h:1
-hppa-linux-gnu/asm/sembuf.h:1
-hppa-linux-gnu/asm/unistd_32.h:1
-hppa-linux-gnu/asm/errno.h:1
-hppa-linux-gnu/asm/termbits.h:1
-hppa-linux-gnu/asm/byteorder.h:1
-hppa-linux-gnu/asm/types.h:1
-hppa-linux-gnu/asm/swab.h:1
-hppa-linux-gnu/asm/ipcbuf.h:1
-hppa-linux-gnu/asm/poll.h:1
-hppa-linux-gnu/asm/sockios.h:1
-hppa-linux-gnu/asm/shmbuf.h:1
-hppa-linux-gnu/asm/mman.h:1
-hppa-linux-gnu/asm/termios.h:1
-hppa-linux-gnu/asm/signal.h:1
-hppa-linux-gnu/asm/setup.h:1
-hppa-linux-gnu/asm/siginfo.h:1
-hppa-linux-gnu/asm/param.h:1
-hppa-linux-gnu/asm/unistd.h:1
-hppa-linux-gnu/asm/resource.h:1
-hppa-linux-gnu/asm/bitsperlong.h:1
-hppa-linux-gnu/asm/ioctls.h:1
-hppa-linux-gnu/asm/sigcontext.h:1
-hppa-linux-gnu/asm/posix_types.h:1
-hppa-linux-gnu/asm/fcntl.h:1
-hppa-linux-gnu/asm/ioctl.h:1
-hppa-linux-gnu/asm/ptrace.h:1
-hppa-linux-gnu/asm/pdc.h:1
-hppa-linux-gnu/asm/perf_regs.h:1
-hppa-linux-gnu/asm/cachectl.h:1
-hppa-linux-gnu/asm/bpf_perf_event.h:1
-hppa-linux-gnu/asm/stat.h:1
-hppa-linux-gnu/asm/unistd_64.h:1
-hppa-linux-gnu/asm/statfs.h:1
-hppa-linux-gnu/asm/msgbuf.h:1
-hppa-linux-gnu/asm/socket.h:1
-poll.h:1
-s390x-linux-gnu/asm/sie.h:1
-s390x-linux-gnu/asm/auxvec.h:1
-s390x-linux-gnu/asm/sembuf.h:1
-s390x-linux-gnu/asm/cmb.h:1
-s390x-linux-gnu/asm/runtime_instr.h:1
-s390x-linux-gnu/asm/errno.h:1
-s390x-linux-gnu/asm/termbits.h:1
-s390x-linux-gnu/asm/byteorder.h:1
-s390x-linux-gnu/asm/types.h:1
-s390x-linux-gnu/asm/swab.h:1
-s390x-linux-gnu/asm/fs3270.h:1
-s390x-linux-gnu/asm/uvdevice.h:1
-s390x-linux-gnu/asm/ipcbuf.h:1
-s390x-linux-gnu/asm/chpid.h:1
-s390x-linux-gnu/asm/poll.h:1
-s390x-linux-gnu/asm/pkey.h:1
-s390x-linux-gnu/asm/sockios.h:1
-s390x-linux-gnu/asm/shmbuf.h:1
-s390x-linux-gnu/asm/mman.h:1
-s390x-linux-gnu/asm/ipl.h:1
-s390x-linux-gnu/asm/monwriter.h:1
-s390x-linux-gnu/asm/hypfs.h:1
-s390x-linux-gnu/asm/guarded_storage.h:1
-s390x-linux-gnu/asm/termios.h:1
-s390x-linux-gnu/asm/signal.h:1
-s390x-linux-gnu/asm/zcrypt.h:1
-s390x-linux-gnu/asm/diag.h:1
-s390x-linux-gnu/asm/setup.h:1
-s390x-linux-gnu/asm/qeth.h:1
-s390x-linux-gnu/asm/siginfo.h:1
-s390x-linux-gnu/asm/kvm_perf.h:1
-s390x-linux-gnu/asm/param.h:1
-s390x-linux-gnu/asm/unistd.h:1
-s390x-linux-gnu/asm/sthyi.h:1
-s390x-linux-gnu/asm/resource.h:1
-s390x-linux-gnu/asm/vtoc.h:1
-s390x-linux-gnu/asm/kvm.h:1
-s390x-linux-gnu/asm/bitsperlong.h:1
-s390x-linux-gnu/asm/raw3270.h:1
-s390x-linux-gnu/asm/dasd.h:1
-s390x-linux-gnu/asm/ioctls.h:1
-s390x-linux-gnu/asm/sigcontext.h:1
-s390x-linux-gnu/asm/chsc.h:1
-s390x-linux-gnu/asm/vmcp.h:1
-s390x-linux-gnu/asm/posix_types.h:1
-s390x-linux-gnu/asm/fcntl.h:1
-s390x-linux-gnu/asm/ioctl.h:1
-s390x-linux-gnu/asm/clp.h:1
-s390x-linux-gnu/asm/virtio-ccw.h:1
-s390x-linux-gnu/asm/kvm_para.h:1
-s390x-linux-gnu/asm/ptrace.h:1
-s390x-linux-gnu/asm/perf_regs.h:1
-s390x-linux-gnu/asm/hwctrset.h:1
-s390x-linux-gnu/asm/bpf_perf_event.h:1
-s390x-linux-gnu/asm/ucontext.h:1
-s390x-linux-gnu/asm/schid.h:1
-s390x-linux-gnu/asm/stat.h:1
-s390x-linux-gnu/asm/unistd_64.h:1
-s390x-linux-gnu/asm/statfs.h:1
-s390x-linux-gnu/asm/sclp_ctl.h:1
-s390x-linux-gnu/asm/msgbuf.h:1
-s390x-linux-gnu/asm/socket.h:1
-nl_types.h:1
-sgtty.h:1
-inttypes.h:1
-riscv64-linux-gnu/asm/auxvec.h:1
-riscv64-linux-gnu/asm/sembuf.h:1
-riscv64-linux-gnu/asm/unistd_32.h:1
-riscv64-linux-gnu/asm/errno.h:1
-riscv64-linux-gnu/asm/termbits.h:1
-riscv64-linux-gnu/asm/byteorder.h:1
-riscv64-linux-gnu/asm/types.h:1
-riscv64-linux-gnu/asm/swab.h:1
-riscv64-linux-gnu/asm/hwcap.h:1
-riscv64-linux-gnu/asm/elf.h:1
-riscv64-linux-gnu/asm/ipcbuf.h:1
-riscv64-linux-gnu/asm/poll.h:1
-riscv64-linux-gnu/asm/sockios.h:1
-riscv64-linux-gnu/asm/shmbuf.h:1
-riscv64-linux-gnu/asm/mman.h:1
-riscv64-linux-gnu/asm/termios.h:1
-riscv64-linux-gnu/asm/signal.h:1
-riscv64-linux-gnu/asm/setup.h:1
-riscv64-linux-gnu/asm/siginfo.h:1
-riscv64-linux-gnu/asm/param.h:1
-riscv64-linux-gnu/asm/unistd.h:1
-riscv64-linux-gnu/asm/resource.h:1
-riscv64-linux-gnu/asm/kvm.h:1
-riscv64-linux-gnu/asm/bitsperlong.h:1
-riscv64-linux-gnu/asm/ioctls.h:1
-riscv64-linux-gnu/asm/sigcontext.h:1
-riscv64-linux-gnu/asm/posix_types.h:1
-riscv64-linux-gnu/asm/fcntl.h:1
-riscv64-linux-gnu/asm/ioctl.h:1
-riscv64-linux-gnu/asm/vendor/sifive.h:1
-riscv64-linux-gnu/asm/vendor/mips.h:1
-riscv64-linux-gnu/asm/vendor/thead.h:1
-riscv64-linux-gnu/asm/ptrace.h:1
-riscv64-linux-gnu/asm/hwprobe.h:1
-riscv64-linux-gnu/asm/perf_regs.h:1
-riscv64-linux-gnu/asm/bpf_perf_event.h:1
-riscv64-linux-gnu/asm/ucontext.h:1
-riscv64-linux-gnu/asm/stat.h:1
-riscv64-linux-gnu/asm/unistd_64.h:1
-riscv64-linux-gnu/asm/statfs.h:1
-riscv64-linux-gnu/asm/msgbuf.h:1
-riscv64-linux-gnu/asm/socket.h:1
-rdma/mana-abi.h:1
-rdma/mthca-abi.h:1
-rdma/ib_user_ioctl_verbs.h:1
-rdma/irdma-abi.h:1
-rdma/ionic-abi.h:1
-rdma/ib_user_ioctl_cmds.h:1
-rdma/hns-abi.h:1
-rdma/ib_user_mad.h:1
-rdma/qedr-abi.h:1
-rdma/mlx5-abi.h:1
-rdma/mlx4-abi.h:1
-rdma/rdma_user_rxe.h:1
-rdma/cxgb4-abi.h:1
-rdma/ib_user_verbs.h:1
-rdma/ib_user_sa.h:1
-rdma/erdma-abi.h:1
-rdma/hfi/hfi1_user.h:1
-rdma/hfi/hfi1_ioctl.h:1
-rdma/rdma_user_ioctl.h:1
-rdma/vmw_pvrdma-abi.h:1
-rdma/bnxt_re-abi.h:1
-rdma/rvt-abi.h:1
-rdma/ocrdma-abi.h:1
-rdma/rdma_user_cm.h:1
-rdma/siw-abi.h:1
-rdma/rdma_user_ioctl_cmds.h:1
-rdma/mlx5_user_ioctl_verbs.h:1
-rdma/efa-abi.h:1
-rdma/rdma_netlink.h:1
-rdma/mlx5_user_ioctl_cmds.h:1
-ftw.h:1
-threads.h:1
-utime.h:1
-misc/pvpanic.h:1
-misc/fastrpc.h:1
-misc/uacce/uacce.h:1
-misc/uacce/hisi_qm.h:1
-misc/mrvl_cn10k_dpi.h:1
-misc/xilinx_sdfec.h:1
-misc/amd-apml.h:1
-misc/ocxl.h:1
-powerpc-linux-gnu/asm/auxvec.h:1
-powerpc-linux-gnu/asm/sembuf.h:1
-powerpc-linux-gnu/asm/unistd_32.h:1
-powerpc-linux-gnu/asm/errno.h:1
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db
+conflicts-breaks.bin  lists           repo_index.bin      repo_src_index.bin    runepkg_autocomplete.bin
+conflicts-breaks.txt  repo_files.txt  repo_src_files.txt  repo_url_mapping.txt
+[ zypherus /home/michko/runepkg/runepkg ]# ls /mnt/runepkg/x86_64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/
+autoconf-2.73-2                               libcc1-0-16.2.0-4                 libquadmath0-16.2.0-4
+automake-1:1.19-3                             libc-dev-bin-2.43-7               libsframe3-2.47.50.20261021-1
+autotools-dev-20240727.1+nmu1                 libc-gconv-modules-extra-2.43-7   libstdc++6-16.2.0-4
+binutils-2.47.50.20261021-1                   libcrypt1-1:4.5.2+20251210-1      libtool-2.6.2-3
+binutils-common-2.47.50.20261021-1            libctf0-2.47.50.20261021-1        libtsan2-16.2.0-4
+binutils-x86-64-linux-gnu-2.47.50.20261021-1  libctf-nobfd0-2.47.50.20261021-1  libubsan1-16.2.0-4
+conflicts-breaks.bin                          libdb5.3t64-5.3.28+dfsg2-11+b1    libzstd1-1.5.7+dfsg-4
+conflicts-breaks.txt                          libgcc-16-dev-16.2.0-4            linux-libc-dev-7.2.15-1kali1
+cpp-16-16.2.0-4                               libgcc-s1-16.2.0-4                lists
+cpp-16-x86-64-linux-gnu-16.2.0-4              libgdbm6t64-1.26-1+b2             m4-1.4.21-1
+cpp-4:16.1.0-3                                libgdbm-compat4t64-1.26-1+b2      perl-5.42.3-1
+cpp-x86-64-linux-gnu-4:16.1.0-3               libgmp10-2:6.3.0+dfsg-5+b2        perl-base-5.42.3-1
+debianutils-5.24                              libgomp1-16.2.0-4                 perl-modules-5.42-5.42.3-1
+file-1:5.47-4                                 libgprofng0-2.47.50.20261021-1    psychic_matrix.bin
+gcc-16-16.2.0-4                               libhwasan0-16.2.0-4               psychic_matrix.txt
+gcc-16-base-16.2.0-4                          libisl23-0.28-1                   repo_files.txt
+gcc-16-x86-64-linux-gnu-16.2.0-4              libitm1-16.2.0-4                  repo_index.bin
+gcc-4:16.1.0-3                                libjansson4-2.15.1-1              repo_src_files.txt
+gcc-x86-64-linux-gnu-4:16.1.0-3               liblsan0-16.2.0-4                 repo_src_index.bin
+libasan8-16.2.0-4                             liblzma5-5.8.4-1                  repo_url_mapping.txt
+libatomic1-16.2.0-4                           libmagic1t64-1:5.47-4             runepkg_autocomplete.bin
+libbinutils-2.47.50.20261021-1                libmagic-mgc-1:5.47-4             runes_graph.bin
+libbz2-1.0-1.0.8-6+b2                         libmpc3-1.3.1-3                   zlib1g-1:1.3.dfsg+really1.3.2-3
+libc6-2.43-7                                  libmpfr6-4.2.2-3
+libc6-dev-2.43-7                              libperl5.42-5.42.3-1
 [ zypherus /home/michko/runepkg/runepkg ]#

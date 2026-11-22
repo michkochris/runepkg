@@ -449,14 +449,21 @@ static RepoMapping g_repo_mapping;
 static std::unordered_map<std::string, PkgMetadata> g_metadata_cache;
 static std::mutex g_metadata_cache_mutex;
 
+static std::string effective_db_dir_str() {
+    const char *eff = runepkg_config_get_effective_db_dir();
+    if (eff && eff[0] != '\0') return std::string(eff);
+    if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') return std::string(g_runepkg_db_dir);
+    return "/srv/lib/runepkg_dir/runepkg_db";
+}
+
 static void ensure_index_loaded(bool is_source) {
     RepoIndex &idx_cache = is_source ? g_src_index : g_pkg_index;
     if (idx_cache.loaded) return;
 
     std::string index_name = is_source ? "repo_src_index.bin" : "repo_index.bin";
     std::string file_list_name = is_source ? "repo_src_files.txt" : "repo_files.txt";
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/" + index_name;
-    std::string file_list_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/" + file_list_name;
+    std::string index_path = effective_db_dir_str() + "/" + index_name;
+    std::string file_list_path = effective_db_dir_str() + "/" + file_list_name;
 
     std::ifstream idx(index_path, std::ios::binary);
     if (idx.is_open()) {
@@ -484,7 +491,7 @@ static void ensure_index_loaded(bool is_source) {
 
 static inline void ensure_repo_mapping_loaded() {
     if (g_repo_mapping.loaded) return;
-    std::string mapping_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_url_mapping.txt";
+    std::string mapping_path = effective_db_dir_str() + "/repo_url_mapping.txt";
     std::ifstream mapping(mapping_path);
     if (mapping.is_open()) {
         std::string m_type, m_url, m_file;
@@ -526,7 +533,7 @@ extern "C" int runepkg_cpp_ffi_available(void) {
 
 std::unordered_map<std::string, std::string> get_latest_versions() {
     std::unordered_map<std::string, std::string> latest_versions;
-    std::string file_list_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_files.txt";
+    std::string file_list_path = effective_db_dir_str() + "/repo_files.txt";
     std::ifstream flist(file_list_path);
     if (!flist.is_open()) return latest_versions;
 
@@ -685,15 +692,16 @@ extern "C" int runepkg_update(void) {
             std::string component;
             while (ss >> component) {
                 std::string url, dest_path;
+                std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
                 if (std::string(g_sources[i]->type) == "deb") {
                     url = base_url + "dists/" + suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
                     std::string safe_url = normalize_url(url);
-                    dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                    dest_path = lists_dir + "/" + safe_url;
                     bin_tasks.push_back({url, dest_path, "", 0, false});
                 } else if (std::string(g_sources[i]->type) == "deb-src") {
                     url = base_url + "dists/" + suite + "/" + component + "/source/Sources.gz";
                     std::string safe_url = normalize_url(url);
-                    dest_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                    dest_path = lists_dir + "/" + safe_url;
                     src_tasks.push_back({url, dest_path, "", 0, false});
                 }
             }
@@ -706,7 +714,8 @@ extern "C" int runepkg_update(void) {
             if (base_url.back() != '/') base_url += '/';
             std::string release_url = base_url + "dists/" + g_sources[i]->suite + "/InRelease";
             std::string safe_release = normalize_url(release_url);
-            std::string release_path = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_release;
+            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
+            std::string release_path = lists_dir + "/" + safe_release;
             if (download_file(release_url, release_path, 0, "InRelease (" + std::string(g_sources[i]->suite) + ")", true)) {
                 if (runepkg::security::verify_gpg_signature(release_path)) {
                     std::cout << "  \033[1;32m[gpg]\033[0m Verified OpenPGP signature for " << g_sources[i]->suite << std::endl;
@@ -753,7 +762,7 @@ extern "C" int runepkg_update(void) {
             }
         }
         std::cout << std::endl << "Building Hybrid Binary and Source Indexes..." << std::endl;
-        std::string db_dir_str = g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db";
+        std::string db_dir_str = effective_db_dir_str();
         build_index(bin_pkg_files, db_dir_str + "/repo_index.bin", db_dir_str + "/repo_files.txt");
         build_index(src_pkg_files, db_dir_str + "/repo_src_index.bin", db_dir_str + "/repo_src_files.txt");
 
@@ -765,16 +774,17 @@ extern "C" int runepkg_update(void) {
                 std::stringstream ss(g_sources[i]->components);
                 std::string component;
                 while (ss >> component) {
+                    std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
                     if (std::string(g_sources[i]->type) == "deb") {
                         std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
                         std::string safe_url = normalize_url(url);
-                        std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                        std::string decompressed = lists_dir + "/" + safe_url;
                         if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
                         out_mapping << "deb\t" << base_url << "\t" << decompressed << "\n";
                     } else if (std::string(g_sources[i]->type) == "deb-src") {
                         std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/source/Sources.gz";
                         std::string safe_url = normalize_url(url);
-                        std::string decompressed = std::string(g_runepkg_lists_dir ? g_runepkg_lists_dir : "/var/lib/runepkg_dir/runepkg_db/lists") + "/" + safe_url;
+                        std::string decompressed = lists_dir + "/" + safe_url;
                         if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") decompressed = decompressed.substr(0, decompressed.size() - 3);
                         out_mapping << "deb-src\t" << base_url << "\t" << decompressed << "\n";
                     }
@@ -811,9 +821,10 @@ extern "C" int runepkg_update(void) {
         runepkg_storage_build_autocomplete_index();
         runepkg_resolver_harvest_graph(nullptr, nullptr);
 
-        if (g_runepkg_db_dir) {
-            std::string host_db_root = std::string(g_runepkg_db_dir) + "/host";
-            std::string host_bin_graph = std::string(g_runepkg_db_dir) + "/runes_host.bin";
+        std::string eff_db_host = effective_db_dir_str();
+        if (!eff_db_host.empty()) {
+            std::string host_db_root = eff_db_host + "/host";
+            std::string host_bin_graph = eff_db_host + "/runes_host.bin";
             if (runepkg_util_is_directory(host_db_root.c_str())) {
                 runepkg_resolver_harvest_graph(host_db_root.c_str(), host_bin_graph.c_str());
             }
@@ -1259,7 +1270,7 @@ static bool check_inter_plan_conflict(const std::string& conflicts_str, const st
 
 extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
+    std::string index_path = effective_db_dir_str() + "/runes_graph.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         std::cerr << "\033[1;31m[error]\033[0m Dependency graph not found. Please run 'runepkg update' first." << std::endl;
         return -1;
@@ -1508,7 +1519,7 @@ extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count,
     runepkg::RunepkgTransactionGuard guard(&tx_ctx, pkg_names[0] ? pkg_names[0] : "download", "1.0");
     runepkg::util::log_info("Starting repository download for " + std::to_string(count) + " packages");
 
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
+    std::string index_path = effective_db_dir_str() + "/runes_graph.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         std::cerr << "\033[1;31m[error]\033[0m Dependency graph not found. Please run 'runepkg update' first." << std::endl;
         return -1;
@@ -1633,7 +1644,7 @@ extern "C" char* runepkg_repo_download(const char *pkg_name, bool recursive) {
 
 extern "C" int runepkg_repo_build_depends_download_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/runes_graph.bin";
+    std::string index_path = effective_db_dir_str() + "/runes_graph.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         std::cerr << "\033[1;31m[error]\033[0m Dependency graph not found. Please run 'runepkg update' first." << std::endl;
         return -1;
@@ -1800,7 +1811,7 @@ extern "C" int runepkg_upgrade(void) {
 extern "C" int runepkg_repo_info(const char *pkg_name) {
     if (!pkg_name) return -1;
 
-    std::string index_path = std::string(g_runepkg_db_dir ? g_runepkg_db_dir : "/var/lib/runepkg_dir/runepkg_db") + "/repo_index.bin";
+    std::string index_path = effective_db_dir_str() + "/repo_index.bin";
     if (!runepkg_util_file_exists(index_path.c_str())) {
         std::cerr << "\033[1;31m[error]\033[0m Repository index not found. Please run 'runepkg update' first." << std::endl;
         return -1;
@@ -1966,6 +1977,8 @@ extern "C" int runepkg_repo_source_download(const char *pkg_name) {
 extern "C" int runepkg_repo_source_build_depends_download_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
 
+    std::vector<char*> allocated_names;
+
     for (int i = 0; i < count; i++) {
         if (!pkg_names[i]) continue;
         RuneTargetPlan *plan = nullptr;
@@ -1986,6 +1999,7 @@ extern "C" int runepkg_repo_source_build_depends_download_multiple(const char **
                             seen.insert(bd_name);
                             char *src_name = runepkg_repo_find_source_for_binary(bd_name.c_str());
                             if (src_name) {
+                                allocated_names.push_back(src_name);
                                 build_srcs.push_back(src_name);
                             } else {
                                 build_srcs.push_back(plan->nodes[0].target_build_depends[k]);
@@ -2008,6 +2022,9 @@ extern "C" int runepkg_repo_source_build_depends_download_multiple(const char **
             runepkg_resolver_free_plan(plan);
         }
     }
+    for (char *p : allocated_names) {
+        free(p);
+    }
     return 0;
 }
 
@@ -2017,6 +2034,8 @@ extern "C" int runepkg_repo_source_build_depends_download(const char *pkg_name) 
 
 extern "C" int runepkg_repo_source_depends_download_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
+
+    std::vector<char*> allocated_names;
 
     for (int i = 0; i < count; i++) {
         if (!pkg_names[i]) continue;
@@ -2030,6 +2049,7 @@ extern "C" int runepkg_repo_source_depends_download_multiple(const char **pkg_na
                 if (plan->nodes[j].package_name && seen.find(plan->nodes[j].package_name) == seen.end()) {
                     seen.insert(plan->nodes[j].package_name);
                     char *src_name = runepkg_repo_find_source_for_binary(plan->nodes[j].package_name);
+                    if (src_name) allocated_names.push_back(src_name);
                     dep_srcs.push_back(src_name ? src_name : plan->nodes[j].package_name);
                 }
             }
@@ -2039,6 +2059,9 @@ extern "C" int runepkg_repo_source_depends_download_multiple(const char **pkg_na
             }
             runepkg_resolver_free_plan(plan);
         }
+    }
+    for (char *p : allocated_names) {
+        free(p);
     }
     return 0;
 }

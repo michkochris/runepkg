@@ -90,31 +90,33 @@ static void sync_db_derived_paths(void) {
 
 const char *runepkg_config_get_effective_db_dir(void) {
     static char s_db_buf[PATH_MAX];
-    const char *root = NULL;
+    const char *target_root = NULL;
 
     if (g_target_sysroot && g_target_sysroot[0] != '\0') {
-        root = g_target_sysroot;
+        target_root = g_target_sysroot;
     } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
-        root = g_active_profile->sysroot;
-    } else if (g_install_dir_internal && strcmp(g_install_dir_internal, "/") != 0) {
-        root = g_install_dir_internal;
+        target_root = g_active_profile->sysroot;
     }
 
-    if (!root || strcmp(root, "/") == 0) {
-        if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
-            return g_runepkg_db_dir;
+    if (target_root && strcmp(target_root, "/") != 0) {
+        snprintf(s_db_buf, sizeof(s_db_buf), "%s/srv/lib/runepkg_dir/runepkg_db", target_root);
+        runepkg_util_create_dir_recursive(s_db_buf, 0755);
+        if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, s_db_buf) != 0) {
+            if (g_runepkg_db_dir) {
+                free(g_runepkg_db_dir);
+            }
+            g_runepkg_db_dir = strdup(s_db_buf);
         }
-        return "/srv/lib/runepkg_dir/runepkg_db";
+        return g_runepkg_db_dir;
     }
 
-    /* Single Formula for Non-Root Root: <root>/srv/lib/runepkg_dir/runepkg_db */
-    snprintf(s_db_buf, sizeof(s_db_buf), "%s/srv/lib/runepkg_dir/runepkg_db", root);
-
-    if (g_runepkg_db_dir) {
-        free(g_runepkg_db_dir);
+    if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
+        runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
+        return g_runepkg_db_dir;
     }
-    g_runepkg_db_dir = strdup(s_db_buf);
-    return g_runepkg_db_dir;
+
+    runepkg_util_create_dir_recursive("/srv/lib/runepkg_dir/runepkg_db", 0755);
+    return "/srv/lib/runepkg_dir/runepkg_db";
 }
 
 int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz) {
