@@ -88,7 +88,7 @@ void usage(void) {
     printf("Maintenance & Diagnostics:\n");
     printf("      --target[=<profile>]                Switch sysroot to target profile (e.g. arm64:aarch64-linux-gnu)\n");
     printf("                                          and execute psychic pre-flight prophecy checks.\n");
-    printf("  -r --remove-profile <profile>           Safely teardown and purge target sysroot and self-contained DB.\n");
+    printf("      --remove-profile <profile>          Safely teardown and purge target sysroot and self-contained DB.\n");
     printf("      --print-config                      Print all active path and repository settings.\n");
     printf("      --print-config-file                 Show the path to the runepkgconfig file in use.\n");
     printf("      --print-pkglist-file                Show paths to the autocomplete index files.\n");
@@ -157,9 +157,6 @@ int main(int argc, char *argv[]) {
     int i;
     int cli_failed = 0;
 
-    printf("[ENTRY] main started with argc=%d\n", argc);
-    fflush(stdout);
-
     if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
         g_completion_mode = true;
         if (runepkg_init() != 0) return 0;
@@ -178,9 +175,6 @@ int main(int argc, char *argv[]) {
         }
         if (strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
             g_debug_mode = true;
-            continue;
-        }
-        if (strcmp(argv[i], "--target") == 0 || strncmp(argv[i], "--target=", 9) == 0) {
             continue;
         }
     }
@@ -220,7 +214,11 @@ int main(int argc, char *argv[]) {
                 target_val = argv[i+1];
                 i++;
             }
-            if (target_val && target_val[0] != '\0') {
+            if (!target_val || target_val[0] == '\0') {
+                fprintf(stderr, "\033[1;31mError:\033[0m --target requires a non-empty profile (e.g. arm64:aarch64-linux-gnu).\n");
+                return EXIT_FAILURE;
+            }
+            {
                 RunePkgTargetSpec spec;
                 char canonical_profile[256];
                 memset(&spec, 0, sizeof(spec));
@@ -236,7 +234,7 @@ int main(int argc, char *argv[]) {
                 const char *prophecy_arch = g_active_profile ? g_active_profile->deb_host_arch : g_target_arch;
                 if (g_system_install_root) free(g_system_install_root);
                 g_system_install_root = strdup(g_target_sysroot);
-                printf("\033[1;36m[psychic]\033[0m Target Sysroot Activated: %s (Arch: %s)\n",
+                runepkg_log_verbose("[psychic] Target Sysroot Activated: %s (Arch: %s)\n",
                     g_system_install_root, prophecy_arch ? prophecy_arch : "amd64");
                 runepkg_psychic_prophecy_check(g_system_install_root, prophecy_arch);
             }
@@ -252,7 +250,6 @@ int main(int argc, char *argv[]) {
     }
 
     for (i = 1; i < argc; ++i) {
-        /* Debug trace */
         runepkg_log_verbose("[DEBUG-CLI-LOOP] i=%d argv[%d]='%s'\n", i, i, argv[i]);
         if (strcmp(argv[i], "-i") == 0 || strcmp(argv[i], "--install") == 0 || strcmp(argv[i], "install") == 0) {
 #ifdef ENABLE_CPP_FFI
@@ -574,7 +571,6 @@ int main(int argc, char *argv[]) {
                 cli_failed = 1;
                 runepkg_log_verbose("Error: -S/--search requires a file path pattern.");
             }
-        } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0) {
         } else if (strcmp(argv[i], "--print-config") == 0) {
             handle_print_config();
         } else if (strcmp(argv[i], "--print-autopool") == 0) {
@@ -787,14 +783,13 @@ int main(int argc, char *argv[]) {
         } else if (strcmp(argv[i], "-v") == 0 || strcmp(argv[i], "--verbose") == 0 ||
                    strcmp(argv[i], "-f") == 0 || strcmp(argv[i], "--force") == 0 ||
                    strcmp(argv[i], "-d") == 0 || strcmp(argv[i], "--debug") == 0) {
-            /* Handled in first pass */
+            /* Already handled in first pass */
         } else if (strcmp(argv[i], "--target") == 0) {
             if (i + 1 < argc && argv[i+1][0] != '-') {
                 i++;
             }
         } else if (strncmp(argv[i], "--target=", 9) == 0) {
-            printf("[DEBUG-MATCH] --target= matched for argv[%d]='%s'\n", i, argv[i]);
-            /* Handled in first pass */
+            /* Already handled in target activation pass */
         } else {
             cli_failed = 1;
             fprintf(stderr, "\033[1;31mError:\033[0m Unknown argument or command: i=%d argv[%d]='%s'\n", i, i, argv[i]);
