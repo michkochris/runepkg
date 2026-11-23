@@ -94,6 +94,30 @@ static void sync_db_derived_paths(void) {
 
 /* --- Path & Database Helper Functions --- */
 
+static void normalize_and_get_db_dir(const char *root, char *buf, size_t buflen) {
+    char temp[PATH_MAX];
+    size_t len;
+    const char *suffix = "/srv/lib/runepkg_dir/runepkg_db";
+    size_t suffix_len;
+
+    if (!root || root[0] == '\0' || strcmp(root, "/") == 0) {
+        snprintf(buf, buflen, "/srv/lib/runepkg_dir/runepkg_db");
+        return;
+    }
+    snprintf(temp, sizeof(temp), "%s", root);
+    len = strlen(temp);
+    while (len > 1 && temp[len - 1] == '/') {
+        temp[len - 1] = '\0';
+        len--;
+    }
+    suffix_len = strlen(suffix);
+    if (len >= suffix_len && strcmp(temp + len - suffix_len, suffix) == 0) {
+        snprintf(buf, buflen, "%s", temp);
+        return;
+    }
+    snprintf(buf, buflen, "%s/srv/lib/runepkg_dir/runepkg_db", temp);
+}
+
 const char *runepkg_config_get_effective_db_dir(void) {
     static char s_db_buf[PATH_MAX];
     const char *target_root = NULL;
@@ -107,7 +131,7 @@ const char *runepkg_config_get_effective_db_dir(void) {
     }
 
     if (target_root && strcmp(target_root, "/") != 0) {
-        snprintf(s_db_buf, sizeof(s_db_buf), "%s/srv/lib/runepkg_dir/runepkg_db", target_root);
+        normalize_and_get_db_dir(target_root, s_db_buf, sizeof(s_db_buf));
         runepkg_util_create_dir_recursive(s_db_buf, 0755);
         if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, s_db_buf) != 0) {
             if (g_runepkg_db_dir) {
@@ -125,10 +149,11 @@ const char *runepkg_config_get_effective_db_dir(void) {
         return g_runepkg_db_dir;
     }
 
-    runepkg_util_create_dir_recursive("/srv/lib/runepkg_dir/runepkg_db", 0755);
-    if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, "/srv/lib/runepkg_dir/runepkg_db") != 0) {
+    normalize_and_get_db_dir(NULL, s_db_buf, sizeof(s_db_buf));
+    runepkg_util_create_dir_recursive(s_db_buf, 0755);
+    if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, s_db_buf) != 0) {
         if (g_runepkg_db_dir) free(g_runepkg_db_dir);
-        g_runepkg_db_dir = strdup("/srv/lib/runepkg_dir/runepkg_db");
+        g_runepkg_db_dir = strdup(s_db_buf);
     }
     sync_db_derived_paths();
     return g_runepkg_db_dir;
@@ -170,7 +195,7 @@ int runepkg_config_provision_target_sysroot_config(const char *sysroot_path, con
             fprintf(f, "runepkg_db=/srv/lib/runepkg_dir/runepkg_db\n");
             fprintf(f, "download_dir=/srv/lib/runepkg_dir/download_dir\n");
             fprintf(f, "build_dir=/srv/lib/runepkg_dir/build_dir\n");
-            fprintf(f, "runepkg_debs=/srv/lib/runepkg_dir/runepkg_debs\n");
+            fprintf(f, "target_deb=/srv/lib/runepkg_dir/target_deb\n");
             fprintf(f, "cleanup=yes\n");
             fprintf(f, "md5_checks=yes\n");
             fclose(f);
@@ -689,7 +714,7 @@ int runepkg_config_load(void) {
         if (!g_download_dir && g_runepkg_base_dir) g_download_dir = runepkg_util_concat_path(g_runepkg_base_dir, "download_dir");
         g_build_dir = runepkg_util_get_config_value(config_file_path, "build_dir", '=');
         if (!g_build_dir && g_runepkg_base_dir) g_build_dir = runepkg_util_concat_path(g_runepkg_base_dir, "build_dir");
-        g_debs_dir = runepkg_util_get_config_value(config_file_path, "runepkg_debs", '=');
+        g_debs_dir = runepkg_util_get_config_value(config_file_path, "target_deb", '=');
         if (!g_debs_dir && g_runepkg_base_dir) g_debs_dir = runepkg_util_concat_path(g_runepkg_base_dir, "debs");
         g_log_dir = runepkg_util_get_config_value(config_file_path, "log_dir", '=');
         if (!g_log_dir && g_runepkg_base_dir) g_log_dir = runepkg_util_concat_path(g_runepkg_base_dir, "log_dir");

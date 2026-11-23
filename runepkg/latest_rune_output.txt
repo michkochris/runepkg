@@ -1,12 +1,11 @@
-[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg/
 [ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
 Cleaning up build artifacts and unearthed runes...
 🧹 Clean complete. The forge is reset.
 Uninstalling runepkg and runas...
 Note: /etc/runepkg has been preserved.
 Uninstallation complete.
-[ zypherus /home/michko/runepkg/runepkg ]# nano runepkgconfig
-[ zypherus /home/michko/runepkg/runepkg ]# make all -j$(nproc) && make install
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
 make[1]: Entering directory '/home/michko/runepkg/runepkg'
 --------------------------------------------------------
   Unearthing Runes: Compiling runepkg v1.0.4
@@ -43,28 +42,80 @@ Installing runepkg to /usr/bin...
 Installing configuration to /etc/runepkg...
 Installing target profiles...
 🧙 runepkg installation complete!
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=loong64:loongarch64-linux-gnu update
+[ zypherus /home/michko/runepkg/runepkg ]# nano runepkgconfig
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
 [runepkg] Starting parallel repository update...
-Downloading 1 package lists...
-  -> InRelease (sid)           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
 Building Hybrid Binary and Source Indexes...
 Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 35.9s
-[harvest] Starting parallel graph analysis on: /mnt/runepkg/loongarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
-  -> Found 0 index partitions to analyze.
-[success] Processed 0 source rune stanzas in 0ms.
-  -> Serialized binary graph to /mnt/runepkg/loongarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (0 KB)
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=loong64:loongarch64-linux-gnu -i file
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 13.3s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113831 source rune stanzas in 671ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29711 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i file
 [runepkg] Planning installation for 1 package(s)...
-All requested package dependencies are already satisfied or unavailable in repository.
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=loong64:loongarch64-linux-gnu search fil
-e
-Searching repository metadata...
-No matches found for 'file'.
-[ zypherus /home/michko/runepkg/runepkg ]# ls /mnt/runepkg/loongarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/
-conflicts-breaks.bin  psychic_matrix.bin  repo_index.bin      repo_url_mapping.txt
-conflicts-breaks.txt  psychic_matrix.txt  repo_src_files.txt  runes_graph.bin
-lists                 repo_files.txt      repo_src_index.bin
-[ zypherus /home/michko/runepkg/runepkg ]#
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc libmagic1t64 file
 
+10 packages (3.9 MB) will be installed. Continue? [y/N] y
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db/
+lists
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db/lists/
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/
+conflicts-breaks.bin   libc-gconv-modules-extra-2.43-7  psychic_matrix.bin  repo_url_mapping.txt
+conflicts-breaks.txt   libgcc-s1-16.2.0-4               psychic_matrix.txt  runepkg_autocomplete.bin
+file-1:5.47-4          liblzma5-5.8.4-1                 repo_files.txt      runes_graph.bin
+gcc-16-base-16.2.0-4   libmagic1t64-1:5.47-4            repo_index.bin      zlib1g-1:1.3.dfsg+really1.3.2-4
+libbz2-1.0-1.0.8-6+b2  libmagic-mgc-1:5.47-4            repo_src_files.txt
+libc6-2.43-7           lists                            repo_src_index.bin
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg -l
+Reading package data: 13 packages, 24.7 MB used, 952.8 GB available
+Listing installed packages...
+
+file (1:5.47-4)                    gcc-16-base (16.2.0-4)             libbz2 (1.0-1.0.8-6+b2)
+libc-gconv-modules-extra (2.43-7)  libc6 (2.43-7)                     libgcc-s1 (16.2.0-4)
+liblzma5 (5.8.4-1)                 libmagic-mgc (1:5.47-4)            libmagic1t64 (1:5.47-4)
+zlib1g (1:1.3.dfsg+really1.3.2-4)
+[ zypherus /home/michko/runepkg/runepkg ]# nano silent_dirivitive.txt

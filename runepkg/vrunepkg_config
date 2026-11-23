@@ -15,7 +15,7 @@ install_dir=${pwd}/vrunepkg_dir
 runepkg_db=${pwd}/vrunepkg_dir/runepkg_db
 download_dir=${pwd}/vrunepkg_dir/download_dir
 build_dir=${pwd}/vrunepkg_dir/build_dir
-runepkg_debs=${pwd}/vrunepkg_dir/runepkg_debs
+target_deb=${pwd}/vrunepkg_dir/target_deb
 
 cleanup=yes
 md5_checks=yes

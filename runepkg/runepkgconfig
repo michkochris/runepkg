@@ -1,74 +1,85 @@
-# ******************************************************************************
-# * Filename:    runepkgconfig
-# * Author:      <michkochris@gmail.com>
-# * Date:        2025-05-12 (Updated 2026-08-24)
-# * Description: Professional configuration for runepkg package manager
-# ******************************************************************************/
+# -------------------------------------------------------------------------------------------------- #
+# - Filename:    runepkgconfig
+# - Author:      <michkochris@gmail.com>
+# - Date:        2025-05-12 (Updated 2026-08-24)
+# - Description: Professional configuration for runepkg package manager
+# -------------------------------------------------------------------------------------------------- #
 
-# [IMPORTANT]
-# - Do NOT leave a trailing forward slash (/) at the end of paths.
-# - Use absolute Linux path names.
 # - The system-wide location for this file is: /etc/runepkg/runepkgconfig
 
-# --- Path Expansion Features ---
+# [IMPORTANT]
+# --- No Forward Slash In Linux ---
+# - Do not leave a trailing forward slash (/) at the end of paths...
+# - Use absolute Linux path names...
+
+# [IMPORTANT]
+# --- Path Expansion! Features ---
 # runepkg supports dynamic expansion for all path settings:
 #
-# 1. Tilde Expansion (~):
+# 1- Tilde Expansion (~):
 #    Expands to the current user's HOME directory.
 #    Example: runepkg_dir=~/runepkg_dir
 #
-# 2. Variable Expansion (${VAR}):
+# 2- Variable Expansion (${VAR}):
 #    Expands environment variables.
 #    Example: runepkg_db=${HOME}/.runepkg/db
 #
-# 3. Command Expansion (${pwd}):
+# 3- Command Expansion (${pwd}):
 #    Expands to the current working directory where runepkg is executed.
 #    Example: install_dir=${pwd}/local_root
 
-# --- Environment Variables ---
+# [IMPORTANT]
+# --------------------------- Environment Variables ------------------------------------------------ #
 # RUNEPKG_CONFIG_PATH:
 #   Points to a custom location for this configuration file.
 #   Example: export RUNEPKG_CONFIG_PATH=$HOME/.runepkg/config
 
-# --- Core Paths (FHS Compliant) ---
+# [IMPORTANT]
+# --------------------------- Core Paths (FHS Compliant) ------------------------------------------- #
 
 # [runepkg_dir]
-# The primary base directory for runepkg tool data.
+# Necessary base directory for runepkg sub-directories.
 runepkg_dir=/srv/lib/runepkg_dir
 
+# [download_dir]
+# Necessary Cache directory where downloaded .deb's and sources are stored.
+download_dir=/srv/lib/runepkg_dir/download_dir
+
 # [control_dir]
-# Temporary workspace where .deb control archives are extracted for processing.
+# Necessary temporary workspace where .deb control archives are extracted while processing.
 control_dir=/srv/lib/runepkg_dir/control_dir
 
-# [install_dir]
-# The target root for package installation (set to '/' for system-wide).
-#install_dir=/
-install_dir=/srv/lib/runepkg_dir/install_dir
+# [build_dir]
+# Necessary standard workspace for building and unpacking packages locally.
+build_dir=/srv/lib/runepkg_dir/build_dir
+
+# [target_deb]
+# Dedicated output directory for isolated standard Debian compatible {cross} built .deb files.
+target_deb=/srv/lib/runepkg_dir/target_deb
+
+# -------------------------------------------------------------------------------------------------- #
 
 # [target_arch]
 # Explicit target architecture for multi-arch cross-staging (e.g. amd64, arm64, riscv64).
 target_arch=amd64:x86_64-linux-gnu
 #target_arch=arm64:aarch64-linux-gnu
 
+# [runepkg_db]
+# Persistent storage location for {HOST} package manager's state.
+# Can `runepkg sync` to sync host dpkg installed packages via dpkg entanglement...
+runepkg_db=/srv/lib/runepkg_dir/runepkg_db
+
+# [install_dir]
+# Indefinite target root for package installation (set to '/' for system-wide).
+# Carefull Can Entangle {HOST} Tracking With Alternate Install Location Vs {HOST}...
+#install_dir=/
+install_dir=/srv/lib/runepkg_dir/install_dir
+
 # [target_sysroot]
 # Dedicated cross-arch embedded target sysroot for runepkg_psychic multi-arch staging (default: /mnt/runepkg/<profile>).
 #target_sysroot=/srv/lib/runepkg_dir/target_sysroot
 
-# [runepkg_db]
-# Persistent storage for the package manager's state.
-runepkg_db=/srv/lib/runepkg_dir/runepkg_db
-
-# [download_dir]
-# Cache directory where downloaded .deb files are stored.
-download_dir=/srv/lib/runepkg_dir/download_dir
-
-# [build_dir]
-# Standard workspace for building and unpacking packages locally.
-build_dir=/srv/lib/runepkg_dir/build_dir
-
-# [runepkg_debs]
-# Dedicated output directory for built .deb files.
-runepkg_debs=/srv/lib/runepkg_dir/runepkg_debs
+# -------------------------------------------------------------------------------------------------- #
 
 # --- Behavior Settings ---
 
