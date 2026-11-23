@@ -394,6 +394,59 @@ bool decompress_gz(const std::string& src, const std::string& dest) {
     return false;
 }
 
+static bool decompress_file(const std::string& src, const std::string& dest) {
+    if (src.size() > 3 && src.substr(src.size() - 3) == ".gz") {
+        return decompress_gz(src, dest);
+    } else if (src.size() > 3 && src.substr(src.size() - 3) == ".xz") {
+        std::string cmd = "xz -dc '" + src + "' > '" + dest + "'";
+        int rc = system(cmd.c_str());
+        if (rc == 0 && runepkg_util_file_exists(dest.c_str())) {
+            struct stat st;
+            if (stat(dest.c_str(), &st) == 0 && st.st_size > 0) return true;
+        }
+        return false;
+    } else {
+        std::ifstream src_f(src, std::ios::binary);
+        std::ofstream dst_f(dest, std::ios::binary);
+        if (src_f.is_open() && dst_f.is_open()) {
+            dst_f << src_f.rdbuf();
+            return true;
+        }
+        return false;
+    }
+}
+
+static bool download_package_index_task(DownloadTask* task, const std::string& display_name) {
+    if (download_file(task->url, task->dest_path, task->size, display_name, true)) {
+        return true;
+    }
+    if (task->url.size() > 3 && task->url.substr(task->url.size() - 3) == ".gz") {
+        std::string alt_url = task->url.substr(0, task->url.size() - 3) + ".xz";
+        std::string alt_dest = task->dest_path.substr(0, task->dest_path.size() - 3) + ".xz";
+        if (download_file(alt_url, alt_dest, task->size, display_name, true)) {
+            task->url = alt_url;
+            task->dest_path = alt_dest;
+            return true;
+        }
+        std::string raw_url = task->url.substr(0, task->url.size() - 3);
+        std::string raw_dest = task->dest_path.substr(0, task->dest_path.size() - 3);
+        if (download_file(raw_url, raw_dest, task->size, display_name, true)) {
+            task->url = raw_url;
+            task->dest_path = raw_dest;
+            return true;
+        }
+    } else if (task->url.size() > 3 && task->url.substr(task->url.size() - 3) == ".xz") {
+        std::string alt_url = task->url.substr(0, task->url.size() - 3) + ".gz";
+        std::string alt_dest = task->dest_path.substr(0, task->dest_path.size() - 3) + ".gz";
+        if (download_file(alt_url, alt_dest, task->size, display_name, true)) {
+            task->url = alt_url;
+            task->dest_path = alt_dest;
+            return true;
+        }
+    }
+    return false;
+}
+
 struct IndexEntry {
     char name[64];
     uint32_t file_id;
@@ -744,7 +797,7 @@ extern "C" int runepkg_update(void) {
             else display_name = task->url;
 
             futures.push_back(pool.enqueue([task, display_name]() {
-                return download_file(task->url, task->dest_path, task->size, display_name, true);
+                return download_package_index_task(task, display_name);
             }));
         }
         for (size_t i = 0; i < all_tasks_ptrs.size(); i++) {
@@ -753,10 +806,12 @@ extern "C" int runepkg_update(void) {
                 std::string decompressed = all_tasks_ptrs[i]->dest_path;
                 if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".gz") {
                     decompressed = decompressed.substr(0, decompressed.size() - 3);
+                } else if (decompressed.size() > 3 && decompressed.substr(decompressed.size() - 3) == ".xz") {
+                    decompressed = decompressed.substr(0, decompressed.size() - 3);
                 } else {
                     decompressed += ".unpacked";
                 }
-                if (decompress_gz(all_tasks_ptrs[i]->dest_path, decompressed)) {
+                if (decompress_file(all_tasks_ptrs[i]->dest_path, decompressed)) {
                     bool is_bin = false;
                     for(auto& t : bin_tasks) if(&t == all_tasks_ptrs[i]) is_bin = true;
                     if(is_bin) bin_pkg_files.push_back(decompressed);

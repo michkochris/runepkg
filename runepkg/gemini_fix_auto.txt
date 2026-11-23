@@ -1,0 +1,101 @@
+Now I have the full picture across runepkg_cli.c, runepkg_completion.c, and runepkg_multiarch.cpp.
+
+Why --target= Only Shows a Dropdown Instead of Completing the Word
+In main() (runepkg_cli.c):
+
+C
+if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
+    g_completion_mode = true;
+    if (runepkg_init() != 0) return 0;
+    handle_binary_completion(argv[2], argv[3]);
+    return 0;
+}
+And in runepkg_completion.c:
+
+--target= is stripped and not put back: When the user types runepkg --target= and presses <TAB>, argv[2] (partial) is "--target=". complete_target_profiles() advances past "--target=" (val_partial += 9;) and calls print_candidate(...) with strings like "arm64:aarch64-linux-gnu", "arm64", "aarch64-linux-gnu", etc. Because those strings don't start with "--target=" (and share no common prefix across all of them), Bash cannot complete anything onto "--target="—it only prints the list of suggestions.
+
+Bash COMP_WORDBREAKS on =: If your shell completion function doesn't strip = from a local COMP_WORDBREAKS (or passes a broken cur when = splits the token), partial won't even be "--target=" or "--target=arm64".
+
+Complete Copy-Paste Fixes
+1. complete_target_profiles() in runepkg_completion.c
+When partial starts with "--target=", prefix every matched candidate with "--target=" so Bash can physically complete the word on the command line:
+
+C
+void complete_target_profiles(const char *partial) {
+    const char *targets_dirs[4];
+    int i;
+    bool has_eq_prefix = false;
+    const char *val_partial = partial ? partial : "";
+    size_t val_len;
+
+    if (strncmp(val_partial, "--target=", 9) == 0) {
+        has_eq_prefix = true;
+        val_partial += 9;
+    }
+    val_len = strlen(val_partial);
+
+    targets_dirs[0] = "/etc/runepkg/targets/";
+    targets_dirs[1] = "targets/";
+    targets_dirs[2] = runepkg_config_resolve_path(NULL, 2);
+    targets_dirs[3] = NULL;
+
+    for (i = 0; i < 3; i++) {
+        DIR *d;
+        if (!targets_dirs[i]) continue;
+        d = opendir(targets_dirs[i]);
+        if (d) {
+            struct dirent *e;
+            while ((e = readdir(d)) != NULL) {
+                if (e->d_type == DT_REG || e->d_type == DT_LNK || e->d_type == DT_UNKNOWN) {
+                    size_t len = strlen(e->d_name);
+                    if (len > 5 && strcmp(e->d_name + len - 5, ".conf") == 0) {
+                        char name[64];
+                        runepkg_secure_strcpy(name, sizeof(name), e->d_name);
+                        name[len - 5] = '\0';
+                        if (val_len == 0 || strncmp(name, val_partial, val_len) == 0) {
+                            if (has_eq_prefix) {
+                                char full[128];
+                                snprintf(full, sizeof(full), "--target=%s", name);
+                                print_candidate(full);
+                            } else {
+                                print_candidate(name);
+                            }
+                        }
+                    }
+                }
+            }
+            closedir(d);
+        }
+    }
+    if (targets_dirs[2]) free((void *)targets_dirs[2]);
+
+    for (i = 0; i < g_known_target_specs_count; i++) {
+        const char *spec = g_known_target_specs[i];
+        if (strncmp(spec, "--target=", 9) == 0) {
+            spec += 9;
+        }
+
+        if (val_len == 0 || strncmp(spec, val_partial, val_len) == 0) {
+            if (has_eq_prefix) {
+                char full[128];
+                snprintf(full, sizeof(full), "--target=%s", spec);
+                print_candidate(full);
+            } else {
+                print_candidate(spec);
+            }
+        }
+    }
+}
+2. Bash Completion Function (COMP_WORDBREAKS without =)
+In whatever Bash completion script/hook registers complete -F ... runepkg, make sure = is removed from COMP_WORDBREAKS locally inside the function so --target=arm64 stays intact as cur:
+
+Bash
+_runepkg_complete() {
+    local COMP_WORDBREAKS="${COMP_WORDBREAKS//=/}"
+    local cur="${COMP_WORDS[COMP_CWORD]}"
+    local prev="${COMP_WORDS[COMP_CWORD-1]}"
+    local IFS=$'\n'
+    COMPREPLY=($(COMP_LINE="$COMP_LINE" COMP_POINT="$COMP_POINT" runepkg "" "" "$cur" "$prev" 2>/dev/null))
+}
+complete -F _runepkg_complete runepkg
+Rebuild with make clean && make all && make install (and reload your shell completion if needed), then test runepkg --target=arm64<TAB>.

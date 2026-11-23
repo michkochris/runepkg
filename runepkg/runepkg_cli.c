@@ -300,10 +300,10 @@ int main(int argc, char *argv[]) {
     int cli_failed = 0;
     int init_rc;
 
-    if (argc == 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
+    if (argc >= 4 && getenv("COMP_LINE") != NULL && is_completion_trigger(argv)) {
         g_completion_mode = true;
         if (runepkg_init() != 0) return 0;
-        handle_binary_completion(argv[2], argv[3]);
+        handle_binary_completion(argv[argc - 2], argv[argc - 1]);
         return 0;
     }
 

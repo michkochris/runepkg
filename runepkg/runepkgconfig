@@ -110,10 +110,17 @@ gpg_check=no
 #deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
 #deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 
-# [Kali Linux Rolling] - LESS RELIABLE FOR RUNEPKG
+# [Kali Linux Rolling] - LESS RELIABLE LATEST ROLLING RELEASE FOR RUNEPKG
 # Note: Kali has later/bleeding-edge packages, but is less reliable for runepkg because
 # rolling mirrors frequently prune older package versions, causing 404 download errors.
 deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+
+# BELOW IS TESTING EXPERIMENTAL...
+# Official Debian Trixie (for standard arches: amd64, arm64, armhf, i386, ppc64el, s390x)
+#deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+
+# Debian Ports (for extra/ports arches: loong64, riscv64, alpha, hppa, m68k, sh4, sparc64)
+#deb http://ftp.ports.debian.org/debian-ports sid main
 
 # end of file...

@@ -62,7 +62,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/runepkg/runepkg_completion.c</url>
-          <line>565</line>
+          <line>646</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>

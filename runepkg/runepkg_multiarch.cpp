@@ -29,8 +29,20 @@ static const std::map<std::string, std::string> g_deb_to_gnu_map = {
     {"i386",      "i386-linux-gnu"},
     {"loong64",   "loongarch64-linux-gnu"},
     {"mips64el",  "mips64el-linux-gnuabi64"},
+    {"mipsel",    "mipsel-linux-gnu"},
+    {"mips",      "mips-linux-gnu"},
     {"ppc64el",   "powerpc64le-linux-gnu"},
-    {"s390x",     "s390x-linux-gnu"}
+    {"ppc64",     "powerpc64-linux-gnu"},
+    {"powerpc",   "powerpc-linux-gnu"},
+    {"s390x",     "s390x-linux-gnu"},
+    {"sparc64",   "sparc64-linux-gnu"},
+    {"alpha",     "alpha-linux-gnu"},
+    {"arc",       "arc-linux-gnu"},
+    {"hppa",      "hppa-linux-gnu"},
+    {"ia64",      "ia64-linux-gnu"},
+    {"m68k",      "m68k-linux-gnu"},
+    {"sh4",       "sh4-linux-gnu"},
+    {"x32",       "x86_64-linux-gnux32"}
 };
 
 std::string DebianMultiArchEngine::deb_arch_to_gnu_triplet(const std::string& deb_arch) {

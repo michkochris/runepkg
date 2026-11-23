@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -41,21 +43,121 @@ static int g_already_on_cmdline_count = 0;
 
 static char g_current_partial[128] = {0};
 
-static const char *g_known_target_specs[] = {
-    "arm64:aarch64-linux-gnu",
-    "aarch64-linux-gnu",
-    "arm64",
-    "amd64:x86_64-linux-gnu",
-    "x86_64-linux-gnu",
-    "amd64",
-    "armhf:arm-linux-gnueabihf",
-    "arm-linux-gnueabihf",
-    "armhf",
-    "riscv64:riscv64-linux-gnu",
-    "riscv64-linux-gnu",
-    "riscv64"
+typedef struct {
+    const char *deb_arch;
+    const char *gnu_triplet;
+} MultiArchPair;
+
+static const MultiArchPair g_multiarch_pairs[] = {
+    { "amd64",     "x86_64-linux-gnu"       },
+    { "arm64",     "aarch64-linux-gnu"      },
+    { "armhf",     "arm-linux-gnueabihf"    },
+    { "armel",     "arm-linux-gnueabi"      },
+    { "riscv64",   "riscv64-linux-gnu"      },
+    { "i386",      "i386-linux-gnu"         },
+    { "loong64",   "loongarch64-linux-gnu"  },
+    { "mips64el",  "mips64el-linux-gnuabi64"},
+    { "mipsel",    "mipsel-linux-gnu"       },
+    { "mips",      "mips-linux-gnu"         },
+    { "ppc64el",   "powerpc64le-linux-gnu"  },
+    { "ppc64",     "powerpc64-linux-gnu"    },
+    { "powerpc",   "powerpc-linux-gnu"      },
+    { "s390x",     "s390x-linux-gnu"        },
+    { "sparc64",   "sparc64-linux-gnu"      },
+    { "alpha",     "alpha-linux-gnu"        },
+    { "arc",       "arc-linux-gnu"          },
+    { "hppa",      "hppa-linux-gnu"         },
+    { "ia64",      "ia64-linux-gnu"         },
+    { "m68k",      "m68k-linux-gnu"         },
+    { "sh4",       "sh4-linux-gnu"          },
+    { "x32",       "x86_64-linux-gnux32"    }
 };
-static const int g_known_target_specs_count = 12;
+static const int g_multiarch_pairs_count =
+    (int)(sizeof(g_multiarch_pairs) / sizeof(g_multiarch_pairs[0]));
+
+/* Tokenizer helper: extracts the active token at COMP_POINT from COMP_LINE,
+ * treating whitespace as token boundaries while tolerating '=' and ':' inside
+ * the token even when Bash splits words on them. */
+static void extract_cursor_token(const char *fallback, int comp_point, char *out, size_t out_sz) {
+    const char *comp_line = getenv("COMP_LINE");
+    size_t len;
+    size_t pos;
+    size_t start;
+    size_t tok_len;
+
+    if (!out || out_sz == 0) return;
+    out[0] = '\0';
+
+    if (!comp_line) {
+        if (fallback) runepkg_secure_strcpy(out, out_sz, fallback);
+        return;
+    }
+
+    len = strlen(comp_line);
+    pos = (comp_point >= 0 && (size_t)comp_point <= len) ? (size_t)comp_point : len;
+
+    start = pos;
+    while (start > 0 && comp_line[start - 1] != ' ' && comp_line[start - 1] != '\t') {
+        start--;
+    }
+
+    tok_len = pos - start;
+    if (tok_len >= out_sz) tok_len = out_sz - 1;
+    if (tok_len > 0) {
+        memcpy(out, comp_line + start, tok_len);
+    }
+    out[tok_len] = '\0';
+}
+
+/* Tokenizer helper: extracts the token immediately preceding the active cursor
+ * token in COMP_LINE so `prev` stays accurate even if Bash word-broke on '='. */
+static void extract_prev_token(const char *fallback, int comp_point, char *out, size_t out_sz) {
+    const char *comp_line = getenv("COMP_LINE");
+    size_t len;
+    size_t pos;
+    size_t cur_start;
+    size_t prev_end;
+    size_t prev_start;
+    size_t tok_len;
+
+    if (!out || out_sz == 0) return;
+    out[0] = '\0';
+
+    if (!comp_line) {
+        if (fallback) runepkg_secure_strcpy(out, out_sz, fallback);
+        return;
+    }
+
+    len = strlen(comp_line);
+    pos = (comp_point >= 0 && (size_t)comp_point <= len) ? (size_t)comp_point : len;
+
+    cur_start = pos;
+    while (cur_start > 0 && comp_line[cur_start - 1] != ' ' && comp_line[cur_start - 1] != '\t') {
+        cur_start--;
+    }
+
+    prev_end = cur_start;
+    while (prev_end > 0 && (comp_line[prev_end - 1] == ' ' || comp_line[prev_end - 1] == '\t')) {
+        prev_end--;
+    }
+
+    if (prev_end == 0) {
+        if (fallback) runepkg_secure_strcpy(out, out_sz, fallback);
+        return;
+    }
+
+    prev_start = prev_end;
+    while (prev_start > 0 && comp_line[prev_start - 1] != ' ' && comp_line[prev_start - 1] != '\t') {
+        prev_start--;
+    }
+
+    tok_len = prev_end - prev_start;
+    if (tok_len >= out_sz) tok_len = out_sz - 1;
+    if (tok_len > 0) {
+        memcpy(out, comp_line + prev_start, tok_len);
+    }
+    out[tok_len] = '\0';
+}
 
 static void normalize_candidate_name(char *dest, const char *src, size_t dest_size) {
     const char *p;
@@ -91,7 +193,7 @@ static void normalize_candidate_name(char *dest, const char *src, size_t dest_si
 }
 
 static void print_candidate(const char *name) {
-    char norm[128];
+    char norm[256];
     int i;
 
     if (g_completion_printed_count >= MAX_COMPLETION_RESULTS) return;
@@ -128,52 +230,10 @@ static void print_candidate(const char *name) {
     g_completion_printed_count++;
 }
 
-static void complete_target_eq_values(const char *tpart) {
-    const char *targets_dirs[4];
-    size_t tlen;
-    int i;
-
-    if (!tpart) tpart = "";
-    tlen = strlen(tpart);
-
-    targets_dirs[0] = "/etc/runepkg/targets/";
-    targets_dirs[1] = "targets/";
-    targets_dirs[2] = runepkg_config_resolve_path(NULL, 2);
-    targets_dirs[3] = NULL;
-
-    for (i = 0; i < 3; i++) {
-        DIR *d;
-        if (!targets_dirs[i]) continue;
-        d = opendir(targets_dirs[i]);
-        if (d) {
-            struct dirent *e;
-            while ((e = readdir(d)) != NULL) {
-                if (e->d_type == DT_REG || e->d_type == DT_LNK || e->d_type == DT_UNKNOWN) {
-                    size_t len = strlen(e->d_name);
-                    if (len > 5 && strcmp(e->d_name + len - 5, ".conf") == 0) {
-                        char name[64];
-                        char full_opt[128];
-                        runepkg_secure_strcpy(name, sizeof(name), e->d_name);
-                        name[len - 5] = '\0';
-                        if (strncmp(name, tpart, tlen) == 0) {
-                            snprintf(full_opt, sizeof(full_opt), "--target=%s", name);
-                            print_candidate(full_opt);
-                        }
-                    }
-                }
-            }
-            closedir(d);
-        }
-    }
-    if (targets_dirs[2]) free((void *)targets_dirs[2]);
-
-    for (i = 0; i < g_known_target_specs_count; i++) {
-        if (strncmp(g_known_target_specs[i], tpart, tlen) == 0) {
-            char full_opt[128];
-            snprintf(full_opt, sizeof(full_opt), "--target=%s", g_known_target_specs[i]);
-            print_candidate(full_opt);
-        }
-    }
+static void emit_target_candidate(const char *spec, bool with_eq_prefix) {
+    (void)with_eq_prefix;
+    if (!spec || spec[0] == '\0') return;
+    print_candidate(spec);
 }
 
 static void populate_already_on_cmdline(const char *partial) {
@@ -476,6 +536,19 @@ void complete_file_paths(const char *partial) {
 void complete_target_profiles(const char *partial) {
     const char *targets_dirs[4];
     int i;
+    bool with_eq_prefix = false;
+    const char *val_partial = partial ? partial : "";
+    size_t val_len;
+
+    /* Only prepend "--target=" when the caller's word (`partial`) already starts
+     * with "--target=". If Bash split on '=' so `partial` is just the value after
+     * '=', emit bare specs so Bash doesn't double "--target=--target=". */
+    if (strncmp(val_partial, "--target=", 9) == 0) {
+        with_eq_prefix = true;
+        val_partial += 9;
+    }
+    val_len = strlen(val_partial);
+
     targets_dirs[0] = "/etc/runepkg/targets/";
     targets_dirs[1] = "targets/";
     targets_dirs[2] = runepkg_config_resolve_path(NULL, 2);
@@ -494,8 +567,8 @@ void complete_target_profiles(const char *partial) {
                         char name[64];
                         runepkg_secure_strcpy(name, sizeof(name), e->d_name);
                         name[len - 5] = '\0';
-                        if (strncmp(name, partial, strlen(partial)) == 0) {
-                            print_candidate(name);
+                        if (val_len == 0 || strncmp(name, val_partial, val_len) == 0) {
+                            emit_target_candidate(name, with_eq_prefix);
                         }
                     }
                 }
@@ -505,9 +578,17 @@ void complete_target_profiles(const char *partial) {
     }
     if (targets_dirs[2]) free((void *)targets_dirs[2]);
 
-    for (i = 0; i < g_known_target_specs_count; i++) {
-        if (strncmp(g_known_target_specs[i], partial, strlen(partial)) == 0) {
-            print_candidate(g_known_target_specs[i]);
+    for (i = 0; i < g_multiarch_pairs_count; i++) {
+        char pair_spec[128];
+        snprintf(pair_spec, sizeof(pair_spec), "%s:%s",
+                 g_multiarch_pairs[i].deb_arch,
+                 g_multiarch_pairs[i].gnu_triplet);
+
+        if (val_len == 0 ||
+            strncmp(pair_spec, val_partial, val_len) == 0 ||
+            strncmp(g_multiarch_pairs[i].deb_arch, val_partial, val_len) == 0 ||
+            strncmp(g_multiarch_pairs[i].gnu_triplet, val_partial, val_len) == 0) {
+            emit_target_candidate(pair_spec, with_eq_prefix);
         }
     }
 }
@@ -828,6 +909,10 @@ void handle_binary_completion(const char *partial, const char *prev) {
     const char *comp_line = getenv("COMP_LINE");
     const char *comp_point_s = getenv("COMP_POINT");
     int comp_point = 0;
+    char tok_partial[256];
+    char tok_prev[256];
+    const char *eff_partial;
+    const char *eff_prev;
     bool is_path;
     char inferred_cmd[64];
     int i;
@@ -841,31 +926,39 @@ void handle_binary_completion(const char *partial, const char *prev) {
     if (!partial) partial = "";
     if (!prev) prev = "";
 
+    if (comp_point_s) comp_point = atoi(comp_point_s);
+
+    /* Tokenize from COMP_LINE + COMP_POINT so '=' and ':' word splits in Bash
+     * do not truncate '--target=<arch>:<triplet>' tokens. */
+    extract_cursor_token(partial, comp_point, tok_partial, sizeof(tok_partial));
+    extract_prev_token(prev, comp_point, tok_prev, sizeof(tok_prev));
+
+    eff_partial = (tok_partial[0] != '\0') ? tok_partial : partial;
+    eff_prev = (tok_prev[0] != '\0') ? tok_prev : prev;
+
     /* Reset completion counters for each new trigger */
     g_completion_printed_count = 0;
     g_completion_seen_count = 0;
     memset(g_current_partial, 0, sizeof(g_current_partial));
-    runepkg_secure_strcpy(g_current_partial, sizeof(g_current_partial), partial);
+    runepkg_secure_strcpy(g_current_partial, sizeof(g_current_partial), eff_partial);
 
     if (should_suppress_completion()) return;
 
-    populate_already_on_cmdline(partial);
-
-    if (comp_point_s) comp_point = atoi(comp_point_s);
+    populate_already_on_cmdline(eff_partial);
 
     /* Direct --target=<profile> completion */
-    if (strncmp(partial, "--target=", 9) == 0) {
-        complete_target_eq_values(partial + 9);
+    if (strncmp(eff_partial, "--target=", 9) == 0) {
+        complete_target_profiles(eff_partial);
         return;
     }
 
     /* Direct --target <profile> completion */
-    if (strcmp(prev, "--target") == 0) {
-        complete_target_profiles(partial);
+    if (strcmp(eff_prev, "--target") == 0) {
+        complete_target_profiles(eff_partial);
         return;
     }
 
-    is_path = (partial[0] == '/' || partial[0] == '.' || strchr(partial, '/') != NULL);
+    is_path = (eff_partial[0] == '/' || eff_partial[0] == '.' || strchr(eff_partial, '/') != NULL);
 
     memset(inferred_cmd, 0, sizeof(inferred_cmd));
     if (comp_line) {
@@ -978,99 +1071,99 @@ void handle_binary_completion(const char *partial, const char *prev) {
 
     if (inferred_cmd[0] != '\0') {
         if (strcmp(inferred_cmd, "install") == 0) {
-            if (partial[0] == '-') {
+            if (eff_partial[0] == '-') {
                 short_opts2[0] = "-f"; short_opts2[1] = "-v";
-                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial)) == 0) print_candidate(short_opts2[i]);
-                if (strncmp(partial, "--", 2) == 0) {
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(short_opts2[i]);
+                if (strncmp(eff_partial, "--", 2) == 0) {
                     long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
                     long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
-                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial)) == 0) print_candidate(long_opts6[i]);
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(long_opts6[i]);
                 }
             } else if (is_path) {
-                complete_file_paths_ext(partial, g_download_dir, ".deb");
+                complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
             } else {
-                prefix_search_and_print_ext(partial, ":pkg");
-                repo_prefix_search_and_print(partial);
-                if (partial[0] != '\0') {
-                    complete_file_paths_ext(partial, g_download_dir, ".deb");
+                prefix_search_and_print_ext(eff_partial, ":pkg");
+                repo_prefix_search_and_print(eff_partial);
+                if (eff_partial[0] != '\0') {
+                    complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
                 }
             }
             return;
         }
         if (strcmp(inferred_cmd, "remove") == 0) {
-            if (partial[0] == '-') {
+            if (eff_partial[0] == '-') {
                 all_long_opts4[0] = "--remove"; all_long_opts4[1] = "--verbose"; all_long_opts4[2] = "--force"; all_long_opts4[3] = "--help";
-                for (i = 0; i < 4; i++) if (strncmp(all_long_opts4[i], partial, strlen(partial)) == 0) print_candidate(all_long_opts4[i]);
+                for (i = 0; i < 4; i++) if (strncmp(all_long_opts4[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(all_long_opts4[i]);
             } else {
-                prefix_search_and_print_ext(partial, ":pkg");
+                prefix_search_and_print_ext(eff_partial, ":pkg");
             }
             return;
         }
         if (strcmp(inferred_cmd, "list") == 0) {
-            prefix_search_and_print_ext(partial, ":pkg");
+            prefix_search_and_print_ext(eff_partial, ":pkg");
             return;
         }
         if (strcmp(inferred_cmd, "status") == 0) {
-            if (partial[0] == '-') {
+            if (eff_partial[0] == '-') {
                 print_candidate("--help");
                 print_candidate("--verbose");
                 return;
             }
             if (is_path) {
-                complete_file_paths(partial);
+                complete_file_paths(eff_partial);
             } else {
-                prefix_search_and_print_ext(partial, ":pkg");
-                repo_prefix_search_and_print(partial);
+                prefix_search_and_print_ext(eff_partial, ":pkg");
+                repo_prefix_search_and_print(eff_partial);
             }
             return;
         }
         if (strcmp(inferred_cmd, "unpack") == 0) {
-            complete_file_paths_ext(partial, g_download_dir, ".deb");
+            complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
             return;
         }
         if (strcmp(inferred_cmd, "build") == 0) {
             if (is_path) {
-                complete_file_paths_ext(partial, g_build_dir, ".dsc");
+                complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
             } else {
-                prefix_search_and_print(partial);
-                complete_file_paths_ext(partial, g_build_dir, ".dsc");
+                prefix_search_and_print(eff_partial);
+                complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
             }
             return;
         }
         if (strcmp(inferred_cmd, "md5check") == 0) {
-            prefix_search_and_print_ext(partial, ":pkg");
+            prefix_search_and_print_ext(eff_partial, ":pkg");
             return;
         }
         if (strcmp(inferred_cmd, "download-only") == 0) {
-            if (is_path) complete_file_paths(partial);
-            else repo_prefix_search_and_print(partial);
+            if (is_path) complete_file_paths(eff_partial);
+            else repo_prefix_search_and_print(eff_partial);
             return;
         }
         if (strcmp(inferred_cmd, "source-build") == 0) {
             if (is_path) {
-                complete_file_paths_ext(partial, g_build_dir, ".dsc");
+                complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
             } else {
-                prefix_search_and_print_ext(partial, ".dsc");
-                complete_file_paths_ext(partial, g_build_dir, ".dsc");
-                repo_src_prefix_search_and_print(partial);
-                repo_prefix_search_and_print(partial);
+                prefix_search_and_print_ext(eff_partial, ".dsc");
+                complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
+                repo_src_prefix_search_and_print(eff_partial);
+                repo_prefix_search_and_print(eff_partial);
             }
             return;
         }
         if (strcmp(inferred_cmd, "info") == 0) {
-            repo_prefix_search_and_print(partial);
+            repo_prefix_search_and_print(eff_partial);
             return;
         }
         if (strcmp(inferred_cmd, "search") == 0) {
-            repo_prefix_search_and_print(partial);
+            repo_prefix_search_and_print(eff_partial);
             return;
         }
         if (strcmp(inferred_cmd, "search-file") == 0) {
-            complete_file_paths(partial);
+            complete_file_paths(eff_partial);
             return;
         }
         if (strcmp(inferred_cmd, "switch") == 0) {
-            complete_target_profiles(partial);
+            complete_target_profiles(eff_partial);
             return;
         }
         if (strcmp(inferred_cmd, "bootstrap") == 0 || strcmp(inferred_cmd, "build-toolchain") == 0) {
@@ -1081,33 +1174,33 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 for (k = 0; k < cp; k++) if (comp_line[k] == ' ') space_count++;
             }
             if (space_count <= 2) {
-                complete_target_profiles(partial);
+                complete_target_profiles(eff_partial);
             } else {
-                prefix_search_and_print_ext(partial, ":pkg");
-                repo_prefix_search_and_print(partial);
+                prefix_search_and_print_ext(eff_partial, ":pkg");
+                repo_prefix_search_and_print(eff_partial);
             }
             return;
         }
         if (strcmp(inferred_cmd, "resolve-tree") == 0) {
-            prefix_search_and_print_ext(partial, ":pkg");
-            repo_prefix_search_and_print(partial);
+            prefix_search_and_print_ext(eff_partial, ":pkg");
+            repo_prefix_search_and_print(eff_partial);
             return;
         }
     }
 
-    if (strcmp(prev, "runepkg") == 0) {
-        if (partial[0] == '-') {
-            if (strncmp(partial, "--", 2) == 0) {
+    if (strcmp(eff_prev, "runepkg") == 0) {
+        if (eff_partial[0] == '-') {
+            if (strncmp(eff_partial, "--", 2) == 0) {
                 const char *long_opts[] = {
-                    "--target", "--target=",
+                    "--target=",
                     "--install", "--remove", "--list", "--status", "--list-files",
                     "--search", "--unpack", "--build", "--md5check", "--buildpkg-split",
                     "--verbose", "--force", "--version", "--help", "--print-config",
                     "--print-config-file", "--print-pkglist-file", "--print-autopool",
                     "--print-profile"
                 };
-                for (i = 0; i < 21; i++) {
-                    if (strncmp(long_opts[i], partial, strlen(partial)) == 0) {
+                for (i = 0; i < 20; i++) {
+                    if (strncmp(long_opts[i], eff_partial, strlen(eff_partial)) == 0) {
                         print_candidate(long_opts[i]);
                     }
                 }
@@ -1116,7 +1209,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 short_opts12[3] = "-s"; short_opts12[4] = "-L"; short_opts12[5] = "-S";
                 short_opts12[6] = "-u"; short_opts12[7] = "-b"; short_opts12[8] = "-m";
                 short_opts12[9] = "-v"; short_opts12[10] = "-f"; short_opts12[11] = "-h";
-                for (i = 0; i < 12; i++) if (strncmp(short_opts12[i], partial, strlen(partial)) == 0) print_candidate(short_opts12[i]);
+                for (i = 0; i < 12; i++) if (strncmp(short_opts12[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(short_opts12[i]);
             }
         } else {
             const char *sub_cmds[] = {
@@ -1125,11 +1218,11 @@ void handle_binary_completion(const char *partial, const char *prev) {
                 "depends", "verify", "update", "upgrade", "buildpkg-split", "build",
                 "switch", "bootstrap", "build-toolchain", "resolve-tree", "transactions"
             };
-            for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
+            for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(sub_cmds[i]);
         }
-    } else if (partial[0] == '-') {
-        if (strncmp(partial, "--", 2) == 0) {
-            if (strncmp("--target", partial, strlen(partial)) == 0) {
+    } else if (eff_partial[0] == '-') {
+        if (strncmp(eff_partial, "--", 2) == 0) {
+            if (strncmp("--target", eff_partial, strlen(eff_partial)) == 0) {
                 print_candidate("--target");
                 print_candidate("--target=");
             }
@@ -1137,11 +1230,11 @@ void handle_binary_completion(const char *partial, const char *prev) {
         if (inferred_cmd[0] != '\0') {
             if (strcmp(inferred_cmd, "install") == 0) {
                 short_opts2[0] = "-f"; short_opts2[1] = "-v";
-                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial)) == 0) print_candidate(short_opts2[i]);
-                if (strncmp(partial, "--", 2) == 0) {
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(short_opts2[i]);
+                if (strncmp(eff_partial, "--", 2) == 0) {
                     long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
                     long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
-                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial)) == 0) print_candidate(long_opts6[i]);
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], eff_partial, strlen(eff_partial)) == 0) print_candidate(long_opts6[i]);
                 }
             } else {
                 print_candidate("--help"); print_candidate("--version"); print_candidate("--verbose"); print_candidate("--force");
@@ -1149,53 +1242,53 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             print_candidate("--help"); print_candidate("--version"); print_candidate("--verbose"); print_candidate("--force");
         }
-        if (prev[0] == '-') {
-            complete_file_paths_ext(partial, g_download_dir, ".deb");
-            prefix_search_and_print(partial);
+        if (eff_prev[0] == '-') {
+            complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
+            prefix_search_and_print(eff_partial);
         }
-    } else if (strcmp(prev, "install") == 0 || strcmp(prev, "-i") == 0 || strcmp(prev, "--install") == 0) {
+    } else if (strcmp(eff_prev, "install") == 0 || strcmp(eff_prev, "-i") == 0 || strcmp(eff_prev, "--install") == 0) {
         if (is_path) {
-            complete_file_paths_ext(partial, g_download_dir, ".deb");
+            complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
         } else {
-            prefix_search_and_print_ext(partial, ":pkg");
-            repo_prefix_search_and_print(partial);
-            if (partial[0] != '\0') {
-                complete_file_paths_ext(partial, g_download_dir, ".deb");
+            prefix_search_and_print_ext(eff_partial, ":pkg");
+            repo_prefix_search_and_print(eff_partial);
+            if (eff_partial[0] != '\0') {
+                complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
             }
         }
-    } else if (strcmp(prev, "remove") == 0 || strcmp(prev, "-r") == 0 || strcmp(prev, "--remove") == 0) {
-        prefix_search_and_print_ext(partial, ":pkg");
-    } else if (strcmp(prev, "transactions") == 0) {
-        if (strncmp("list", partial, strlen(partial)) == 0) print_candidate("list");
-        if (strncmp("inspect", partial, strlen(partial)) == 0) print_candidate("inspect");
-    } else if (strcmp(prev, "list") == 0 || strcmp(prev, "-l") == 0 || strcmp(prev, "-L") == 0 || strcmp(prev, "--list") == 0 || strcmp(prev, "--list-files") == 0) {
-        prefix_search_and_print_ext(partial, ":pkg");
-    } else if (strcmp(prev, "status") == 0 || strcmp(prev, "-s") == 0 || strcmp(prev, "--status") == 0) {
-        if (is_path) complete_file_paths(partial);
+    } else if (strcmp(eff_prev, "remove") == 0 || strcmp(eff_prev, "-r") == 0 || strcmp(eff_prev, "--remove") == 0) {
+        prefix_search_and_print_ext(eff_partial, ":pkg");
+    } else if (strcmp(eff_prev, "transactions") == 0) {
+        if (strncmp("list", eff_partial, strlen(eff_partial)) == 0) print_candidate("list");
+        if (strncmp("inspect", eff_partial, strlen(eff_partial)) == 0) print_candidate("inspect");
+    } else if (strcmp(eff_prev, "list") == 0 || strcmp(eff_prev, "-l") == 0 || strcmp(eff_prev, "-L") == 0 || strcmp(eff_prev, "--list") == 0 || strcmp(eff_prev, "--list-files") == 0) {
+        prefix_search_and_print_ext(eff_partial, ":pkg");
+    } else if (strcmp(eff_prev, "status") == 0 || strcmp(eff_prev, "-s") == 0 || strcmp(eff_prev, "--status") == 0) {
+        if (is_path) complete_file_paths(eff_partial);
         else {
-            prefix_search_and_print_ext(partial, ":pkg");
-            repo_prefix_search_and_print(partial);
+            prefix_search_and_print_ext(eff_partial, ":pkg");
+            repo_prefix_search_and_print(eff_partial);
         }
-    } else if (strcmp(prev, "download-only") == 0 || strcmp(prev, "download-depends") == 0 || strcmp(prev, "download-build-depends") == 0) {
-        if (is_path) complete_file_paths(partial);
-        else repo_prefix_search_and_print(partial);
-    } else if (strcmp(prev, "buildpkg-split") == 0 || strcmp(prev, "--buildpkg-split") == 0) {
+    } else if (strcmp(eff_prev, "download-only") == 0 || strcmp(eff_prev, "download-depends") == 0 || strcmp(eff_prev, "download-build-depends") == 0) {
+        if (is_path) complete_file_paths(eff_partial);
+        else repo_prefix_search_and_print(eff_partial);
+    } else if (strcmp(eff_prev, "buildpkg-split") == 0 || strcmp(eff_prev, "--buildpkg-split") == 0) {
         if (is_path) {
-            complete_file_paths_ext(partial, g_build_dir, ".dsc");
+            complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
         } else {
-            prefix_search_and_print_ext(partial, ".dsc");
-            complete_file_paths_ext(partial, g_build_dir, ".dsc");
-            repo_src_prefix_search_and_print(partial);
-            repo_prefix_search_and_print(partial);
+            prefix_search_and_print_ext(eff_partial, ".dsc");
+            complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
+            repo_src_prefix_search_and_print(eff_partial);
+            repo_prefix_search_and_print(eff_partial);
         }
-    } else if (strcmp(prev, "unpack") == 0 || strcmp(prev, "-u") == 0 || strcmp(prev, "--unpack") == 0) {
-        complete_file_paths_ext(partial, g_download_dir, ".deb");
-    } else if (strcmp(prev, "build") == 0 || strcmp(prev, "-b") == 0 || strcmp(prev, "--build") == 0) {
+    } else if (strcmp(eff_prev, "unpack") == 0 || strcmp(eff_prev, "-u") == 0 || strcmp(eff_prev, "--unpack") == 0) {
+        complete_file_paths_ext(eff_partial, g_download_dir, ".deb");
+    } else if (strcmp(eff_prev, "build") == 0 || strcmp(eff_prev, "-b") == 0 || strcmp(eff_prev, "--build") == 0) {
         if (is_path) {
-            complete_file_paths_ext(partial, g_build_dir, ".dsc");
+            complete_file_paths_ext(eff_partial, g_build_dir, ".dsc");
         } else {
-            prefix_search_and_print(partial);
-            complete_file_paths_ext(partial, g_build_dir, NULL);
+            prefix_search_and_print(eff_partial);
+            complete_file_paths_ext(eff_partial, g_build_dir, NULL);
         }
     }
 }

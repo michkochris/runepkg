@@ -1,0 +1,1109 @@
+MultiarchTuples
+
+Multiarch Architecture Specifiers (Tuples)
+This document describes the schema for representing architecture ABIs as directory names, based largely on normalized GNU triplets. The process to document the tuples in the Debian Policy and distribution independent standards is tracked in bug #664257, and the previous (abandoned) proposal can be found at Multiarch/TuplesAbandoned. For other multiarch topics, see the multiarch category.
+
+Contents
+
+Multiarch Architecture Specifiers (Tuples)
+The problem
+The solution: extend GNU triplets
+Multiarch names
+Architectures in Debian
+Unsolved problems
+Why extend GNU triplets?
+Supporting interfaces
+See also
+The problem
+Multiarch specifies a method of making libraries for multiple, mutually-incompatible architectures installable on a single filesystem in a manner that ensures the same binaries can be used without modification on any system. To accomplish this, we require unique identifiers for each architecture that identifies an incompatible set of libraries that we want to be co-installed. We want these identifiers to be specified in as vendor-neutral a manner as possible, to ensure we retain maximal binary compatibility across Linux distributions.
+
+
+The solution: extend GNU triplets
+We use normalized GNU triplets for most tuples, and extend the GNU triplet when it is ambiguous.
+
+
+Multiarch names
+Multiarch names are based on the instruction set architecture (ISA), operating system, and Application Binary Interface (ABI).
+
+multiarch name
+
+instruction set
+
+syscall ABI
+
+endian­ness
+
+word size
+
+description
+
+spec documents
+
+aarch64-linux-gnu
+
+ARM64
+
+linux
+
+little
+
+64
+
+aarch64 Linux Platform
+
+AAPCS64 (ARM IHI 005A)1
+ELF for the ARM 64-bit Architecture2
+
+aarch64_be-linux-gnu
+
+ARM64
+
+linux
+
+big
+
+64
+
+aarch64 Linux Platform
+
+AAPCS64 (ARM IHI 005A)1
+ELF for the ARM 64-bit Architecture2
+
+aarch64-linux-gnu_ilp32
+
+ARM64
+
+linux
+
+little
+
+32
+
+aarch64 Linux Platform
+
+
+aarch64_be-linux-gnu_ilp32
+
+ARM64
+
+linux
+
+big
+
+32
+
+aarch64 Linux Platform
+
+
+aarch64-uefi
+
+ARM64
+
+UEFI
+
+little
+
+64
+
+UEFI AARCH64
+
+UEFI Spec3
+
+alpha-linux-gnu
+
+Alpha
+
+linux
+
+little
+
+64
+
+glibc, Tru64 calling standard
+
+Tru64 Calling Standard4
+
+arc-linux-gnu
+
+ARCv2
+
+linux
+
+little
+
+32
+
+glibc Linux hard-float
+
+(ARC v2 ABI)56
+
+arm-linux-gnu
+
+ARM
+
+linux
+
+little
+
+32
+
+Old ARM ABI
+
+APCS (ARM DUI 0041 chapter 9)7
+
+arm-linux-gnueabi
+
+ARM
+
+linux
+
+little
+
+32
+
+ARM EABI, soft-float
+
+AAPCS (ARM IHI 0042D)8
+ARM GNU/Linux ABI Supplement9
+
+arm-linux-gnueabihf
+
+ARM
+
+linux
+
+little
+
+32
+
+ARM EABI, hard-float
+
+AAPCS (ARM IHI 0042D)8 and
+XXXXX (TBD)
+
+arm-uefi
+
+ARM
+
+UEFI
+
+little
+
+32
+
+UEFI ARMHF
+
+UEFI Spec3
+
+armeb-linux-gnueabi
+
+ARM
+
+linux
+
+big
+
+32
+
+ARM EABI, soft-float
+
+AAPCS (ARM IHI 0042D)8
+ARM GNU/Linux ABI Supplement9
+
+armeb-linux-gnueabihf
+
+ARM
+
+linux
+
+big
+
+32
+
+ARM EABI, hard-float
+
+AAPCS (ARM IHI 0042D)8 and
+XXXXX (TBD)
+
+hppa-linux-gnu
+
+PA-RISC
+
+linux
+
+big
+
+32
+
+PA-RISC Linux 32-bit ELF
+
+parisc-linux toolchain documents10
+
+i386-gnu
+
+IA-32
+
+Hurd
+
+little
+
+32
+
+Hurd/IA-32
+
+ia32 functions calls11
+LSB Bug 326812
+OS interface XXXXX undocumented
+
+i386-linux-gnu
+
+IA-32
+
+linux
+
+little
+
+32
+
+LSB IA32
+
+SCO Developer Specifications13
+Intel386 psABI11
+LSB Core-IA3214
+LSB Bug 326812
+
+i386-kfreebsd-gnu
+
+IA-32
+
+FreeBSD
+
+little
+
+32
+
+glibc kFreeBSD IA-32
+
+XXXXX undocumented
+
+i386-uefi
+
+IA-32
+
+UEFI
+
+little
+
+32
+
+UEFI IA32
+
+UEFI Spec3
+
+ia64-linux-gnu
+
+IA-64
+
+linux
+
+little
+
+64
+
+LSB IA64
+
+Intel Itanium SysV psABI15
+LSB Core-IA6416
+
+loongarch64-linux-gnu
+
+LoongArch LA64
+
+linux
+
+little
+
+64
+
+LoongArch64 Linux Platform
+LP64D ABI
+
+LoongArch ELF psABI17
+
+m68k-linux-gnu
+
+MC68000
+
+linux
+
+big
+
+32
+
+m68k SysV ABI
+
+ISBN: 978-0138776633
+
+mips-linux-gnu
+
+MIPS32r2+FPXX
+
+linux
+
+big
+
+32
+
+MIPS o32 ABI
+
+MIPS psABI1819
+
+mipsel-linux-gnu
+
+MIPS2(MIPS32r2 soon)+FPXX
+
+linux
+
+little
+
+32
+
+MIPS o32 ABI
+
+MIPS psABI1819
+
+mips64-linux-gnuabin32
+
+MIPS64r2
+
+linux
+
+big
+
+32
+
+MIPS n32 ABI
+
+MIPSpro N32 ABI Handbook1820
+
+mips64el-linux-gnuabin32
+
+MIPS64r2
+
+linux
+
+little
+
+32
+
+MIPS n32 ABI
+
+MIPSpro N32 ABI Handbook1820
+
+mips64-linux-gnuabi64
+
+MIPS64r2
+
+linux
+
+big
+
+64
+
+MIPS 64-bit ABI
+
+MIPSpro N64 ABI Handbook1820
+
+mips64el-linux-gnuabi64
+
+linux
+
+MIPS64r2
+
+little
+
+64
+
+MIPS 64-bit ABI
+
+MIPSpro N64 ABI Handbook1820
+
+mipsisa32r6-linux-gnu
+
+MIPS32r6
+
+linux
+
+big
+
+32
+
+MIPS o32 ABI
+
+MIPS psABI1819
+
+mipsisa32r6el-linux-gnu
+
+linux
+
+MIPS32r6
+
+little
+
+32
+
+MIPS o32 ABI
+
+MIPS psABI1819
+
+mipsisa64r6-linux-gnuabin32
+
+MIPS64r6
+
+linux
+
+big
+
+32
+
+MIPS n32 ABI
+
+MIPSpro N32 ABI Handbook1820
+
+mipsisa64r6el-linux-gnuabin32
+
+MIPS64r6
+
+linux
+
+little
+
+32
+
+MIPS n32 ABI
+
+MIPSpro N32 ABI Handbook1820
+
+mipsisa64r6-linux-gnuabi64
+
+MIPS64r6
+
+linux
+
+big
+
+64
+
+MIPS 64-bit ABI
+
+MIPSpro N64 ABI Handbook1820
+
+mipsisa64r6el-linux-gnuabi64
+
+linux
+
+MIPS64r6
+
+little
+
+64
+
+MIPS 64-bit ABI
+
+MIPSpro N64 ABI Handbook1820
+
+powerpc-linux-gnu
+
+PowerPC
+
+linux
+
+big
+
+32
+
+LSB PPC32
+
+PowerPC psABI21
+LSB Core-PPC3222
+
+powerpc-linux-gnuspe
+
+PowerPC
+
+linux
+
+big
+
+32
+
+PowerPC e500 (SPE)
+
+Power 32-bit ABI Supplement 1.0 Linux23
+
+powerpc64-linux-gnu
+
+PowerPC
+
+linux
+
+big
+
+64
+
+LSB PPC64
+
+64-bit PowerPC ELF psABI24
+LSB Core-PPC6425
+
+powerpc64le-linux-gnu
+
+PowerPC
+
+linux
+
+little
+
+64
+
+??
+
+??
+
+riscv64-linux-gnu
+
+RISC-V
+
+linux
+
+little
+
+64
+
+RV64G Linux Platform
+
+RISC-V ELF psABI 26
+
+s390-linux-gnu
+
+System/390
+
+linux
+
+big
+
+32
+
+LSB S390
+
+S/390 ELF psABI27
+LSB Core-S39028
+
+s390x-linux-gnu
+
+z/Architecture
+
+linux
+
+big
+
+64
+
+LSB S390X
+
+zSeries ELF psABI29
+LSB Core-S390X30
+
+sh4-linux-gnu
+
+SH-4
+
+linux
+
+little
+
+32
+
+glibc Linux SH-4
+with fpu, double pervading
+
+SH-4 Generic and Specific ABI31
+
+sparc-linux-gnu
+
+SPARC
+
+linux
+
+big
+
+32
+
+glibc Linux sparc32
+
+SPARC psABI32
+
+sparc64-linux-gnu
+
+SPARC64
+
+linux
+
+big
+
+64
+
+glibc Linux sparc64
+
+SPARCv9 psABI33
+
+x86_64-gnu
+
+x86_64
+
+Hurd
+
+little
+
+64
+
+Hurd / LSB AMD64
+
+AMD64 psABI34
+LSB Core-
+
+x86_64-kfreebsd-gnu
+
+x86_64
+
+FreeBSD
+
+little
+
+64
+
+glibc kFreeBSD x86-64
+
+XXXXX undocumented
+
+x86_64-linux-gnu
+
+x86_64
+
+linux
+
+little
+
+64
+
+LSB AMD64
+
+AMD64 psABI34
+LSB Core-AMD6435
+
+x86_64-linux-gnux32
+
+x86_64
+
+linux
+
+little
+
+32
+
+glibc Linux x32
+
+x32-abi documents36
+
+x86_64-uefi
+
+x86_64
+
+UEFI
+
+little
+
+64
+
+UEFI AMD64
+
+UEFI Spec3
+
+
+Architectures in Debian
+Debian architecture name
+
+status in Debian
+
+multiarch name
+
+alpha
+
+EOL
+
+alpha-linux-gnu
+
+amd64
+
+released
+
+x86_64-linux-gnu
+
+arc
+
+planning
+
+arc-linux-gnu
+
+arm
+
+EOL
+
+arm-linux-gnu
+
+arm64
+
+released
+
+aarch64-linux-gnu
+
+arm64ilp32
+
+none
+
+aarch64-linux-gnu_ilp32
+
+armel
+
+released
+
+arm-linux-gnueabi
+
+armhf
+
+released
+
+arm-linux-gnueabihf
+
+hppa
+
+EOL
+
+hppa-linux-gnu
+
+hurd-i386
+
+development
+
+i386-gnu
+
+hurd-amd64
+
+development
+
+x86_64-gnu
+
+i386
+
+released
+
+i386-linux-gnu
+
+ia64
+
+EOL
+
+ia64-linux-gnu
+
+kfreebsd-amd64
+
+EOL
+
+x86_64-kfreebsd-gnu
+
+kfreebsd-i386
+
+EOL
+
+i386-kfreebsd-gnu
+
+loong64
+
+development
+
+loongarch64-linux-gnu
+
+m68k
+
+EOL
+
+m68k-linux-gnu
+
+mips
+
+released
+
+mips-linux-gnu
+
+mipsel
+
+released
+
+mipsel-linux-gnu
+
+mips64
+
+none
+
+mips64-linux-gnuabi64
+
+mips64el
+
+development
+
+mips64el-linux-gnuabi64
+
+mipsn32
+
+none
+
+mips64-linux-gnuabin32
+
+mipsn32el
+
+none
+
+mips64el-linux-gnuabin32
+
+mipsr6
+
+none
+
+mipsisa32r6-linux-gnu
+
+mipsr6el
+
+planning
+
+mipsisa32r6el-linux-gnu
+
+mips64r6
+
+none
+
+mipsisa64r6-linux-gnuabi64
+
+mips64r6el
+
+planning
+
+mipsisa64r6el-linux-gnuabi64
+
+mipsn32r6
+
+none
+
+mipsisa64r6-linux-gnuabin32
+
+mipsn32r6el
+
+none
+
+mipsisa64r6el-linux-gnuabin32
+
+powerpc
+
+released
+
+powerpc-linux-gnu
+
+powerpcspe
+
+development
+
+powerpc-linux-gnuspe
+
+ppc64
+
+development
+
+powerpc64-linux-gnu
+
+ppc64el
+
+released
+
+powerpc64le-linux-gnu
+
+riscv64
+
+development
+
+riscv64-linux-gnu
+
+s390
+
+EOL
+
+s390-linux-gnu
+
+s390x
+
+released
+
+s390x-linux-gnu
+
+sh4
+
+development
+
+sh4-linux-gnu
+
+sparc
+
+released
+
+sparc-linux-gnu
+
+sparc64
+
+development
+
+sparc64-linux-gnu
+
+uefi-amd6437
+
+cross
+
+x86_64-uefi
+
+uefi-arm6437
+
+cross
+
+aarch64-uefi
+
+uefi-armhf37
+
+cross
+
+arm-uefi
+
+uefi-i38637
+
+cross
+
+i386-uefi
+
+x32
+
+none
+
+x86_64-linux-gnux32
+
+The status describes if the name is used in a (to be) released version of Debian and/or Ubuntu (release), if it is a new or abandoned port on Debian unofficial ports (port), or if it's used as a name for a Debian gcc multilib configuration (biarch).
+
+On a Debian system with dpkg-dev installed, you can list Debian architectures with dpkg-architecture --list-known and get the Debian architecture name for a triplet with dpkg-architecture -t<triplet> -qDEB_HOST_ARCH.
+
+uefi- debian architecture name have been choosen such as uefi-$(DEB_BUILD_ARCH) give sensible answer. The multiarch name was choosen in order to give directly the gnu triplet by using unknown as vendor (using for instance dpkg-architecture -f -A $(subst uefi-,,$(1)) -q DEB_TARGET_ARCH_CPU)-uefi)
+
+
+Unsolved problems
+Multiarch names can still be ambiguous if distributions use names in incompatible ways. For example, Debian armhf targets ARMv7 with VFPv3-D16 CPUs, but Raspbian (the basis for Raspberry Pi armhf) targets ARMv6 with VFPv2 CPUs, such as the Raspberry Pi 1, leading to strange run-time errors when running packages with the wrong definition of arm-linux-gnueabihf.
+
+
+Why extend GNU triplets?
+Earlier proposals used GNU triplets as the components of the library path. Proof-of-concept implementations ran into two distinct cases where GNU triplets could not be used effectively in a cross-distribution manner:
+
+On IA-32, the GNU triplet varies according to the precise instruction set being targeted: e.g., i486-linux-gnu, i586-linux-gnu i686-linux-gnu. Such triplets will be inconsistent over time within a single distribution as compiler defaults are changed, let alone between distributions.
+Historical note: On ARM, the canonical GNU triplet for EABI systems, whether using hard-float or soft-float, was arm-linux-gnueabi, despite the fact that hard-float and soft-float libraries use different calling conventions and can't be intermixed. The advice given by upstream GCC developers was to use the vendor field in the GNU triplet to express this difference1; however, the vendor field is private by design, making this unreliable for cross-distribution use. Work finally succeeded to push the arm-linux-gnueabihf triplet upstream, but there may still be some broken packages around for a while.
+
+
+Supporting interfaces
+dpkg-architecture -qDEB_HOST_MULTIARCH (on dpkg based systems).
+gcc -print-multiarch (available upstream in GCC 4.9 and newer versions).
+To avoid divergent embedded implementations of architecture->tuple mappings in every piece of software that wants to make use of these paths, a standard commandline tool that encapsulates this mapping should be provided, similar to the config.guess and config.sub tools that are a standard part of GNU autotools. We recommend a name of lsb_architecture for this tool.
+
+
+See also
+ArchitectureSpecificsMemo
+
+CategoryMultiarch
+
+https://github.com/ARM-software/abi-aa/blob/main/aapcs64/aapcs64.rst (1 2)
+
+https://github.com/ARM-software/abi-aa/blob/main/aaelf64/aaelf64.rst (3 4)
+
+https://uefi.org/sites/default/files/resources/UEFI_Spec_2_8_final.pdf (5 6 7 8)
+
+http://www.openwatcom.org/ftp/devel/docs/alpha%20calling%20standard.pdf (9)
+
+https://github.com/foss-for-synopsys-dwc-arc-processors/arc-ABI-manual/blob/master/ARCv2_ABI.pdf (10)
+
+https://www.synopsys.com/dw/doc.php/ds/cc/programmers-reference-manual-ARC-HS.pdf (11)
+
+http://infocenter.arm.com/help/topic/com.arm.doc.dui0041c/BGBGFIDA.html (12)
+
+https://github.com/ARM-software/abi-aa/blob/main/aapcs32/aapcs32.rst (13 14 15 16)
+
+https://sourcery.mentor.com/GNUToolchain/kbentry39 (17 18)
+
+http://wiki.parisc-linux.org/ToolChain (19)
+
+http://refspecs.linuxbase.org/elf/abi386-4.pdf (20 21)
+
+https://lsbbugs.linuxfoundation.org/show_bug.cgi?id=3268 (22 23)
+
+http://www.sco.com/developers/devspecs/ (24)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-IA32/LSB-Core-IA32/elf-ia32.html (25)
+
+http://refspecs.linuxbase.org/elf/IA64-SysV-psABI.pdf (26)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-IA64/LSB-Core-IA64/elf-ia64.html (27)
+
+https://loongson.github.io/LoongArch-Documentation/LoongArch-ELF-ABI-EN.html (28)
+
+ftp://www.linux-mips.org/pub/linux/mips/doc/ABI/ (29 30 31 32 33 34 35 36 37 38 39 40)
+
+https://imgtec.com/mips/architectures/mips32/ (41 42 43 44)
+
+https://imgtec.com/mips/architectures/mips64/ (45 46 47 48 49 50 51 52)
+
+http://refspecs.linux-foundation.org/elf/elfspec_ppc.pdf (53)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-PPC32/LSB-Core-PPC32/elf-ppc32.html (54)
+
+https://www.power.org/resources/downloads/Power-Arch-32-bit-ABI-supp-1.0.tgz (55)
+
+http://refspecs.linuxfoundation.org/ELF/ppc64/PPC-elf64abi-1.9.html (56)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-PPC64/LSB-Core-PPC64/elf-ppc64.html (57)
+
+https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md (58)
+
+http://refspecs.linuxbase.org/ELF/zSeries/lzsabi0_s390.html (59)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-S390/LSB-Core-S390/elf-s390.html (60)
+
+http://refspecs.linuxbase.org/ELF/zSeries/lzsabi0_zSeries.html (61)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-S390X/LSB-Core-S390X/elf-s390x.html (62)
+
+http://sg.renesas.com/support/downloads/download_results/C2003801-C2003900/sh4_000_top_abi_00013.jsp (registration required) (63)
+
+http://www.sparc.com/standards/psABI3rd.pdf (64)
+
+draft https://sparc.org/wp-content/uploads/2014/01/64.psabi_.1.35.pdf1.gz available online, can't find anything more concrete (65)
+
+http://x86-64.org/documentation/abi.pdf (66 67)
+
+http://refspecs.linuxbase.org/LSB_4.1.0/LSB-Core-AMD64/LSB-Core-AMD64/elf-amd64.html (68)
+
+https://sites.google.com/site/x32abi/ (69)
+
+#UEFI (70 71 72 73)
+
+Multiarch/Tuples (last modified 2026-05-10 01:23:30)
+
+Changes made after 24 July 2025 00:00 UTC are available under Creative Commons Attribution-ShareAlike 4.0 International unless otherwise noted.Debian privacy policy, Wiki team, bugs and config.Powered by MoinMoin and Python, with hosting provided by Metropolitan Area Network Darmstadt.

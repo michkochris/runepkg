@@ -2013,15 +2013,13 @@ int runepkg_util_get_package_suggestions(const char *search_name, const char *db
 
 const char* runepkg_util_find_version_separator(const char *s) {
     const char *p;
-    const char *last_match = NULL;
     if (!s) return NULL;
-    /* We look for the LAST hyphen followed by a digit.
-     * Heuristic: A version separator is a hyphen followed by a digit,
-     * and that version segment usually contains a dot, colon, tilde, or plus.
-     * If there's no such character before the next hyphen or end of string,
-     * it's likely part of the name (e.g., 'gcc-14'). */
+    /* A version separator is the FIRST hyphen followed by a digit or epoch (1:)
+     * where the version segment contains a version indicator (dot, colon, tilde, plus, etc.).
+     * This correctly splits multi-hyphen package names like 'libbz2-1.0-1.0.8-6+b2'
+     * into name='libbz2-1.0', ver='1.0.8-6+b2'. */
     for (p = s; *p; p++) {
-        if (*p == '-' && isdigit((unsigned char)p[1])) {
+        if (*p == '-' && (isdigit((unsigned char)p[1]) || p[1] == ':')) {
             const char *v = p + 1;
             bool has_ver_char = false;
             while (*v && *v != '-') {
@@ -2032,11 +2030,11 @@ const char* runepkg_util_find_version_separator(const char *s) {
                 v++;
             }
             if (has_ver_char) {
-                last_match = p;
+                return p;
             }
         }
     }
-    return last_match;
+    return NULL;
 }
 
 const char *runepkg_util_resolve_build_target(const char *arg, const char *build_dir) {
