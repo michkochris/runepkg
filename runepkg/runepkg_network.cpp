@@ -682,6 +682,10 @@ extern "C" int runepkg_update(void) {
             std::lock_guard<std::mutex> lock(g_metadata_cache_mutex);
             g_metadata_cache.clear();
         }
+        const char *eff_db_path = runepkg_config_get_effective_db_dir();
+        std::string effective_lists_dir = eff_db_path ? std::string(eff_db_path) + "/lists" : (g_runepkg_lists_dir ? g_runepkg_lists_dir : "/srv/lib/runepkg_dir/runepkg_db/lists");
+        runepkg_util_create_dir_recursive(effective_lists_dir.c_str(), 0755);
+
         std::vector<DownloadTask> bin_tasks, src_tasks;
         std::vector<std::string> bin_pkg_files, src_pkg_files;
         for (int i = 0; i < g_sources_count; i++) {
@@ -692,7 +696,7 @@ extern "C" int runepkg_update(void) {
             std::string component;
             while (ss >> component) {
                 std::string url, dest_path;
-                std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
+                std::string lists_dir = effective_lists_dir;
                 if (std::string(g_sources[i]->type) == "deb") {
                     url = base_url + "dists/" + suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
                     std::string safe_url = normalize_url(url);
@@ -714,8 +718,7 @@ extern "C" int runepkg_update(void) {
             if (base_url.back() != '/') base_url += '/';
             std::string release_url = base_url + "dists/" + g_sources[i]->suite + "/InRelease";
             std::string safe_release = normalize_url(release_url);
-            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
-            std::string release_path = lists_dir + "/" + safe_release;
+            std::string release_path = effective_lists_dir + "/" + safe_release;
             if (download_file(release_url, release_path, 0, "InRelease (" + std::string(g_sources[i]->suite) + ")", true)) {
                 if (runepkg::security::verify_gpg_signature(release_path)) {
                     std::cout << "  \033[1;32m[gpg]\033[0m Verified OpenPGP signature for " << g_sources[i]->suite << std::endl;
@@ -774,7 +777,7 @@ extern "C" int runepkg_update(void) {
                 std::stringstream ss(g_sources[i]->components);
                 std::string component;
                 while (ss >> component) {
-                    std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir : effective_db_dir_str() + "/lists";
+                    std::string lists_dir = effective_lists_dir;
                     if (std::string(g_sources[i]->type) == "deb") {
                         std::string url = base_url + "dists/" + g_sources[i]->suite + "/" + component + "/binary-" + G_ARCH + "/Packages.gz";
                         std::string safe_url = normalize_url(url);

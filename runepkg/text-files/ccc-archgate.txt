@@ -1,0 +1,55 @@
+================================================================================
+                   CCC-ARCHGATE: ARCHITECTURE-NEUTRAL GATEKEEPER
+================================================================================
+
+1. PURPOSE & CORE DEFINITION
+--------------------------------------------------------------------------------
+ccc-archgate is a standalone, architecture-neutral executable component
+included with the ccc C/C++ compiler toolchain.
+
+Its sole purpose is to act as a live gatekeeper during compilation and build
+execution: resolving the target architecture in context and switching
+architecture-specific settings cleanly while work is in progress.
+
+2. ZERO CONFIG FILES, ZERO REGISTRIES
+--------------------------------------------------------------------------------
+Unlike traditional cross-toolchain wrappers that rely on external config
+files, environment soup, or target registries, ccc-archgate requires none.
+
+There are no config file lookups, no registry state files, no external path
+parsers, and no host-dependent settings that can drift out of sync. All gate
+decisions and profile switches come directly from invocation context and
+explicit binary metadata passed or inspected at runtime.
+
+3. WHY IT IS ARCHITECTURE-NEUTRAL
+--------------------------------------------------------------------------------
+ccc-archgate separates gatekeeper decision logic from architecture-specific
+state profiles:
+
+- The gatekeeper engine itself is written in strict, portable C89 with zero
+  assumptions about host word size, pointer width, or CPU family.
+- Because the gate logic is neutral to the underlying CPU, the binary itself
+  compiles and runs cleanly on any host architecture (x86_64, aarch64,
+  riscv64, etc.).
+- Architecture-specific parameters (endianness, ABI alignment, target flags,
+  and sysroot/toolchain paths) live as swappable state profiles activated only
+  when switching target context.
+
+4. DETERMINISTIC BINARY DATA MODEL
+--------------------------------------------------------------------------------
+Whenever ccc-archgate inspects or exchanges binary target metadata or ELF
+artifacts, it relies on explicit, fixed-width serialization (uint16_t,
+uint32_t, uint64_t fields with magic headers) rather than raw C struct dumps.
+
+This eliminates struct alignment, padding, and word-size discrepancies across
+compilers and architectures, keeping binary state predictable everywhere.
+
+5. ROLE IN THE COMPILATION PIPELINE
+--------------------------------------------------------------------------------
+1. Intercepts build or compiler work before architecture-sensitive stages run.
+2. Resolves the target context from invocation arguments and binary metadata
+   without touching external config files or registries.
+3. Validates target compatibility to prevent host/target or ABI bleed.
+4. Switches active architecture-specific settings in-flight for downstream
+   compiler, assembler, linker, or runas execution stages.
+================================================================================

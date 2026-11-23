@@ -84,6 +84,12 @@ static void sync_db_derived_paths(void) {
     g_pkglist_txt_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.txt");
     g_pkglist_bin_path = runepkg_util_concat_path(g_runepkg_db_dir, "runepkg_autocomplete.bin");
     g_runepkg_lists_dir = runepkg_util_concat_path(g_runepkg_db_dir, "lists");
+    if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
+        runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
+    }
+    if (g_runepkg_lists_dir && g_runepkg_lists_dir[0] != '\0') {
+        runepkg_util_create_dir_recursive(g_runepkg_lists_dir, 0755);
+    }
 }
 
 /* --- Path & Database Helper Functions --- */
@@ -96,6 +102,8 @@ const char *runepkg_config_get_effective_db_dir(void) {
         target_root = g_target_sysroot;
     } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
         target_root = g_active_profile->sysroot;
+    } else if (g_install_dir_internal && strcmp(g_install_dir_internal, "/") != 0) {
+        target_root = g_install_dir_internal;
     }
 
     if (target_root && strcmp(target_root, "/") != 0) {
@@ -107,16 +115,23 @@ const char *runepkg_config_get_effective_db_dir(void) {
             }
             g_runepkg_db_dir = strdup(s_db_buf);
         }
+        sync_db_derived_paths();
         return g_runepkg_db_dir;
     }
 
     if (g_runepkg_db_dir && g_runepkg_db_dir[0] != '\0') {
         runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
+        sync_db_derived_paths();
         return g_runepkg_db_dir;
     }
 
     runepkg_util_create_dir_recursive("/srv/lib/runepkg_dir/runepkg_db", 0755);
-    return "/srv/lib/runepkg_dir/runepkg_db";
+    if (!g_runepkg_db_dir || strcmp(g_runepkg_db_dir, "/srv/lib/runepkg_dir/runepkg_db") != 0) {
+        if (g_runepkg_db_dir) free(g_runepkg_db_dir);
+        g_runepkg_db_dir = strdup("/srv/lib/runepkg_dir/runepkg_db");
+    }
+    sync_db_derived_paths();
+    return g_runepkg_db_dir;
 }
 
 int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot, size_t sysroot_sz, char *out_db_dir, size_t db_sz) {
@@ -705,6 +720,8 @@ int runepkg_config_load(void) {
             free(g_system_install_root);
             g_system_install_root = strdup(g_target_sysroot);
         }
+    } else {
+        runepkg_config_get_effective_db_dir();
     }
 
     free(config_file_path);

@@ -1,0 +1,37 @@
+================================================================================
+               WHY RUNEPKG TARGET DATABASE & SYSROOT PROVISIONING WORKS
+================================================================================
+
+1. CUSTOM SERIALIZATION (NOT RAW STRUCT DUMPS)
+--------------------------------------------------------------------------------
+- Files like `runes_graph.bin` and `repo_index.bin` report as generic "data" to the
+  host `file` utility because they utilize a custom binary header ("RUNEGRPH")
+  and explicit stream serialization (`uint16_t` string lengths, `uint32_t` counts,
+  `uint64_t` sizes).
+- This prevents struct alignment and packing discrepancies across compilation units
+  and architectures.
+
+2. HOST VS. TARGET DB ISOLATION
+--------------------------------------------------------------------------------
+- When provisioning a target (e.g., `--target=arm64:aarch64-linux-gnu`), runepkg
+  strictly segregates the database directory:
+  Host DB   : /srv/lib/runepkg_dir/runepkg_db/
+  Target DB : /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/
+- There is zero cross-contamination between host and target metadata.
+
+3. SELF-CONTAINED CONFIGURATION REGISTRIES
+--------------------------------------------------------------------------------
+- Provisioned target sysroots include their own isolated configuration hierarchy:
+  - `<sysroot>/etc/runepkg/runepkgconfig`
+  - `<sysroot>/etc/runepkg/config_registry.txt`
+  - `<sysroot>/etc/runepkg/active_target.conf`
+- When an ARM64 native build of runepkg takes over on the target hardware (or inside
+  a chroot), its path resolution logic (`runepkg_config_get_registry_path()`) reads
+  these local configuration registries to operate entirely self-contained.
+
+4. NATIVE RE-GENERATION SUPPORT
+--------------------------------------------------------------------------------
+- While cross-provisioned graph caches are cleanly managed from the host, running
+  `runepkg update` natively on the target device re-parses repository stanzas
+  and rebuilds `runes_graph.bin` natively on the target architecture, ensuring
+  100% native environment consistency.

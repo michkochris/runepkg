@@ -1,9 +1,9 @@
 /*****************************************************************************
- * Filename:    runepkg_completion.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Bash completion logic for runepkg
- * LICENSE:     GPL v3
+- Filename:    runepkg_completion.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Bash completion logic for runepkg
+- LICENSE:     GPL v3
  ******************************************************************************/
 
 #include "runepkg_portable.h"
@@ -41,11 +41,33 @@ static int g_already_on_cmdline_count = 0;
 
 static char g_current_partial[128] = {0};
 
+static const char *g_known_target_specs[] = {
+    "arm64:aarch64-linux-gnu",
+    "aarch64-linux-gnu",
+    "arm64",
+    "amd64:x86_64-linux-gnu",
+    "x86_64-linux-gnu",
+    "amd64",
+    "armhf:arm-linux-gnueabihf",
+    "arm-linux-gnueabihf",
+    "armhf",
+    "riscv64:riscv64-linux-gnu",
+    "riscv64-linux-gnu",
+    "riscv64"
+};
+static const int g_known_target_specs_count = 12;
+
 static void normalize_candidate_name(char *dest, const char *src, size_t dest_size) {
     const char *p;
     size_t len;
 
     if (!src) { dest[0] = '\0'; return; }
+
+    /* Preserve --target=<profile> and arch:triplet specs intact */
+    if (strncmp(src, "--target=", 9) == 0 || strchr(src, ':') != NULL) {
+        runepkg_secure_strcpy(dest, dest_size, src);
+        return;
+    }
 
     /* Strip constraints like " (= 2:9.2...)" or " (>= 1.0)" */
     p = strchr(src, ' ');
@@ -69,7 +91,7 @@ static void normalize_candidate_name(char *dest, const char *src, size_t dest_si
 }
 
 static void print_candidate(const char *name) {
-    char norm[64];
+    char norm[128];
     int i;
 
     if (g_completion_printed_count >= MAX_COMPLETION_RESULTS) return;
@@ -78,9 +100,7 @@ static void print_candidate(const char *name) {
     normalize_candidate_name(norm, name, sizeof(norm));
 
     /* Safety: If normalization stripped the prefix the user is typing,
-     * fallback to the full name to avoid breaking Bash completion.
-     * e.g., if typing 'gcc-' and 'gcc-14' is normalized to 'gcc',
-     * Bash would incorrectly try to replace 'gcc-' with 'gcc'. */
+     * fallback to the full name to avoid breaking Bash completion. */
     if (g_current_partial[0] != '\0') {
         size_t plen = strlen(g_current_partial);
         if (strncmp(name, g_current_partial, plen) == 0 &&
@@ -106,6 +126,54 @@ static void print_candidate(const char *name) {
 
     printf("%s\n", norm);
     g_completion_printed_count++;
+}
+
+static void complete_target_eq_values(const char *tpart) {
+    const char *targets_dirs[4];
+    size_t tlen;
+    int i;
+
+    if (!tpart) tpart = "";
+    tlen = strlen(tpart);
+
+    targets_dirs[0] = "/etc/runepkg/targets/";
+    targets_dirs[1] = "targets/";
+    targets_dirs[2] = runepkg_config_resolve_path(NULL, 2);
+    targets_dirs[3] = NULL;
+
+    for (i = 0; i < 3; i++) {
+        DIR *d;
+        if (!targets_dirs[i]) continue;
+        d = opendir(targets_dirs[i]);
+        if (d) {
+            struct dirent *e;
+            while ((e = readdir(d)) != NULL) {
+                if (e->d_type == DT_REG || e->d_type == DT_LNK || e->d_type == DT_UNKNOWN) {
+                    size_t len = strlen(e->d_name);
+                    if (len > 5 && strcmp(e->d_name + len - 5, ".conf") == 0) {
+                        char name[64];
+                        char full_opt[128];
+                        runepkg_secure_strcpy(name, sizeof(name), e->d_name);
+                        name[len - 5] = '\0';
+                        if (strncmp(name, tpart, tlen) == 0) {
+                            snprintf(full_opt, sizeof(full_opt), "--target=%s", name);
+                            print_candidate(full_opt);
+                        }
+                    }
+                }
+            }
+            closedir(d);
+        }
+    }
+    if (targets_dirs[2]) free((void *)targets_dirs[2]);
+
+    for (i = 0; i < g_known_target_specs_count; i++) {
+        if (strncmp(g_known_target_specs[i], tpart, tlen) == 0) {
+            char full_opt[128];
+            snprintf(full_opt, sizeof(full_opt), "--target=%s", g_known_target_specs[i]);
+            print_candidate(full_opt);
+        }
+    }
 }
 
 static void populate_already_on_cmdline(const char *partial) {
@@ -143,13 +211,6 @@ static void populate_already_on_cmdline(const char *partial) {
     }
 }
 
-/**
- * @brief Checks if the current completion request is a repeated press of Tab
- * for the exact same command-line state. If so, suggests suppressing output
- * to avoid terminal "spam".
- *
- * @return 1 if completion should be suppressed, 0 otherwise.
- */
 static int should_suppress_completion(void) {
     const char *comp_line = getenv("COMP_LINE");
     const char *comp_point_s = getenv("COMP_POINT");
@@ -196,16 +257,12 @@ static int should_suppress_completion(void) {
         fclose(fp);
     }
 
-    /* Suppress if the same state has been queried more than twice consecutively.
-     * Tab 1: Beep (Bash sees multiple)
-     * Tab 2: Show List
-     * Tab 3+: Suppress (User has seen it) */
     if (count > 2) return 1;
     return 0;
 }
 
 int is_completion_trigger(char *argv[]) {
-    (void)argv; /* suppressed unused warning; argc check is done by caller */
+    (void)argv;
     return 1;
 }
 
@@ -217,7 +274,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
     const char *search_dir = ".";
     const char *match_prefix;
     DIR *d;
-    const char* virtual_dirs[8];
+    const char *virtual_dirs[8];
     int num_v;
     size_t plen;
     int i;
@@ -229,7 +286,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
 
     if (last_slash) {
         size_t dirlen = (size_t)(last_slash - prefix);
-        if (dirlen >= sizeof(dirbuf)) dirlen = sizeof(dirbuf)-1;
+        if (dirlen >= sizeof(dirbuf)) dirlen = sizeof(dirbuf) - 1;
         memcpy(dirbuf, prefix, dirlen);
         dirbuf[dirlen] = '\0';
 
@@ -244,7 +301,6 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
         match_prefix = prefix + 1;
     }
 
-    /* FS Scan */
     d = opendir(search_dir);
     if (d) {
         struct dirent *e;
@@ -255,10 +311,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
             struct stat st_entry;
 
             if (strcmp(e->d_name, ".") == 0 || strcmp(e->d_name, "..") == 0) continue;
-
-            /* Skip hidden files unless specifically requested */
             if (e->d_name[0] == '.' && match_prefix[0] != '.') continue;
-
             if (strncmp(e->d_name, match_prefix, strlen(match_prefix)) != 0) continue;
 
             is_dir_entry = (e->d_type == DT_DIR);
@@ -266,7 +319,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
             if (e->d_type == DT_UNKNOWN) {
                 char full[PATH_MAX + 512];
                 struct stat st2;
-                snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), search_dir, e->d_name);
+                snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full) - 258), search_dir, e->d_name);
                 if (stat(full, &st2) == 0) {
                     is_dir_entry = S_ISDIR(st2.st_mode);
                     is_reg_entry = S_ISREG(st2.st_mode);
@@ -281,7 +334,8 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                 continue;
             }
 
-            snprintf(full_path, sizeof(full_path), "%.*s%s%s", (int)(sizeof(full_path)-258), search_dir, (search_dir[strlen(search_dir)-1] == '/') ? "" : "/", e->d_name);
+            snprintf(full_path, sizeof(full_path), "%.*s%s%s", (int)(sizeof(full_path) - 258), search_dir,
+                     (search_dir[strlen(search_dir) - 1] == '/') ? "" : "/", e->d_name);
 
             if (stat(full_path, &st_entry) == 0) {
                 bool st_is_dir = S_ISDIR(st_entry.st_mode);
@@ -296,7 +350,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                 if (st_is_dir) {
                     if (last_slash) {
                         size_t sd_len = strlen(search_dir);
-                        const char *sep = (sd_len > 0 && search_dir[sd_len-1] == '/') ? "" : "/";
+                        const char *sep = (sd_len > 0 && search_dir[sd_len - 1] == '/') ? "" : "/";
                         char buf[PATH_MAX + 256];
                         snprintf(buf, sizeof(buf), "%s%s%s/", search_dir, sep, e->d_name);
                         print_candidate(buf);
@@ -312,7 +366,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                 } else {
                     if (last_slash) {
                         size_t sd_len = strlen(search_dir);
-                        const char *sep = (sd_len > 0 && search_dir[sd_len-1] == '/') ? "" : "/";
+                        const char *sep = (sd_len > 0 && search_dir[sd_len - 1] == '/') ? "" : "/";
                         char buf[PATH_MAX + 256];
                         snprintf(buf, sizeof(buf), "%s%s%s", search_dir, sep, e->d_name);
                         print_candidate(buf);
@@ -336,18 +390,18 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
     num_v = 8;
     plen = strlen(prefix);
 
-    for (i=0; i<num_v; i++) {
+    for (i = 0; i < num_v; i++) {
         if (!virtual_dirs[i]) continue;
 
         if (strncmp(virtual_dirs[i], prefix, plen) == 0) {
-            const char* remainder = virtual_dirs[i] + plen;
+            const char *remainder = virtual_dirs[i] + plen;
 
             if (*remainder == '\0') continue;
 
             {
                 char segment[PATH_MAX];
-                const char* remainder_start = (*remainder == '/') ? remainder + 1 : remainder;
-                const char* next_slash = strchr(remainder_start, '/');
+                const char *remainder_start = (*remainder == '/') ? remainder + 1 : remainder;
+                const char *next_slash = strchr(remainder_start, '/');
 
                 if (next_slash) {
                     size_t seg_len = (size_t)(next_slash - virtual_dirs[i]) + 1;
@@ -379,7 +433,7 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                 if (e->d_type == DT_UNKNOWN) {
                     char full[PATH_MAX + 512];
                     struct stat st2;
-                    snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full)-258), extra_dir, e->d_name);
+                    snprintf(full, sizeof(full), "%.*s/%s", (int)(sizeof(full) - 258), extra_dir, e->d_name);
                     if (stat(full, &st2) == 0) {
                         is_dir_e = S_ISDIR(st2.st_mode);
                         is_reg_e = S_ISREG(st2.st_mode);
@@ -394,11 +448,11 @@ void complete_file_paths_ext(const char *partial, const char *extra_dir, const c
                     continue;
                 }
 
-                snprintf(namebuf, sizeof(namebuf), "%.*s/%s", (int)(sizeof(namebuf)-258), extra_dir, e->d_name);
+                snprintf(namebuf, sizeof(namebuf), "%.*s/%s", (int)(sizeof(namebuf) - 258), extra_dir, e->d_name);
                 {
                     struct stat st;
                     if (stat(namebuf, &st) == 0 && S_ISDIR(st.st_mode)) {
-                        if (namebuf[strlen(namebuf)-1] != '/') {
+                        if (namebuf[strlen(namebuf) - 1] != '/') {
                             char buf2[PATH_MAX + 1024];
                             snprintf(buf2, sizeof(buf2), "%s/", namebuf);
                             print_candidate(buf2);
@@ -420,7 +474,7 @@ void complete_file_paths(const char *partial) {
 }
 
 void complete_target_profiles(const char *partial) {
-    const char* targets_dirs[4];
+    const char *targets_dirs[4];
     int i;
     targets_dirs[0] = "/etc/runepkg/targets/";
     targets_dirs[1] = "targets/";
@@ -449,7 +503,13 @@ void complete_target_profiles(const char *partial) {
             closedir(d);
         }
     }
-    if (targets_dirs[2]) free((void*)targets_dirs[2]);
+    if (targets_dirs[2]) free((void *)targets_dirs[2]);
+
+    for (i = 0; i < g_known_target_specs_count; i++) {
+        if (strncmp(g_known_target_specs[i], partial, strlen(partial)) == 0) {
+            print_candidate(g_known_target_specs[i]);
+        }
+    }
 }
 
 static void check_rebuild_autocomplete_index(void) {
@@ -591,7 +651,7 @@ int prefix_search_and_print_ext(const char *prefix, const char *suffix_filter) {
                 if (strcmp(suffix_filter, ":pkg") == 0) {
                     size_t nlen = strlen(name);
                     size_t clen = nlen;
-                    if (clen > 0 && name[clen-1] == '/') clen--;
+                    if (clen > 0 && name[clen - 1] == '/') clen--;
 
                     if (clen > 4 && (strncmp(name + clen - 4, ".deb", 4) == 0 || strncmp(name + clen - 4, ".dsc", 4) == 0)) {
                         continue;
@@ -721,7 +781,6 @@ int runepkg_completion_get_repo_suggestions(const char *search_name, char sugges
 
     memset(last_added, 0, sizeof(last_added));
 
-    /* Pass 1: Prefix matches */
     for (i = 0; i < count && found < max_suggestions; i++) {
         if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) {
             if (strcmp(last_added, entries[i].name) != 0) {
@@ -732,7 +791,6 @@ int runepkg_completion_get_repo_suggestions(const char *search_name, char sugges
         }
     }
 
-    /* Pass 2: Substring matches */
     if (found < max_suggestions) {
         for (i = 0; i < count && found < max_suggestions; i++) {
             if (strncmp(entries[i].name, search_name, strlen(search_name)) == 0) continue;
@@ -781,12 +839,13 @@ void handle_binary_completion(const char *partial, const char *prev) {
     char *full_line_copy;
 
     if (!partial) partial = "";
+    if (!prev) prev = "";
 
     /* Reset completion counters for each new trigger */
     g_completion_printed_count = 0;
     g_completion_seen_count = 0;
     memset(g_current_partial, 0, sizeof(g_current_partial));
-    if (partial) runepkg_secure_strcpy(g_current_partial, sizeof(g_current_partial), partial);
+    runepkg_secure_strcpy(g_current_partial, sizeof(g_current_partial), partial);
 
     if (should_suppress_completion()) return;
 
@@ -794,7 +853,19 @@ void handle_binary_completion(const char *partial, const char *prev) {
 
     if (comp_point_s) comp_point = atoi(comp_point_s);
 
-    is_path = (partial && (partial[0] == '/' || partial[0] == '.' || strchr(partial, '/') != NULL));
+    /* Direct --target=<profile> completion */
+    if (strncmp(partial, "--target=", 9) == 0) {
+        complete_target_eq_values(partial + 9);
+        return;
+    }
+
+    /* Direct --target <profile> completion */
+    if (strcmp(prev, "--target") == 0) {
+        complete_target_profiles(partial);
+        return;
+    }
+
+    is_path = (partial[0] == '/' || partial[0] == '.' || strchr(partial, '/') != NULL);
 
     memset(inferred_cmd, 0, sizeof(inferred_cmd));
     if (comp_line) {
@@ -909,11 +980,11 @@ void handle_binary_completion(const char *partial, const char *prev) {
         if (strcmp(inferred_cmd, "install") == 0) {
             if (partial[0] == '-') {
                 short_opts2[0] = "-f"; short_opts2[1] = "-v";
-                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial))==0) print_candidate(short_opts2[i]);
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial)) == 0) print_candidate(short_opts2[i]);
                 if (strncmp(partial, "--", 2) == 0) {
                     long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
                     long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
-                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial))==0) print_candidate(long_opts6[i]);
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial)) == 0) print_candidate(long_opts6[i]);
                 }
             } else if (is_path) {
                 complete_file_paths_ext(partial, g_download_dir, ".deb");
@@ -929,7 +1000,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         if (strcmp(inferred_cmd, "remove") == 0) {
             if (partial[0] == '-') {
                 all_long_opts4[0] = "--remove"; all_long_opts4[1] = "--verbose"; all_long_opts4[2] = "--force"; all_long_opts4[3] = "--help";
-                for (i=0;i<4;i++) if (strncmp(all_long_opts4[i], partial, strlen(partial))==0) print_candidate(all_long_opts4[i]);
+                for (i = 0; i < 4; i++) if (strncmp(all_long_opts4[i], partial, strlen(partial)) == 0) print_candidate(all_long_opts4[i]);
             } else {
                 prefix_search_and_print_ext(partial, ":pkg");
             }
@@ -940,7 +1011,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
             return;
         }
         if (strcmp(inferred_cmd, "status") == 0) {
-            if (partial && partial[0] == '-') {
+            if (partial[0] == '-') {
                 print_candidate("--help");
                 print_candidate("--verbose");
                 return;
@@ -1025,16 +1096,21 @@ void handle_binary_completion(const char *partial, const char *prev) {
     }
 
     if (strcmp(prev, "runepkg") == 0) {
-        if (partial && partial[0] == '-') {
+        if (partial[0] == '-') {
             if (strncmp(partial, "--", 2) == 0) {
                 const char *long_opts[] = {
+                    "--target", "--target=",
                     "--install", "--remove", "--list", "--status", "--list-files",
                     "--search", "--unpack", "--build", "--md5check", "--buildpkg-split",
                     "--verbose", "--force", "--version", "--help", "--print-config",
                     "--print-config-file", "--print-pkglist-file", "--print-autopool",
                     "--print-profile"
                 };
-                for (i = 0; i < 19; i++) if (strncmp(long_opts[i], partial, strlen(partial)) == 0) print_candidate(long_opts[i]);
+                for (i = 0; i < 21; i++) {
+                    if (strncmp(long_opts[i], partial, strlen(partial)) == 0) {
+                        print_candidate(long_opts[i]);
+                    }
+                }
             } else {
                 short_opts12[0] = "-i"; short_opts12[1] = "-r"; short_opts12[2] = "-l";
                 short_opts12[3] = "-s"; short_opts12[4] = "-L"; short_opts12[5] = "-S";
@@ -1051,15 +1127,21 @@ void handle_binary_completion(const char *partial, const char *prev) {
             };
             for (i = 0; i < 22; i++) if (strncmp(sub_cmds[i], partial, strlen(partial)) == 0) print_candidate(sub_cmds[i]);
         }
-    } else if (partial && partial[0] == '-') {
+    } else if (partial[0] == '-') {
+        if (strncmp(partial, "--", 2) == 0) {
+            if (strncmp("--target", partial, strlen(partial)) == 0) {
+                print_candidate("--target");
+                print_candidate("--target=");
+            }
+        }
         if (inferred_cmd[0] != '\0') {
             if (strcmp(inferred_cmd, "install") == 0) {
                 short_opts2[0] = "-f"; short_opts2[1] = "-v";
-                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial))==0) print_candidate(short_opts2[i]);
+                for (i = 0; i < 2; i++) if (strncmp(short_opts2[i], partial, strlen(partial)) == 0) print_candidate(short_opts2[i]);
                 if (strncmp(partial, "--", 2) == 0) {
                     long_opts6[0] = "--force"; long_opts6[1] = "--verbose"; long_opts6[2] = "--print-config";
                     long_opts6[3] = "--print-config-file"; long_opts6[4] = "--print-pkglist-file"; long_opts6[5] = "--print-autopool";
-                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial))==0) print_candidate(long_opts6[i]);
+                    for (i = 0; i < 6; i++) if (strncmp(long_opts6[i], partial, strlen(partial)) == 0) print_candidate(long_opts6[i]);
                 }
             } else {
                 print_candidate("--help"); print_candidate("--version"); print_candidate("--verbose"); print_candidate("--force");
@@ -1067,7 +1149,7 @@ void handle_binary_completion(const char *partial, const char *prev) {
         } else {
             print_candidate("--help"); print_candidate("--version"); print_candidate("--verbose"); print_candidate("--force");
         }
-        if (prev && prev[0] == '-') {
+        if (prev[0] == '-') {
             complete_file_paths_ext(partial, g_download_dir, ".deb");
             prefix_search_and_print(partial);
         }

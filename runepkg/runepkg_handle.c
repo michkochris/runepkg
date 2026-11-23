@@ -106,11 +106,17 @@ int print_package_data_header(void) {
 }
 
 int runepkg_init(void) {
+    if (!g_completion_mode && g_debug_mode) {
+        fprintf(stderr, "RUNEPKG_INIT REACHED\n");
+    }
     runepkg_log_verbose("Initializing runepkg...\n");
 
     runepkg_init_paths();
+    runepkg_config_get_effective_db_dir();
     runepkg_host_init();
-    runepkg_fsm_recover_orphaned_transactions();
+    if (!g_completion_mode) {
+        runepkg_fsm_recover_orphaned_transactions();
+    }
     /* We don't call runepkg_host_sync() here automatically to avoid startup lag.
      * Host sync is a manually triggered operation via 'runepkg sync'. */
 

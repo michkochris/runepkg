@@ -1,0 +1,192 @@
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir /mnt/runepkg
+[ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg and runas...
+Note: /etc/runepkg has been preserved.
+Uninstallation complete.
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
+make[1]: Entering directory '/home/michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [forge] Compiling C Rune: runepkg_psychic.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_utility.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [ritual] Compiling C++ Rune: runepkg_multiarch.cpp
+  [ritual] Compiling C++ Rune: runepkg_building.cpp
+  [ritual] Compiling C++ Rune: runepkg_runas.cpp
+  [link]  Linking binaries: runepkg runas
+⚡ runepkg build complete: runepkg runas
+make[1]: Leaving directory '/home/michko/runepkg/runepkg'
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+🧙 runepkg installation complete!
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 6.5s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113831 source rune stanzas in 633ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29711 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db
+lists
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/
+conflicts-breaks.bin  repo_files.txt      repo_src_index.bin        runes_graph.bin
+conflicts-breaks.txt  repo_index.bin      repo_url_mapping.txt
+lists                 repo_src_files.txt  runepkg_autocomplete.bin
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 9.4s
+[harvest] Starting parallel graph analysis on: /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113055 source rune stanzas in 623ms.
+  -> Serialized binary graph to /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29519 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu -i file
+[runepkg] Planning installation for 1 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc
+  libmagic1t64 file
+
+10 packages (3.5 MB) will be installed. Continue? [y/N] y
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu -l
+Reading package data: 13 packages, 35.0 MB used, 952.6 GB available
+Listing installed packages...
+
+file (1:5.47-4)                    gcc-16-base (16.2.0-4)
+libbz2-1.0-1.0.8 (6+b2)            libc-gconv-modules-extra (2.43-7)
+libc6 (2.43-7)                     libgcc-s1 (16.2.0-4)
+liblzma5 (5.8.4-1)                 libmagic-mgc (1:5.47-4)
+libmagic1t64 (1:5.47-4)            zlib1g (1:1.3.dfsg+really1.3.2-4)
+[ zypherus /home/michko/runepkg/runepkg ]# ls /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/
+conflicts-breaks.bin             liblzma5-5.8.4-1       repo_src_files.txt
+conflicts-breaks.txt             libmagic1t64-1:5.47-4  repo_src_index.bin
+file-1:5.47-4                    libmagic-mgc-1:5.47-4  repo_url_mapping.txt
+gcc-16-base-16.2.0-4             lists                  runepkg_autocomplete.bin
+libbz2-1.0-1.0.8-6+b2            psychic_matrix.bin     runes_graph.bin
+libc6-2.43-7                     psychic_matrix.txt     zlib1g-1:1.3.dfsg+really1.3.2-4
+libc-gconv-modules-extra-2.43-7  repo_files.txt
+libgcc-s1-16.2.0-4               repo_index.bin
+[ zypherus /home/michko/runepkg/runepkg ]# nano /etc/runepkg/runepkgconfig
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  Base Directory:      /srv/lib/runepkg_dir
+  Control Directory:   /srv/lib/runepkg_dir/control_dir
+  Install Directory:   /
+  System Install Root: /
+  Database Directory:  /srv/lib/runepkg_dir/runepkg_db
+  Download Directory:  /srv/lib/runepkg_dir/download_dir
+  Build Directory:     /srv/lib/runepkg_dir/build_dir
+  Debs Directory:      /srv/lib/runepkg_dir/runepkg_debs
+  Target Install Dir:  (not set)
+  Target Architecture: amd64:x86_64-linux-gnu
+  Cleanup: no
+  MD5 Checks: yes
+
+Configured Sources:
+==================
+  [1] deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+  [2] deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 10.6s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113831 source rune stanzas in 646ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29711 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db
+conflicts-breaks.bin  repo_files.txt      repo_src_index.bin        runes_graph.bin
+conflicts-breaks.txt  repo_index.bin      repo_url_mapping.txt
+lists                 repo_src_files.txt  runepkg_autocomplete.bin
+[ zypherus /home/michko/runepkg/runepkg ]#
