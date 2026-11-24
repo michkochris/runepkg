@@ -2,7 +2,7 @@
 
 **runas** is the advanced C++17 source-compiling companion executable for **runepkg**, affectionately named after *Runas the Shamed* from *World of Warcraft*. While `runepkg` manages binary `.deb` installation, removal, and graph resolution, `runas` acts as a specialized Debian source package builder and multi-arch cross-compilation forge.
 
-*As the Kobolds always warn: "You no take candle!"*
+*Kobold Says "You no take candle!"*
 
 For complete step-by-step tutorials and cross-architecture build workflows, read on below.
 
@@ -10,9 +10,9 @@ For complete step-by-step tutorials and cross-architecture build workflows, read
 
 ## 1. Core Responsibilities & Architecture
 
-To maintain a pristine host environment (`amd64`), `runas` and `runepkg` enforce strict separation between host build tools and target sysroots:
+To maintain a pristine host environment regardless of host architecture (`amd64`, `arm64`, `riscv64`, etc.), `runas` and `runepkg` enforce strict separation between host build tools and target sysroots:
 
-* **Host Build Environment (`amd64`)**: Executes native compilers (`gcc`, `g++`), build automation (`make`, `autoconf`, `automake`), and packaging tools (`dpkg-dev`, `debhelper`).
+* **Host Build Environment (Native Host)**: Executes native compilers (`gcc`, `g++`), build automation (`make`, `autoconf`, `automake`), and packaging tools (`dpkg-dev`, `debhelper`). `runepkg` automatically detects your native host architecture via multi-arch introspection.
 * **Target Sysroot (`/mnt/runepkg/<target-triplet>`)**: Isolated multi-arch root (e.g., `/mnt/runepkg/aarch64-linux-gnu`) containing target-architecture runtime libraries and header files (`*-dev`).
 
 ---
