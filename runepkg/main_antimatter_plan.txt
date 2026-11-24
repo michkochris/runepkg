@@ -1,0 +1,164 @@
+Implementation Plan: Zero-Binary Hard Isolation (--target vs. Host -i) with runepkg_antimatter
+Root Cause
+Following the incident detailed in  important_incident_report.txt,  further_reading.txt,  another_read.txt,  gemini_reading.txt,  finial_critic_github_copilot.txt, and  ccc-archgate.txt, the underlying root cause stems from root-level boundary pollution between runepkg host operations and cross-target profile execution.
+When target state (~/.runepkg_target.conf, g_target_arch, g_target_sysroot), cached repository indexes (repo_index.bin), and multi-arch environment variables (DEB_HOST_ARCH, GNU triplets) persist across invocations, runepkg blurs the line between --target=arm64:aarch64-linux-gnu and standard host commands (runepkg -i, runepkg update, runepkg upgrade). A single ARM64 executable or cross-sysroot path spilling onto the host / root causes a "butterfly effect snowball" that corrupts host shell binaries, package state, and host package manager synchronization (runepkg upgrade + host apt upgrade), rendering the WSL Kali host unrecoverable until mounted for source restoration.
+Purpose: The Decontamination Chamber ("Decon") Gateway
+The primary purpose of this change is to establish a deterministic C89 decontamination gateway—a "Decon Chamber"—within runepkg:
+1.
+Target Profile & Path Decontamination: Act as a live decontamination gateway (runepkg_antimatter_purge()) that automatically scrubs, frees, NULLs, and null-terminates ('\0') all target profiles, sysroot paths, and multi-arch environment variables before any host command runs.
+2.
+Low-Level Architecture Guard on runepkg -i: Perform low-level pre-flight architecture inspection directly on .deb control metadata (Architecture:) and payload ELF headers (e_ident class/endianness, e_machine) during low-level runepkg -i <pkg.deb> execution, halting extraction before any foreign binary touches host /.
+3.
+No Blind Bypass for Architecture: all: Scan payload binaries in Architecture: all packages for embedded ELF executables/shared objects to prevent mislabeled or foreign binaries from slipping through.
+4.
+Harmonized Host Sync & Upgrade Lubrication: Ensure host runepkg update/upgrade runs seamlessly alongside host apt upgrade on fresh systems without any leftover cross-target pollution interference.
+5.
+Foundational Structural Post: Serve as the permanent, zero-leakage C89 structural beam ( runepkg_antimatter.c /  runepkg_antimatter.h) compiled directly into runepkg, with zero extra .bin binaries or persistent config registries on disk.
+User Review Required
+Important
+Phased Incremental Rollout: Implementation is structured in 4 self-contained phases (Core C89 Decon module -> Metadata/ELF payload validation -> Boundary canonicalization -> Same-filesystem staging & child env scrubbing) to ensure easy verification and debugging.
+Architecture: all Payload ELF Verification: Packages marked Architecture: all are not granted a blind pass-through; their payload archives are scanned for embedded ELF binaries to catch mislabeled cross-architecture binaries.
+Foundational Structural Post: runepkg_antimatter provides a permanent structural beam for state isolation. Higher-level features (target profiles, sysroot routing, resolver, install staging) rest securely on top of this zero-leakage gatekeeper.
+C89 + C++ extern "C" Interop: Header  runepkg_antimatter.h wraps all declarations in extern "C" guards to ensure seamless interop between C89 source modules and C++ compilation units (runepkg_network.cpp, runepkg_multiarch.cpp).
+Same-Filesystem Staging & Atomic rename(2): Staging takes place inside <sysroot>/var/lib/runepkg/tmp/stage_XXXXXX (or /var/lib/runepkg/tmp/stage_XXXXXX on host) to prevent EXDEV cross-mount errors when moving files into place via atomic rename(2).
+Proposed Changes (Phased Rollout)
+Phase 1: Core C89 In-Memory Decon Module & Makefile Integration
+[NEW]  runepkg_antimatter.h
+#ifndef RUNEPKG_ANTIMATTER_H
+#define RUNEPKG_ANTIMATTER_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    RUNEPKG_MODE_HOST = 0,
+    RUNEPKG_MODE_TARGET = 1
+} runepkg_exec_mode_t;
+
+typedef enum {
+    RUNEPKG_DECON_OK = 0,
+    RUNEPKG_DECON_ERR_ARCH_MISMATCH = 1,
+    RUNEPKG_DECON_ERR_BOUNDARY = 2,
+    RUNEPKG_DECON_ERR_ENV = 3
+} runepkg_decon_status_t;
+
+/* Scrubs target state pointers, clears cross-arch env vars, and locks to host mode. */
+void runepkg_antimatter_purge(void);
+
+/* Validates .deb control Architecture string against active mode/arch. */
+runepkg_decon_status_t runepkg_antimatter_validate_deb_meta(
+    runepkg_exec_mode_t mode,
+    const char *expected_deb_arch,
+    const char *pkg_deb_arch
+);
+
+/* Inspects ELF header magic, EI_CLASS, EI_DATA, and e_machine in memory before extraction. */
+runepkg_decon_status_t runepkg_antimatter_validate_payload(
+    runepkg_exec_mode_t mode,
+    const unsigned char *buf,
+    unsigned long len
+);
+
+/* Ensures resolved destination and symlink targets stay strictly within allowed root. */
+runepkg_decon_status_t runepkg_antimatter_assert_boundary(
+    const char *allowed_root,
+    const char *candidate_path,
+    const char *symlink_target
+);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* RUNEPKG_ANTIMATTER_H */
+[NEW]  runepkg_antimatter.c
+•
+Implement runepkg_antimatter_purge() with C89 compliance (-ansi -pedantic -D_POSIX_C_SOURCE=200112L) and /* ... */ documentation comments.
+•
+Teardown routine frees target profile variables, sets pointers to NULL, null-terminates string buffers ('\0'), and unsets exported multi-arch environment variables (DEB_HOST_ARCH, PKG_CONFIG_PATH, SYSROOT).
+[MODIFY] runepkg/Makefile
+•
+Add runepkg_antimatter.c to C_SOURCES with compiler flags -ansi -pedantic -D_POSIX_C_SOURCE=200112L -Wall -Wextra.
+Phase 2: Host-by-Default CLI Binding & Decon Integration
+[MODIFY]  runepkg_config.c
+[MODIFY]  runepkg_config.h
+•
+Eliminate auto-persisted target config lookups when --target is omitted on the CLI.
+•
+Add runepkg_config_reset_target_context() to execute runepkg_antimatter_purge() on every command invocation unless --target is explicitly supplied.
+[MODIFY]  runepkg_cli.c
+•
+Invoke runepkg_antimatter_purge() at the top of main().
+•
+Evaluate CLI flags before initializing system paths so standard host commands explicitly lock to host architecture and host DB path.
+•
+Add runepkg verify sub-command for fast in-memory sanity checks of package payloads against disk state before extraction.
+Phase 3: Low-Level Metadata & ELF Payload Validation
+[MODIFY]  runepkg_install.c
+•
+Integrate runepkg_antimatter_validate_deb_meta() on .deb control stanzas.
+•
+Integrate runepkg_antimatter_validate_payload() to inspect payload ELF headers (EI_CLASS, EI_DATA, e_machine).
+•
+Even for packages marked Architecture: all, scan payload files for embedded ELF binaries to catch mislabeled foreign executables/shared objects.
+Phase 4: Boundary Canonicalization, Same-FS Staging & Child Env Isolation
+[MODIFY]  runepkg_install.c
+•
+Unpack payloads into same-filesystem staging directory (<sysroot>/var/lib/runepkg/tmp/stage_XXXXXX or /var/lib/runepkg/tmp/stage_XXXXXX on host) for atomic rename(2) calls with EXDEV fallback.
+•
+Integrate runepkg_antimatter_assert_boundary() to canonicalize parent paths and validate symlink targets relative to allowed_root.
+•
+Install signal handlers (SIGINT, SIGTERM, SIGHUP) during active staging to clean up temporary directories on interrupt.
+[MODIFY]  runepkg_network.cpp
+[MODIFY]  runepkg_multiarch.cpp
+•
+Isolate repo sync outputs (repo_index.bin, repo_files.txt) to <sysroot>/var/lib/runepkg/.
+•
+Pass explicit, scrubbed envp[] allowlists (PATH, HOME, TERM, LANG) to child processes and maintainer scripts (execve()).
+Verification Plan ("Wrench Clanking" Stress Test)
+Automated & Rapid Stress Tests
+1.
+Low-Level runepkg -i <pkg.deb> Architecture Guard Test:
+◦
+Run runepkg -i arm64_sample.deb directly on a host x86_64 system without --target.
+◦
+Assert runepkg_antimatter_validate_deb_meta() and runepkg_antimatter_validate_payload() catch the mismatch during low-level control/ELF parsing, logging RUNEPKG_DECON_ERR_ARCH_MISMATCH and aborting before any file touches /usr/bin or host DB.
+2.
+Architecture: all Mislabeled ELF Binary Test:
+◦
+Create a test package marked Architecture: all containing an ARM64 binary payload (EM_AARCH64).
+◦
+Run runepkg -i without --target and verify runepkg_antimatter_validate_payload() detects the embedded ARM64 ELF binary and halts extraction.
+3.
+Non-ELF Artifact Pass-Through Test:
+◦
+Install a package containing shell scripts, headers, manpages, text configs, and relative symlinks.
+◦
+Verify non-ELF files pass validate_payload() and assert_boundary() cleanly without false positives.
+4.
+"Clanking Wrench" Interleaved Invocation Test:
+◦
+Execute rapid interleaved command sequences:
+runepkg --target=arm64:aarch64-linux-gnu status
+runepkg -i host_package.deb
+runepkg --target=arm64:aarch64-linux-gnu update
+runepkg list
+◦
+Verify zero cross-contamination: g_target_arch is NULL, DEB_HOST_ARCH is unset, and effective sysroot is / on every host command in the sequence.
+5.
+Host Sync & apt Coexistence Test:
+◦
+Run runepkg update and runepkg upgrade alongside host apt upgrade on a host system.
+◦
+Verify zero interference or target state leakage between runepkg host package operations and host apt.
+6.
+Symlink Escape & Boundary Test:
+◦
+Attempt extracting a package containing relative symlinks pointing outside sysroot (e.g. <sysroot>/lib64 -> /lib64).
+◦
+Verify runepkg_antimatter_assert_boundary() detects symlink escape attempts and rejects extraction with RUNEPKG_DECON_ERR_BOUNDARY.
+7.
+Build & C89 Sanity Verification:
+◦
+Build runepkg with Makefile ensuring zero C89 / POSIX warnings (-ansi -pedantic -D_POSIX_C_SOURCE=200112L).
