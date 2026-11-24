@@ -1,0 +1,98 @@
+Here is the updated diagnostic document with Section 4: Field Hypotheses & Error Assumptions appended directly to your existing blueprint so you can use it as your test and validation checklist once Kali WSL is back up.
+
+Diagnostic Analysis: Root Cause & Prevention of Host Environment Corruption
+1. Executive Summary
+During the execution of runepkg upgrade with the host installation directory configured to system root (install_dir=/), runepkg processed and executed a full system upgrade against the live Kali Linux WSL environment. This resulted in core system binaries and interpreters (/bin/bash, /bin/sh, and core dynamic linkers/libc) being overwritten or unlinked, leading to the terminal WSL error:execvpe(/bin/bash) failed: No such file or directory
+
+2. Root Cause Analysis
+A. Live Host Upgrade Execution (runepkg upgrade against /)
+Mechanism: runepkg update fetched the latest Kali Rolling repository indexes. runepkg upgrade identified 241 upgradable packages and planned a full system replacement.
+
+The Danger: Unlike a dedicated package manager (apt / dpkg) which maintains complex transaction ordering, pre/post-install safety hooks, and multi-arch fallback protections for running host environments, runepkg's generic installation pipeline unzipped and overwrote binaries and libraries directly into the target prefix.
+
+Dynamic Linker & libc Mismatch: When libc6, bash, or dynamic linkers (ld-linux-x86-64.so.2) are upgraded out-of-order on a live running Linux system, all subsequent process spawns (fork/exec) fail instantly because the new libraries require symbols or paths that do not match the running kernel/process memory space.
+
+B. Host Entanglement (install_dir=/ + dpkg_host=auto)
+Allowing install_dir to default to / without immutable guardrails invites accidental host pollution. A package manager engineered for isolated or target-sysroot forging should never perform destructive bulk upgrades (like upgrade or bulk -i) on the live host system root without explicit hazard overrides.
+
+3. Permanent Preventative Guardrails (Implementation Blueprint)
+To ensure this never happens again, runepkg requires the following architectural defenses:
+
+Host Root Hazard Lock (install_dir == /):
+
+runepkg upgrade and bulk package installations must hard-abort with a safety error if install_dir == "/" unless an explicit override flag (--danger-live-host-override) is supplied by the user.
+
+Protected System Package Blacklist:
+
+Maintain a hardcoded defensive blacklist of critical system packages (libc6, bash, dash, dpkg, systemd, linux-base, coreutils) that runepkg is strictly forbidden from upgrading or replacing when operating on a live host root.
+
+Default Sandbox Enforced:
+
+Default install_dir in runepkgconfig must point to a safe user-space container directory (/srv/lib/runepkg_dir) rather than /, ensuring all experiments remain fully sandboxed away from the host OS.
+
+4. Field Hypotheses & Error Assumptions (Post-Incident Audit)
+Before re-enabling multi-arch cross-compilation (--target=arm64:aarch64-linux-gnu), validate these four operational hypotheses from the incident logs on a clean baseline:
+
+Hypothesis 1: Sysroot Dynamic Linker Anchor Interference (/mnt/runepkg/aarch64-linux-gnu/lib/ld-link)
+Assumption: The custom anchor/symlink placed at /mnt/runepkg/aarch64-linux-gnu/lib/ld-link may be interfering with standard linker path resolution or leaking into normal build behavior.
+
+Validation Gate: Test plain, single-architecture native building and upgrading inside an isolated sandbox (install_dir=/srv/lib/runepkg_dir) with zero --target flags and no ld-link anchors first. Only introduce sysroot linker anchors after native builds pass cleanly.
+
+Hypothesis 2: Cross-Architecture Contamination (arm64 Artifacts Leaking into {HOST})
+Assumption: Running runepkg / runas with --target=arm64:aarch64-linux-gnu alongside a live host configuration (install_dir=/) may have allowed arm64 libraries, dynamic linkers, or index state to cross-pollinate into the amd64 host root (/), breaking native ELF execution (execvpe(/bin/bash) failed).
+
+Validation Gate: Enforce strict per-architecture isolation for download_dir, control_dir, build_dir, and runepkg_db. Verify via file / readelf -h on extracted binaries and libraries that arm64 (EM_AARCH64) artifacts can never be unpacked into an amd64 (EM_X86_64) root.
+
+Hypothesis 3: Broken Host Build-Dependency Verification Loop in runas
+Assumption: runas repeatedly prompting to auto-install host build tools (debhelper-compat, dh-autoreconf, debhelper, xsltproc) on every invocation—followed by runepkg rejecting them with unsatisfied dependency errors (autopoint, libdebhelper-perl, libxslt1.1)—indicates a disconnect between:
+
+How runas checks whether a host tool or virtual package (e.g., debhelper-compat) is already satisfied via runepkg sync / host DB, and
+
+How runas invokes runepkg to install missing host tools (installing leaf packages without full dependency closure or querying the wrong DB).
+
+Validation Gate: Audit runas's host-tool verification logic (runepkg_runas.cpp / runepkg_host.c) so virtual packages (debhelper-compat) and already-synced host tools resolve cleanly once, and any genuinely missing build tools are resolved with their full dependency tree in a single pass.
+
+Hypothesis 4: Baseline Isolation Order of Operations
+Recovery Sequence:
+
+Reinstall clean Kali WSL and establish a clean runepkg build.
+
+Configure default install_dir to a non-root sandbox (/srv/lib/runepkg_dir) and lock / behind --danger-live-host-override.
+
+Verify native amd64 sandboxed update -> install -> upgrade -> runas build first.
+
+Re-introduce arm64 sysroot builds only after confirming strict architecture boundaries and clean single-pass host tool checks in runas.
+
+Got it—plain text only, no code blocks or extra components. Here is the clean text version ready to paste:
+
+4. Field Hypotheses & Error Assumptions (Post-Incident Audit)
+Context: Proven Baseline vs. Newly Introduced Regression
+runepkg already had a long-standing, complete, and working update / install / upgrade workflow—verified in the project README even under scrutiny from GitHub Copilot. Confidence in runepkg's core package-management foundation remains intact; the failure observed here points to a newly introduced regression or interaction layered onto that established baseline rather than the baseline flow itself being broken.
+
+Before re-enabling multi-arch cross-compilation (--target=arm64:aarch64-linux-gnu), validate these operational hypotheses from the incident logs on a clean baseline once Kali WSL is reinstalled:
+
+Hypothesis 1: Sysroot Dynamic Linker Anchor Interference (/mnt/runepkg/aarch64-linux-gnu/lib/ld-link)
+Assumption: The newly added anchor/symlink at /mnt/runepkg/aarch64-linux-gnu/lib/ld-link may be interfering with linker path resolution or leaking into normal build behavior.
+
+Validation Gate: Test plain, single-architecture native upgrading, installing, and building inside an isolated sandbox (install_dir=/srv/lib/runepkg_dir) with zero --target flags and no ld-link anchors first to confirm the proven native baseline remains intact.
+
+Hypothesis 2: Cross-Architecture Contamination (arm64 Artifacts Leaking into {HOST})
+Assumption: Running runepkg / runas with --target=arm64:aarch64-linux-gnu alongside a live host configuration (install_dir=/) may have allowed arm64 artifacts or state to mix with {HOST}, breaking native execution (execvpe(/bin/bash) failed).
+
+Validation Gate: Keep architecture paths (download_dir, control_dir, build_dir, runepkg_db, and sysroots) strictly separated so arm64 target state never bleeds into the native host.
+
+Hypothesis 3: Repeated Host Build-Dependency Prompts in runas
+Assumption: runas repeatedly asking over and over to install host build dependencies (debhelper-compat, dh-autoreconf, debhelper, xsltproc)—only to hit unsatisfied dependency errors (autopoint, libdebhelper-perl, libxslt1.1)—points to a newly introduced bug in how runas checks already-satisfied/synced host packages or invokes runepkg to resolve full dependency closures.
+
+Validation Gate: Audit runas's host-tool check and install invocation so host dependencies are checked once accurately and resolved with full dependencies instead of looping on partial installs.
+
+Hypothesis 4: Baseline Recovery Order of Operations
+Recovery Sequence:
+
+Reinstall clean Kali WSL and build runepkg / runas cleanly.
+
+Keep install_dir sandboxed away from / by default and enforce the live-host guardrails (--danger-live-host-override).
+
+Verify the proven native update / install / upgrade and build flow first.
+
+Re-introduce arm64 target sysroot builds and runas host-dependency checks once native behavior is confirmed clean.

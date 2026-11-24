@@ -290,6 +290,16 @@ static int perform_file_install(const char *src, const char *dst) {
     }
 
     if (S_ISDIR(st.st_mode)) {
+        struct stat dst_st;
+        if (lstat(dst, &dst_st) == 0 && S_ISLNK(dst_st.st_mode)) {
+            if (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 ||
+                strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0 ||
+                (g_system_install_root && strcmp(g_system_install_root, "/") == 0 &&
+                 (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 || strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0))) {
+                runepkg_util_log_verbose("[install] Preserving critical usrmerge symlink at %s\n", dst);
+                return 0;
+            }
+        }
         if (runepkg_util_create_dir_recursive(dst, 0755) != 0) {
             fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create directory: %s\n", dst);
             return -1;

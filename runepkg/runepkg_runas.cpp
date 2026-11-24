@@ -50,8 +50,18 @@ extern "C" int runepkg_runas_interleaved_autocomplete(const char *query, char su
 
 #ifndef RUNEPKG_BUILD
 /* Ensure missing host-level binary build tools are installed before compilation */
+static bool s_asked_host_tools = false;
+
 static int ensure_host_build_dependencies(const char *pkg_name) {
     if (!pkg_name) return -1;
+    extern char *g_target_arch;
+    if (g_target_arch && g_target_arch[0] != '\0') {
+        const char *host_arch = runepkg_host_get_architecture();
+        if (host_arch && strcmp(host_arch, "unknown") != 0 && strstr(g_target_arch, host_arch) == NULL) {
+            std::cout << "\033[1;36m[runas]\033[0m Cross-architecture target active (" << g_target_arch << "). Skipping host build dependency auto-install to protect host root." << std::endl;
+            return 0;
+        }
+    }
     RuneTargetPlan *plan = nullptr;
     if (runepkg_resolver_resolve_target(pkg_name, &plan) == 0 && plan) {
         if (plan->node_count > 0 && plan->nodes[0].host_tools_required) {
@@ -59,10 +69,29 @@ static int ensure_host_build_dependencies(const char *pkg_name) {
             for (int i = 0; i < plan->nodes[0].host_tools_count; i++) {
                 const char *tool = plan->nodes[0].host_tools_required[i];
                 if (tool) {
+                    char cmd[PATH_MAX];
+                    snprintf(cmd, sizeof(cmd), "which %s >/dev/null 2>&1", tool);
+                    int present = (system(cmd) == 0);
                     PkgInfo *info = runepkg_main_hash_table ? runepkg_hash_search(runepkg_main_hash_table, tool) : NULL;
-                    if (!info) {
-                        std::cout << "\033[1;33m[runas]\033[0m Auto-installing missing host tool: " << tool << "..." << std::endl;
-                        runepkg_repo_install(tool);
+
+                    if (!present && !info) {
+                        if (!g_force_mode && !g_auto_confirm_deps && !s_asked_host_tools) {
+                            std::cout << "\033[1;33m[runas]\033[0m Missing required host build tools detected." << std::endl;
+                            std::cout << "Would you like to auto-install missing host tools for this build session? [\033[1;32mY\033[0m/n] ";
+                            fflush(stdout);
+                            char resp[16];
+                            if (!fgets(resp, sizeof(resp), stdin) || resp[0] == 'y' || resp[0] == 'Y' || resp[0] == '\n' || resp[0] == '\r') {
+                                g_auto_confirm_deps = true;
+                            }
+                            s_asked_host_tools = true;
+                        }
+
+                        if (g_auto_confirm_deps || g_force_mode) {
+                            std::cout << "\033[1;33m[runas]\033[0m Auto-installing missing host tool: " << tool << "..." << std::endl;
+                            runepkg_repo_install(tool);
+                        } else {
+                            std::cout << "\033[1;31m[runas]\033[0m Skipping host tool " << tool << " (user declined)." << std::endl;
+                        }
                     } else {
                         std::cout << "  -> Host tool \033[1;32m" << tool << "\033[0m is satisfied." << std::endl;
                     }

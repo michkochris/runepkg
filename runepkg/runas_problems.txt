@@ -1,0 +1,29 @@
+[ zypherus /home/michko/runepkg/runepkg ]# runas build file
+[multiarch] Target Configuration:
+  Build Arch:    amd64 (x86_64-linux-gnu)
+  Host Arch:     amd64 (x86_64-linux-gnu)
+  Mode:          Native Build
+  Library Path:  /usr/lib/x86_64-linux-gnu
+[runas] Verifying host build tools for file...
+  -> Host tool debhelper-compat is satisfied.
+  -> Host tool xsltproc is satisfied.
+[runas] Initiating modern source build for file...
+  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir/file-5.47
+  -> [patch] Applying Debian source patches...
+     * Applying: cherry-pick/FILE5_47-8-g5a42c66b.add-zxc-bertrand-lebonnois.patch
+     * Applying: cherry-pick/FILE5_47-17-g50fc7a6b.pr-166-flanglet-add-kanzi-magic.patch
+     * Applying: cherry-pick/FILE5_47-18-gc5460571.pr-725-inliniac-revert-previous-and-always-set-offset.patch
+     * Applying: cherry-pick/FILE5_47-57-g797a2755.add-le-be-guid.patch
+     * Applying: cherry-pick/FILE5_47-62-g2866af2e.fix-typo.patch
+     * Applying: cherry-pick/FILE5_47-93-g7a2b2a4b.handle-parsing-guids-in-big-endian-machines.patch
+     * Applying: upstream/disable.att3b.patch
+     * Applying: upstream/stricter-postscript-magic.patch
+     * Applying: upstream/disable-over-eagerly-msooxml-detection.patch
+     * Applying: local/support-local-definitions-in-etc-magic.patch
+     * Applying: local/don-t-include-libs-in-build.patch
+     * Applying: local/extra-magic.patch
+     * Applying: local/manpage-seccomp-is-disabled.patch
+  -> [error] Build failed! Diagnostic log saved to: /srv/lib/runepkg_dir/build_dir/logs/file_make.log
+[runas] Source build staged in /srv/lib/runepkg_dir/build_dir/file-5.47
+[ zypherus /home/michko/runepkg/runepkg ]#
+

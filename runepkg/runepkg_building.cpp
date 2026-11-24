@@ -139,9 +139,14 @@ public:
 
         /* Step 1: Locate or extract source tree inside build_dir */
         fs::path source_tree_root;
+        auto is_utility_dir = [](const std::string& name) {
+            return name == "logs" || name == "temp_install" || name == "runepkg_debs" || name == "build_dir";
+        };
+
         for (const auto& entry : fs::directory_iterator(build_dir)) {
             if (entry.is_directory()) {
                 std::string name = entry.path().filename().string();
+                if (is_utility_dir(name)) continue;
                 if (name.rfind(target_path_, 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
                     source_tree_root = entry.path();
                     break;
@@ -153,11 +158,26 @@ public:
         if (source_tree_root.empty()) {
             std::cout << "  -> Unpacking source runes in " << build_dir << "..." << std::endl;
             extract_source_archives(build_dir, target_path_);
-            /* Re-check source tree after extraction */
+            /* Re-check source tree after extraction with robust filtering */
             for (const auto& entry : fs::directory_iterator(build_dir)) {
                 if (entry.is_directory()) {
-                    source_tree_root = entry.path();
-                    break;
+                    std::string name = entry.path().filename().string();
+                    if (is_utility_dir(name)) continue;
+                    if (name.rfind(target_path_, 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
+                        source_tree_root = entry.path();
+                        break;
+                    }
+                }
+            }
+            if (source_tree_root.empty()) {
+                for (const auto& entry : fs::directory_iterator(build_dir)) {
+                    if (entry.is_directory()) {
+                        std::string name = entry.path().filename().string();
+                        if (!is_utility_dir(name)) {
+                            source_tree_root = entry.path();
+                            break;
+                        }
+                    }
                 }
             }
         }

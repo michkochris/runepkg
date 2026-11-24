@@ -97,8 +97,6 @@ static void sync_db_derived_paths(void) {
 static void normalize_and_get_db_dir(const char *root, char *buf, size_t buflen) {
     char temp[PATH_MAX];
     size_t len;
-    const char *suffix = "/srv/lib/runepkg_dir/runepkg_db";
-    size_t suffix_len;
 
     if (!root || root[0] == '\0' || strcmp(root, "/") == 0) {
         snprintf(buf, buflen, "/srv/lib/runepkg_dir/runepkg_db");
@@ -110,12 +108,11 @@ static void normalize_and_get_db_dir(const char *root, char *buf, size_t buflen)
         temp[len - 1] = '\0';
         len--;
     }
-    suffix_len = strlen(suffix);
-    if (len >= suffix_len && strcmp(temp + len - suffix_len, suffix) == 0) {
+    if (len >= 12 && strcmp(temp + len - 12, "runepkg_db") == 0) {
         snprintf(buf, buflen, "%s", temp);
         return;
     }
-    snprintf(buf, buflen, "%s/srv/lib/runepkg_dir/runepkg_db", temp);
+    snprintf(buf, buflen, "%s/runepkg_db", temp);
 }
 
 const char *runepkg_config_get_effective_db_dir(void) {
