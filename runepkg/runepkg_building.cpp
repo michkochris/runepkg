@@ -134,6 +134,17 @@ public:
         std::string build_dir = g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir";
         fs::create_directories(build_dir);
 
+        /* Always wipe and overwrite previous build source directory for a pristine start */
+        for (const auto& entry : fs::directory_iterator(build_dir)) {
+            if (entry.is_directory()) {
+                std::string name = entry.path().filename().string();
+                if (name == target_path_ || name.rfind(target_path_ + "-", 0) == 0 || name.rfind(target_path_ + "_", 0) == 0) {
+                    std::cout << "\033[1;33m[clean]\033[0m Purging stale build source tree: " << entry.path().string() << std::endl;
+                    fs::remove_all(entry.path());
+                }
+            }
+        }
+
         std::string deb_debs_dir = std::string(g_runepkg_base_dir ? g_runepkg_base_dir : "/srv/lib/runepkg_dir") + "/runepkg_debs";
         fs::create_directories(deb_debs_dir);
 
@@ -147,7 +158,7 @@ public:
             if (entry.is_directory()) {
                 std::string name = entry.path().filename().string();
                 if (is_utility_dir(name)) continue;
-                if (name.rfind(target_path_, 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
+                if (name == target_path_ || name.rfind(target_path_ + "-", 0) == 0 || name.rfind(target_path_ + "_", 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
                     source_tree_root = entry.path();
                     break;
                 }
@@ -156,6 +167,31 @@ public:
 
         /* Auto-extract if source directory is not yet unpacked */
         if (source_tree_root.empty()) {
+            bool has_source_archive = false;
+            for (const auto& entry : fs::directory_iterator(build_dir)) {
+                if (!entry.is_regular_file()) continue;
+                std::string fname = entry.path().filename().string();
+                if (fname.find(target_path_) != std::string::npos && (fname.find(".orig.tar.") != std::string::npos || fname.find(".dsc") != std::string::npos)) {
+                    has_source_archive = true;
+                    break;
+                }
+            }
+
+            if (!has_source_archive) {
+                std::cout << "\033[1;33m[runas]\033[0m Source package for \033[1;36m" << target_path_ << "\033[0m not found in build directory." << std::endl;
+                if (!g_force_mode && !g_auto_confirm_deps) {
+                    std::cout << "Would you like to download the source package now? [\033[1;32mY\033[0m/n] ";
+                    fflush(stdout);
+                    char resp[16];
+                    if (!fgets(resp, sizeof(resp), stdin) || resp[0] == 'n' || resp[0] == 'N') {
+                        std::cerr << "\033[1;31m[error]\033[0m Aborted: Source package required for build." << std::endl;
+                        return -1;
+                    }
+                }
+                std::cout << "\033[1;33m[runas]\033[0m Downloading source package for " << target_path_ << "..." << std::endl;
+                runepkg_repo_source_download(target_path_.c_str());
+            }
+
             std::cout << "  -> Unpacking source runes in " << build_dir << "..." << std::endl;
             extract_source_archives(build_dir, target_path_);
             /* Re-check source tree after extraction with robust filtering */
@@ -163,7 +199,7 @@ public:
                 if (entry.is_directory()) {
                     std::string name = entry.path().filename().string();
                     if (is_utility_dir(name)) continue;
-                    if (name.rfind(target_path_, 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
+                    if (name == target_path_ || name.rfind(target_path_ + "-", 0) == 0 || name.rfind(target_path_ + "_", 0) == 0 || fs::exists(entry.path() / "debian") || fs::exists(entry.path() / "configure")) {
                         source_tree_root = entry.path();
                         break;
                     }
@@ -194,6 +230,11 @@ public:
 
         apply_debian_patches(source_tree_root);
         sanitize_autotools_timestamps(source_tree_root);
+        if (fs::exists(source_tree_root / "configure.ac") || fs::exists(source_tree_root / "configure.in")) {
+            std::cout << "\033[1;36m[autotools]\033[0m Regenerating build system via autoreconf -fiv..." << std::endl;
+            int ar_res = system("autoreconf -fiv > /dev/null 2>&1");
+            (void)ar_res;
+        }
 
         /* Step 2: Telemetry Build Pipeline - debian/rules or configure + make */
         fs::path temp_install_dir = fs::path(build_dir) / "temp_install";

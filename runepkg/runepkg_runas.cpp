@@ -9,11 +9,13 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <set>
 #include <future>
 #include <mutex>
 #include <cstring>
 #include <cstdlib>
 #include <chrono>
+#include <algorithm>
 #include <unistd.h>
 
 #include "runepkg_runas.hpp"
@@ -50,7 +52,42 @@ extern "C" int runepkg_runas_interleaved_autocomplete(const char *query, char su
 
 #ifndef RUNEPKG_BUILD
 /* Ensure missing host-level binary build tools are installed before compilation */
-static bool s_asked_host_tools = false;
+struct HostToolMapping {
+    const char* token;
+    const char* cmd_check;
+    const char* pkg_name;
+};
+
+static const HostToolMapping HOST_TOOL_MAP[] = {
+    {"debhelper-compat", "dh", "debhelper"},
+    {"debhelper", "dh", "debhelper"},
+    {"xsltproc", "xsltproc", "xsltproc"},
+    {"automake", "automake", "automake"},
+    {"autoconf", "autoconf", "autoconf"},
+    {"make", "make", "make"},
+    {"dpkg-dev", "dpkg-architecture", "dpkg-dev"},
+    {"pkg-config", "pkg-config", "pkg-config"},
+    {nullptr, nullptr, nullptr}
+};
+
+static void get_tool_mappings(const std::string& tool, std::string& out_cmd, std::string& out_pkg) {
+    out_cmd = tool;
+    out_pkg = tool;
+    for (int i = 0; HOST_TOOL_MAP[i].token != nullptr; i++) {
+        if (tool == HOST_TOOL_MAP[i].token) {
+            out_cmd = HOST_TOOL_MAP[i].cmd_check;
+            out_pkg = HOST_TOOL_MAP[i].pkg_name;
+            return;
+        }
+    }
+    if (tool.rfind("automake", 0) == 0) {
+        out_cmd = "automake";
+        out_pkg = "automake";
+    } else if (tool.rfind("autoconf", 0) == 0) {
+        out_cmd = "autoconf";
+        out_pkg = "autoconf";
+    }
+}
 
 static int ensure_host_build_dependencies(const char *pkg_name) {
     if (!pkg_name) return -1;
@@ -62,43 +99,46 @@ static int ensure_host_build_dependencies(const char *pkg_name) {
             return 0;
         }
     }
+
+    std::vector<std::string> tools_to_check = { "debhelper", "automake", "autoconf", "libtool", "dpkg-dev" };
+
     RuneTargetPlan *plan = nullptr;
     if (runepkg_resolver_resolve_target(pkg_name, &plan) == 0 && plan) {
         if (plan->node_count > 0 && plan->nodes[0].host_tools_required) {
-            std::cout << "\033[1;35m[runas]\033[0m Verifying host build tools for " << pkg_name << "..." << std::endl;
             for (int i = 0; i < plan->nodes[0].host_tools_count; i++) {
-                const char *tool = plan->nodes[0].host_tools_required[i];
-                if (tool) {
-                    char cmd[PATH_MAX];
-                    snprintf(cmd, sizeof(cmd), "which %s >/dev/null 2>&1", tool);
-                    int present = (system(cmd) == 0);
-                    PkgInfo *info = runepkg_main_hash_table ? runepkg_hash_search(runepkg_main_hash_table, tool) : NULL;
-
-                    if (!present && !info) {
-                        if (!g_force_mode && !g_auto_confirm_deps && !s_asked_host_tools) {
-                            std::cout << "\033[1;33m[runas]\033[0m Missing required host build tools detected." << std::endl;
-                            std::cout << "Would you like to auto-install missing host tools for this build session? [\033[1;32mY\033[0m/n] ";
-                            fflush(stdout);
-                            char resp[16];
-                            if (!fgets(resp, sizeof(resp), stdin) || resp[0] == 'y' || resp[0] == 'Y' || resp[0] == '\n' || resp[0] == '\r') {
-                                g_auto_confirm_deps = true;
-                            }
-                            s_asked_host_tools = true;
-                        }
-
-                        if (g_auto_confirm_deps || g_force_mode) {
-                            std::cout << "\033[1;33m[runas]\033[0m Auto-installing missing host tool: " << tool << "..." << std::endl;
-                            runepkg_repo_install(tool);
-                        } else {
-                            std::cout << "\033[1;31m[runas]\033[0m Skipping host tool " << tool << " (user declined)." << std::endl;
-                        }
-                    } else {
-                        std::cout << "  -> Host tool \033[1;32m" << tool << "\033[0m is satisfied." << std::endl;
+                if (plan->nodes[0].host_tools_required[i]) {
+                    std::string t = plan->nodes[0].host_tools_required[i];
+                    if (std::find(tools_to_check.begin(), tools_to_check.end(), t) == tools_to_check.end()) {
+                        tools_to_check.push_back(t);
                     }
                 }
             }
         }
         runepkg_resolver_free_plan(plan);
+    }
+
+    std::cout << "\033[1;35m[runas]\033[0m Verifying and auto-installing required host build tools for " << pkg_name << "..." << std::endl;
+    std::set<std::string> unique_pkgs;
+    for (const auto& tool_token : tools_to_check) {
+        std::string cmd_check, pkg_mapped;
+        get_tool_mappings(tool_token, cmd_check, pkg_mapped);
+
+        char cmd[PATH_MAX];
+        snprintf(cmd, sizeof(cmd), "which %s >/dev/null 2>&1", cmd_check.c_str());
+        int present = (system(cmd) == 0);
+
+        if (!present) {
+            if (unique_pkgs.find(pkg_mapped) == unique_pkgs.end()) {
+                unique_pkgs.insert(pkg_mapped);
+                std::cout << "\033[1;33m[runas]\033[0m Auto-installing missing host tool package: " << pkg_mapped << " (for " << tool_token << ")..." << std::endl;
+                bool prev_auto = g_auto_confirm_deps;
+                g_auto_confirm_deps = true;
+                runepkg_repo_install(pkg_mapped.c_str());
+                g_auto_confirm_deps = prev_auto;
+            }
+        } else {
+            std::cout << "  -> Host tool \033[1;32m" << tool_token << "\033[0m is satisfied." << std::endl;
+        }
     }
     return 0;
 }

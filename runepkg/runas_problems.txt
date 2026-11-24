@@ -5,25 +5,106 @@
   Mode:          Native Build
   Library Path:  /usr/lib/x86_64-linux-gnu
 [runas] Verifying host build tools for file...
+[runas] Missing required host build tools detected.
+Would you like to auto-install missing host tools for this build session? [Y/n] y
+[runas] Auto-installing missing host tool: debhelper-compat...
+[runepkg] Planning installation for 1 package(s)...
+  autopoint libdebhelper-perl dh-autoreconf libarchive-zip-perl libfile-stripnondeterminism-perl
+  dh-strip-nondeterminism libdpkg-perl dpkg-dev dwz libuchardet0 groff-base libpipeline1 man-db intltool-debian
+  po-debconf debhelper
+
+16 packages (6.6 MB) will be installed. Continue? [y/N] y (auto)
+  -> dh-autoreconf             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dh-strip-nondeterminism   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfile-stripnondeterm... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libarchive-zip-perl       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdebhelper-perl         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdpkg-perl              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libuchardet0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dwz                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpipeline1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> autopoint                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dpkg-dev                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> po-debconf                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> man-db                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debhelper                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> groff-base                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> intltool-debian           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 16 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for autopoint
+[runepkg] Installing autopoint (1.0-5)
+[md5sums] Passed for libdebhelper-perl
+[runepkg] Installing libdebhelper-perl (14.5)
+[md5sums] Passed for dh-autoreconf
+[runepkg] Installing dh-autoreconf (23)
+[md5sums] Passed for libarchive-zip-perl
+[runepkg] Installing libarchive-zip-perl (1.68-1)
+[md5sums] Passed for libfile-stripnondeterminism-perl
+[runepkg] Installing libfile-stripnondeterminism-perl (1.15.1-1)
+[md5sums] Passed for dh-strip-nondeterminism
+[runepkg] Installing dh-strip-nondeterminism (1.15.1-1)
+[md5sums] Passed for libdpkg-perl
+[runepkg] Installing libdpkg-perl (1.23.11+kali1)
+[md5sums] Passed for dpkg-dev
+[runepkg] Installing dpkg-dev (1.23.11+kali1)
+[md5sums] Passed for dwz
+[runepkg] Installing dwz (0.17-1)
+[md5sums] Passed for libuchardet0
+[runepkg] Installing libuchardet0 (0.0.8-2+b2)
+[md5sums] Passed for groff-base
+[runepkg] Installing groff-base (1.24.2-2)
+[md5sums] Passed for libpipeline1
+[runepkg] Installing libpipeline1 (1.5.8-3)
+[md5sums] Passed for man-db
+[runepkg] Installing man-db (2.13.1-1)
+[md5sums] Passed for intltool-debian
+[runepkg] Installing intltool-debian (0.35.0+20060710.6)
+[md5sums] Passed for po-debconf
+[runepkg] Installing po-debconf (1.0.22)
+[md5sums] Passed for debhelper
+[runepkg] Installing debhelper (14.5)
+[runas] Auto-installing missing host tool: xsltproc...
+[runepkg] Planning installation for 1 package(s)...
+  libxslt1.1 xsltproc
+
+2 packages (196.3 KB) will be installed. Continue? [y/N] y (auto)
+  -> xsltproc                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxslt1.1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 2 packages to /srv/lib/runepkg_dir/download_dir
+[md5sums] Passed for libxslt1.1
+[runepkg] Installing libxslt1.1 (1.1.45-0.1)
+[md5sums] Passed for xsltproc
+[runepkg] Installing xsltproc (1.1.45-0.1)
+[runas] Initiating modern source build for file...
+  -> Unpacking source runes in /srv/lib/runepkg_dir/build_dir...
+  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir
+[runas] Source build staged in /srv/lib/runepkg_dir/build_dir
+[ zypherus /home/michko/runepkg/runepkg ]# runas build file -v
+[multiarch] Target Configuration:
+  Build Arch:    amd64 (x86_64-linux-gnu)
+  Host Arch:     amd64 (x86_64-linux-gnu)
+  Mode:          Native Build
+  Library Path:  /usr/lib/x86_64-linux-gnu
+[runas] Verifying host build tools for file...
   -> Host tool debhelper-compat is satisfied.
   -> Host tool xsltproc is satisfied.
 [runas] Initiating modern source build for file...
-  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir/file-5.47
-  -> [patch] Applying Debian source patches...
-     * Applying: cherry-pick/FILE5_47-8-g5a42c66b.add-zxc-bertrand-lebonnois.patch
-     * Applying: cherry-pick/FILE5_47-17-g50fc7a6b.pr-166-flanglet-add-kanzi-magic.patch
-     * Applying: cherry-pick/FILE5_47-18-gc5460571.pr-725-inliniac-revert-previous-and-always-set-offset.patch
-     * Applying: cherry-pick/FILE5_47-57-g797a2755.add-le-be-guid.patch
-     * Applying: cherry-pick/FILE5_47-62-g2866af2e.fix-typo.patch
-     * Applying: cherry-pick/FILE5_47-93-g7a2b2a4b.handle-parsing-guids-in-big-endian-machines.patch
-     * Applying: upstream/disable.att3b.patch
-     * Applying: upstream/stricter-postscript-magic.patch
-     * Applying: upstream/disable-over-eagerly-msooxml-detection.patch
-     * Applying: local/support-local-definitions-in-etc-magic.patch
-     * Applying: local/don-t-include-libs-in-build.patch
-     * Applying: local/extra-magic.patch
-     * Applying: local/manpage-seccomp-is-disabled.patch
-  -> [error] Build failed! Diagnostic log saved to: /srv/lib/runepkg_dir/build_dir/logs/file_make.log
-[runas] Source build staged in /srv/lib/runepkg_dir/build_dir/file-5.47
+  -> Unpacking source runes in /srv/lib/runepkg_dir/build_dir...
+  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir
+[runas] Source build staged in /srv/lib/runepkg_dir/build_dir
+[ zypherus /home/michko/runepkg/runepkg ]# runas build file -v
+[multiarch] Target Configuration:
+  Build Arch:    amd64 (x86_64-linux-gnu)
+  Host Arch:     amd64 (x86_64-linux-gnu)
+  Mode:          Native Build
+  Library Path:  /usr/lib/x86_64-linux-gnu
+[runas] Verifying host build tools for file...
+  -> Host tool debhelper-compat is satisfied.
+  -> Host tool xsltproc is satisfied.
+[runas] Initiating modern source build for file...
+  -> Unpacking source runes in /srv/lib/runepkg_dir/build_dir...
+  -> [source] Building in source tree: /srv/lib/runepkg_dir/build_dir
+[runas] Source build staged in /srv/lib/runepkg_dir/build_dir
 [ zypherus /home/michko/runepkg/runepkg ]#
-
