@@ -2,6 +2,8 @@
 
 **runas** is the advanced C++17 source-compiling companion executable for **runepkg**, affectionately named after *Runas the Shamed* from *World of Warcraft*. While `runepkg` manages binary `.deb` installation, removal, and graph resolution, `runas` acts as a specialized Debian source package builder and multi-arch cross-compilation forge.
 
+*As the Kobolds always warn: "You no take candle!"*
+
 For complete step-by-step tutorials and cross-architecture build workflows, read on below.
 
 ---

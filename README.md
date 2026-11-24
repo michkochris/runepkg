@@ -17,6 +17,8 @@
 
 **runas** is a companion executable for the extended C++ version of **runepkg**. Serving as a Debian source package builder—a Debian Source package Mana Fiend named after *Runas the Shamed* from *World of Warcraft*—**runas** builds and splits standard Debian-compatible source packages into fully compliant `.deb` binaries, adhering strictly to official Debian policy standards.
 
+*Kobold Says "You no take candle!"*
+
 🕯️ **[Read the dedicated RUNAS.md Guide](RUNAS.md)** for comprehensive step-by-step usage, cross-compilation workflows, and build-dependency pinning.
 
 ---
