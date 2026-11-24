@@ -28,6 +28,7 @@ extern "C" {
 #include "runepkg_completion.h"
 #include "runepkg_host.h"
 #include "runepkg_handle.h"
+#include "runepkg_psychic.h"
 }
 
 /* Interleaved Fast Autocomplete Engine Hook for runas (uses memory-mapped pkginfo.bin index) */
@@ -200,12 +201,15 @@ int main(int argc, char **argv) {
         std::cout << "  runas source-build-depends <pkg>         Download complete source runes for package and build dependencies" << std::endl;
         std::cout << "  runas depends <package>                  Render recursive ASCII dependency tree of target package" << std::endl;
         std::cout << "  runas resolve-tree <package>             Resolve target dependency graph for source building" << std::endl;
+        std::cout << "  runas build-depends <package>            Render recursive ASCII build dependency tree of target package" << std::endl;
+        std::cout << "  runas resolve-build-tree <package>       Resolve target build dependency graph for source building" << std::endl;
         std::cout << "  runas build <package|dsc> [subpkg|help]  Verify host tools and build primary package (or subpackage/help)" << std::endl;
         std::cout << "  runas buildpkg-split <package>           Build source package and split into all subpackages" << std::endl;
         std::cout << "  runas source-build <package>             3-Stage Pipeline: fetch runes -> verify host tools -> build .deb" << std::endl;
         std::cout << "  runas autocomplete <query>               Run $O(1)$ memory-mapped binary autocomplete lookup" << std::endl;
         std::cout << std::endl;
         std::cout << "Options:" << std::endl;
+        std::cout << "  --target=<profile> / --target <profile>  Specify target profile/sysroot (e.g. arm64:aarch64-linux-gnu)" << std::endl;
         std::cout << "  --arch=<target_arch>                     Specify target Multi-Arch architecture (amd64, arm64, riscv64, etc.)" << std::endl;
         return 0;
     }
@@ -213,95 +217,147 @@ int main(int argc, char **argv) {
     runepkg_init();
 
     std::string target_arch = "";
+    std::vector<std::string> positional_args;
+
     for (int i = 1; i < argc; i++) {
         std::string arg = argv[i];
-        if (arg.rfind("--arch=", 0) == 0) {
+        if (arg.find("--arch=") == 0) {
             target_arch = arg.substr(7);
+        } else if (arg.find("--target=") == 0) {
+            target_arch = arg.substr(9);
+        } else if (arg == "--target" && i + 1 < argc) {
+            target_arch = argv[i + 1];
+            i++;
+        } else {
+            positional_args.push_back(arg);
         }
+    }
+
+    if (!target_arch.empty()) {
+        RunePkgTargetSpec spec;
+        memset(&spec, 0, sizeof(spec));
+        char canonical_profile[256];
+        if (runepkg_psychic_parse_target_arch(target_arch.c_str(), &spec) == 0 && spec.gnu_triplet) {
+            snprintf(canonical_profile, sizeof(canonical_profile), "%s", spec.gnu_triplet);
+            runepkg_psychic_free_target_spec(&spec);
+        } else {
+            snprintf(canonical_profile, sizeof(canonical_profile), "%s", target_arch.c_str());
+        }
+        runepkg_config_activate_profile(canonical_profile);
     }
 
     DebianMultiArchConfig ma_config = DebianMultiArchEngine::configure_multiarch(target_arch);
     DebianMultiArchEngine::export_multiarch_env(ma_config);
 
-    if (strcmp(argv[1], "sync") == 0) {
+    if (positional_args.empty()) {
+        std::cout << "\033[1;35mrunas\033[0m - High-Performance Debian Source Package & Toolchain Forge Engine" << std::endl;
+        std::cout << "Usage:" << std::endl;
+        std::cout << "  runas sync                               Synchronize host package database snapshot" << std::endl;
+        std::cout << "  runas update                             Download repository indices & update binary graphs" << std::endl;
+        std::cout << "  runas source <package>                   Download Debian source package files (.dsc, .orig, .debian)" << std::endl;
+        std::cout << "  runas prepare <package>                  Unpack source rune, apply Debian patches (*), & fix timestamps" << std::endl;
+        std::cout << "  runas source-depends <pkg>               Download complete source runes for package and runtime dependencies" << std::endl;
+        std::cout << "  runas source-build-depends <pkg>         Download complete source runes for package and build dependencies" << std::endl;
+        std::cout << "  runas depends <package>                  Render recursive ASCII dependency tree of target package" << std::endl;
+        std::cout << "  runas resolve-tree <package>             Resolve target dependency graph for source building" << std::endl;
+        std::cout << "  runas build-depends <package>            Render recursive ASCII build dependency tree of target package" << std::endl;
+        std::cout << "  runas resolve-build-tree <package>       Resolve target build dependency graph for source building" << std::endl;
+        std::cout << "  runas build <package|dsc> [subpkg|help]  Verify host tools and build primary package (or subpackage/help)" << std::endl;
+        std::cout << "  runas buildpkg-split <package>           Build source package and split into all subpackages" << std::endl;
+        std::cout << "  runas source-build <package>             3-Stage Pipeline: fetch runes -> verify host tools -> build .deb" << std::endl;
+        std::cout << "  runas autocomplete <query>               Run $O(1)$ memory-mapped binary autocomplete lookup" << std::endl;
+        std::cout << std::endl;
+        std::cout << "Options:" << std::endl;
+        std::cout << "  --target=<profile> / --target <profile>  Specify target profile/sysroot (e.g. arm64:aarch64-linux-gnu)" << std::endl;
+        std::cout << "  --arch=<target_arch>                     Specify target Multi-Arch architecture (amd64, arm64, riscv64, etc.)" << std::endl;
+        return 0;
+    }
+
+    const std::string& cmd = positional_args[0];
+
+    if (cmd == "sync") {
         return runepkg_host_sync();
     }
 
-    if (strcmp(argv[1], "update") == 0) {
+    if (cmd == "update") {
         return runepkg_update();
     }
 
-    if (strcmp(argv[1], "autocomplete") == 0 && argc >= 3) {
+    if (cmd == "autocomplete" && positional_args.size() >= 2) {
         char suggestions[64][PATH_MAX];
-        int count = runepkg_completion_get_repo_suggestions(argv[2], suggestions, 64);
+        int count = runepkg_completion_get_repo_suggestions(positional_args[1].c_str(), suggestions, 64);
         for (int i = 0; i < count; i++) {
             std::cout << suggestions[i] << std::endl;
         }
         return 0;
     }
 
-    if (strcmp(argv[1], "source") == 0 && argc >= 3) {
-        if (argc == 3) {
-            return runepkg_repo_source_download(argv[2]);
+    if (cmd == "source" && positional_args.size() >= 2) {
+        if (positional_args.size() == 2) {
+            return runepkg_repo_source_download(positional_args[1].c_str());
         } else {
             std::vector<const char*> pkgs;
-            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            for (size_t i = 1; i < positional_args.size(); i++) pkgs.push_back(positional_args[i].c_str());
             return runepkg_repo_source_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
         }
     }
 
-    if ((strcmp(argv[1], "prepare") == 0 || strcmp(argv[1], "unpack") == 0) && argc >= 3) {
-        return runepkg_building_unpack_and_patch(argv[2]);
+    if ((cmd == "prepare" || cmd == "unpack") && positional_args.size() >= 2) {
+        return runepkg_building_unpack_and_patch(positional_args[1].c_str());
     }
 
-    if (strcmp(argv[1], "source-depends") == 0 && argc >= 3) {
-        if (argc == 3) {
-            return runepkg_repo_source_depends_download(argv[2]);
+    if (cmd == "source-depends" && positional_args.size() >= 2) {
+        if (positional_args.size() == 2) {
+            return runepkg_repo_source_depends_download(positional_args[1].c_str());
         } else {
             std::vector<const char*> pkgs;
-            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            for (size_t i = 1; i < positional_args.size(); i++) pkgs.push_back(positional_args[i].c_str());
             return runepkg_repo_source_depends_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
         }
     }
 
-    if (strcmp(argv[1], "source-build-depends") == 0 && argc >= 3) {
-        if (argc == 3) {
-            return runepkg_repo_source_build_depends_download(argv[2]);
+    if (cmd == "source-build-depends" && positional_args.size() >= 2) {
+        if (positional_args.size() == 2) {
+            return runepkg_repo_source_build_depends_download(positional_args[1].c_str());
         } else {
             std::vector<const char*> pkgs;
-            for (int i = 2; i < argc; i++) pkgs.push_back(argv[i]);
+            for (size_t i = 1; i < positional_args.size(); i++) pkgs.push_back(positional_args[i].c_str());
             return runepkg_repo_source_build_depends_download_multiple(pkgs.data(), static_cast<int>(pkgs.size()));
         }
     }
 
-    if ((strcmp(argv[1], "depends") == 0 || strcmp(argv[1], "resolve-tree") == 0) && argc >= 3) {
-        return runepkg_resolver_dump_tree(argv[2]);
+    if ((cmd == "depends" || cmd == "resolve-tree") && positional_args.size() >= 2) {
+        return runepkg_resolver_dump_tree(positional_args[1].c_str());
     }
 
-    if (strcmp(argv[1], "build") == 0 && argc >= 3) {
-        if (argc >= 4 && (strcmp(argv[3], "help") == 0 || strcmp(argv[3], "--help") == 0 || strcmp(argv[3], "-h") == 0)) {
-            return runepkg_building_list_subpackages(argv[2]);
+    if ((cmd == "build-depends" || cmd == "resolve-build-tree") && positional_args.size() >= 2) {
+        return runepkg_resolver_dump_build_tree(positional_args[1].c_str());
+    }
+
+    if (cmd == "build" && positional_args.size() >= 2) {
+        if (positional_args.size() >= 3 && (positional_args[2] == "help" || positional_args[2] == "--help" || positional_args[2] == "-h")) {
+            return runepkg_building_list_subpackages(positional_args[1].c_str());
         }
         DebianMultiArchEngine::print_multiarch_info(ma_config);
-        ensure_host_build_dependencies(argv[2]);
-        const char *subpkg = (argc >= 4) ? argv[3] : nullptr;
-        return runepkg_building_debian_build(argv[2], false, subpkg);
+        ensure_host_build_dependencies(positional_args[1].c_str());
+        const char *subpkg = (positional_args.size() >= 3) ? positional_args[2].c_str() : nullptr;
+        return runepkg_building_debian_build(positional_args[1].c_str(), false, subpkg);
     }
 
-    if (strcmp(argv[1], "buildpkg-split") == 0 && argc >= 3) {
+    if (cmd == "buildpkg-split" && positional_args.size() >= 2) {
         DebianMultiArchEngine::print_multiarch_info(ma_config);
-        ensure_host_build_dependencies(argv[2]);
-        const char *subpkg = (argc >= 4) ? argv[3] : nullptr;
-        return runepkg_building_debian_build(argv[2], true, subpkg);
+        ensure_host_build_dependencies(positional_args[1].c_str());
+        const char *subpkg = (positional_args.size() >= 3) ? positional_args[2].c_str() : nullptr;
+        return runepkg_building_debian_build(positional_args[1].c_str(), true, subpkg);
     }
 
-    if (strcmp(argv[1], "source-build") == 0 && argc >= 3) {
+    if (cmd == "source-build" && positional_args.size() >= 2) {
         DebianMultiArchEngine::print_multiarch_info(ma_config);
-        ensure_host_build_dependencies(argv[2]);
-        return runepkg_building_source_build_pipeline(argv[2], target_arch.c_str());
+        ensure_host_build_dependencies(positional_args[1].c_str());
+        return runepkg_building_source_build_pipeline(positional_args[1].c_str(), target_arch.c_str());
     }
 
-    std::cerr << "\033[1;31m[runas]\033[0m Unknown command: " << argv[1] << std::endl;
+    std::cerr << "\033[1;31m[runas]\033[0m Unknown command: " << cmd << std::endl;
     return -1;
 }
 #endif

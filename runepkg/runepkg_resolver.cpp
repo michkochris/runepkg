@@ -409,6 +409,54 @@ public:
         dump_node_recursive(root, "", true, graph, seen);
     }
 
+    void dump_build_tree_view(const std::string& pkg_name) {
+        std::string db_path = get_default_db_path();
+        std::unordered_map<std::string, RuneGraphEntry> graph;
+
+        if (load_binary_graph(db_path, graph) != 0) {
+            const char *eff_db = runepkg_config_get_effective_db_dir();
+            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir :
+                                   (eff_db ? std::string(eff_db) + "/lists" : "/srv/lib/runepkg_dir/runepkg_db/lists");
+            harvest(lists_dir, db_path);
+            load_binary_graph(db_path, graph);
+        }
+
+        std::string root = clean_package_key(pkg_name);
+        if (root.rfind("src:", 0) != 0) {
+            root = "src:" + root;
+        }
+
+        if (graph.find(root) == graph.end()) {
+            char *src_res = runepkg_repo_find_source_for_binary(pkg_name.c_str());
+            if (src_res) {
+                root = "src:" + std::string(src_res);
+                free(src_res);
+            }
+        }
+
+        if (graph.find(root) == graph.end()) {
+            std::cerr << "ERROR: Source package for '" << pkg_name << "' not found in graph." << std::endl;
+            return;
+        }
+
+        std::cout << "\033[1;34m[tree]\033[0m Build Dependencies Visualization for \033[1;32m" << pkg_name << "\033[0m (Target Sysroot: " << (g_target_sysroot ? g_target_sysroot : "/") << ")" << std::endl;
+        std::unordered_set<std::string> seen;
+        dump_node_recursive(root, "", true, graph, seen);
+
+        std::cout << "\n\033[1;32mCopy-pasteable one-liner for runepkg -i:\033[0m\n";
+        bool first = true;
+        for (const auto& s : seen) {
+            std::string name = s;
+            if (name.rfind("src:", 0) == 0) name = name.substr(4);
+            if (name != clean_package_key(pkg_name)) {
+                if (!first) std::cout << " ";
+                std::cout << name;
+                first = false;
+            }
+        }
+        std::cout << std::endl;
+    }
+
 private:
     void dump_node_recursive(const std::string& pkg, const std::string& prefix, bool is_last,
                             const std::unordered_map<std::string, RuneGraphEntry>& graph,
@@ -1146,6 +1194,17 @@ extern "C" int runepkg_resolver_dump_tree(const char *pkg_name) {
         if (!pkg_name) return -1;
         RuneResolverEngine engine;
         engine.dump_tree_view(pkg_name);
+        return 0;
+    } catch (...) {
+        return -1;
+    }
+}
+
+extern "C" int runepkg_resolver_dump_build_tree(const char *pkg_name) {
+    try {
+        if (!pkg_name) return -1;
+        RuneResolverEngine engine;
+        engine.dump_build_tree_view(pkg_name);
         return 0;
     } catch (...) {
         return -1;

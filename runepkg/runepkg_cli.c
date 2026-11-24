@@ -219,7 +219,8 @@ void usage(void) {
     printf("  search <pkg|pattern>                    Search repositories for packages or patterns.\n");
     printf("                                          (Use \"quotes\" to search for multiple words).\n");
     printf("  info <pkg>...                           Show repository information for a package.\n");
-    printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n\n");
+    printf("  depends, resolve-tree <pkg>             Recursive ASCII tree visualization of target depends.\n");
+    printf("  build-depends, resolve-build-tree <pkg> Recursive ASCII tree visualization of target build depends.\n\n");
 
     printf("Download Utilities:\n");
     printf("  download-only <pkg>...                  Download a .deb to download_dir without dependencies.\n");
@@ -825,6 +826,21 @@ int main(int argc, char *argv[]) {
             } else {
                 for (p = 0; p < pkg_count; p++) {
                     if (handle_resolve_tree(pkgs[p]) != 0) {
+                        cli_failed = 1;
+                    }
+                }
+            }
+        } else if (strcmp(argv[i], "build-depends") == 0 || strcmp(argv[i], "resolve-build-tree") == 0) {
+            const char *cmd_name = argv[i];
+            const char *pkgs[MAX_COLLECTED_PKGS];
+            int pkg_count = collect_pkg_args(argc, argv, &i, pkgs, MAX_COLLECTED_PKGS);
+            int p;
+            if (pkg_count <= 0) {
+                printf("Error: %s requires a package name.\n", cmd_name);
+                cli_failed = 1;
+            } else {
+                for (p = 0; p < pkg_count; p++) {
+                    if (handle_resolve_build_tree(pkgs[p]) != 0) {
                         cli_failed = 1;
                     }
                 }

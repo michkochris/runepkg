@@ -18,6 +18,7 @@
 
 extern "C" {
 #include "runepkg_host.h"
+#include "runepkg_config.h"
 }
 
 static const std::map<std::string, std::string> g_deb_to_gnu_map = {
@@ -91,7 +92,13 @@ DebianMultiArchConfig DebianMultiArchEngine::configure_multiarch(const std::stri
         config.is_cross_compiling = true;
     }
 
-    config.lib_dir = "/usr/lib/" + config.deb_host_triplet;
+    std::string base_root = "/usr";
+    if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+        base_root = std::string(g_target_sysroot) + "/usr";
+    } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
+        base_root = std::string(g_active_profile->sysroot) + "/usr";
+    }
+    config.lib_dir = base_root + "/lib/" + config.deb_host_triplet;
     config.pkgconfig_dir = config.lib_dir + "/pkgconfig";
 
     return config;

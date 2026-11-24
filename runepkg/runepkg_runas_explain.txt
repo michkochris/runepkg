@@ -1,0 +1,222 @@
+# `runepkg` & `runas`: Clean Installation, Coexistence, and Cross-Build Guide
+
+
+
+This guide walks through setting up `runepkg` and `runas` cleanly on an existing Debian/Kali (`dpkg`/`apt`) host, syncing host state without entanglement, and preparing a cross-architecture sysroot (such as `arm64:aarch64-linux-gnu`) to build packages safely.
+
+
+
+---
+
+
+
+## 1. How `runepkg` and `runas` Split Responsibilities
+
+
+
+To keep your build machine (`amd64`) clean and predictable, `runepkg` and `runas` separate **where things live** by role:
+
+
+
+* **Host System (`/` + `/srv/lib/runepkg_dir/runepkg_db`)**
+
+  * Represents your native `x86_64` host environment.
+
+  * When `Install Directory: /` is configured, `runepkg sync` imports a snapshot of what `dpkg` already has installed on the host so `runepkg` and `runas` know which native tools and libraries exist—without duplicating or breaking `dpkg`/`apt`.
+
+* **Target Sysroot (`/mnt/runepkg/<target-triplet>`)**
+
+  * Example: `/mnt/runepkg/aarch64-linux-gnu` for `--target=arm64:aarch64-linux-gnu`.
+
+  * Holds target-architecture runtime libraries, headers (`*-dev`), and target metadata inside its own isolated database (`/mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db`).
+
+  * Treated strictly as the **target root**, never as a place to install native `x86_64` build tools.
+
+* **Build Tools (`runas` Host Tool Verification)**
+
+  * Compilers, cross-compilers, `make`, `autoconf`, `automake`, `dpkg-dev`, and `debhelper` execute on the **build machine** (`amd64`), not inside the target sysroot.
+
+
+
+---
+
+
+
+## 2. Step-by-Step Clean Installation & Setup
+
+
+
+### Step 1: Build and Install `runepkg` and `runas`
+
+From the `runepkg` source directory, start from a clean build and install both binaries:
+
+
+
+```bash
+
+make clean && make uninstall
+
+make all && make install && make install-runas
+
+```
+
+
+
+This installs:
+
+* `/usr/bin/runepkg`
+
+* `/usr/bin/runas`
+
+* `/etc/runepkg/` (configuration and target profiles)
+
+
+
+### Step 2: Configure the Host Root (`/etc/runepkg/runepkgconfig`)
+
+Ensure your host configuration sets the primary install root to `/` and points to your desired `deb` and `deb-src` repositories. Verify the active configuration with:
+
+
+
+```bash
+
+runepkg --print-config
+
+```
+
+
+
+Expected host baseline:
+
+* `Base Directory`: `/srv/lib/runepkg_dir`
+
+* `Install Directory` / `System Install Root`: `/`
+
+* `Database Directory`: `/srv/lib/runepkg_dir/runepkg_db`
+
+* `Target Architecture`: `amd64:x86_64-linux-gnu` (default host target)
+
+
+
+### Step 3: Initialize the Host Index and Sync Existing `dpkg` Packages
+
+Before building anything, populate the host repository indexes and synchronize existing host `dpkg` packages so `runepkg` and `runas` recognize what is already installed on your machine:
+
+
+
+```bash
+
+runepkg update
+
+runepkg sync
+
+```
+
+
+
+* **`runepkg update`** downloads `Packages` and `Sources` metadata into `/srv/lib/runepkg_dir/runepkg_db/lists` and builds `runes_graph.bin`.
+
+* **`runepkg sync`** registers your existing host `dpkg` packages into `runepkg`'s host state so `runepkg` can coexist alongside `dpkg`/`apt` and avoid unnecessarily re-downloading tools you already have.
+
+
+
+*(Tip: Always run `runepkg update` and `runepkg sync` on the host **before** invoking `runas` so host tool checks have a complete picture of your system.)*
+
+
+
+---
+
+
+
+## 3. Preparing a Cross-Build Sysroot (`arm64` Example)
+
+
+
+When cross-compiling a package for another architecture (e.g., `arm64:aarch64-linux-gnu`), follow this order so target dependencies and host build tools stay cleanly separated:
+
+
+
+### Step 1: Update the Target Sysroot Indexes
+
+```bash
+
+runepkg --target=arm64:aarch64-linux-gnu update
+
+```
+
+This creates an isolated repository index and dependency graph specifically for the target sysroot at:
+
+`/mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/`
+
+
+
+### Step 2: Inspect and Install Target Build Dependencies into the Sysroot
+
+Query the target build-dependency tree for the package you want to build (for example, `file`):
+
+
+
+```bash
+
+runepkg --target=arm64:aarch64-linux-gnu build-depends file
+
+```
+
+
+
+Install the listed `arm64` target libraries and `-dev` headers into `/mnt/runepkg/aarch64-linux-gnu`:
+
+
+
+```bash
+
+runepkg --target=arm64:aarch64-linux-gnu -i <resolved-target-packages>
+
+```
+
+
+
+Because `--target=arm64:aarch64-linux-gnu` is passed, `runepkg` installs those headers and libraries strictly into `/mnt/runepkg/aarch64-linux-gnu` without touching your host `/usr` or `/lib`.
+
+
+
+### Step 3: Build the Package with `runas`
+
+Once the target sysroot has its `-dev` libraries and the host has been synced (`runepkg sync`), invoke `runas`:
+
+
+
+```bash
+
+runas --target=arm64:aarch64-linux-gnu build file
+
+```
+
+
+
+What `runas` does at this stage:
+
+1. Configures the cross-build environment (`Build Arch: amd64`, `Host Arch: arm64`, `Library Path: /mnt/runepkg/aarch64-linux-gnu/usr/lib/aarch64-linux-gnu`).
+
+2. Verifies native build tools on the `amd64` host (such as `debhelper`, `dpkg-dev`, `automake`, and `gcc-aarch64-linux-gnu`).
+
+3. Prompts before installing any genuinely missing native build tools, then compiles and packages `file` against the `arm64` sysroot.
+
+
+
+---
+
+
+
+## 4. Quick Checklist for New Users
+
+
+
+1. **Always initialize the host first:** Run `runepkg update` and `runepkg sync` with `Install Directory: /` so `runepkg` knows what `dpkg` has already installed.
+
+2. **Keep `--target=<arch:triplet>` consistent:** Every target command (`update`, `build-depends`, `-i`, `runas build`) uses that target's isolated sysroot under `/mnt/runepkg/<triplet>`.
+
+3. **Never mix target libraries into `/`:** Target `*-dev` packages belong in `/mnt/runepkg/<triplet>`, while native build tools belong on the `amd64` build host.
+
+4. **Review prompts before confirming (`[y/N]`):** Check whether a prompt is installing target packages into `/mnt/runepkg/<triplet>` or native build tools onto the host before pressing `y`.
+

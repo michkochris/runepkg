@@ -1303,6 +1303,23 @@ int handle_resolve_tree(const char *pkg_name) {
 #endif
 }
 
+int handle_resolve_build_tree(const char *pkg_name) {
+#ifdef ENABLE_CPP_FFI
+    if (!pkg_name) {
+        printf("Error: build-depends requires a target package name.\n");
+        return -1;
+    }
+    return runepkg_resolver_dump_build_tree(pkg_name);
+#else
+    (void)pkg_name;
+    printf("Notice: Target build dependency resolver requires a C++ build with FFI enabled.\n");
+    printf("Rebuild with 'make all' to enable this feature.\n");
+    return -1;
+#endif
+}
+
+
+
 int handle_md5_check(const char *package_name) {
     PkgInfo pkg_info;
     DIR *dir;

@@ -1,11 +1,11 @@
-[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg/
+[ zypherus /home/michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg
 [ zypherus /home/michko/runepkg/runepkg ]# make clean && make uninstall
 Cleaning up build artifacts and unearthed runes...
 🧹 Clean complete. The forge is reset.
 Uninstalling runepkg and runas...
 Note: /etc/runepkg has been preserved.
 Uninstallation complete.
-[ zypherus /home/michko/runepkg/runepkg ]# make all && make install
+[ zypherus /home/michko/runepkg/runepkg ]# make all && make install && make install-runas
 make[1]: Entering directory '/home/michko/runepkg/runepkg'
 --------------------------------------------------------
   Unearthing Runes: Compiling runepkg v1.0.4
@@ -42,44 +42,75 @@ Installing runepkg to /usr/bin...
 Installing configuration to /etc/runepkg...
 Installing target profiles...
 🧙 runepkg installation complete!
-[ zypherus /home/michko/runepkg/runepkg ]# nano runepkgconfig
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+Installing runas to /usr/bin...
+🧙 runas installation complete!
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu update
 [runepkg] Starting parallel repository update...
 Downloading 8 package lists...
   -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
 Building Hybrid Binary and Source Indexes...
 Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 13.3s
-[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/lists
+Update complete! Binary/Source indexes updated. 0 upgradable. Time: 18.4s
+[harvest] Starting parallel graph analysis on: /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/lists
   -> Found 16 index partitions to analyze.
-[success] Processed 113831 source rune stanzas in 671ms.
-  -> Serialized binary graph to /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29711 KB)
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg -i file
-[runepkg] Planning installation for 1 package(s)...
-  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 libbz2-1.0 liblzma5 zlib1g libmagic-mgc libmagic1t64 file
+[success] Processed 113055 source rune stanzas in 681ms.
+  -> Serialized binary graph to /mnt/runepkg/aarch64-linux-gnu/srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29519 KB)
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu build-depends file
+[tree] Build Dependencies Visualization for file (Target Sysroot: /mnt/runepkg/aarch64-linux-gnu)
+└── file (1:5.47-4)
+    ├── libbz2-dev (1.0.8-6+b2)
+    │   ├── libbz2-1.0 (1.0.8-6+b2)
+    │   │   └── libc6 (2.43-7)
+    │   │       ├── libgcc-s1 (16.2.0-4)
+    │   │       │   ├── gcc-16-base (16.2.0-4)
+    │   │       │   └── libc6 (already listed)
+    │   │       └── libc-gconv-modules-extra (2.43-7)
+    │   └── libc6-dev (2.43-7)
+    │       ├── libc6 (already listed)
+    │       ├── libc-dev-bin (2.43-7)
+    │       │   ├── libc6 (already listed)
+    │       │   └── libc6 (already listed)
+    │       └── linux-libc-dev (7.2.15-1kali1)
+    ├── liblzma-dev (5.8.4-1)
+    │   └── liblzma5 (5.8.4-1)
+    │       └── libc6 (already listed)
+    └── zlib1g-dev (1:1.3.dfsg+really1.3.2-4)
+        ├── zlib1g (1:1.3.dfsg+really1.3.2-4)
+        │   └── libc6 (already listed)
+        └── libc6-dev (already listed)
 
-10 packages (3.9 MB) will be installed. Continue? [y/N] y
-  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+Copy-pasteable one-liner for runepkg -i:
+zlib1g libc6-dev libc-dev-bin zlib1g-dev libbz2-dev libgcc-s1 libc6 linux-libc-dev libc-gconv-modules-extra liblzma-dev libbz2-1.0 gcc-16-base liblzma5
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --target=arm64:aarch64-linux-gnu -i zlib1g libc6-dev libc-dev-bin zlib1g-dev libbz2-dev libgcc-s1 libc6 linux-libc-dev libc-gconv-modules-extra liblzma-dev libbz2-1.0 gcc-16-base liblzma5
+[runepkg] Planning installation for 13 package(s)...
+  gcc-16-base libgcc-s1 libc-gconv-modules-extra libc6 zlib1g libc-dev-bin linux-libc-dev libc6-dev zlib1g-dev libbz2-1.0 libbz2-dev
+  liblzma5 liblzma-dev
+
+13 packages (7.9 MB) will be installed. Continue? [y/N] y
   -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+[success] Downloaded 13 packages to /srv/lib/runepkg_dir/download_dir
 [md5sums] Passed for gcc-16-base
 [runepkg] Installing gcc-16-base (16.2.0-4)
 [md5sums] Passed for libgcc-s1
@@ -88,34 +119,354 @@ Update complete! Binary/Source indexes updated. 0 upgradable. Time: 13.3s
 [runepkg] Installing libc-gconv-modules-extra (2.43-7)
 [md5sums] Passed for libc6
 [runepkg] Installing libc6 (2.43-7)
-[md5sums] Passed for libbz2-1.0
-[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
-[md5sums] Passed for liblzma5
-[runepkg] Installing liblzma5 (5.8.4-1)
 [md5sums] Passed for zlib1g
 [runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
-[md5sums] Passed for libmagic-mgc
-[runepkg] Installing libmagic-mgc (1:5.47-4)
-[md5sums] Passed for libmagic1t64
-[runepkg] Installing libmagic1t64 (1:5.47-4)
-[md5sums] Passed for file
-[runepkg] Installing file (1:5.47-4)
-[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db/
-lists
-[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/runepkg_db/lists/
-[ zypherus /home/michko/runepkg/runepkg ]# ls /srv/lib/runepkg_dir/install_dir/srv/lib/runepkg_dir/runepkg_db/
-conflicts-breaks.bin   libc-gconv-modules-extra-2.43-7  psychic_matrix.bin  repo_url_mapping.txt
-conflicts-breaks.txt   libgcc-s1-16.2.0-4               psychic_matrix.txt  runepkg_autocomplete.bin
-file-1:5.47-4          liblzma5-5.8.4-1                 repo_files.txt      runes_graph.bin
-gcc-16-base-16.2.0-4   libmagic1t64-1:5.47-4            repo_index.bin      zlib1g-1:1.3.dfsg+really1.3.2-4
-libbz2-1.0-1.0.8-6+b2  libmagic-mgc-1:5.47-4            repo_src_files.txt
-libc6-2.43-7           lists                            repo_src_index.bin
-[ zypherus /home/michko/runepkg/runepkg ]# runepkg -l
-Reading package data: 13 packages, 24.7 MB used, 952.8 GB available
-Listing installed packages...
+[md5sums] Passed for libc-dev-bin
+[runepkg] Installing libc-dev-bin (2.43-7)
+[md5sums] Passed for linux-libc-dev
+[runepkg] Installing linux-libc-dev (7.2.15-1kali1)
+[md5sums] Passed for libc6-dev
+[runepkg] Installing libc6-dev (2.43-7)
+[md5sums] Passed for zlib1g-dev
+[runepkg] Installing zlib1g-dev (1:1.3.dfsg+really1.3.2-4)
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+[md5sums] Passed for libbz2-dev
+[runepkg] Installing libbz2-dev (1.0.8-6+b2)
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for liblzma-dev
+[runepkg] Installing liblzma-dev (5.8.4-1)
+[ zypherus /home/michko/runepkg/runepkg ]# runas --target=arm64:aarch64-linux-gnu build file
+[multiarch] Target Configuration:
+  Build Arch:    amd64 (x86_64-linux-gnu)
+  Host Arch:     arm64 (aarch64-linux-gnu)
+  Mode:          Cross Multi-Arch
+  Library Path:  /mnt/runepkg/aarch64-linux-gnu/usr/lib/aarch64-linux-gnu
+[runas] Verifying host build tools for file...
+[runas] Auto-installing missing host tool: debhelper-compat...
+[runepkg] Planning installation for 1 package(s)...
+  libcrypt1 perl-base perl-modules-5.42 libbz2-1.0 libdb5.3t64 libgdbm6t64 libgdbm-compat4t64 libperl5.42 perl m4 debianutils
+  autoconf autotools-dev automake xz-utils autopoint libdebhelper-perl libgmp10 libisl23 libmpfr6 libmpc3 libzstd1
+  cpp-16-aarch64-linux-gnu cpp-16 cpp-aarch64-linux-gnu cpp libstdc++6 libcc1-0 binutils-common libsframe3 libbinutils libctf-nobfd0
+  libctf0 libjansson4 binutils-aarch64-linux-gnu libgomp1 libitm1 libatomic1 libasan8 liblsan0 libtsan2 libubsan1 libhwasan0
+  libgcc-16-dev gcc-16-aarch64-linux-gnu libgprofng0 binutils gcc-16 gcc-aarch64-linux-gnu gcc libmagic-mgc libmagic1t64 file libtool
+  dh-autoreconf libarchive-zip-perl libfile-stripnondeterminism-perl dh-strip-nondeterminism libdpkg-perl bzip2 patch make dpkg-dev
+  libmd0 libpcre2-8-0 libselinux1 dpkg libelf1t64 dwz libsmartcols1 libtinfo6 bsdextrautils libuchardet0 groff-base debconf
+  libpipeline1 libseccomp2 man-db gettext-base libacl1 libattr1 libunistring5 libxml2-16 gettext intltool-debian sensible-utils
+  po-debconf debhelper
 
-file (1:5.47-4)                    gcc-16-base (16.2.0-4)             libbz2 (1.0-1.0.8-6+b2)
-libc-gconv-modules-extra (2.43-7)  libc6 (2.43-7)                     libgcc-s1 (16.2.0-4)
-liblzma5 (5.8.4-1)                 libmagic-mgc (1:5.47-4)            libmagic1t64 (1:5.47-4)
-zlib1g (1:1.3.dfsg+really1.3.2-4)
-[ zypherus /home/michko/runepkg/runepkg ]# nano silent_dirivitive.txt
+88 packages (78.2 MB) will be installed. Continue? [y/N] ^C
+[ zypherus /home/michko/runepkg/runepkg ]# cat > latest_rune_output.txt
+^C
+[ zypherus /home/michko/runepkg/runepkg ]# nano latest_rune_output.txt
+[ zypherus /home/michko/runepkg/runepkg ]# nano /etc/runepkg/runepkgconfig
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  Base Directory:      /srv/lib/runepkg_dir
+  Control Directory:   /srv/lib/runepkg_dir/control_dir
+  Install Directory:   /
+  System Install Root: /
+  Database Directory:  /srv/lib/runepkg_dir/runepkg_db
+  Download Directory:  /srv/lib/runepkg_dir/download_dir
+  Build Directory:     /srv/lib/runepkg_dir/build_dir
+  Debs Directory:      /srv/lib/runepkg_dir/target_deb
+  Target Install Dir:  (not set)
+  Target Architecture: amd64:x86_64-linux-gnu
+  Cleanup: no
+  MD5 Checks: yes
+
+Configured Sources:
+==================
+  [1] deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+  [2] deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg sync
+Host synchronization successful.
+[ zypherus /home/michko/runepkg/runepkg ]# runas --target=arm64:aarch64-linux-gnu build file
+[multiarch] Target Configuration:
+  Build Arch:    amd64 (x86_64-linux-gnu)
+  Host Arch:     arm64 (aarch64-linux-gnu)
+  Mode:          Cross Multi-Arch
+  Library Path:  /mnt/runepkg/aarch64-linux-gnu/usr/lib/aarch64-linux-gnu
+[runas] Verifying host build tools for file...
+[runas] Auto-installing missing host tool: debhelper-compat...
+[runepkg] Planning installation for 1 package(s)...
+  automake xz-utils autopoint libdebhelper-perl libtool dh-autoreconf libarchive-zip-perl libfile-stripnondeterminism-perl
+  dh-strip-nondeterminism libdpkg-perl patch make libsframe3 binutils-common libbinutils libstdc++6 libgprofng0 libctf-nobfd0 libctf0
+  libjansson4 binutils-aarch64-linux-gnu binutils dpkg-dev libmd0 libpcre2-8-0 libselinux1 dpkg libelf1t64 dwz libsmartcols1
+  bsdextrautils libuchardet0 groff-base libpipeline1 libseccomp2 man-db gettext-base libattr1 libgomp1 libxml2-16 gettext
+  intltool-debian po-debconf debhelper
+
+44 packages (20.5 MB) will be installed. Continue? [y/N] ^C
+[ zypherus /home/michko/runepkg/runepkg ]# lib
+libnetcfg             libtool               libtoolize            libtool-next-version
+[ zypherus /home/michko/runepkg/runepkg ]# dpkg -l automake
+┌── Desired=Unknown/Install/Remove/Purge/Hold
+│┌─ Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+││┌ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+│││ Name           Version      Architecture Description
+├┼┼─══════════════─════════════─════════════─═════════════════════════════════════════════════════
+ii  automake       1:1.18.1-4   all          Tool for generating GNU Standards-compliant Makefiles
+[ zypherus /home/michko/runepkg/runepkg ]# runepkg update
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] bind9-libs: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] dbus-daemon: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libsmartcols1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libnewt0.52: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] python3.13: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libauthen-sasl-perl: 2.2000-1 -> 2.2000-2
+  [upgradable] libltdl-dev: 2.6.2-2 -> 2.6.2-3
+  [upgradable] linux-libc-dev: 7.1.5-1kali1 -> 7.2.15-1kali1
+  [upgradable] libfido2-1: 1.17.0-1 -> 1.17.0-2
+  [upgradable] libfdisk1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] linux-sysctl-defaults: 4.15 -> 4.17
+  [upgradable] init-system-helpers: 1.69+kali1 -> 1.69+nmu3+kali1
+  [upgradable] openssl: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libext2fs2t64: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] zsh: 5.9-8+b40 -> 5.9.2-1+b2
+  [upgradable] libapt-pkg7.0: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] dbus-bin: 1.16.2-5 -> 1.16.4-1
+  [upgradable] zlib1g: 1:1.3.dfsg+really1.3.2-3 -> 1:1.3.dfsg+really1.3.2-4
+  [upgradable] libbrotli-dev: 1.2.0-4+b1 -> 1.2.0-4.1
+  [upgradable] libscalar-list-utils-perl: 5.42.3-1 -> 1:1.70-1+b1
+  [upgradable] libnet-ssleay-perl: 1.96-1+b1 -> 1.96-2
+  [upgradable] libhwasan0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libc-gconv-modules-extra: 2.43-4 -> 2.43-7
+  [upgradable] libpython3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] less: 668-1 -> 710+really668-1
+  [upgradable] libctf-nobfd0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] manpages: 6.19-3 -> 6.20-2
+  [upgradable] libatomic1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libsemanage2: 3.10-1 -> 3.11-1+b2
+  [upgradable] udev: 260.1-1 -> 262.2-1
+  [upgradable] openssh-client-gssapi: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] cron: 3.0pl1-209 -> 3.0pl1-213
+  [upgradable] libsepol2: 3.10-1 -> 3.11-1
+  [upgradable] dhcpcd-base: 1:10.3.2-3 -> 1:10.5.2-6
+  [upgradable] openssl-provider-legacy: 3.6.3-1 -> 3.6.5-1
+  [upgradable] g++-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] libsystemd0: 260.1-1 -> 262.2-1
+  [upgradable] libubsan1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libpython3.13-stdlib: 3.13.12-1 -> 3.13.15-1
+  [upgradable] dbus: 1.16.2-5 -> 1.16.4-1
+  [upgradable] nano: 9.0-1 -> 9.3-1
+  [upgradable] libblkid1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] bind9-dnsutils: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] libc6: 2.43-4 -> 2.43-7
+  [upgradable] libuv1t64: 1.52.1-4 -> 1.53.0-1
+  [upgradable] liburing2: 2.14-1 -> 2.15-1
+  [upgradable] bsdextrautils: 2.42.2-4 -> 2.42.4-1
+  [upgradable] tasksel: 3.88+kali2 -> 3.91+kali1
+  [upgradable] libffi8: 3.5.2-4 -> 3.8.0-2
+  [upgradable] kali-linux-core: 2026.2.12 -> 2026.4.2
+  [upgradable] tzdata: 2026b-1 -> 2026f-1
+  [upgradable] libcurl4-openssl-dev: 8.21.0-2 -> 8.23.0-2
+  [upgradable] gcc-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] laptop-detect: 0.16+nmu1 -> 0.17
+  [upgradable] libgcc-s1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libasan8: 16.2.0-1 -> 16.2.0-4
+  [upgradable] musl-tools: 1.2.6-1 -> 1.2.6-2
+  [upgradable] libparted2t64: 3.7-1 -> 3.8-2
+  [upgradable] kali-defaults: 2026.2.12 -> 2026.4.1
+  [upgradable] libjson-c5: 0.18+ds-3 -> 0.19+ds-1
+  [upgradable] mawk: 1.3.4.20260302-1 -> 1.3.4.20260302-2
+  [upgradable] libcc1-0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] logsave: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] login: 1:4.16.0-2+really2.42.2-4 -> 1:4.16.0-2+really2.42.4-1
+  [upgradable] cpp-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] passwd: 1:4.19.3-2 -> 1:4.20.3-1
+  [upgradable] kali-system-core: 2026.2.12 -> 2026.4.2
+  [upgradable] libssl3t64: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libclone-perl: 0.50-1+b1 -> 0.51-1
+  [upgradable] patch: 2.8-2 -> 2.8.1-1
+  [upgradable] libcap-ng0: 0.9.3-1 -> 0.9.6-1+b1
+  [upgradable] python3: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] apt: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] debianutils: 5.23.2 -> 5.24
+  [upgradable] automake: 1:1.18.1-4 -> 1:1.19-3
+  [upgradable] libversion-perl: 5.42.3-1 -> 1:0.9934-1+b1
+  [upgradable] libx11-6: 2:1.8.13-1 -> 2:1.8.14-1
+  [upgradable] vim: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] nftables: 1.1.6-1+b1 -> 1.1.7-3
+  [upgradable] liblsan0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] openssh-server: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] openssh-sftp-server: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] apt-transport-https: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] manpages-dev: 6.19-3 -> 6.20-2
+  [upgradable] libbrotli1: 1.2.0-4+b1 -> 1.2.0-4.1
+  [upgradable] liburcu8t64: 0.15.6-1+b1 -> 0.15.7-1
+  [upgradable] libattr1: 1:2.5.2-4 -> 1:2.6.0-1
+  [upgradable] libmount1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] python3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] gcc-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] bsdutils: 1:2.42.2-4 -> 1:2.42.4-1
+  [upgradable] mount: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libpam0g: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] procps: 2:4.0.4-9+b2 -> 2:4.0.7-1.1
+  [upgradable] ifupdown: 0.8.45 -> 0.8.45+nmu1+b1
+  [upgradable] libtool-bin: 2.6.2-2 -> 2.6.2-3
+  [upgradable] libitm1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libssl-dev: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libbinutils: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libsasl2-modules-db: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] libsqlite3-0: 3.46.1-9+b1 -> 3.53.4-2
+  [upgradable] libpam-runtime: 1.7.0-5 -> 1.7.0-8
+  [upgradable] libsasl2-2: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] libsasl2-modules: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] kali-system-cli: 2026.2.12 -> 2026.4.2
+  [upgradable] dbus-system-bus-common: 1.16.2-5 -> 1.16.4-1
+  [upgradable] dpkg: 1.23.7+kali1 -> 1.23.11+kali1
+  [upgradable] libnftnl11: 1.3.1-1+b1 -> 1.3.2-1
+  [upgradable] libcom-err2: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] publicsuffix: 20260428.1050-1 -> 20261007.0728-1
+  [upgradable] libc6-dev: 2.43-4 -> 2.43-7
+  [upgradable] comerr-dev: 2.1-1.47.4-1+b1 -> 2.1-1.47.4-1+b3
+  [upgradable] liblwp-protocol-https-perl: 6.15-1 -> 6.17-1
+  [upgradable] libpam-modules: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] libuuid1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] adduser: 3.156 -> 3.159
+  [upgradable] vim-runtime: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] libsystemd-shared: 260.1-1 -> 262.2-1
+  [upgradable] gcc-16-base: 16.2.0-1 -> 16.2.0-4
+  [upgradable] fdisk: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libcap2: 1:2.78-1 -> 1:2.78-1+b2
+  [upgradable] sqv: 1.3.0-5+b2 -> 1.5.0-1
+  [upgradable] tmux: 3.6b-1 -> 3.7c-1
+  [upgradable] zlib1g-dev: 1:1.3.dfsg+really1.3.2-3 -> 1:1.3.dfsg+really1.3.2-4
+  [upgradable] libx11-data: 2:1.8.13-1 -> 2:1.8.14-1
+  [upgradable] tar: 1.35+dfsg-5 -> 1.35+dfsg-7
+  [upgradable] libdbus-1-3: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libc-l10n: 2.43-4 -> 2.43-7
+  [upgradable] liblmdb0: 0.9.31-1+b3 -> 0.9.35-1
+  [upgradable] kali-archive-keyring: 2025.2 -> 2025.3
+  [upgradable] libstdc++-16-dev: 16.2.0-1 -> 16.2.0-4
+  [upgradable] sudo: 1.9.17p2-7 -> 1.9.17p2-11
+  [upgradable] init: 1.69+kali1 -> 1.69+nmu3+kali1
+  [upgradable] gettext-base: 1.0-3 -> 1.0-5
+  [upgradable] libjansson4: 2.14-2+b4 -> 2.15.1-1
+  [upgradable] g++-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libhtml-parser-perl: 3.83-2+b1 -> 3.86-1
+  [upgradable] parted: 3.7-1 -> 3.8-2
+  [upgradable] distro-info-data: 0.69 -> 2026.10.12-1
+  [upgradable] tex-common: 6.20 -> 6.21
+  [upgradable] tasksel-data: 3.88+kali2 -> 3.91+kali1
+  [upgradable] liblzma5: 5.8.3-1 -> 5.8.4-1
+  [upgradable] libpython3-stdlib: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] netbase: 6.5 -> 6.6
+  [upgradable] dbus-session-bus-common: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libc-dev-bin: 2.43-4 -> 2.43-7
+  [upgradable] libpam-modules-bin: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] python3-minimal: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] libcrypt1: 1:4.5.1-1+b1 -> 1:4.5.2+20251210-1
+  [upgradable] python3-newt: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] bind9-host: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] systemd-sysv: 260.1-1 -> 262.2-1
+  [upgradable] libss2: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] libpam-systemd: 260.1-1 -> 262.2-1
+  [upgradable] libsframe3: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] vim-common: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] libpopt0: 1.19+dfsg-2+b2 -> 1.19+dfsg-3
+  [upgradable] libelf1t64: 0.195-1 -> 0.196-1
+  [upgradable] runit-helper: 2.16.6 -> 2.16.7
+  [upgradable] gcc-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] openssh-client: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] cpp-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] ucf: 3.0053 -> 3.0056
+  [upgradable] libcurl4-gnutls: 8.21.0-2 -> 8.23.0-2
+  [upgradable] liblwp-mediatypes-perl: 6.04-2 -> 6.05-1
+  [upgradable] apt-utils: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] libgomp1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libltdl7: 2.6.2-2 -> 2.6.2-3
+  [upgradable] libmodule-corelist-perl: 5.42.3-1 -> 5.20261022-1
+  [upgradable] cron-daemon-common: 3.0pl1-209 -> 3.0pl1-213
+  [upgradable] lzma: 5.8.3-1 -> 25.00+dfsg-1
+  [upgradable] libunbound8: 1.26.0-2 -> 1.26.2-1
+  [upgradable] g++-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] gettext: 1.0-3 -> 1.0-5
+  [upgradable] libcurl3t64-gnutls: 8.21.0-2 -> 8.23.0-2
+  [upgradable] nfs-common: 1:2.9.1-1 -> 1:3.1.1-1
+  [upgradable] libc-bin: 2.43-4 -> 2.43-7
+  [upgradable] musl: 1.2.6-1 -> 1.2.6-2
+  [upgradable] libgcc-16-dev: 16.2.0-1 -> 16.2.0-4
+  [upgradable] binutils-common: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] base-files: 1:2026.2.0 -> 1:2026.3.1
+  [upgradable] libexpat1: 2.8.1-1 -> 2.10.0-1
+  [upgradable] libxml2-16: 2.15.3+dfsg-1 -> 2.15.4+dfsg-1+b1
+  [upgradable] xz-utils: 5.8.3-1 -> 5.8.4-1
+  [upgradable] iproute2: 7.0.0-1 -> 7.3.0-1
+  [upgradable] coreutils: 9.10-1 -> 9.12-0.3
+  [upgradable] binutils: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libtsan2: 16.2.0-1 -> 16.2.0-4
+  [upgradable] ca-certificates: 20260601 -> 20260816+nmu1
+  [upgradable] liberror-perl: 0.17030-1 -> 0.17031-1
+  [upgradable] wget: 1.25.0-2 -> 1.25.0-3
+  [upgradable] bash: 5.3-3 -> 5.3-4+b1
+  [upgradable] binutils-x86-64-linux-gnu: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] lsb-base: 3.18-1 -> 11.6
+  [upgradable] libquadmath0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] findutils: 4.10.0-4 -> 4.11.0-3
+  [upgradable] e2fsprogs: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] diffstat: 1.69-1 -> 1.69-2
+  [upgradable] g++: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] rsync: 3.5.0+ds1-2 -> 3.5.2+ds1-2
+  [upgradable] libnfsidmap1: 1:2.9.1-1 -> 1:3.1.1-1
+  [upgradable] util-linux: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libselinux1: 3.10-1 -> 3.11-2.1+b1
+  [upgradable] libseccomp2: 2.6.0-2+b1 -> 2.6.1-1+b2
+  [upgradable] libcurl4t64: 8.21.0-2 -> 8.23.0-2
+  [upgradable] kali-linux-wsl: 2026.2.12 -> 2026.4.2
+  [upgradable] libmd0: 1.2.0-2 -> 1.3.0-1
+  [upgradable] cpp: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] gcc: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] cpp-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] libcap2-bin: 1:2.78-1 -> 1:2.78-1+b2
+  [upgradable] libdb5.3t64: 5.3.28+dfsg2-11+b1 -> 5.3.28+dfsg2-12
+  [upgradable] libctf0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libtool: 2.6.2-2 -> 2.6.2-3
+  [upgradable] locales-all: 2.43-4 -> 2.43-7
+  [upgradable] libdigest-sha-perl: 5.42.3-1 -> 6.04-1+b4
+  [upgradable] quilt: 0.69-0.1 -> 0.69-1
+  [upgradable] tzdata-legacy: 2026b-1 -> 2026f-1
+  [upgradable] vim-tiny: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] python3-apt: 3.1.0 -> 3.1.0+b2
+  [upgradable] musl-dev: 1.2.6-1 -> 1.2.6-2
+  [upgradable] curl: 8.21.0-2 -> 8.23.0-2
+  [upgradable] libaudit1: 1:4.1.2-1+b1 -> 1:4.1.2-1+b2
+  [upgradable] libsemanage-common: 3.10-1 -> 3.11-1
+  [upgradable] liburi-perl: 5.35-1 -> 5.40-1
+  [upgradable] dbus-user-session: 1.16.2-5 -> 1.16.4-1
+  [upgradable] whiptail: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] libpcap0.8t64: 1.10.6-1 -> 1.11.0-1
+  [upgradable] libstdc++6: 16.2.0-1 -> 16.2.0-4
+  [upgradable] login.defs: 1:4.19.3-2 -> 1:4.20.3-1
+  [upgradable] plocate: 1.1.24-1 -> 1.1.25-1
+  [upgradable] libpcre2-8-0: 10.46-1+b2 -> 10.49-1
+  [upgradable] libapparmor1: 4.1.7-4 -> 4.1.8-3+b1
+  [upgradable] libudev1: 260.1-1 -> 262.2-1
+  [upgradable] libnftables1: 1.1.6-1+b1 -> 1.1.7-3
+  [upgradable] zsh-common: 5.9-8 -> 5.9.2-1
+  [upgradable] systemd: 260.1-1 -> 262.2-1
+  [upgradable] libgprofng0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] python-is-python3: 3.13.3-1 -> 3.14.7-1
+  [upgradable] libcbor0.10: 0.10.2-2.1+b1 -> 0.10.2-2.2
+  [upgradable] apt-file: 3.3 -> 3.4
+Update complete! Binary/Source indexes updated. 241 upgradable. Time: 27.4s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113784 source rune stanzas in 651ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29717 KB)
+[ zypherus /home/michko/runepkg/runepkg ]#

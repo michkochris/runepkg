@@ -58,6 +58,7 @@ void handle_update_pkglist(void);
 
 /* 70k+ Repository Graph Harvester & Target Dependency Resolver */
 int handle_resolve_tree(const char *pkg_name);
+int handle_resolve_build_tree(const char *pkg_name);
 
 #ifdef __cplusplus
 }

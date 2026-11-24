@@ -330,6 +330,7 @@ int runepkg_host_sync(void) {
 
     /* Check dpkg_host config: if 'none', skip host sync but still update local index */
     if (g_dpkg_host && strcmp(g_dpkg_host, "none") == 0) {
+        runepkg_util_log_verbose("[host] dpkg_host is set to 'none'. Skipping host sync.");
         runepkg_util_log_debug("[host] dpkg_host is set to 'none'. Skipping host sync.");
         runepkg_storage_build_autocomplete_index();
         return 0;
