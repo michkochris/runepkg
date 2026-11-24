@@ -62,8 +62,8 @@ target_arch=amd64:x86_64-linux-gnu
 
 # [install_dir]
 # Indefinite target root for package installation (set to '/' for system-wide).
-#install_dir=/
-install_dir=/srv/lib/runepkg_dir/install_dir
+install_dir=/
+#install_dir=/srv/lib/runepkg_dir/install_dir
 
 # [runepkg_db]
 # Persistent storage location for {HOST} package manager's state.

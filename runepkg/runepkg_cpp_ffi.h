@@ -112,6 +112,7 @@ int runepkg_resolver_get_install_plan_multiple(const char **pkg_names, int count
 void runepkg_resolver_free_plan(RuneTargetPlan *plan);
 int runepkg_resolver_dump_tree(const char *pkg_name);
 int runepkg_resolver_dump_build_tree(const char *pkg_name);
+int runepkg_resolver_dump_cross_tree(const char *pkg_name, const char *target_arch);
 
 #ifdef __cplusplus
 }

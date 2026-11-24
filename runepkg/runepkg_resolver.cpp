@@ -1,9 +1,9 @@
 /******************************************************************************
- * Filename:    runepkg_resolver.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-26
- * Description: 70k+ Repository Graph Harvester & Minimal Target Rune Resolver
- * LICENSE:     GPL v3
+- Filename:    runepkg_resolver.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-26
+- Description: 70k+ Repository Graph Harvester & Minimal Target Rune Resolver
+- LICENSE:     GPL v3
  ******************************************************************************/
 
 #include <iostream>
@@ -18,12 +18,15 @@
 #include <filesystem>
 #include <thread>
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <unistd.h>
 #include <libgen.h>
 #include <dirent.h>
 
 #include "runepkg_cpp_ffi.h"
+#include "runepkg_multiarch.hpp"
 #include "runepkg_utility.hpp"
 #include "runepkg_security.hpp"
 
@@ -434,21 +437,147 @@ public:
             }
         }
 
+        std::cout << "\033[1;34m[tree]\033[0m Build Dependencies Visualization for \033[1;32m" << pkg_name << "\033[0m (Target Sysroot: " << (g_target_sysroot ? g_target_sysroot : "/") << ")" << std::endl;
+        std::unordered_set<std::string> seen;
+        std::vector<std::string> order;
+        dump_node_recursive(root, "", true, graph, seen, &order);
+
+        std::cout << "\n\033[1;32mCopy-pasteable one-liner for runepkg -i:\033[0m\n";
+        std::unordered_set<std::string> emitted;
+        bool first = true;
+        for (const auto& s : order) {
+            std::string name = s;
+            if (name.rfind("src:", 0) == 0) name = name.substr(4);
+            name = clean_package_key(name);
+            if (!name.empty() && name != clean_package_key(pkg_name) && emitted.insert(name).second) {
+                if (!first) std::cout << " ";
+                std::cout << name;
+                first = false;
+            }
+        }
+        std::cout << std::endl;
+    }
+
+    void dump_cross_tree_view(const std::string& pkg_name, const std::string& target_arch_override = "") {
+        std::string db_path = get_default_db_path();
+        std::unordered_map<std::string, RuneGraphEntry> graph;
+
+        if (load_binary_graph(db_path, graph) != 0) {
+            const char *eff_db = runepkg_config_get_effective_db_dir();
+            std::string lists_dir = g_runepkg_lists_dir ? g_runepkg_lists_dir :
+                                   (eff_db ? std::string(eff_db) + "/lists" : "/srv/lib/runepkg_dir/runepkg_db/lists");
+            harvest(lists_dir, db_path);
+            load_binary_graph(db_path, graph);
+        }
+
+        extern char *g_target_arch;
+        std::string arch_arg = !target_arch_override.empty() ? target_arch_override : (g_target_arch ? g_target_arch : "");
+        DebianMultiArchConfig ma = DebianMultiArchEngine::configure_multiarch(arch_arg);
+
+        std::string root = clean_package_key(pkg_name);
+        if (root.rfind("src:", 0) != 0) {
+            root = "src:" + root;
+        }
+        if (graph.find(root) == graph.end()) {
+            char *src_res = runepkg_repo_find_source_for_binary(pkg_name.c_str());
+            if (src_res) {
+                root = "src:" + std::string(src_res);
+                free(src_res);
+            }
+        }
         if (graph.find(root) == graph.end()) {
             std::cerr << "ERROR: Source package for '" << pkg_name << "' not found in graph." << std::endl;
             return;
         }
 
-        std::cout << "\033[1;34m[tree]\033[0m Build Dependencies Visualization for \033[1;32m" << pkg_name << "\033[0m (Target Sysroot: " << (g_target_sysroot ? g_target_sysroot : "/") << ")" << std::endl;
-        std::unordered_set<std::string> seen;
-        dump_node_recursive(root, "", true, graph, seen);
+        std::unordered_map<std::string, std::string> host_installed;
+        populate_host_installed_map(host_installed);
 
-        std::cout << "\n\033[1;32mCopy-pasteable one-liner for runepkg -i:\033[0m\n";
+        auto has_bin_in_path = [](const std::string& bin) -> bool {
+            const char *path_env = getenv("PATH");
+            if (!path_env) return false;
+            std::stringstream ss(path_env);
+            std::string dir;
+            while (std::getline(ss, dir, ':')) {
+                if (dir.empty()) dir = ".";
+                if (access((dir + "/" + bin).c_str(), X_OK) == 0) return true;
+            }
+            return false;
+        };
+
+        const char *sysroot_disp = !ma.sysroot.empty() ? ma.sysroot.c_str() :
+                                   (g_target_sysroot ? g_target_sysroot : "/");
+
+        std::cout << "\033[1;34m[tree]\033[0m Cross Dependencies Visualization for \033[1;32m" << pkg_name << "\033[0m"
+                  << " (Build: " << ma.deb_build_arch << " -> Target: " << ma.deb_host_arch << "/" << ma.deb_host_triplet
+                  << ", Sysroot: " << sysroot_disp << ")" << std::endl;
+
+        struct ToolSpec {
+            std::string host_pkg;
+            std::string bin_name;
+        };
+        std::vector<ToolSpec> toolchain_bins = {
+            { "gcc-" + ma.deb_host_triplet,      ma.deb_host_triplet + "-gcc" },
+            { "g++-" + ma.deb_host_triplet,      ma.deb_host_triplet + "-g++" },
+            { "binutils-" + ma.deb_host_triplet, ma.deb_host_triplet + "-ld"  }
+        };
+
+        std::vector<std::string> missing_host_pkgs;
+        const RuneGraphEntry& src_entry = graph.at(root);
+
+        std::cout << "└── " << pkg_name << "\n";
+        std::cout << "    ├── \033[1;33m[host-toolchain]\033[0m Cross Compiler & Build Tools (" << ma.deb_build_arch << ")\n";
+        for (size_t i = 0; i < toolchain_bins.size(); ++i) {
+            bool ok = has_bin_in_path(toolchain_bins[i].bin_name);
+            bool has_more_host_tools = !src_entry.host_tools.empty();
+            bool last = (!has_more_host_tools && i + 1 == toolchain_bins.size());
+            std::cout << "    │   " << (last ? "└── " : "├── ")
+                      << toolchain_bins[i].host_pkg << " (" << toolchain_bins[i].bin_name << "): "
+                      << (ok ? "\033[1;32mready\033[0m" : "\033[1;31mmissing\033[0m") << "\n";
+            if (!ok && std::find(missing_host_pkgs.begin(), missing_host_pkgs.end(), toolchain_bins[i].host_pkg) == missing_host_pkgs.end()) {
+                missing_host_pkgs.push_back(toolchain_bins[i].host_pkg);
+            }
+        }
+        for (size_t i = 0; i < src_entry.host_tools.size(); ++i) {
+            const std::string& htool = src_entry.host_tools[i];
+            bool inst = host_installed.count(htool) > 0 || has_bin_in_path(htool);
+            bool last = (i + 1 == src_entry.host_tools.size());
+            std::cout << "    │   " << (last ? "└── " : "├── ")
+                      << htool << (inst ? " \033[1;32m(ready)\033[0m" : " \033[1;31m(missing)\033[0m") << "\n";
+            if (!inst && std::find(missing_host_pkgs.begin(), missing_host_pkgs.end(), htool) == missing_host_pkgs.end()) {
+                missing_host_pkgs.push_back(htool);
+            }
+        }
+
+        std::cout << "    └── \033[1;36m[target-sysroot]\033[0m Target Build-Depends (" << sysroot_disp << ")\n";
+        std::unordered_set<std::string> seen;
+        std::vector<std::string> order;
+        dump_node_recursive(root, "        ", true, graph, seen, &order);
+
+        if (!missing_host_pkgs.empty()) {
+            std::cout << "\n\033[1;33mCopy-pasteable one-liner for host build/cross packages:\033[0m\n";
+            std::unordered_set<std::string> emitted_host;
+            bool first_host = true;
+            for (size_t i = 0; i < missing_host_pkgs.size(); ++i) {
+                std::string hname = clean_package_key(missing_host_pkgs[i]);
+                if (!hname.empty() && emitted_host.insert(hname).second) {
+                    if (!first_host) std::cout << " ";
+                    std::cout << hname;
+                    first_host = false;
+                }
+            }
+            std::cout << "\n";
+        }
+
+        std::cout << "\n\033[1;32mCopy-pasteable one-liner for target sysroot (runepkg --target="
+                  << ma.deb_host_arch << ":" << ma.deb_host_triplet << " -i):\033[0m\n";
+        std::unordered_set<std::string> emitted_target;
         bool first = true;
-        for (const auto& s : seen) {
+        for (const auto& s : order) {
             std::string name = s;
             if (name.rfind("src:", 0) == 0) name = name.substr(4);
-            if (name != clean_package_key(pkg_name)) {
+            name = clean_package_key(name);
+            if (!name.empty() && name != clean_package_key(pkg_name) && emitted_target.insert(name).second) {
                 if (!first) std::cout << " ";
                 std::cout << name;
                 first = false;
@@ -460,7 +589,8 @@ public:
 private:
     void dump_node_recursive(const std::string& pkg, const std::string& prefix, bool is_last,
                             const std::unordered_map<std::string, RuneGraphEntry>& graph,
-                            std::unordered_set<std::string>& seen) {
+                            std::unordered_set<std::string>& seen,
+                            std::vector<std::string>* order_list = nullptr) {
         auto it = graph.find(pkg);
         if (it == graph.end()) return;
 
@@ -475,6 +605,7 @@ private:
         }
         std::cout << " (" << it->second.version << ")" << std::endl;
         seen.insert(pkg);
+        if (order_list) order_list->push_back(pkg);
 
         std::vector<std::string> deps;
         if (pkg.rfind("src:", 0) == 0) {
@@ -493,7 +624,7 @@ private:
 
         std::string new_prefix = prefix + (is_last ? "    " : "│   ");
         for (size_t i = 0; i < resolved_deps.size(); i++) {
-            dump_node_recursive(resolved_deps[i], new_prefix, (i == resolved_deps.size() - 1), graph, seen);
+            dump_node_recursive(resolved_deps[i], new_prefix, (i == resolved_deps.size() - 1), graph, seen, order_list);
         }
     }
 
@@ -705,7 +836,7 @@ private:
         maybe_insert();
     }
 
-void parse_sources_file(const std::string& path, std::unordered_map<std::string, RuneGraphEntry>& graph) {
+    void parse_sources_file(const std::string& path, std::unordered_map<std::string, RuneGraphEntry>& graph) {
         std::ifstream file(path);
         if (!file.is_open()) return;
 
@@ -824,7 +955,6 @@ void parse_sources_file(const std::string& path, std::unordered_map<std::string,
                 }
             }
         } else if (!qual.empty() && qual != "native") {
-            /* Without a stanza confirming Multi-Arch satisfaction, don't assume cross-arch match */
             const char* host_arch = get_effective_host_arch();
             const char* target_arch = get_effective_arch();
             if (qual == "any") {
@@ -1205,6 +1335,17 @@ extern "C" int runepkg_resolver_dump_build_tree(const char *pkg_name) {
         if (!pkg_name) return -1;
         RuneResolverEngine engine;
         engine.dump_build_tree_view(pkg_name);
+        return 0;
+    } catch (...) {
+        return -1;
+    }
+}
+
+extern "C" int runepkg_resolver_dump_cross_tree(const char *pkg_name, const char *target_arch) {
+    try {
+        if (!pkg_name) return -1;
+        RuneResolverEngine engine;
+        engine.dump_cross_tree_view(pkg_name, target_arch ? target_arch : "");
         return 0;
     } catch (...) {
         return -1;

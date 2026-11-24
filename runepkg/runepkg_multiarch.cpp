@@ -93,13 +93,17 @@ DebianMultiArchConfig DebianMultiArchEngine::configure_multiarch(const std::stri
     }
 
     std::string base_root = "/usr";
+    std::string sysroot_path = "/";
     if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+        sysroot_path = g_target_sysroot;
         base_root = std::string(g_target_sysroot) + "/usr";
     } else if (g_active_profile && g_active_profile->sysroot && g_active_profile->sysroot[0] != '\0') {
+        sysroot_path = g_active_profile->sysroot;
         base_root = std::string(g_active_profile->sysroot) + "/usr";
     }
     config.lib_dir = base_root + "/lib/" + config.deb_host_triplet;
     config.pkgconfig_dir = config.lib_dir + "/pkgconfig";
+    config.sysroot = sysroot_path;
 
     return config;
 }
@@ -122,6 +126,14 @@ int DebianMultiArchEngine::export_multiarch_env(const DebianMultiArchConfig& con
         setenv("AR", ar.c_str(), 1);
         setenv("RANLIB", ranlib.c_str(), 1);
         setenv("STRIP", strip.c_str(), 1);
+
+        if (!config.sysroot.empty() && config.sysroot != "/") {
+            std::string sysroot_flag = "--sysroot=" + config.sysroot;
+            setenv("PKG_CONFIG_SYSROOT_DIR", config.sysroot.c_str(), 1);
+            setenv("CFLAGS", sysroot_flag.c_str(), 1);
+            setenv("CXXFLAGS", sysroot_flag.c_str(), 1);
+            setenv("LDFLAGS", sysroot_flag.c_str(), 1);
+        }
 
         std::string pkg_path = config.pkgconfig_dir + ":/usr/share/pkgconfig";
         setenv("PKG_CONFIG_PATH", pkg_path.c_str(), 1);

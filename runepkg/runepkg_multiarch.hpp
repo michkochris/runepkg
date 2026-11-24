@@ -19,6 +19,7 @@ struct DebianMultiArchConfig {
     std::string deb_host_triplet;   /* e.g. "aarch64-linux-gnu" */
     std::string lib_dir;            /* e.g. "/usr/lib/aarch64-linux-gnu" */
     std::string pkgconfig_dir;      /* e.g. "/usr/lib/aarch64-linux-gnu/pkgconfig" */
+    std::string sysroot;            /* e.g. "/mnt/runepkg/aarch64-linux-gnu" */
     bool is_cross_compiling;
 };
 

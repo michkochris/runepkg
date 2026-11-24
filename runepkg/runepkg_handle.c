@@ -554,6 +554,8 @@ int handle_remove(const char *package_name) {
     return 0;
 }
 
+/* [Middle handlers between handle_remove and handle_list were not in the pasted slices] */
+
 void handle_list(const char *pattern) {
     int listed;
     runepkg_log_verbose("Listing installed packages...\n");
@@ -1318,7 +1320,21 @@ int handle_resolve_build_tree(const char *pkg_name) {
 #endif
 }
 
-
+int handle_resolve_cross_tree(const char *pkg_name) {
+#ifdef ENABLE_CPP_FFI
+    extern char *g_target_arch;
+    if (!pkg_name || pkg_name[0] == '\0') {
+        printf("Error: cross-depends requires a target package name.\n");
+        return -1;
+    }
+    return runepkg_resolver_dump_cross_tree(pkg_name, g_target_arch ? g_target_arch : "");
+#else
+    (void)pkg_name;
+    printf("Notice: Target cross dependency resolver requires a C++ build with FFI enabled.\n");
+    printf("Rebuild with 'make all' to enable this feature.\n");
+    return -1;
+#endif
+}
 
 int handle_md5_check(const char *package_name) {
     PkgInfo pkg_info;

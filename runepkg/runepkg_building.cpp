@@ -1,9 +1,9 @@
 /*****************************************************************************
- * Filename:    runepkg_building.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-09-20
- * Description: Standard Debian Source Builder & JIT Matrix Cross-Forge
- * LICENSE:     GPL v3
+- Filename:    runepkg_building.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: Standard Debian Source Builder & JIT Matrix Cross-Forge
+- LICENSE:     GPL v3
  ******************************************************************************/
 
 #include <iostream>
@@ -14,6 +14,7 @@
 #include <sstream>
 #include <filesystem>
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -134,6 +135,11 @@ public:
         std::string build_dir = g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir";
         fs::create_directories(build_dir);
 
+        extern char *g_target_arch;
+        std::string target_arch_arg = g_target_arch ? g_target_arch : "";
+        DebianMultiArchConfig ma_config = DebianMultiArchEngine::configure_multiarch(target_arch_arg);
+        DebianMultiArchEngine::export_multiarch_env(ma_config);
+
         /* Always wipe and overwrite previous build source directory for a pristine start */
         for (const auto& entry : fs::directory_iterator(build_dir)) {
             if (entry.is_directory()) {
@@ -249,11 +255,45 @@ public:
         std::string make_log = (log_dir / (target_path_ + "_make.log")).string();
         std::string inst_log = (log_dir / (target_path_ + "_install.log")).string();
 
+        if (ma_config.is_cross_compiling) {
+            setenv("DEB_HOST_ARCH", ma_config.deb_host_arch.c_str(), 1);
+            setenv("DEB_HOST_GNU_TYPE", ma_config.deb_host_triplet.c_str(), 1);
+            if (!ma_config.deb_build_arch.empty()) {
+                setenv("DEB_BUILD_ARCH", ma_config.deb_build_arch.c_str(), 1);
+            }
+            if (!ma_config.deb_build_triplet.empty()) {
+                setenv("DEB_BUILD_GNU_TYPE", ma_config.deb_build_triplet.c_str(), 1);
+            }
+
+            std::string cross_cc = ma_config.deb_host_triplet + "-gcc";
+            std::string cross_cxx = ma_config.deb_host_triplet + "-g++";
+            std::string cross_ar = ma_config.deb_host_triplet + "-ar";
+            std::string cross_ranlib = ma_config.deb_host_triplet + "-ranlib";
+            setenv("CC", cross_cc.c_str(), 1);
+            setenv("CXX", cross_cxx.c_str(), 1);
+            setenv("AR", cross_ar.c_str(), 1);
+            setenv("RANLIB", cross_ranlib.c_str(), 1);
+
+            if (!ma_config.sysroot.empty()) {
+                std::string sysroot_inc = "-isystem" + ma_config.sysroot + "/usr/include";
+                std::string sysroot_lib = "-L" + ma_config.sysroot + "/lib/" + ma_config.deb_host_triplet +
+                                          " -L" + ma_config.sysroot + "/usr/lib/" + ma_config.deb_host_triplet +
+                                          " -Wl,-rpath-link," + ma_config.sysroot + "/lib/" + ma_config.deb_host_triplet +
+                                          " -Wl,-rpath-link," + ma_config.sysroot + "/usr/lib/" + ma_config.deb_host_triplet;
+                setenv("CFLAGS", sysroot_inc.c_str(), 0);
+                setenv("CPPFLAGS", sysroot_inc.c_str(), 0);
+                setenv("LDFLAGS", sysroot_lib.c_str(), 0);
+            }
+        }
+
         bool build_success = false;
 
         /* Try debian/rules build first with Telemetry & Log Redirection */
         if (fs::exists("debian/rules")) {
             chmod("debian/rules", 0755);
+            if (ma_config.is_cross_compiling) {
+                std::cout << "\033[1;36m[multiarch]\033[0m Cross-compiling via debian/rules for host arch: " << ma_config.deb_host_arch << " (" << ma_config.deb_host_triplet << ")" << std::endl;
+            }
             char* argv_rules[] = {(char*)"./debian/rules", (char*)"build", NULL};
             if (runepkg_util_execute_command_telemetry("./debian/rules", argv_rules, make_log.c_str()) == 0) {
                 char* argv_inst[] = {(char*)"./debian/rules", (char*)"binary", NULL};
@@ -263,16 +303,26 @@ public:
             }
         }
 
-        /* Fallback: Modern ./configure && make && make install DESTDIR=... with Telemetry */
+        /* Fallback: Modern ./configure with cross --host support */
         if (!build_success && fs::exists("configure")) {
-            char* argv_cfg[] = {
-                (char*)"./configure",
-                (char*)"--prefix=/usr",
-                (char*)"--sysconfdir=/etc",
-                (char*)"--localstatedir=/var",
-                NULL
+            std::vector<std::string> cfg_args = {
+                "./configure",
+                "--prefix=/usr",
+                "--sysconfdir=/etc",
+                "--localstatedir=/var"
             };
-            if (runepkg_util_execute_command_telemetry("./configure", argv_cfg, cfg_log.c_str()) == 0) {
+            if (ma_config.is_cross_compiling) {
+                if (!ma_config.deb_build_triplet.empty()) {
+                    cfg_args.push_back("--build=" + ma_config.deb_build_triplet);
+                }
+                cfg_args.push_back("--host=" + ma_config.deb_host_triplet);
+            }
+
+            std::vector<char*> c_args;
+            for (auto& s : cfg_args) c_args.push_back(&s[0]);
+            c_args.push_back(nullptr);
+
+            if (runepkg_util_execute_command_telemetry("./configure", c_args.data(), cfg_log.c_str()) == 0) {
                 unsigned int cores = std::thread::hardware_concurrency();
                 if (cores == 0) cores = 2;
                 std::string j_str = "-j" + std::to_string(cores);
