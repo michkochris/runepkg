@@ -1010,7 +1010,7 @@ private:
         if (!is_root_target &&
             explicit_targets.find(check_name) == explicit_targets.end() &&
             explicit_targets.find(real_pkg) == explicit_targets.end() &&
-            (mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
+            (mode == ResolveMode::MODE_HOST_DEPS) &&
             is_installed_satisfied(pkg, host_installed_map, graph)) {
             visited.insert(pkg);
             return true;
@@ -1062,7 +1062,7 @@ private:
 
         if (explicit_targets.find(target_key) == explicit_targets.end() &&
             explicit_targets.find(real_key) == explicit_targets.end()) {
-            if ((mode == ResolveMode::MODE_INSTALL || mode == ResolveMode::MODE_HOST_DEPS) &&
+            if ((mode == ResolveMode::MODE_HOST_DEPS) &&
                 is_installed_satisfied(dep, host_installed_map, graph)) {
                 return;
             }

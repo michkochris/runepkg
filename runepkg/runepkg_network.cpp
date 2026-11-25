@@ -1360,18 +1360,6 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
         for (int j = 0; j < plan->node_count; j++) {
             std::string pkg_name = plan->nodes[j].package_name;
 
-            /* Host Core Protection Shield: Skip auto-upgrades of core host packages on live / */
-            if ((!g_system_install_root || strcmp(g_system_install_root, "/") == 0) && runepkg_defensive_is_critical_host_pkg(pkg_name.c_str())) {
-                bool is_explicit = false;
-                for (int k = 0; k < count; k++) {
-                    if (pkg_names[k] && pkg_name == pkg_names[k]) { is_explicit = true; break; }
-                }
-                if (!is_explicit) {
-                    std::cout << "\033[1;33m[defensive]\033[0m Shielding host core package '" << pkg_name << "' from dependency auto-upgrade on live host /" << std::endl;
-                    continue;
-                }
-            }
-
             std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
             PkgMetadata meta;
             if (filename.empty()) {

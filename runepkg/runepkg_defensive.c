@@ -600,15 +600,8 @@ int runepkg_defensive_is_critical_host_pkg(const char *pkg_name) {
 }
 
 runepkg_error_t runepkg_defensive_check_critical_host_package(const char *pkg_name, const char *install_root) {
-    if (!pkg_name) return RUNEPKG_ERROR_NULL_POINTER;
-
-    if (!install_root || install_root[0] == '\0' || strcmp(install_root, "/") == 0) {
-        if (runepkg_defensive_is_critical_host_pkg(pkg_name)) {
-            runepkg_util_log_verbose("\033[1;33m[defensive]\033[0m Shielded critical host infrastructure package '%s' from direct extraction onto /\n", pkg_name);
-            return RUNEPKG_ERROR_INVALID_INPUT;
-        }
-    }
-
+    (void)pkg_name;
+    (void)install_root;
     return RUNEPKG_SUCCESS;
 }
 

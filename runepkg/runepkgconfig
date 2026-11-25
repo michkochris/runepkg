@@ -123,15 +123,15 @@ gpg_check=no
 
 # [Debian Stable (Trixie)] - RECOMMENDED FOR STABLE RUNEPKG DEPLOYMENTS
 # Debian Stable provides frozen, reliable package versions that prevent 404 mirror pruning errors.
-deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
-deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
-deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+#deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
+#deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 
 # [Kali Linux Rolling] - OPTIONAL ROLLING RELEASE FOR RUNEPKG
 # Note: Rolling mirrors frequently prune older package versions, which can cause 404 download errors.
-#deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
-#deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 
 # Debian Ports (for extra/ports arches: loong64, riscv64, alpha, hppa, m68k, sh4, sparc64)
 #deb http://ftp.ports.debian.org/debian-ports sid main
