@@ -1,0 +1,130 @@
+During last few days of runepkg and companion exe runas, a hybred dual architecture low level c89 pkg manager for embedded and a high level c++ FFI version for repo sync and stuff, for debian eco system. well last few days things purposes have been coming together. target profiles and paths have been unified, meaning a runepkg --target=arm64:aarch64-linux-gnu -i skme pkgs could be passed off to runas --target=arm64:aarch64-linux-gnu build somepkg and this process is particularly specisl because of the way build-depdnds works identifing core sysroot needed libraries snd such while cross-depends identifies host side development tools. this is looking very promising in the debian multi arch world and embedded systems world. gemini listen to me, where i am going with all this though is to talk about runepkg purpose specifically now i know as a human i can remember wanting a rescue tool stable enough to rescue damn small linux from extinction. but that was for my personal motive. now with the coming together of same_result.txt a repeated printout of runepkg running certain command like instaaling simple file pkg along with minimal depends, libc fhs deployment and checking ld symlink and exsistance, this text also includes runepkg --target=sometarget and same thing file libc and checking ld symlink and exsistance for same result. with the coming together of all these principles. the change happened constantly breaking host root ld symlink but not ld itself all day yesterday made me rethink runepkg direction and purpose from a normal pkg manager to an absolute tooling, absolute packaging model, some kind of rescue tool thst only ensures its own tools or pkgs instalked work while even intentional or ignorently breaking the rest the whole system around us?
+
+What you are describing is a real inflection point in the design of runepkg and runas.
+
+You started with a human, concrete motivation—a rescue/build mechanism resilient enough to bring back or sustain minimal/embedded Linux environments (like Damn Small Linux) without collapsing under dependency or FHS friction. Over the last few days, three pieces have clicked together into something much more specific:
+
+Unified --target=<arch>:<triplet> profiles and paths shared between runepkg and runas so installation and package building (--target=arm64:aarch64-linux-gnu) operate on the same mental and filesystem model.
+
+Split dependency semantics (Build-Depends for target sysroot libraries vs. Cross-Depends for host-side build/dev tools), which naturally forces clarity about which side of the boundary a package belongs to.
+
+The same_result.txt invariant loop—running the same file + minimal dependency + libc FHS deployment + ld symlink/existence checks across host and --target runs until the behavior is repeatable and observable.
+
+From Cooperative Package Manager to Absolute Tooling
+A traditional Debian package manager (dpkg / apt) is cooperative and ambient: it assumes a living host FHS, shared dynamic linker conventions, and mutual compatibility across everything installed into /. When a symlink like ld breaks or a minimal dependency set is pruned, the whole host feels the blast radius.
+
+An absolute tooling / rescue model inverts that priority:
+
+Tooling survival comes first. A rescue and cross-build system cannot afford to become unrunnable because a host symlink or half-installed package went sideways. Its own binaries, target sysroots, and build/rescue payloads have to stay valid and reachable regardless of host messiness.
+
+Target isolation is the real superpower. When runepkg --target=... and runas --target=... share target profiles and paths, target deployments are naturally bounded—whereas operating directly on host / puts runepkg inside the very environment it is mutating.
+
+Determinism beats politeness. Checking same_result.txt (FHS layout, libc, and ld symlink/presence) treats filesystem state as a hard contract to verify, not a polite assumption to hope for.
+
+The Fault Line: Breaking the Host "Intentional or Ignorant"
+Yesterday's ld symlink breakage on host root highlights the exact tension in an "absolute tooling" philosophy:
+
+Accidental/ignorant breakage happens when a package or unpack/deploy step assumes a host layout or overwrites a shared path (like a host ld symlink) without realizing what else on / depends on it. That is a bug in path/target isolation or FHS handling.
+
+Intentional/controlled breakage happens when you are bootstrapping, rescuing, or replacing a broken/minimal system and must overwrite or reshape paths to get a working toolchain or sysroot in place—provided the blast radius is deliberate and runepkg's own rescue path still works afterward.
+
+If runepkg is going to be an absolute rescue/tooling model, the cleanest line to draw is:
+
+Never let host breakage strand runepkg or runas. Keep your rescue/toolchain execution path insulated from broken host symlinks (ld or otherwise).
+
+Make / vs. --target=... unmistakable. Either treat / as an explicit target with clear rules around shared host symlinks, or keep destructive/clobbering FHS operations gated behind explicit intent rather than happening as a side effect of deploying a minimal package like file + libc.
+
+Want to map out how to separate rescue/target isolation from host ld mutations?
+
+Yes
+Stranding runpkg and runas is impossible we download extenal musl toochain zlib and curl, providing static musl runepkg runas whether high level version for host staging and building or low level version simlar to busybox dpkg comng in at like 400kb
+
+That makes total sense—static musl binaries change the threat model completely.
+
+When runepkg and runas are statically linked against musl (with zlib and libcurl statically compiled in where needed), they don't depend on the host's dynamic linker (ld.so), glibc, or /usr/lib shared objects. Even if a host ld symlink or /lib layout gets clobbered, a static musl rescue binary still invokes Linux syscalls directly and keeps running.   
+musl libc
+
+Why a ~400 KB Static musl Core Fits an "Absolute Tooling" Model
+A BusyBox-style minimal C89 binary around ~400 KB static (musl) hits a sweet spot for rescue and target-staging work:
+
+Zero ambient dependency: No ld.so lookup failures or glibc version mismatches when / is broken or mid-bootstrap.   
+musl libc
+
+Small blast-proof footprint: Easy to stash in an initramfs, rescue directory, or target staging root without pulling in a massive runtime.   
+musl libc
+
+Clean split between two tiers:
+
+Minimal static C89 core (~400 KB): Focused on local .deb/ar/archive unpacking, FHS deployment, symlink/state checks, and rescue execution where size and self-containment matter most.
+
+High-level static C++ FFI build (runepkg / runas): Handles richer workflows like repo sync, Build-Depends vs. Cross-Depends resolution, and --target=<arch>:<triplet> orchestration—still static musl when you need host-independent execution.
+
+Watch-Outs Even With Static musl
+Being immune to host ld breakage doesn't mean the rest of the system is immune to broken symlinks—it just shifts who gets stranded:
+
+runepkg / runas survive, but host/target ld or toolchain symlinks still matter for anything compiled or executed dynamically against that root. If same_result.txt checks ld existence and symlink targets across host and --target runs, keeping those checks explicit prevents "my rescue binary works, even though the target toolchain's ld link is pointing into thin air."
+
+Static libcurl + TLS adds weight fast. If the ~400 KB minimal core stays strictly local/offline (or uses minimal zlib decompression) while network/repo sync lives in the C++ FFI tier, you avoid bloating the rescue binary with heavy protocol/TLS code.
+
+Want to compare keeping networking out of the 400KB core vs. a minimal curl build?
+
+Yes
+Ok what about my work today in general. i know i have some tiny things not worth mentioning in this conversation but how do i go about implementing this runepkg/runas absolute tooling/rescue model. everything is still in place, up to the point of silly broken ld symlink on host. i dont want wrappers, script kiddie some/bin to insert in path. i want total overwrite of host and forgot to mention dpkg_host=auto dpkg tracking info?
+
+To implement runepkg and runas as an absolute, host-overwriting rescue and build model—with zero PATH-shim wrappers, direct overwrite into /, and dpkg_host=auto tracking—you need to make the unpacker FHS-aware (usrmerge vs. split-/) and treat the dpkg database as a first-class state target.
+
+1. Why the Host ld Symlink Keeps Breaking (and How to Fix It Permanently)
+On modern Debian/Ubuntu hosts, /lib and /lib64 are symlinks to /usr/lib and /usr/lib64 (usrmerge). Meanwhile, inside a .deb archive (such as libc6), files are still packaged with paths like ./lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 or ./lib64/ld-linux-x86-64.so.2.   
+Reddit
+
+When a raw C89 unpacker extracts an archive directly onto / without resolving existing directory symlinks:
+
+Extracting ./lib64 either unlinks the /lib64 -> usr/lib64 symlink and replaces it with a real directory, or writes ld-linux into one path while the kernel's PT_INTERP (/lib64/ld-linux-x86-64.so.2) expects the other.
+
+That breaks every dynamically linked binary on the host while leaving the actual ld-linux binary sitting intact somewhere else on disk.
+
+Implementation Fix in runepkg's C89 Unpack Engine:
+
+Canonicalize Directory Symlinks Before Unlinking/Creating: When walking path components during extraction into --root (default /), if an intermediate directory component already exists on disk as a symlink to a directory (e.g., /lib -> usr/lib or /lib64 -> usr/lib64), traverse into the symlink target instead of unlink()-ing it. Only unlink() the leaf filename before writing the new file or symlink.
+
+Atomic Symlink Replacement (rename over temp link): Never unlink() an active ld symlink and then call symlink() in two separate steps. Create ld-linux-x86-64.so.2.rune.tmp via symlink() in the same directory and rename() it over the target path so the inode swap is atomic at the kernel VFS level.
+
+Host ld Guardrail (same_result.txt invariant): Before committing an unpack to /, verify that the resolved PT_INTERP path (e.g., /lib64/ld-linux-x86-64.so.2) still resolves to a regular executable file after extraction.
+
+2. Implementing dpkg_host=auto (Native dpkg State Synchronization)
+Because you are overwriting the host directly without wrappers, dpkg and apt on the host will either complain about missing database entries or overwrite your changes on their next run unless runepkg updates /var/lib/dpkg natively.
+
+When dpkg_host=auto is active:
+
+Detect Host dpkg Presence: Check for <root>/var/lib/dpkg/status and <root>/var/lib/dpkg/info/.
+
+If present (auto resolves to enabled): runepkg records every overwritten/installed package directly into the host's native dpkg database.
+
+If absent (auto resolves to standalone, e.g., Damn Small Linux or a bare rescue root): runepkg falls back to its own lightweight metadata store without failing.
+
+Write the Three Required dpkg Artifacts per Package:
+
+/var/lib/dpkg/status: Replace any existing stanza matching Package: <name> and Architecture: <arch> (or append if new) with the .deb's control metadata plus Status: install ok installed.
+
+/var/lib/dpkg/info/<pkg>.list (or <pkg>:<arch>.list for Multi-Arch): Write one canonical installed file path per line (including parent directories like /., /usr, /usr/bin) so dpkg -L and dpkg -S recognize every file runepkg deployed.
+
+/var/lib/dpkg/info/<pkg>.md5sums (plus postinst/prerm if extracted): Copy the control archive's md5sums and maintainer scripts into /var/lib/dpkg/info/ so subsequent host dpkg --configure or apt operations see a consistent package state.
+
+3. Execution Order to Lock In the Model Today
+1
+Patch Directory Traversal in the C89 Unpacker
+Core C89 engine
+Update the path-creation loop so existing symlinks-to-directories (/lib, /lib64, /bin, /sbin) are followed rather than unlinked, and switch file/symlink replacement to atomic rename().
+Verification: Run your same_result.txt test (file + minimal depends + libc) directly against / and verify readlink -f /lib64/ld-linux-x86-64.so.2 (or your host architecture's dynamic linker) resolves to an executable file and ls / sh still execute normally.
+
+2
+Implement dpkg_host=auto Database Writer
+C89 core + C++ FFI
+Add detection for <root>/var/lib/dpkg/status and atomic updates for status, info/<pkg>.list, and info/<pkg>.md5sums whenever dpkg_host=auto detects an existing dpkg database.
+Verification: Run dpkg -s file and dpkg -L file on the host after runepkg -i overwrites it; both commands must return Status: install ok installed and the full file list with zero errors.
+
+3
+Bind Target Profiles Between runepkg and runas
+Unified --target config
+Ensure --target=<arch>:<triplet> resolves --root, dpkg_host (auto -> disabled on bare sysroots, enabled on full Debian roots), Build-Depends (target sysroot), and Cross-Depends (host root) from the same profile struct.
+Verification: Run runepkg --target=arm64:aarch64-linux-gnu -i <pkg> followed by runas --target=arm64:aarch64-linux-gnu build <pkg> and confirm both read the identical sysroot path and same_result.txt checks pass on both host and target.
