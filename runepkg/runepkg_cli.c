@@ -197,8 +197,8 @@ void usage(void) {
     printf("  -i, --install <deb|pkg>...              Install .deb files or repository packages.\n");
     printf("      --install -                         Read .deb paths from stdin.\n");
     printf("      --install @file                     Read .deb paths from a list file.\n");
-    printf("  -u, --unpack <package.deb> [dest_dir]   Unpack a .deb into control_dir workspace;\n");
-    printf("                                          optionally extract install files to destination directory.\n");
+    printf("  -u, --unpack <package.deb> [dest_dir]   Unpack a .deb into a local staging directory (control/ & data/);\n");
+    printf("                                          does not modify system state or package database.\n");
     printf("  -r, --remove <package-name>             Remove an installed package.\n");
     printf("      --remove -                          Read package names from stdin.\n");
     printf("      --remove @file                      Read package names from a list file.\n");
@@ -207,7 +207,7 @@ void usage(void) {
     printf("  -L, --list-files <package-name>         List all files owned by an installed package.\n");
     printf("  -S, --search <file-path>                Search installed packages for a specific file.\n");
     printf("  -m, --md5check <package-name>           Verify MD5 checksums of an installed package.\n");
-    printf("  -b, --build [dir] [output.deb]          Build a .deb from a directory structure.\n");
+    printf("  -b, --build [staging_dir] [output.deb]  Build a .deb package from a local staging directory structure.\n");
     printf("  -v, --verbose                           Enable verbose output (detailed logging).\n");
     printf("  -d, --debug                             Enable debug output (developer traces).\n");
     printf("  -f, --force                             Force install/upgrade despite missing dependencies.\n");

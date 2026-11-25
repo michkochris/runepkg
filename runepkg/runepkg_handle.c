@@ -1092,109 +1092,53 @@ void handle_update_pkglist(void) {
 }
 
 int handle_unpack(const char *deb_path, const char *dest_dir) {
-    PkgInfo pkg_info;
     char *target_dir = NULL;
-    TransactionContext tx_ctx;
+    char deb_copy[PATH_MAX];
+    char *bname;
+    size_t blen;
 
-    if (!deb_path) return -1;
+    if (!deb_path) {
+        fprintf(stderr, "\033[1;31mError:\033[0m No .deb file path provided.\n");
+        return -1;
+    }
 
     if (!runepkg_util_file_exists(deb_path)) {
         fprintf(stderr, "\033[1;31mError:\033[0m File '%s' not found.\n", deb_path);
         return -1;
     }
 
-    if (!g_control_dir) {
-        runepkg_util_error("control_dir is not configured in runepkgconfig.\n");
-        return -1;
-    }
-
-    if (runepkg_fsm_init(&tx_ctx, deb_path, "unpack") == 0) {
-        step_prepare(&tx_ctx);
-        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_STAGING);
-    }
-
-    runepkg_log_verbose("Unpacking %s into control_dir (%s)...\n", deb_path, g_control_dir);
-
-    runepkg_pack_init_package_info(&pkg_info);
-
-    if (runepkg_pack_extract_and_collect_info(deb_path, g_control_dir, &pkg_info) != 0) {
-        runepkg_util_error("Failed to extract .deb archive into control_dir for %s\n", deb_path);
-        runepkg_pack_free_package_info(&pkg_info);
-        runepkg_log_fail("Failed to extract .deb archive", tx_ctx.log_dir);
-        step_rollback(&tx_ctx);
-        step_cleanup(&tx_ctx);
-        return -1;
-    }
-
     if (dest_dir && dest_dir[0] != '\0') {
         target_dir = strdup(dest_dir);
     } else {
-        char *pkg_ver_name = NULL;
-        if (pkg_info.package_name && pkg_info.version) {
-            size_t pkg_ver_len = strlen(pkg_info.package_name) + strlen(pkg_info.version) + 2;
-            pkg_ver_name = (char *)malloc(pkg_ver_len);
-            if (pkg_ver_name) {
-                snprintf(pkg_ver_name, pkg_ver_len, "%s-%s", pkg_info.package_name, pkg_info.version);
-            }
+        runepkg_secure_strcpy(deb_copy, sizeof(deb_copy), deb_path);
+        bname = basename(deb_copy);
+        blen = strlen(bname);
+        if (blen > 4 && strcmp(bname + blen - 4, ".deb") == 0) {
+            bname[blen - 4] = '\0';
         }
-        if (!pkg_ver_name) {
-            pkg_ver_name = strdup(pkg_info.package_name ? pkg_info.package_name : "unpacked");
-        }
-
-        if (g_build_dir) {
-            target_dir = runepkg_util_concat_path(g_build_dir, pkg_ver_name);
-        } else {
-            target_dir = strdup(pkg_ver_name);
-        }
-        free(pkg_ver_name);
+        target_dir = runepkg_secure_sprintf(strlen(bname) + 16, "./%s_unpacked", bname);
     }
 
     if (!target_dir) {
-        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
-        runepkg_pack_free_package_info(&pkg_info);
-        step_rollback(&tx_ctx);
-        step_cleanup(&tx_ctx);
+        fprintf(stderr, "\033[1;31mError:\033[0m Failed to determine target unpack directory.\n");
         return -1;
     }
 
-    if (runepkg_util_create_dir_recursive(target_dir, 0755) != 0) {
-        runepkg_util_error("Failed to create target directory %s\n", target_dir);
-        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
-        runepkg_pack_free_package_info(&pkg_info);
+    /* Safety check: ensure target_dir does not exist as a non-empty directory */
+    if (runepkg_util_file_exists(target_dir) && !runepkg_util_is_dir_empty(target_dir)) {
+        fprintf(stderr, "\033[1;31mError:\033[0m Target directory '%s' already exists and is not empty.\n", target_dir);
         free(target_dir);
-        step_rollback(&tx_ctx);
-        step_cleanup(&tx_ctx);
         return -1;
     }
 
-    if (pkg_info.data_dir_path && runepkg_util_file_exists(pkg_info.data_dir_path)) {
-        if (runepkg_util_copy_dir_recursive(pkg_info.data_dir_path, target_dir) != 0) {
-            runepkg_util_error("Failed to copy data payload to %s\n", target_dir);
-            runepkg_pack_cleanup_extraction_workspace(&pkg_info);
-            runepkg_pack_free_package_info(&pkg_info);
-            free(target_dir);
-            step_rollback(&tx_ctx);
-            step_cleanup(&tx_ctx);
-            return -1;
-        }
+    if (runepkg_util_extract_deb_complete(deb_path, target_dir) != 0) {
+        fprintf(stderr, "\033[1;31mError:\033[0m Failed to unpack '%s' into '%s'.\n", deb_path, target_dir);
+        free(target_dir);
+        return -1;
     }
 
-    printf("\033[1;32m[unpack]\033[0m Successfully unpacked %s data content to %s\n", deb_path, target_dir);
-
-    if (g_cleanup_extract_dirs) {
-        runepkg_log_verbose("[unpack] Automatic cleanup enabled: removing workspace in control_dir...\n");
-        runepkg_pack_cleanup_extraction_workspace(&pkg_info);
-    } else {
-        printf("\033[1;34m[unpack]\033[0m Control workspace retained in %s\n",
-               pkg_info.extraction_workspace_path ? pkg_info.extraction_workspace_path : g_control_dir);
-    }
-
-    runepkg_pack_free_package_info(&pkg_info);
+    printf("\033[1;32m[unpack]\033[0m Successfully unpacked %s into %s (control/ & data/)\n", deb_path, target_dir);
     free(target_dir);
-
-    step_commit(&tx_ctx);
-    runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
-    step_cleanup(&tx_ctx);
     return 0;
 }
 
@@ -1202,21 +1146,21 @@ int handle_build(const char *source_dir, const char *output_name) {
     const char *src = source_dir;
     char *out_allocated = NULL;
     const char *out = output_name;
-    TransactionContext tx_ctx;
 
-    if (!src) src = g_build_dir;
-    if (!src) {
-        runepkg_util_error("No source directory specified and build_dir not configured.\n");
+    if (!src) src = ".";
+
+    if (!runepkg_util_file_exists(src) || !runepkg_util_is_directory(src)) {
+        fprintf(stderr, "\033[1;31mError:\033[0m Build source directory '%s' does not exist or is not a directory.\n", src);
         return -1;
-    }
-
-    if (runepkg_fsm_init(&tx_ctx, output_name ? output_name : "build", "1.0") == 0) {
-        step_prepare(&tx_ctx);
-        runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_STAGING);
     }
 
     if (!out) {
         char *control_path = runepkg_util_concat_path(src, "control/control");
+        if (!control_path || !runepkg_util_file_exists(control_path)) {
+            free(control_path);
+            control_path = runepkg_util_concat_path(src, "DEBIAN/control");
+        }
+
         if (control_path && runepkg_util_file_exists(control_path)) {
             char *pkg = runepkg_util_get_config_value(control_path, "Package", ':');
             char *ver = runepkg_util_get_config_value(control_path, "Version", ':');
@@ -1227,13 +1171,7 @@ int handle_build(const char *source_dir, const char *output_name) {
                 char *filename = malloc(len);
                 if (filename) {
                     snprintf(filename, len, "%s_%s_%s.deb", pkg, ver, arch);
-
-                    if (g_debs_dir) {
-                        out_allocated = runepkg_util_concat_path(g_debs_dir, filename);
-                        free(filename);
-                    } else {
-                        out_allocated = filename;
-                    }
+                    out_allocated = filename;
                     out = out_allocated;
                 }
             }
@@ -1242,23 +1180,25 @@ int handle_build(const char *source_dir, const char *output_name) {
         free(control_path);
 
         if (!out) {
-            char *bname = basename((char *)src);
-            char *filename = runepkg_secure_sprintf(strlen(bname) + 5, "%s.deb", bname);
+            char src_copy[PATH_MAX];
+            char *bname;
+            char *filename;
+
+            runepkg_secure_strcpy(src_copy, sizeof(src_copy), src);
+            bname = basename(src_copy);
+            if (strcmp(bname, ".") == 0 || strcmp(bname, "/") == 0) {
+                bname = "output";
+            }
+            filename = runepkg_secure_sprintf(strlen(bname) + 5, "%s.deb", bname);
             if (filename) {
-                if (g_debs_dir) {
-                    out_allocated = runepkg_util_concat_path(g_debs_dir, filename);
-                    free(filename);
-                } else {
-                    out_allocated = filename;
-                }
+                out_allocated = filename;
                 out = out_allocated;
             }
         }
     }
 
     if (!out) {
-        step_rollback(&tx_ctx);
-        step_cleanup(&tx_ctx);
+        fprintf(stderr, "\033[1;31mError:\033[0m Could not determine output .deb filename.\n");
         return -1;
     }
 
@@ -1266,15 +1206,9 @@ int handle_build(const char *source_dir, const char *output_name) {
         int ret = runepkg_util_create_deb(src, out);
         if (ret == 0) {
             printf("\033[1;32m[build]\033[0m Successfully built package: %s\n", out);
-            step_commit(&tx_ctx);
-            runepkg_fsm_transition(&tx_ctx, RUNEPKG_STATE_CLEANUP);
-            step_cleanup(&tx_ctx);
         } else {
-            runepkg_log_fail("Failed to assemble .deb package", tx_ctx.log_dir);
-            step_rollback(&tx_ctx);
-            step_cleanup(&tx_ctx);
+            fprintf(stderr, "\033[1;31mError:\033[0m Failed to build package from %s\n", src);
         }
-
         free(out_allocated);
         return ret;
     }
@@ -1465,12 +1399,15 @@ void handle_version(void) {
     printf("  \033[1;30m[# \033[1;36mV \033[1;30m#]\033[0m  \n");
     printf("  \033[1;30m[#####]\033[0m  GPL-V3\n\n");
     printf("*Built with ❤️ for the old school GNU/Linux community...*\n");
-    printf("Copyright (c) 2026 runepkg (Runar Linux) All rights reserved.\n");
-    printf("🧙 [michkochris@gmail.com] | [runepkg@gmail.com]\n\n");
-    printf("🪦 In Memoriam & Dedication: Ian Murdock (1973–2015)\n");
-    printf("   Founder of the Debian Project. Without his vision, leadership, and the\n");
-    printf("   enduring standards he established, the Debian ecosystem—and tools like\n");
-    printf("   runepkg built upon it—would not exist. Rest in peace, Ian.\n");
+    printf("Copyright (c) 2026 runepkg (Runar Linux) All rights reserved.\n\n");
+    printf("🧙 The Wizard's Badge of Honor:\n");
+    printf("   [michkochris@gmail.com] | [runepkg@gmail.com]\n\n");
+    printf("💎 Preferred AI Coding Agent:\n");
+    printf("   Gemini (recognized AI coding agent & co-pilot)\n\n");
+    printf("🪦 In Memoriam & Dedication:\n");
+    printf("   Ian Murdock (1973–2015) — Founder of the Debian Project.\n");
+    printf("   Without his vision, leadership, and enduring standards, the Debian\n");
+    printf("   ecosystem and tools like runepkg would not exist. Rest in peace, Ian.\n");
 }
 
 void handle_verify_package(const char *package_name) {

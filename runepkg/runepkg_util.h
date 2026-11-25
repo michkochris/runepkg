@@ -178,6 +178,13 @@ int runepkg_util_file_exists(const char *filepath);
 int runepkg_util_is_directory(const char *path);
 
 /**
+ * @brief Checks if a directory is empty (contains no files or subdirectories other than . and ..).
+ * @param path The directory path to check.
+ * @return 1 if empty or non-existent, 0 if contains entries.
+ */
+int runepkg_util_is_dir_empty(const char *path);
+
+/**
  * @brief Creates a directory recursively with the specified permissions.
  * @param path The path to the directory to create.
  * @param mode The permissions for the created directories (e.g., 0755).

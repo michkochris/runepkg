@@ -15,6 +15,7 @@
 #include "runepkg_portable.h"
 #include "runepkg_util.h"
 #include "runepkg_state.h"
+#include "runepkg_storage.h"
 #include "runepkg_config.h"
 #include "runepkg_defensive.h"
 #include "runepkg_cpp_ffi.h"
@@ -605,6 +606,22 @@ int runepkg_util_is_directory(const char *path) {
         return S_ISDIR(st.st_mode);
     }
     return 0;
+}
+
+int runepkg_util_is_dir_empty(const char *path) {
+    DIR *dir;
+    struct dirent *entry;
+    if (!path || !runepkg_util_is_directory(path)) return 1;
+    dir = opendir(path);
+    if (!dir) return 1;
+    while ((entry = readdir(dir)) != NULL) {
+        if (strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            closedir(dir);
+            return 0;
+        }
+    }
+    closedir(dir);
+    return 1;
 }
 
 int runepkg_util_create_dir_recursive(const char *path, mode_t mode) {
@@ -1585,6 +1602,7 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
 
     if (extract_tar_archive(data_archive_path, data_extract_dir) != 0) {
         runepkg_util_error("Failed to extract data archive.\n");
+        if (temp_dir) runepkg_storage_remove_directory_tree(temp_dir);
         runepkg_util_free_and_null(&temp_dir);
         runepkg_util_free_and_null(&control_archive_path);
         runepkg_util_free_and_null(&data_archive_path);
@@ -1593,7 +1611,10 @@ int runepkg_util_extract_deb_complete(const char *deb_path, const char *extract_
         return -1;
     }
 
-    runepkg_util_log_verbose("Temporary files left in: %s\n", temp_dir);
+    /* Clean up temporary raw ar extraction directory */
+    if (temp_dir) {
+        runepkg_storage_remove_directory_tree(temp_dir);
+    }
 
     runepkg_util_free_and_null(&temp_dir);
     runepkg_util_free_and_null(&control_archive_path);
@@ -1633,10 +1654,15 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
     runepkg_util_log_verbose("Building .deb package: %s from %s\n", output_deb, abs_source);
 
     control_dir = runepkg_util_concat_path(abs_source, "control");
+    if (!runepkg_util_file_exists(control_dir)) {
+        free(control_dir);
+        control_dir = runepkg_util_concat_path(abs_source, "DEBIAN");
+    }
+
     data_dir = runepkg_util_concat_path(abs_source, "data");
 
     if (!runepkg_util_file_exists(control_dir)) {
-        runepkg_util_error("Control directory not found: %s\n", control_dir);
+        runepkg_util_error("Control directory not found (expected 'control/' or 'DEBIAN/'): %s\n", abs_source);
         free(control_dir); free(data_dir); free(abs_source);
         return -1;
     }
@@ -1749,6 +1775,11 @@ int runepkg_util_create_deb(const char *source_dir, const char *output_deb) {
             runepkg_journal_record_create(ctx, abs_output);
         }
     }
+
+    /* Clean up intermediate tarballs and binary descriptor from source directory */
+    if (deb_bin_path) unlink(deb_bin_path);
+    if (control_tar) unlink(control_tar);
+    if (data_tar) unlink(data_tar);
 
     free(control_dir); free(data_dir); free(deb_bin_path); free(control_tar); free(data_tar); free(abs_output); free(abs_source);
     return 0;
