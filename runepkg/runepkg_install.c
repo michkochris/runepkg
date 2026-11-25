@@ -810,8 +810,9 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             if (glob(new_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
                 found = 1;
             } else if (g_download_dir) {
-                /* Try with download_dir/ prefix */
+                /* Try with download_dir/ prefix and architecture subdirectories */
                 char download_pattern[PATH_MAX];
+                bool found_deb = false;
                 if (strstr(deb_file_path, "*") != NULL) {
                     snprintf(download_pattern, sizeof(download_pattern), "%s/%s", g_download_dir, deb_file_path);
                 } else {
@@ -819,6 +820,21 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 }
                 if (glob(download_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
                     found = 1;
+                    found_deb = true;
+                }
+                if (!found_deb) {
+                    const char *subdirs[] = {"amd64", "arm64", "i386", "armhf", "all", "noarch"};
+                    for (int s = 0; s < 6; s++) {
+                        if (strstr(deb_file_path, "*") != NULL) {
+                            snprintf(download_pattern, sizeof(download_pattern), "%s/%s/%s", g_download_dir, subdirs[s], deb_file_path);
+                        } else {
+                            snprintf(download_pattern, sizeof(download_pattern), "%s/%s/%s*.deb", g_download_dir, subdirs[s], deb_file_path);
+                        }
+                        if (glob(download_pattern, 0, NULL, &globbuf) == 0 && globbuf.gl_pathc > 0) {
+                            found = 1;
+                            break;
+                        }
+                    }
                 }
             }
         }

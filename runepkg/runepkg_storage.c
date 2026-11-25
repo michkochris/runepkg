@@ -1104,11 +1104,18 @@ int runepkg_storage_build_autocomplete_index(void) {
         }
     }
 
-    /* 4. Scan download directory */
+    /* 4. Scan download directory and architecture-scoped subdirectories */
     if (g_download_dir) {
-        if (scan_and_add_entries(g_download_dir, &packages, &count, &capacity, false, ".deb", true) != 0) {
-            runepkg_log_verbose("Error: Failed to scan download directory for .deb files.\n");
-            goto error_cleanup;
+        scan_and_add_entries(g_download_dir, &packages, &count, &capacity, false, ".deb", true);
+        {
+            char sub_buf[PATH_MAX];
+            const char *subdirs[] = {"amd64", "arm64", "i386", "armhf", "all", "noarch"};
+            for (int s = 0; s < 6; s++) {
+                snprintf(sub_buf, sizeof(sub_buf), "%s/%s", g_download_dir, subdirs[s]);
+                if (runepkg_util_file_exists(sub_buf)) {
+                    scan_and_add_entries(sub_buf, &packages, &count, &capacity, false, ".deb", true);
+                }
+            }
         }
     }
 

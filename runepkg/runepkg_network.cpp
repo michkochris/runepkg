@@ -1327,6 +1327,18 @@ static bool check_inter_plan_conflict(const std::string& conflicts_str, const st
     return conflict_found;
 }
 
+static std::string get_arch_scoped_dest_path(const std::string& filename, const std::string& architecture) {
+    std::string base_file = filename.substr(filename.find_last_of('/') + 1);
+    std::string pkg_arch = architecture;
+    if (pkg_arch.empty()) {
+        pkg_arch = g_target_arch ? g_target_arch : runepkg_host_get_architecture();
+    }
+    std::string base_dir = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir");
+    std::string arch_dir = base_dir + "/" + pkg_arch;
+    runepkg_util_create_dir_recursive(arch_dir.c_str(), 0755);
+    return arch_dir + "/" + base_file;
+}
+
 extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) {
     if (!pkg_names || count <= 0) return -1;
     std::string index_path = effective_db_dir_str() + "/runes_graph.bin";
@@ -1361,14 +1373,16 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
             }
 
             std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
+            PkgMetadata meta;
             if (filename.empty()) {
-                PkgMetadata meta = get_package_metadata(pkg_name.c_str());
+                meta = get_package_metadata(pkg_name.c_str());
                 filename = meta.filename;
+            } else {
+                meta = get_package_metadata(pkg_name.c_str());
             }
 
             if (!filename.empty()) {
-                std::string base_file = filename.substr(filename.find_last_of('/') + 1);
-                std::string dest_path = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") + "/" + base_file;
+                std::string dest_path = get_arch_scoped_dest_path(filename, meta.architecture);
 
                 if (unique_dest_files.find(dest_path) == unique_dest_files.end()) {
                     unique_dest_files.insert(dest_path);
@@ -1614,15 +1628,17 @@ extern "C" int runepkg_repo_download_multiple(const char **pkg_names, int count,
             for (int j = (recursive ? 0 : plan->node_count - 1); j < plan->node_count; j++) {
                 std::string pkg_name = plan->nodes[j].package_name;
                 std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
+                PkgMetadata meta;
 
                 if (filename.empty()) {
-                    PkgMetadata meta = get_package_metadata(pkg_name);
+                    meta = get_package_metadata(pkg_name);
                     filename = meta.filename;
+                } else {
+                    meta = get_package_metadata(pkg_name);
                 }
 
                 if (!filename.empty()) {
-                    std::string base_file = filename.substr(filename.find_last_of('/') + 1);
-                    std::string dest_path = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") + "/" + base_file;
+                    std::string dest_path = get_arch_scoped_dest_path(filename, meta.architecture);
 
                     if (unique_dest_files.find(dest_path) == unique_dest_files.end()) {
                         unique_dest_files.insert(dest_path);
@@ -1738,15 +1754,17 @@ extern "C" int runepkg_repo_build_depends_download_multiple(const char **pkg_nam
             for (int j = 0; j < plan->node_count; j++) {
                 std::string pkg_name = plan->nodes[j].package_name;
                 std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
+                PkgMetadata meta;
 
                 if (filename.empty()) {
-                    PkgMetadata meta = get_package_metadata(pkg_name);
+                    meta = get_package_metadata(pkg_name);
                     filename = meta.filename;
+                } else {
+                    meta = get_package_metadata(pkg_name);
                 }
 
                 if (!filename.empty()) {
-                    std::string base_file = filename.substr(filename.find_last_of('/') + 1);
-                    std::string dest_path = std::string(g_download_dir ? g_download_dir : "/var/lib/runepkg_dir/download_dir") + "/" + base_file;
+                    std::string dest_path = get_arch_scoped_dest_path(filename, meta.architecture);
 
                     if (unique_dest_files.find(dest_path) == unique_dest_files.end()) {
                         unique_dest_files.insert(dest_path);

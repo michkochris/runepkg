@@ -255,11 +255,24 @@ int runepkg_config_activate_profile(const char *profile_name) {
     g_target_sysroot = strdup(sysroot_buf);
     g_target_install_dir = g_target_sysroot; /* Sync legacy alias */
 
+    if (g_target_sysroot && g_target_sysroot[0] != '\0' && strcmp(g_target_sysroot, "/") != 0) {
+        char control_buf[PATH_MAX];
+        char download_buf[PATH_MAX];
+        snprintf(control_buf, sizeof(control_buf), "%s/srv/lib/runepkg_dir/control_dir", g_target_sysroot);
+        snprintf(download_buf, sizeof(download_buf), "%s/srv/lib/runepkg_dir/download_dir", g_target_sysroot);
+        runepkg_util_free_and_null(&g_control_dir);
+        g_control_dir = strdup(control_buf);
+        runepkg_util_free_and_null(&g_download_dir);
+        g_download_dir = strdup(download_buf);
+    }
+
     runepkg_util_free_and_null(&g_runepkg_db_dir);
     g_runepkg_db_dir = strdup(db_buf);
     sync_db_derived_paths();
 
     runepkg_util_create_dir_recursive(g_target_sysroot, 0755);
+    runepkg_util_create_dir_recursive(g_control_dir, 0755);
+    runepkg_util_create_dir_recursive(g_download_dir, 0755);
     runepkg_util_create_dir_recursive(g_runepkg_db_dir, 0755);
     if (g_runepkg_lists_dir) {
         runepkg_util_create_dir_recursive(g_runepkg_lists_dir, 0755);
