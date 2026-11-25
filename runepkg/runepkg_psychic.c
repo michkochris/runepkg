@@ -441,8 +441,8 @@ int runepkg_psychic_prophecy_check(const char *sysroot_path, const char *target_
     /* 2. Anchor Multi-Arch FHS Symlinks and Dynamic Linker */
     runepkg_psychic_anchor_dynamic_linker(sysroot_path, spec.deb_arch, spec.gnu_triplet);
 
-    /* 3. Scan actual sysroot state and write psychic_matrix.bin + psychic_matrix.txt */
-    runepkg_psychic_build_matrix_bin(sysroot_path, spec.gnu_triplet);
+    /* 3. Check and guard Debian FHS symlinks */
+    runepkg_psychic_check_fhs_symlinks(sysroot_path);
 
     runepkg_psychic_free_target_spec(&spec);
     runepkg_util_log_verbose("[psychic] Pre-flight prophecy check completed successfully.\n");
@@ -579,289 +579,68 @@ const char *runepkg_psychic_normalize_deb_arch(const char *arch) {
     return arch;
 }
 
-/* --- psychic_matrix.bin & psychic_matrix.txt Sysroot Scanner --- */
+/* --- Debian FHS & Protected Symlink Guards --- */
 
-static void psychic_add_record(PsychicMatrixRecord *records,
-                               size_t *count,
-                               size_t max_count,
-                               const char *name,
-                               int status) {
-    size_t i;
-    if (!records || !count || !name || name[0] == '\0') return;
-    if (*count >= max_count) return;
-
-    for (i = 0; i < *count; i++) {
-        if (strcmp(records[i].name, name) == 0) {
-            if (status != 0) {
-                records[i].status = status;
-            }
-            return;
-        }
-    }
-
-    runepkg_util_safe_strncpy(records[*count].name, name, sizeof(records[*count].name));
-    records[*count].status = status;
-    (*count)++;
-}
-
-static void psychic_scan_include_tree(const char *base_dir,
-                                      const char *prefix,
-                                      PsychicMatrixRecord *records,
-                                      size_t *count,
-                                      size_t max_count) {
-    DIR *dir;
-    struct dirent *entry;
-
-    if (!base_dir || !records || !count || *count >= max_count) return;
-    dir = opendir(base_dir);
-    if (!dir) return;
-
-    while ((entry = readdir(dir)) != NULL && *count < max_count) {
-        char full_path[PATH_MAX * 2];
-        char rel_name[220];
-        struct stat st;
-
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
-            continue;
-        }
-
-        snprintf(full_path, sizeof(full_path), "%s/%s", base_dir, entry->d_name);
-        if (stat(full_path, &st) != 0) continue;
-
-        if (prefix && prefix[0] != '\0') {
-            snprintf(rel_name, sizeof(rel_name), "%.100s/%.100s", prefix, entry->d_name);
-        } else {
-            snprintf(rel_name, sizeof(rel_name), "%.219s", entry->d_name);
-        }
-
-        if (S_ISDIR(st.st_mode)) {
-            psychic_scan_include_tree(full_path, rel_name, records, count, max_count);
-        } else if (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode)) {
-            psychic_add_record(records, count, max_count, rel_name, 1);
-        }
-    }
-
-    closedir(dir);
-}
-
-static void psychic_scan_flat_dir(const char *dir_path,
-                                  PsychicMatrixRecord *records,
-                                  size_t *count,
-                                  size_t max_count) {
-    DIR *dir;
-    struct dirent *entry;
-
-    if (!dir_path || !records || !count || *count >= max_count) return;
-    dir = opendir(dir_path);
-    if (!dir) return;
-
-    while ((entry = readdir(dir)) != NULL && *count < max_count) {
-        char full_path[PATH_MAX * 2];
-        struct stat st;
-
-        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
-            continue;
-        }
-
-        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
-        if (stat(full_path, &st) == 0 && (S_ISREG(st.st_mode) || S_ISLNK(st.st_mode))) {
-            psychic_add_record(records, count, max_count, entry->d_name, 1);
-        }
-    }
-
-    closedir(dir);
-}
-
-static void psychic_scan_installed_pkgs(const char *db_dir,
-                                        PsychicMatrixRecord *records,
-                                        size_t *count,
-                                        size_t max_count) {
-    char status_path[PATH_MAX + 64];
-    FILE *sf;
-    char line[512];
-
-    if (!db_dir || !records || !count || *count >= max_count) return;
-
-    snprintf(status_path, sizeof(status_path), "%.*s/installed_packages.txt",
-             (int)(PATH_MAX - 1), db_dir);
-    sf = fopen(status_path, "r");
-    if (!sf) return;
-
-    while (fgets(line, sizeof(line), sf) != NULL && *count < max_count) {
-        char *sep;
-        trim_line_endings(line);
-        if (line[0] == '\0' || line[0] == '#') continue;
-        sep = strchr(line, ':');
-        if (sep) {
-            *sep = '\0';
-        }
-        if (line[0] != '\0') {
-            char pkg_entry[220];
-            snprintf(pkg_entry, sizeof(pkg_entry), "pkg:%.210s", line);
-            psychic_add_record(records, count, max_count, pkg_entry, 1);
-        }
-    }
-
-    fclose(sf);
-}
-
-static void write_psychic_matrix_txt(const char *txt_path,
-                                     const char *sysroot_path,
-                                     const char *gnu_triplet,
-                                     const PsychicMatrixRecord *records,
-                                     size_t count) {
-    FILE *tf;
-    size_t i;
-
-    if (!txt_path || !records) return;
-
-    tf = fopen(txt_path, "w");
-    if (!tf) return;
-
-    fprintf(tf, "# psychic_matrix.txt (live sysroot scan)\n");
-    fprintf(tf, "# sysroot=%s\n", sysroot_path ? sysroot_path : "");
-    fprintf(tf, "# triplet=%s\n", gnu_triplet ? gnu_triplet : "");
-    fprintf(tf, "# entries=%lu\n", (unsigned long)count);
-
-    if (count == 0) {
-        fprintf(tf, "# empty sysroot scan\n");
-    } else {
-        for (i = 0; i < count; i++) {
-            fprintf(tf, "%s:%d\n", records[i].name, records[i].status);
-        }
-    }
-
-    fclose(tf);
-}
-
-int runepkg_psychic_build_matrix_bin(const char *sysroot_path, const char *gnu_triplet) {
-    char db_dir[PATH_MAX + 64];
-    char bin_path[PATH_MAX + 128];
-    char txt_path[PATH_MAX + 128];
-    char scan_dir[PATH_MAX + 128];
-    FILE *f;
-    PsychicMatrixHeader hdr;
-    PsychicMatrixRecord *records;
-    size_t count = 0;
-    size_t i;
-
-    if (!sysroot_path || sysroot_path[0] == '\0') return -1;
-
-    snprintf(db_dir, sizeof(db_dir), "%.*s/srv/lib/runepkg_dir/runepkg_db",
-             (int)(PATH_MAX - 64), sysroot_path);
-    runepkg_util_create_dir_recursive(db_dir, 0755);
-
-    snprintf(bin_path, sizeof(bin_path), "%.*s/psychic_matrix.bin",
-             (int)PATH_MAX, db_dir);
-    snprintf(txt_path, sizeof(txt_path), "%.*s/psychic_matrix.txt",
-             (int)PATH_MAX, db_dir);
-
-    records = (PsychicMatrixRecord *)calloc(PSYCHIC_MAX_MATRIX_ENTRIES, sizeof(PsychicMatrixRecord));
-    if (!records) return -1;
-
-    psychic_scan_installed_pkgs(db_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
-
-    snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/include", (int)(PATH_MAX - 32), sysroot_path);
-    psychic_scan_include_tree(scan_dir, "", records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
-
-    if (gnu_triplet && gnu_triplet[0] != '\0') {
-        snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/include/%.*s",
-                 (int)(PATH_MAX / 2), sysroot_path, 128, gnu_triplet);
-        psychic_scan_include_tree(scan_dir, "", records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
-
-        snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/lib/%.*s",
-                 (int)(PATH_MAX / 2), sysroot_path, 128, gnu_triplet);
-        psychic_scan_flat_dir(scan_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
-    }
-
-    snprintf(scan_dir, sizeof(scan_dir), "%.*s/usr/bin", (int)(PATH_MAX - 32), sysroot_path);
-    psychic_scan_flat_dir(scan_dir, records, &count, PSYCHIC_MAX_MATRIX_ENTRIES);
-
-    hdr.magic[0] = 'P';
-    hdr.magic[1] = 'S';
-    hdr.magic[2] = 'Y';
-    hdr.magic[3] = 'C';
-    hdr.version = PSYCHIC_MATRIX_VERSION;
-    hdr.entry_count = (unsigned int)count;
-    hdr.total_bytes = sizeof(PsychicMatrixHeader) + (count * 256);
-
-    f = fopen(bin_path, "wb");
-    if (!f) {
-        free(records);
-        return -1;
-    }
-
-    if (fwrite(&hdr, sizeof(PsychicMatrixHeader), 1, f) != 1) {
-        fclose(f);
-        free(records);
-        return -1;
-    }
-
-    for (i = 0; i < count; i++) {
-        char entry_buf[256];
-        memset(entry_buf, 0, sizeof(entry_buf));
-        snprintf(entry_buf, sizeof(entry_buf), "%.220s:%d", records[i].name, records[i].status);
-        fwrite(entry_buf, 256, 1, f);
-    }
-
-    fclose(f);
-    write_psychic_matrix_txt(txt_path, sysroot_path, gnu_triplet, records, count);
-    free(records);
-
-    runepkg_util_log_verbose("[psychic] Scanned sysroot and serialized psychic_matrix.bin + psychic_matrix.txt (%lu entries)\n",
-                             (unsigned long)count);
-    return 0;
-}
-
-int runepkg_psychic_query_matrix_bin(const char *sysroot_path, const char *file_name) {
-    char bin_path[PATH_MAX + 64];
-    FILE *f;
-    PsychicMatrixHeader hdr;
+int runepkg_psychic_guard_protected_symlink(const char *path) {
     struct stat st;
+    char target[PATH_MAX];
+    ssize_t len;
+
+    if (!path) return 0;
+
+    if (lstat(path, &st) != 0) {
+        return 0; /* Path doesn't exist */
+    }
+
+    if (S_ISLNK(st.st_mode)) {
+        len = readlink(path, target, sizeof(target) - 1);
+        if (len < 0) {
+            fprintf(stderr, "\033[1;31m[psychic warning]\033[0m Protected symlink %s is dangling/broken!\n", path);
+            return -1;
+        }
+        target[len] = '\0';
+        if (stat(path, &st) != 0) {
+            fprintf(stderr, "\033[1;31m[psychic warning]\033[0m Protected symlink %s points to non-existent target '%s'!\n", path, target);
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int runepkg_psychic_check_fhs_symlinks(const char *sysroot_path) {
+    char path_buf[PATH_MAX];
+    struct stat st;
+    int violations = 0;
+    const char *fhs_links[] = { "lib", "lib64", "bin", "sbin" };
     size_t i;
 
-    if (!sysroot_path || !file_name || file_name[0] == '\0') return -1;
+    if (!sysroot_path) sysroot_path = "";
 
-    snprintf(bin_path, sizeof(bin_path), "%.*s/srv/lib/runepkg_dir/runepkg_db/psychic_matrix.bin",
-             (int)(PATH_MAX - 64), sysroot_path);
-    if (stat(bin_path, &st) != 0) return 0;
+    for (i = 0; i < sizeof(fhs_links) / sizeof(fhs_links[0]); i++) {
+        if (sysroot_path[0] != '\0') {
+            snprintf(path_buf, sizeof(path_buf), "%s/%s", sysroot_path, fhs_links[i]);
+        } else {
+            snprintf(path_buf, sizeof(path_buf), "/%s", fhs_links[i]);
+        }
 
-    f = fopen(bin_path, "rb");
-    if (!f) return 0;
-
-    if (fread(&hdr, sizeof(PsychicMatrixHeader), 1, f) != 1) {
-        fclose(f);
-        return 0;
-    }
-
-    if (memcmp(hdr.magic, "PSYC", 4) != 0 || hdr.version != PSYCHIC_MATRIX_VERSION) {
-        fclose(f);
-        return 0;
-    }
-
-    if (st.st_size < (off_t)hdr.total_bytes) {
-        fclose(f);
-        return 0;
-    }
-
-    for (i = 0; i < hdr.entry_count; i++) {
-        char entry_buf[256];
-        char *colon;
-        if (fread(entry_buf, 256, 1, f) != 1) break;
-        entry_buf[255] = '\0';
-        colon = strrchr(entry_buf, ':');
-        if (colon && colon != entry_buf) {
-            *colon = '\0';
-            if (strcmp(entry_buf, file_name) == 0) {
-                int status = atoi(colon + 1);
-                fclose(f);
-                return status;
+        if (lstat(path_buf, &st) == 0) {
+            if (S_ISLNK(st.st_mode)) {
+                if (stat(path_buf, &st) != 0) {
+                    fprintf(stderr, "\033[1;31m[psychic FHS error]\033[0m FHS symlink %s is dangling!\n", path_buf);
+                    violations++;
+                }
             }
         }
     }
 
-    fclose(f);
-    return 0;
+    if (sysroot_path[0] != '\0') {
+        snprintf(path_buf, sizeof(path_buf), "%s/bin/ls", sysroot_path);
+    } else {
+        snprintf(path_buf, sizeof(path_buf), "/bin/ls");
+    }
+    runepkg_psychic_guard_protected_symlink(path_buf);
+
+    return violations > 0 ? -1 : 0;
 }
 
 int runepkg_psychic_prophesy_missing_package(const char *sysroot_path,

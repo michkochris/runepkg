@@ -112,33 +112,21 @@ int runepkg_psychic_is_multiarch_satisfied(const char *candidate_arch,
                                            const char *target_arch,
                                            const char *host_arch);
 
-/* --- psychic_matrix.bin Binary Format & Prophecy Declarations --- */
-
-#define PSYCHIC_MATRIX_MAGIC 0x50535943 /* "PSYC" */
-#define PSYCHIC_MATRIX_VERSION 1
-
-typedef struct {
-    char magic[4];        /* "PSYC" */
-    unsigned int version; /* 1 */
-    unsigned int entry_count;
-    unsigned long total_bytes;
-} PsychicMatrixHeader;
+/* --- Debian FHS & Protected Symlink Guard Declarations --- */
 
 /**
- * @brief Generates and serializes psychic_matrix.bin in-place inside target DB directory.
- * @param sysroot_path Sysroot path (e.g. "/mnt/runepkg/aarch64-linux-gnu").
- * @param gnu_triplet Triplet string (e.g. "aarch64-linux-gnu").
- * @return 0 on success, -1 on failure.
+ * @brief Guards critical system symlinks and executables (ld, ls, sh) against breakage or dangling targets.
+ * @param path File or symlink path to inspect.
+ * @return 0 if valid/safe, -1 if broken or dangling.
  */
-int runepkg_psychic_build_matrix_bin(const char *sysroot_path, const char *gnu_triplet);
+int runepkg_psychic_guard_protected_symlink(const char *path);
 
 /**
- * @brief Queries psychic_matrix.bin to check if a header or library file exists inside sysroot.
- * @param sysroot_path Sysroot path.
- * @param file_name Relative file path or header name (e.g. "zlib.h" or "libssl.so").
- * @return 1 if present, 0 if absent/missing, -1 on error.
+ * @brief Checks core Debian FHS and usrmerge symlinks (/lib, /lib64, /bin, /sbin) in a sysroot or root.
+ * @param sysroot_path Target root or sysroot path.
+ * @return 0 on success, -1 on FHS violation.
  */
-int runepkg_psychic_query_matrix_bin(const char *sysroot_path, const char *file_name);
+int runepkg_psychic_check_fhs_symlinks(const char *sysroot_path);
 
 /**
  * @brief Prophesies missing Debian package for missing build headers or library links.
