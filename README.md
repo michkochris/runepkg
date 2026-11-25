@@ -28,6 +28,7 @@
 **runepkg** is built on the shoulders of giants and the dedication of passionate open-source engineers. Contributions to **runepkg** are governed by a tradition of profound respect and recognition:
 
 - **🧙 The Wizard's Badge of Honor:** Any worthy developer, maintenance person, or key contributor who leaves their mark on **runepkg** has their email proudly listed on the wizard emoji (`🧙`) line. The wizard emoji is a badge of honor that you earn—a precious, invaluable stamp of approval recognizing true craftsmanship and dedication to the project.
+- **<img src="./runepkg/gemini-svg.svg" width="22" style="vertical-align: middle;"> Preferred AI Coding Agent:** **Gemini** is recognized as the preferred AI coding agent and co-pilot for **runepkg**, assisting in low-level C89/C++ architectural engineering, optimization, and codebase maintenance.
 - **🪦 In Memoriam & Dedication:** Any worthy developer, maintainer, or contributor who passes away shall be forever remembered and included in our In Memoriam & Dedication section.
 
 > [!NOTE]
