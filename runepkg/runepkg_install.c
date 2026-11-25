@@ -19,6 +19,7 @@
 #include "runepkg_handle.h"
 #include "runepkg_md5sums.h"
 #include "runepkg_host.h"
+#include "runepkg_antimatter.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -263,12 +264,29 @@ typedef struct {
     TransactionContext *tx;
 } FileInstallArgs;
 
-/* Internal function to perform the actual file system operation for a single file/dir/link
- * Returns 0 on success, -1 on error. */
 static int perform_file_install(const char *src, const char *dst) {
     extern char *g_system_install_root;
     struct stat st;
     char *dst_copy;
+    char canon_dst[PATH_MAX];
+
+    if (!src || !dst) return -1;
+
+    /* Usr-Merge Root Symlink Protection */
+    if (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 ||
+        strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0 ||
+        strcmp(dst, "/lib32") == 0 || strcmp(dst, "/libx32") == 0 ||
+        (g_system_install_root && strcmp(g_system_install_root, "/") == 0 &&
+         (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 ||
+          strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0 ||
+          strcmp(dst, "/lib32") == 0 || strcmp(dst, "/libx32") == 0))) {
+        runepkg_util_log_verbose("[install] Preserving critical usrmerge symlink at %s\n", dst);
+        return 0;
+    }
+
+    /* Canonicalize destination path through Usr-Merge symlinks */
+    runepkg_util_canonicalize_usrmerge_path(dst, canon_dst, sizeof(canon_dst));
+    dst = canon_dst;
 
     /* Ensure parent directories exist inside system install root */
     dst_copy = strdup(dst);
@@ -294,8 +312,8 @@ static int perform_file_install(const char *src, const char *dst) {
         if (lstat(dst, &dst_st) == 0 && S_ISLNK(dst_st.st_mode)) {
             if (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 ||
                 strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0 ||
-                (g_system_install_root && strcmp(g_system_install_root, "/") == 0 &&
-                 (strcmp(dst, "/bin") == 0 || strcmp(dst, "/sbin") == 0 || strcmp(dst, "/lib") == 0 || strcmp(dst, "/lib64") == 0))) {
+                strcmp(dst, "/usr/bin") == 0 || strcmp(dst, "/usr/sbin") == 0 ||
+                strcmp(dst, "/usr/lib") == 0 || strcmp(dst, "/usr/lib64") == 0) {
                 runepkg_util_log_verbose("[install] Preserving critical usrmerge symlink at %s\n", dst);
                 return 0;
             }
@@ -343,18 +361,34 @@ static int perform_file_install(const char *src, const char *dst) {
             struct stat dst_st;
             if (lstat(dst, &dst_st) == 0) {
                 if (S_ISDIR(dst_st.st_mode)) {
-                    if (rmdir(dst) != 0) {
-                        fprintf(stderr, "\033[1;31m[file error]\033[0m Cannot overwrite directory with file: %s\n", dst);
-                        return -1;
-                    }
-                } else {
-                    unlink(dst);
+                    fprintf(stderr, "\033[1;31m[file error]\033[0m Cannot overwrite directory with file: %s\n", dst);
+                    return -1;
                 }
             }
         }
-        if (runepkg_util_copy_file(src, dst) != 0) {
-            fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to copy file: %s\n", dst);
-            return -1;
+        /* Atomic regular file installation via temporary staging write & rename(2) */
+        {
+            char tmp_file[PATH_MAX];
+            runepkg_secure_snprintf(tmp_file, sizeof(tmp_file), "%s.runepkg_tmp_%d", dst, (int)getpid());
+            unlink(tmp_file);
+            if (runepkg_util_copy_file(src, tmp_file) == 0) {
+                if (chmod(tmp_file, st.st_mode & 07777) == 0 && (getuid() != 0 || chown(tmp_file, st.st_uid, st.st_gid) == 0)) {
+                    /* ignore non-fatal chown/chmod */
+                }
+                if (rename(tmp_file, dst) != 0) {
+                    unlink(tmp_file);
+                    if (runepkg_util_copy_file(src, dst) != 0) {
+                        fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to copy file: %s\n", dst);
+                        return -1;
+                    }
+                }
+            } else {
+                unlink(tmp_file);
+                if (runepkg_util_copy_file(src, dst) != 0) {
+                    fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to copy file: %s\n", dst);
+                    return -1;
+                }
+            }
         }
     } else if (S_ISLNK(st.st_mode)) {
         char link_target[PATH_MAX];
@@ -378,19 +412,33 @@ static int perform_file_install(const char *src, const char *dst) {
                     free(dst_copy);
                 }
             }
+            /* Atomic symlink replacement via temporary symlink & rename(2) */
             {
-                struct stat dst_st;
-                if (lstat(dst, &dst_st) == 0) {
-                    if (S_ISDIR(dst_st.st_mode)) {
-                        runepkg_storage_remove_directory_tree(dst);
-                    } else {
-                        unlink(dst);
+                char tmp_symlink[PATH_MAX];
+                runepkg_secure_snprintf(tmp_symlink, sizeof(tmp_symlink), "%s.runepkg_tmp_%d", dst, (int)getpid());
+                unlink(tmp_symlink);
+                if (symlink(link_target, tmp_symlink) == 0) {
+                    if (rename(tmp_symlink, dst) != 0) {
+                        struct stat dst_st;
+                        if (lstat(dst, &dst_st) == 0 && S_ISDIR(dst_st.st_mode) && !S_ISLNK(dst_st.st_mode)) {
+                            runepkg_storage_remove_directory_tree(dst);
+                        } else {
+                            unlink(dst);
+                        }
+                        if (rename(tmp_symlink, dst) != 0) {
+                            unlink(tmp_symlink);
+                            if (symlink(link_target, dst) != 0) {
+                                fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create symlink: %s -> %s (%s)\n", dst, link_target, strerror(errno));
+                                return -1;
+                            }
+                        }
+                    }
+                } else {
+                    if (symlink(link_target, dst) != 0) {
+                        fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create symlink: %s -> %s (%s)\n", dst, link_target, strerror(errno));
+                        return -1;
                     }
                 }
-            }
-            if (symlink(link_target, dst) != 0) {
-                fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to create symlink: %s -> %s (%s)\n", dst, link_target, strerror(errno));
-                return -1;
             }
         } else {
             fprintf(stderr, "\033[1;31m[file error]\033[0m Failed to read symlink source: %s\n", src);
@@ -857,6 +905,37 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
     if (result == 0) {
         PkgInfo *existing_inst_main;
         PkgInfo *existing_inst;
+        runepkg_exec_mode_t exec_mode = (g_target_sysroot && g_target_sysroot[0] != '\0') ? RUNEPKG_MODE_TARGET : RUNEPKG_MODE_HOST;
+        const char *expected_arch = g_target_arch ? g_target_arch : "amd64";
+
+        /* Pre-flight low-level architecture control check */
+        if (runepkg_antimatter_validate_deb_meta(exec_mode, expected_arch, pkg_info.architecture) != RUNEPKG_DECON_OK) {
+            fprintf(stderr, "\033[1;31mError:\033[0m Cannot install foreign package '%s' (Architecture: %s) in host mode.\n",
+                    pkg_info.package_name ? pkg_info.package_name : deb_file_path,
+                    pkg_info.architecture ? pkg_info.architecture : "unknown");
+            fprintf(stderr, "Use --target=<profile> (e.g. --target=arm64:aarch64-linux-gnu) to install into a target sysroot.\n");
+            runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+            runepkg_pack_free_package_info(&pkg_info);
+            return -1;
+        }
+
+        /* Matryoshka Core Shield Check: Gated glibc runtime mutations on live host root */
+        if (runepkg_antimatter_shield_check(g_system_install_root, pkg_info.package_name, g_force_mode) != RUNEPKG_DECON_OK) {
+            runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+            runepkg_pack_free_package_info(&pkg_info);
+            return -1;
+        }
+
+        /* Pre-flight host core infrastructure check */
+        if (runepkg_defensive_check_critical_host_package(pkg_info.package_name, g_system_install_root) != RUNEPKG_SUCCESS) {
+            fprintf(stderr, "\033[1;31m[defensive error]\033[0m Refusing to extract core host infrastructure package '%s' directly onto host /\n",
+                    pkg_info.package_name ? pkg_info.package_name : deb_file_path);
+            fprintf(stderr, "Host glibc and core system packages (libc6, dpkg, apt, systemd) are shielded on live host.\n");
+            fprintf(stderr, "Use --target=<profile> to perform cross-target installation into an isolated sysroot.\n");
+            runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+            runepkg_pack_free_package_info(&pkg_info);
+            return -1;
+        }
 
         /* Pre-flight conflict validation via binary index */
         {
@@ -1223,6 +1302,56 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
             printf("\033[1;34m[runepkg]\033[0m Installing %s (%s)\n",
                    pkg_info.package_name ? pkg_info.package_name : "(unknown)",
                    pkg_info.version ? pkg_info.version : "(unknown)");
+        }
+
+        /* Pre-flight payload ELF header & boundary inspection */
+        if (pkg_info.data_dir_path && pkg_info.file_count > 0 && pkg_info.file_list) {
+            int i;
+            for (i = 0; i < pkg_info.file_count; i++) {
+                const char *rel = pkg_info.file_list[i];
+                char *src_path;
+                char *dst_path;
+                FILE *f;
+                unsigned char header_buf[64];
+                size_t bytes_read = 0;
+
+                if (!rel || rel[0] == '\0') continue;
+
+                src_path = runepkg_util_concat_path(pkg_info.data_dir_path, rel);
+                dst_path = runepkg_util_concat_path(g_system_install_root ? g_system_install_root : "/", rel);
+
+                /* Boundary check on destination path */
+                if (runepkg_antimatter_assert_boundary(g_system_install_root ? g_system_install_root : "/", dst_path, NULL) != RUNEPKG_DECON_OK) {
+                    fprintf(stderr, "\033[1;31mError:\033[0m Path boundary violation detected for file '%s'\n", rel);
+                    runepkg_util_free_and_null(&src_path);
+                    runepkg_util_free_and_null(&dst_path);
+                    runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                    runepkg_pack_free_package_info(&pkg_info);
+                    return -1;
+                }
+
+                /* Inspect payload ELF headers if file exists in workspace */
+                if (src_path) {
+                    f = fopen(src_path, "rb");
+                    if (f) {
+                        bytes_read = fread(header_buf, 1, sizeof(header_buf), f);
+                        fclose(f);
+                        if (bytes_read > 20) {
+                            if (runepkg_antimatter_validate_payload(exec_mode, header_buf, (unsigned long)bytes_read) != RUNEPKG_DECON_OK) {
+                                fprintf(stderr, "\033[1;31mError:\033[0m Foreign binary payload detected in '%s' (%s). Aborting installation.\n",
+                                        pkg_info.package_name ? pkg_info.package_name : "package", rel);
+                                runepkg_util_free_and_null(&src_path);
+                                runepkg_util_free_and_null(&dst_path);
+                                runepkg_pack_cleanup_extraction_workspace(&pkg_info);
+                                runepkg_pack_free_package_info(&pkg_info);
+                                return -1;
+                            }
+                        }
+                    }
+                }
+                runepkg_util_free_and_null(&src_path);
+                runepkg_util_free_and_null(&dst_path);
+            }
         }
 
         if (g_system_install_root && pkg_info.data_dir_path && pkg_info.file_count > 0 && pkg_info.file_list) {

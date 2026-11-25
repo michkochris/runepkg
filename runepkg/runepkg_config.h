@@ -120,5 +120,14 @@ int runepkg_config_get_profile_paths(const char *profile_name, char *out_sysroot
 int runepkg_config_provision_target_sysroot_config(const char *sysroot_path, const TargetProfile *profile);
 int runepkg_config_activate_profile(const char *profile_name);
 const char *runepkg_config_resolve_target(const char *cli_target);
+void runepkg_config_reset_target_context(int verbose);
+
+/* Resolves relative archive path through usr-merge directory symlinks safely with sysroot anchoring */
+int runepkg_config_resolve_usr_merge_path(
+    const char *sysroot,
+    const char *rel_path,
+    char *out_real_path,
+    size_t out_size
+);
 
 #endif /* RUNEPKG_CONFIG_H */

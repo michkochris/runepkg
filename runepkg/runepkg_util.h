@@ -396,4 +396,14 @@ void runepkg_log_fail(const char *err_msg, const char *log_dir);
  */
 void runepkg_log_close(int clean_up_enabled);
 
+/**
+ * @brief Canonicalizes a target installation path through Usr-Merge symlinks
+ *        (e.g., /lib64/ld-linux.so -> /usr/lib64/ld-linux.so)
+ * @param in_path Input destination path
+ * @param out_buf Output buffer for canonicalized path
+ * @param out_size Size of out_buf
+ * @return 0 on success, -1 on failure/truncation
+ */
+int runepkg_util_canonicalize_usrmerge_path(const char *in_path, char *out_buf, size_t out_size);
+
 #endif /* RUNEPKG_UTIL_H */

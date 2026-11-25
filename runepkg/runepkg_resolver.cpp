@@ -331,6 +331,26 @@ public:
             }
         }
 
+        /* Matryoshka Stage Partitioning: Ensure Stage 0 (glibc/loader) -> Stage 1 (modules) -> Stage 2 (leaf) */
+        auto get_matryoshka_stage = [](const std::string& pkg) -> int {
+            std::string clean = pkg;
+            if (clean.rfind("src:", 0) == 0) clean = clean.substr(4);
+            if (clean == "libc6" || clean == "libc-bin" || clean == "libgcc-s1" ||
+                clean == "gcc-16-base" || clean == "libstdc++6" || clean.rfind("ld-linux", 0) == 0) {
+                return 0; /* Stage 0: Deepest Doll - Core Runtime */
+            }
+            if (clean == "libc-gconv-modules-extra" || clean.rfind("libmagic", 0) == 0) {
+                return 1; /* Stage 1: Middle Doll - Core Modules */
+            }
+            return 2;     /* Stage 2: Outer Doll - Application Utilities */
+        };
+
+        std::stable_sort(deduplicated_order.begin(), deduplicated_order.end(),
+            [&get_matryoshka_stage](const RuneGraphEntry& a, const RuneGraphEntry& b) {
+                return get_matryoshka_stage(a.package) < get_matryoshka_stage(b.package);
+            }
+        );
+
         if (out_plan) {
             RuneTargetPlan *plan = (RuneTargetPlan*)malloc(sizeof(RuneTargetPlan));
             plan->node_count = deduplicated_order.size();

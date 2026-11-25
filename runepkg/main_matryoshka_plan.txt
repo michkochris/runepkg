@@ -1,0 +1,125 @@
+Portable Static musl Rescue Runner & Safe Matryoshka Deployment Engine
+Deployment strategy and architectural plan for dropping a static musl runepkg & runas binary suite onto any unknown Linux environment (Debian, Kali, Ubuntu, etc.) to safely extract and configure a working core libc6 alongside target packages (such as file), maintaining full operational survival and bidirectional harmony with host dpkg/apt.
+User Review Required & Critical Guardrails
+Important
+Static musl Rescue Binary Suite (make musl-all) The runepkg and runas binaries MUST both be compiled as zero-glibc static binaries via make musl-all (using x86_64-linux-musl-gcc and x86_64-linux-musl-g++ with static zlib and libcurl). Updated forge-musl-all.sh targets build (both runepkg and runas) to guarantee zero dynamic linkage to /lib64/ld-linux-x86-64.so.2 or libc.so.6.
+Warning
+Live Root (/) Mutation Gatekeeping & Container Isolation By default, runepkg -i <pkg> on live / activates the runepkg_antimatter_shield_check() safety lock on core packages (libc6, libgcc-s1, ld-linux*). Deploying a new libc6 directly onto live host / requires passing the explicit CLI flag --allow-core-runtime-on-root (or targeting an isolated --sysroot=/srv/lib/runepkg_dir/target_sysroot). Crucial Precaution: Live-root libc.so.6 swaps are delicate. Always test full libc6 + file deployments inside a sysroot or throwaway container first, keeping a rescue snapshot ready before running --allow-core-runtime-on-root on a live root.
+Caution
+Atomic In-Flight Swap & Usr-Merge Symlink Invariants Replacing live shared objects (e.g., libc.so.6) MUST NOT truncate existing files in-place or unlink structural directory symlinks (/lib64 -> usr/lib64). Extractions MUST write to same-directory temporary files (.runepkg_tmp_PID) and execute an atomic rename(2) swap to preserve active host processes.
+Important
+Host dpkg/apt Lock Checking & State Harmony When dpkg_host=auto writes stanzas to /var/lib/dpkg/status and file lists to /var/lib/dpkg/info/<pkg>.list:
+1.
+Lock Verification: runepkg MUST verify that host /var/lib/dpkg/lock-frontend and /var/lib/dpkg/lock are unlocked (no concurrent apt or dpkg process running).
+2.
+State Exactness: Package version, architecture, status (install ok installed), and dependencies MUST be exact.
+3.
+Validation: Always run apt-get check immediately after syncing to verify complete state agreement before running apt upgrade.
+Proposed Changes & Architectural Modules
+Core Component: Static Rescue & Deployment Harness
+[MODIFY]  forge-musl-all.sh
+•
+Update final make build target in forge-musl-all.sh from runepkg to build so both runepkg and runas are compiled statically against musl.
+•
+Verify ldd runepkg and ldd runas report "statically linked" with zero dynamic dependencies.
+[MODIFY] Makefile
+•
+Synchronize C_SOURCES, CPP_SOURCES, OBJS, and RUNAS_OBJS targets for new modules (runepkg_antimatter.c, runepkg_psychic.c, runepkg_state.c).
+•
+Ensure static-musl target delegates to musl-all / forge-musl-all.sh.
+•
+Ensure clean installation rules for install and install-runas.
+[MODIFY]  runepkg_antimatter.c &  runepkg_antimatter.h
+•
+Live Root Shield Control: Enforce runepkg_antimatter_shield_check() to guard core packages (libc6, libgcc-s1, gcc-16-base, libstdc++6, ld-linux*).
+•
+Override Flag Integration: Allow core runtime mutation when --allow-core-runtime-on-root is passed or when operating inside a target sysroot (g_target_sysroot).
+•
+ELF Architecture Audit: Validate .gnu.version_r tags, DT_RELR, and e_machine on incoming .deb archives before disk extractions.
+[MODIFY]  runepkg_resolver.cpp
+•
+3-Stage Matryoshka Ordering: Partition resolved dependency trees into strict topological levels:
+◦
+Stage 0 (Deepest Doll — Base Runtime): libc6, ld-linux*, libgcc-s1, gcc-16-base, libstdc++6.
+◦
+Stage 1 (Middle Doll — Support Modules): libc-gconv-modules-extra, libmagic1t64.
+◦
+Stage 2 (Outer Doll — Application Utilities): file, grep, curl.
+•
+2-Pass Plan Generation: Pass 1 extracts all stage archives bottom-up (Stage 0 → Stage 1 → Stage 2); Pass 2 triggers postinst and ldconfig bottom-up.
+[MODIFY]  runepkg_install.c
+•
+Atomic File Replacement: Replace O_TRUNC in-place writes with staging file creation (.runepkg_tmp_PID) followed by atomic rename(2).
+•
+Usr-Merge Protection: Enforce immutable directory symlink protections (/lib64, /bin, /sbin).
+[MODIFY]  runepkg_host.c &  runepkg_storage.c
+•
+Quantum Entanglement (dpkg_host=auto): Sync metadata into host /var/lib/dpkg/status and /var/lib/dpkg/info/<pkg>.list.
+•
+Host Lock Guard: Verify /var/lib/dpkg/lock-frontend is non-exclusive before writing.
+•
+State Convergence: Ensure that subsequent apt-get check and apt upgrade calls detect libc6 and file as fully installed and valid, reaching complete state equilibrium.
+[MODIFY] runepkgconfig
+•
+Configure reliable package sources (Debian Trixie) to guarantee 404-free package downloads.
+•
+Enable automatic workspace cleanup (cleanup=yes).
+Deployment & Execution Workflow (Matryoshka Sequence)
+ Step 1: Drop static musl `runepkg` & `runas` rescue binaries onto target Linux system.
+                             |
+ Step 2: Invoke `runepkg -i file.deb --allow-core-runtime-on-root` (or via --sysroot).
+                             |
+ Step 3: Resolution Engine builds 3-Stage Dependency Graph:
+         - Stage 0: libc6, ld-linux-x86-64.so.2, libgcc-s1
+         - Stage 1: libc-gconv-modules-extra, libmagic1t64
+         - Stage 2: file
+                             |
+ Step 4: Pass 1 (Atomic Extraction Bottom-Up):
+         - Unpack Stage 0 (.runepkg_tmp_PID + rename(2) atomic swap over libc.so.6)
+         - Unpack Stage 1 (modules & libmagic)
+         - Unpack Stage 2 (file executable)
+                             |
+ Step 5: Pass 2 (Configuration & Triggers Bottom-Up):
+         - Run ldconfig & Stage 0 postinst
+         - Run Stage 1 postinst
+         - Run Stage 2 postinst
+                             |
+ Step 6: Host Entanglement Sync & Validation:
+         - Verify /var/lib/dpkg/lock-frontend is free
+         - Write status stanzas to /var/lib/dpkg/status
+         - Write file lists to /var/lib/dpkg/info/*.list
+         - Immediately run `apt-get check` to verify zero broken package warnings
+                             |
+ Step 7: System Equilibrium Verification:
+         - Verify `file /bin/bash` runs cleanly.
+         - Verify `apt upgrade` reports 0 broken packages and operates harmoniously.
+Verification Plan & Clean Rollout Order
+Phase 1: Build & Verify Static Binary Suite (runepkg + runas)
+1.
+Compile static rescue binaries:
+make clean-all && make musl-all
+2.
+Verify static linkage for both binaries:
+file runepkg runas   # Output: ELF 64-bit LSB executable, x86_64, statically linked
+ldd runepkg runas    # Output: statically linked (not a dynamic executable)
+Phase 2: Shield Guard & Sysroot Staging Verification
+1.
+Live Root Shield Test:
+./runepkg -i file.deb
+# Verify block message: [matryoshka shield] Refusing to mutate core glibc package 'libc6' on live host root '/'
+2.
+Sysroot Staging Test:
+./runepkg --target=amd64:x86_64-linux-gnu -i file
+# Verify Stage 0 -> Stage 1 -> Stage 2 unpacking cleanly inside /srv/lib/runepkg_dir/target_sysroot
+Phase 3: Container Test & apt-get check Validation
+1.
+Execute full libc6 + file deployment inside an isolated test container / sysroot:
+./runepkg -i file.deb --allow-core-runtime-on-root
+2.
+Verify execution of installed binaries:
+file /bin/bash
+3.
+Verify host dpkg/apt lock safety and state agreement:
+apt-get check
+apt upgrade
+# Must return: 0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.

@@ -11,49 +11,46 @@ cat << 'EOF' > Makefile
 # Makefile for runepkg with consolidated configuration system.
 
 # --- User Overrides ---
-CC      ?= gcc
-CXX     ?= g++
-V       ?= 0
-MUSL    ?= 0
+CC       ?= gcc
+CXX      ?= g++
+V        ?= 0
+MUSL     ?= 0
 WITH_CPP ?= auto
 
 # --- Installation Variables ---
-DESTDIR ?=
-PREFIX  ?= /usr
-ETCDIR  ?= /etc
+DESTDIR       ?=
+PREFIX        ?= /usr
+ETCDIR        ?= /etc
 TERMUX_PREFIX ?= /data/data/com.termux/files/usr
 
 # --- Power User Shortcut: MUSL ---
 ifeq ($(MUSL),1)
-  # Check for the Grand Forge toolchain from 'make musl-all'
   FORGE_BIN := $(CURDIR)/forge_musl/toolchain/bin
   ifneq ($(wildcard $(FORGE_BIN)/x86_64-linux-musl-gcc),)
     CC  := $(FORGE_BIN)/x86_64-linux-musl-gcc
     CXX := $(FORGE_BIN)/x86_64-linux-musl-g++
-    # Automatically include forge dependencies if present
     ifneq ($(wildcard $(CURDIR)/forge_musl/deps/include),)
       override CFLAGS   += -I$(CURDIR)/forge_musl/deps/include
       override CXXFLAGS += -I$(CURDIR)/forge_musl/deps/include
-      LDFLAGS  += -L$(CURDIR)/forge_musl/deps/lib
+      LDFLAGS           += -L$(CURDIR)/forge_musl/deps/lib
     endif
   else
     CC  := musl-gcc
     CXX := $(shell if command -v musl-g++ >/dev/null 2>&1; then echo musl-g++; else echo musl-gcc; fi)
   endif
-  # Disable glibc-specific hardening that can conflict with musl-gcc specs on some hosts
   BASE_CFLAGS   += -fno-stack-protector -U_FORTIFY_SOURCE
   BASE_CXXFLAGS += -fno-stack-protector -U_FORTIFY_SOURCE
 endif
 
 # --- Strict Flags and Security Hardening ---
-BASE_CFLAGS   = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef \
-                -std=c89 -D_GNU_SOURCE -D_XOPEN_SOURCE=700 -g -O2 \
-                -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -MMD -MP \
-                -pthread -fdiagnostics-color=always
-BASE_CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef \
-                -std=c++17 -D_GNU_SOURCE -g -O2 -D_FORTIFY_SOURCE=2 \
-                -fstack-protector-strong -fPIE -MMD -MP -pthread -fdiagnostics-color=always
-BASE_LDFLAGS  = -pthread -pie -Wl,-z,relro,-z,now -Wl,-z,noexecstack
+BASE_CFLAGS   += -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef \
+                 -std=c89 -D_GNU_SOURCE -D_XOPEN_SOURCE=700 -g -O2 \
+                 -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -MMD -MP \
+                 -pthread -fdiagnostics-color=always
+BASE_CXXFLAGS += -Wall -Wextra -Wpedantic -Werror -Wshadow -Wformat=2 -Wundef \
+                 -std=c++17 -D_GNU_SOURCE -g -O2 -D_FORTIFY_SOURCE=2 \
+                 -fstack-protector-strong -fPIE -MMD -MP -pthread -fdiagnostics-color=always
+BASE_LDFLAGS  += -pthread -pie -Wl,-z,relro,-z,now -Wl,-z,noexecstack
 
 # Append user-provided flags to the base flags
 CFLAGS   := $(BASE_CFLAGS) $(CFLAGS)
@@ -84,10 +81,10 @@ CYAN   := $(ESC)[1;36m
 PURPLE := $(ESC)[1;35m
 
 # --- Dependency detection ---
-CC_AVAILABLE      := $(shell command -v $(CC) >/dev/null 2>&1 && echo 1 || echo 0)
-CXX_AVAILABLE     := $(shell command -v $(CXX) >/dev/null 2>&1 && echo 1 || echo 0)
-LIBCURL_AVAILABLE := $(shell pkg-config --exists libcurl 2>/dev/null && echo 1 || (curl-config --version >/dev/null 2>&1 && echo 1 || echo 0))
-ZLIB_AVAILABLE    := $(shell pkg-config --exists zlib 2>/dev/null && echo 1 || (echo "int main(){}" | $(CC) -x c - -lz -o /dev/null >/dev/null 2>&1 && echo 1 || echo 0))
+CC_AVAILABLE       := $(shell command -v $(CC) >/dev/null 2>&1 && echo 1 || echo 0)
+CXX_AVAILABLE      := $(shell command -v $(CXX) >/dev/null 2>&1 && echo 1 || echo 0)
+LIBCURL_AVAILABLE  := $(shell pkg-config --exists libcurl 2>/dev/null && echo 1 || (curl-config --version >/dev/null 2>&1 && echo 1 || echo 0))
+ZLIB_AVAILABLE     := $(shell pkg-config --exists zlib 2>/dev/null && echo 1 || (echo "int main(){}" | $(CC) -x c - -lz -o /dev/null >/dev/null 2>&1 && echo 1 || echo 0))
 CPP_WRAPPER_EXISTS := $(if $(wildcard runepkg_network.cpp),1,0)
 
 # Resolve 'auto' if still needed
@@ -112,32 +109,55 @@ ifeq ($(WITH_CPP),1)
   endif
 endif
 
-# --- Apply Configuration ---
-ifeq ($(WITH_CPP),1)
-  override CFLAGS  += -DENABLE_CPP_FFI
-  override CXXFLAGS += -DRUNEPKG_BUILD
-  LDFLAGS += $(shell pkg-config --libs libcurl openssl libcrypto 2>/dev/null || echo "-lcurl -lcrypto") -lz
-  CPP_SOURCES = runepkg_security.cpp runepkg_utility.cpp runepkg_resolver.cpp runepkg_network.cpp runepkg_guard.cpp runepkg_multiarch.cpp runepkg_building.cpp runepkg_runas.cpp
-  CPP_OBJECTS = $(CPP_SOURCES:.cpp=.o)
-  LINKER = $(CXX)
-else
-  CPP_SOURCES =
-  CPP_OBJECTS =
-  LINKER = $(CC)
-endif
-
-TARGET = runepkg
+# --- Sources & Objects ---
+TARGET       = runepkg
 RUNAS_TARGET = runas
+
 C_SOURCES = runepkg_cli.c runepkg_handle.c runepkg_config.c runepkg_util.c \
             runepkg_pack.c runepkg_hash.c runepkg_storage.c runepkg_defensive.c \
             runepkg_completion.c runepkg_install.c runepkg_md5sums.c runepkg_crypto.c \
-            runepkg_host.c runepkg_state.c runepkg_psychic.c
+            runepkg_host.c runepkg_state.c runepkg_psychic.c runepkg_antimatter.c
+
+ifeq ($(WITH_CPP),1)
+  override CFLAGS   += -DENABLE_CPP_FFI
+  override CXXFLAGS += -DRUNEPKG_BUILD
+  LDFLAGS           += $(shell pkg-config --libs libcurl openssl libcrypto 2>/dev/null || echo "-lcurl -lcrypto") -lz
+  CPP_SOURCES        = runepkg_security.cpp runepkg_utility.cpp runepkg_resolver.cpp \
+                       runepkg_network.cpp runepkg_guard.cpp runepkg_multiarch.cpp \
+                       runepkg_building.cpp runepkg_runas.cpp
+  CPP_OBJECTS        = $(CPP_SOURCES:.cpp=.o)
+  LINKER             = $(CXX)
+else
+  CPP_SOURCES =
+  CPP_OBJECTS =
+  LINKER      = $(CC)
+endif
+
 OBJS = $(C_SOURCES:.c=.o) $(CPP_OBJECTS)
-RUNAS_OBJS = runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o runepkg_state.o runepkg_psychic.o
+RUNAS_OBJS = runas.o runepkg_multiarch.o runepkg_building.o runepkg_network.o \
+             runepkg_security.o runepkg_utility.o runepkg_resolver.o runepkg_guard.o \
+             runepkg_util.o runepkg_config.o runepkg_hash.o runepkg_storage.o \
+             runepkg_defensive.o runepkg_pack.o runepkg_handle.o runepkg_completion.o \
+             runepkg_install.o runepkg_md5sums.o runepkg_crypto.o runepkg_host.o \
+             runepkg_state.o runepkg_psychic.o runepkg_antimatter.o
+
 HEADERS = runepkg_config.h runepkg_handle.h runepkg_util.h runepkg_pack.h \
           runepkg_hash.h runepkg_storage.h runepkg_defensive.h runepkg_md5sums.h \
           runepkg_crypto.h runepkg_cpp_ffi.h runepkg_host.h runepkg_state.h \
-          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp runepkg_multiarch.hpp runepkg_building.hpp runepkg_psychic.h
+          runepkg_security.hpp runepkg_utility.hpp runepkg_guard.hpp runepkg_runas.hpp \
+          runepkg_multiarch.hpp runepkg_building.hpp runepkg_psychic.h runepkg_antimatter.h
+
+# Export canonical source & build metadata so forge-musl-all.sh matches `make all`
+export RUNEPKG_TARGET=$(TARGET)
+export RUNEPKG_RUNAS_TARGET=$(RUNAS_TARGET)
+export RUNEPKG_C_SOURCES=$(C_SOURCES)
+export RUNEPKG_CPP_SOURCES=$(CPP_SOURCES)
+export RUNEPKG_RUNAS_OBJS=$(RUNAS_OBJS)
+export RUNEPKG_HEADERS=$(HEADERS)
+export RUNEPKG_CFLAGS=$(CFLAGS)
+export RUNEPKG_CXXFLAGS=$(CXXFLAGS)
+export RUNEPKG_LDFLAGS=$(LDFLAGS)
+export RUNEPKG_LIBS=$(LIBS)
 
 # --- Output Control ---
 Q = $(if $(filter 1,$(V)),,@)
@@ -155,7 +175,7 @@ E = $(if $(filter 1,$(V)),@true,@echo)
 # --- Targets ---
 
 .DEFAULT_GOAL := build
-.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all install-runas FORCE
+.PHONY: build all clean clean-forge clean-extended clean-all install install-target-rules debug run termux-install uninstall test info with-cpp build-banner musl-all static-musl install-runas static-analysis FORCE
 
 build: build-banner $(TARGET) $(RUNAS_TARGET)
 	$(E) "  $(GREEN)[link]$(RESET)  Linking binaries: $(TARGET) $(RUNAS_TARGET)"
@@ -164,6 +184,8 @@ build: build-banner $(TARGET) $(RUNAS_TARGET)
 musl-all:
 	@chmod +x forge-musl-all.sh
 	@./forge-musl-all.sh
+
+static-musl: musl-all
 
 build-banner:
 	@echo "$(BOLD)$(CYAN)--------------------------------------------------------$(RESET)"
@@ -259,12 +281,12 @@ uninstall:
 	$(Q)rm -f $(DESTDIR)$(PREFIX)/bin/$(RUNAS_TARGET)
 	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(TARGET)
 	$(Q)rm -f $(TERMUX_PREFIX)/bin/$(RUNAS_TARGET)
-	@echo "$(YELLOW)Note: $(DESTDIR)$(ETCDIR)/runepkg has been preserved.$(RESET)"
-	@echo "$(GREEN)Uninstallation complete.$(RESET)"
+	$(Q)rm -f $(DESTDIR)$(ETCDIR)/runepkg/runepkgconfig
+	$(Q)echo "$(GREEN)Uninstallation complete.$(RESET)"
 
 debug: CFLAGS += -DDEBUG -O0
 debug: CXXFLAGS += -DDEBUG -O0
-debug: runepkg
+debug: build
 
 test: $(TARGET)
 	$(Q)./$(TARGET) --help

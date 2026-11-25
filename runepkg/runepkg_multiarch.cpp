@@ -19,6 +19,7 @@
 extern "C" {
 #include "runepkg_host.h"
 #include "runepkg_config.h"
+#include "runepkg_antimatter.h"
 }
 
 static const std::map<std::string, std::string> g_deb_to_gnu_map = {
@@ -109,6 +110,11 @@ DebianMultiArchConfig DebianMultiArchEngine::configure_multiarch(const std::stri
 }
 
 int DebianMultiArchEngine::export_multiarch_env(const DebianMultiArchConfig& config) {
+    if (!config.is_cross_compiling) {
+        runepkg_antimatter_purge();
+        return 0;
+    }
+
     setenv("DEB_BUILD_ARCH", config.deb_build_arch.c_str(), 1);
     setenv("DEB_BUILD_GNU_TYPE", config.deb_build_triplet.c_str(), 1);
     setenv("DEB_HOST_ARCH", config.deb_host_arch.c_str(), 1);

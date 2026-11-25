@@ -22,6 +22,7 @@
 #include "runepkg_util.h"
 #include "runepkg_config.h"
 #include "runepkg_psychic.h"
+#include "runepkg_antimatter.h"
 
 /* Define PATH_MAX if not defined */
 #ifndef PATH_MAX
@@ -108,11 +109,11 @@ static void normalize_and_get_db_dir(const char *root, char *buf, size_t buflen)
         temp[len - 1] = '\0';
         len--;
     }
-    if (len >= 12 && strcmp(temp + len - 12, "runepkg_db") == 0) {
+    if (strstr(temp, "srv/lib/runepkg_dir/runepkg_db") != NULL) {
         snprintf(buf, buflen, "%s", temp);
-        return;
+    } else {
+        snprintf(buf, buflen, "%s/srv/lib/runepkg_dir/runepkg_db", temp);
     }
-    snprintf(buf, buflen, "%s/runepkg_db", temp);
 }
 
 const char *runepkg_config_get_effective_db_dir(void) {
@@ -743,11 +744,17 @@ int runepkg_config_load(void) {
             g_system_install_root = strdup(g_target_sysroot);
         }
     } else {
+        /* When --target is omitted on CLI, reset and plunge target state clean to host baseline */
+        runepkg_config_reset_target_context(0);
         runepkg_config_get_effective_db_dir();
     }
 
     free(config_file_path);
     return 0;
+}
+
+void runepkg_config_reset_target_context(int verbose) {
+    runepkg_antimatter_plunger(verbose);
 }
 
 void runepkg_config_cleanup(void) {
@@ -854,4 +861,38 @@ void runepkg_init_paths(void) {
     if (g_build_dir && !runepkg_util_file_exists(g_build_dir)) runepkg_util_create_dir_recursive(g_build_dir, 0755);
     if (g_debs_dir && !runepkg_util_file_exists(g_debs_dir)) runepkg_util_create_dir_recursive(g_debs_dir, 0755);
     if (g_log_dir && !runepkg_util_file_exists(g_log_dir)) runepkg_util_create_dir_recursive(g_log_dir, 0755);
+}
+
+/*
+ * runepkg_config_resolve_usr_merge_path:
+ *   Canonicalizes relative package extraction path through usr-merge directory
+ *   symlinks (/lib64 -> usr/lib64, /bin -> usr/bin) while strictly anchoring
+ *   destination paths under sysroot when sysroot is non-NULL and non-"/".
+ */
+int runepkg_config_resolve_usr_merge_path(
+    const char *sysroot,
+    const char *rel_path,
+    char *out_real_path,
+    size_t out_size
+) {
+    char canon_path[PATH_MAX];
+    if (!rel_path || !out_real_path || out_size == 0) {
+        return -1;
+    }
+
+    /* Canonicalize path through Usr-Merge symlinks */
+    runepkg_util_canonicalize_usrmerge_path(rel_path, canon_path, sizeof(canon_path));
+
+    /* Ensure path is strictly anchored under sysroot when sysroot is non-empty and non-"/" */
+    if (sysroot && sysroot[0] != '\0' && strcmp(sysroot, "/") != 0) {
+        if (canon_path[0] == '/') {
+            snprintf(out_real_path, out_size, "%s%s", sysroot, canon_path);
+        } else {
+            snprintf(out_real_path, out_size, "%s/%s", sysroot, canon_path);
+        }
+    } else {
+        snprintf(out_real_path, out_size, "%s", canon_path);
+    }
+
+    return 0;
 }

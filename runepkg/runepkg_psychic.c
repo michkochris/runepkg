@@ -340,6 +340,7 @@ static const char *get_linker_name_for_deb_arch(const char *deb_arch) {
 void runepkg_psychic_anchor_dynamic_linker(const char *sysroot_path, const char *deb_arch, const char *gnu_triplet) {
     char lib_dir[PATH_MAX];
     char usr_lib_dir[PATH_MAX];
+    char lib_sub_dir[PATH_MAX];
     char link_path[PATH_MAX];
     char target_path[PATH_MAX];
     char libc_so_path[PATH_MAX];
@@ -350,28 +351,15 @@ void runepkg_psychic_anchor_dynamic_linker(const char *sysroot_path, const char 
 
     if (!sysroot_path || !deb_arch || !gnu_triplet) return;
 
-    snprintf(lib_dir, sizeof(lib_dir), "%s/lib/%s", sysroot_path, gnu_triplet);
+    snprintf(lib_dir, sizeof(lib_dir), "%s/lib", sysroot_path);
+    snprintf(lib_sub_dir, sizeof(lib_sub_dir), "%s/lib/%s", sysroot_path, gnu_triplet);
     snprintf(usr_lib_dir, sizeof(usr_lib_dir), "%s/usr/lib/%s", sysroot_path, gnu_triplet);
 
+    runepkg_util_create_dir_recursive(lib_dir, 0755);
+    runepkg_util_create_dir_recursive(lib_sub_dir, 0755);
     runepkg_util_create_dir_recursive(usr_lib_dir, 0755);
 
-    /* If /lib/<gnu_triplet> exists as an empty directory, remove it so we can create symlink */
-    if (lstat(lib_dir, &st) == 0) {
-        if (S_ISDIR(st.st_mode)) {
-            if (rmdir(lib_dir) != 0) {
-                (void)0;
-            }
-        }
-    }
-
-    if (lstat(lib_dir, &st) != 0) {
-        snprintf(target_path, sizeof(target_path), "../usr/lib/%s", gnu_triplet);
-        if (symlink(target_path, lib_dir) != 0) {
-            (void)0;
-        }
-    }
-
-    /* Anchor dynamic linker loader symlink in /lib/<linker_name> */
+    /* Anchor dynamic linker loader symlink in /lib/<linker_name> pointing to <gnu_triplet>/<linker_name> */
     linker_name = get_linker_name_for_deb_arch(deb_arch);
     if (linker_name) {
         snprintf(link_path, sizeof(link_path), "%s/lib/%s", sysroot_path, linker_name);

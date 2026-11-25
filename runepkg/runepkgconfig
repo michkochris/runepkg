@@ -71,8 +71,9 @@ install_dir=/
 runepkg_db=/srv/lib/runepkg_dir/runepkg_db
 
 # [target_sysroot]
-# Dedicated cross-arch embedded target sysroot for runepkg_psychic multi-arch staging (default: /mnt/runepkg/<profile>).
-#target_sysroot=/srv/lib/runepkg_dir/target_sysrootw
+# Dedicated cross-arch embedded target sysroot for runepkg_psychic multi-arch staging and Matryoshka staging.
+# When enabled, packages extract safely into sysroot without mutating live host root / (default: /srv/lib/runepkg_dir/target_sysroot).
+target_sysroot=/srv/lib/runepkg_dir/target_sysroot
 
 # [target_deb]
 # Dedicated output directory for isolated Debian compatible {cross} built .deb files.
@@ -82,7 +83,7 @@ target_deb=/srv/lib/runepkg_dir/target_deb
 
 # [cleanup]
 # Automatically delete extraction workspace after installation (yes/no).
-cleanup=no
+cleanup=yes
 
 # [md5_checks]
 # Enable MD5 integrity verification during installation (yes/no).
@@ -102,6 +103,15 @@ dpkg_host=auto
 # currently a future proof feature, as no current debian based distro ever signs a .deb with a gpg signature...
 gpg_check=no
 
+# --------------------------- Matryoshka & Rescue Runner Policy ---------------------------------------- #
+# 1- Static musl Rescue Binary: Compiled with `make musl-all` (zero dynamic linkage to host glibc/ld.so).
+# 2- Core Lock Guard: On live host root '/', core glibc & toolchain packages (libc6, libgcc-s1, ld-linux)
+#    are locked by default unless --allow-core-runtime-on-root is passed.
+# 3- Matryoshka Ordering:
+#    - Stage 0: Deepest Doll (base runtime: libc6, ld-linux*, libgcc-s1, gcc-base)
+#    - Stage 1: Middle Doll (support modules: libc-gconv-modules-extra, libmagic)
+#    - Stage 2: Outer Doll (leaf application utilities: file, grep, curl)
+
 # --- Repository Sources ---
 # runepkg supports standard Debian sources.list syntax.
 #
@@ -111,22 +121,17 @@ gpg_check=no
 # base URL defined. Mixing repositories with different base URLs may cause
 # download failures (404) if a package exists in one but not the other.
 
-# [Debian Stable (Bookworm)] - RECOMMENDED FOR RUNEPKG
+# [Debian Stable (Trixie)] - RECOMMENDED FOR STABLE RUNEPKG DEPLOYMENTS
 # Debian Stable provides frozen, reliable package versions that prevent 404 mirror pruning errors.
-#deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
-#deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
-#deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
-#deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-updates main contrib non-free non-free-firmware
+deb http://deb.debian.org/debian trixie-backports main contrib non-free non-free-firmware
+deb-src http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
 
-# [Kali Linux Rolling] - LESS RELIABLE LATEST ROLLING RELEASE FOR RUNEPKG
-# Note: Kali has later/bleeding-edge packages, but is less reliable for runepkg because
-# rolling mirrors frequently prune older package versions, causing 404 download errors.
-deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
-deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
-
-# BELOW IS TESTING EXPERIMENTAL...
-# Official Debian Trixie (for standard arches: amd64, arm64, armhf, i386, ppc64el, s390x)
-#deb http://deb.debian.org/debian trixie main contrib non-free non-free-firmware
+# [Kali Linux Rolling] - OPTIONAL ROLLING RELEASE FOR RUNEPKG
+# Note: Rolling mirrors frequently prune older package versions, which can cause 404 download errors.
+#deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+#deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 
 # Debian Ports (for extra/ports arches: loong64, riscv64, alpha, hppa, m68k, sh4, sparc64)
 #deb http://ftp.ports.debian.org/debian-ports sid main

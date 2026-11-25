@@ -38,6 +38,7 @@
 #include "runepkg_md5sums.h"
 #include "runepkg_crypto.h"
 #include "runepkg_host.h"
+#include "runepkg_psychic.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -114,6 +115,10 @@ int runepkg_init(void) {
     runepkg_init_paths();
     runepkg_config_get_effective_db_dir();
     runepkg_host_init();
+    if (g_system_install_root && strcmp(g_system_install_root, "/") != 0) {
+        const char *prophecy_arch = g_target_arch ? g_target_arch : runepkg_host_get_architecture();
+        runepkg_psychic_prophecy_check(g_system_install_root, prophecy_arch);
+    }
     if (!g_completion_mode) {
         runepkg_fsm_recover_orphaned_transactions();
     }

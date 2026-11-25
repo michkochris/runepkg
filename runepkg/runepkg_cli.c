@@ -35,6 +35,7 @@
 #include "runepkg_completion.h"
 #include "runepkg_host.h"
 #include "runepkg_psychic.h"
+#include "runepkg_antimatter.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -311,6 +312,11 @@ int main(int argc, char *argv[]) {
 
     parse_cli_plan(argc, argv, &plan);
 
+    /* If --target was not passed on CLI, execute decontamination plunger check */
+    if (!plan.raw_target) {
+        runepkg_antimatter_plunger(g_verbose_mode);
+    }
+
     runepkg_log_verbose("=== RUNEPKG STARTUP ANALYSIS ===\n");
     runepkg_log_verbose("Command line arguments: %d\n", argc);
     if (g_verbose_mode) {
@@ -345,6 +351,9 @@ int main(int argc, char *argv[]) {
         runepkg_cleanup();
         return EXIT_FAILURE;
     }
+
+    /* Cold-Start Environment Probe (Polish Item 2): Probes active target sysroot after flags and init */
+    runepkg_antimatter_probe_environment(g_system_install_root, &g_env_info);
 
     for (i = 1; i < argc; ++i) {
         if (is_target_flag(argv[i])) {

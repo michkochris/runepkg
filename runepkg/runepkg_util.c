@@ -2179,3 +2179,26 @@ void runepkg_log_close(int clean_up_enabled)
         g_tx_log_path[0] = '\0';
     }
 }
+
+int runepkg_util_canonicalize_usrmerge_path(const char *in_path, char *out_buf, size_t out_size) {
+    if (!in_path || !out_buf || out_size == 0) return -1;
+
+    /* Single root prefix (/bin/, /sbin/, /lib/, /lib64/, /lib32/, /libx32/) */
+    if (strncmp(in_path, "/bin/", 5) == 0) {
+        snprintf(out_buf, out_size, "/usr/bin/%s", in_path + 5);
+    } else if (strncmp(in_path, "/sbin/", 6) == 0) {
+        snprintf(out_buf, out_size, "/usr/sbin/%s", in_path + 6);
+    } else if (strncmp(in_path, "/lib/", 5) == 0) {
+        snprintf(out_buf, out_size, "/usr/lib/%s", in_path + 5);
+    } else if (strncmp(in_path, "/lib64/", 7) == 0) {
+        snprintf(out_buf, out_size, "/usr/lib64/%s", in_path + 7);
+    } else if (strncmp(in_path, "/lib32/", 7) == 0) {
+        snprintf(out_buf, out_size, "/usr/lib32/%s", in_path + 7);
+    } else if (strncmp(in_path, "/libx32/", 8) == 0) {
+        snprintf(out_buf, out_size, "/usr/libx32/%s", in_path + 8);
+    } else {
+        snprintf(out_buf, out_size, "%s", in_path);
+    }
+
+    return 0;
+}

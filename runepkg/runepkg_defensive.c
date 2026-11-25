@@ -580,6 +580,38 @@ runepkg_error_t runepkg_defensive_validate_conflicts(const char *pkg_name, const
     return RUNEPKG_SUCCESS;
 }
 
+int runepkg_defensive_is_critical_host_pkg(const char *pkg_name) {
+    if (!pkg_name || pkg_name[0] == '\0') return 0;
+
+    if (strcmp(pkg_name, "libc6") == 0 ||
+        strcmp(pkg_name, "libc-bin") == 0 ||
+        strcmp(pkg_name, "libc-dev-bin") == 0 ||
+        strcmp(pkg_name, "libc6-dev") == 0 ||
+        strcmp(pkg_name, "dpkg") == 0 ||
+        strcmp(pkg_name, "apt") == 0 ||
+        strcmp(pkg_name, "systemd") == 0 ||
+        strcmp(pkg_name, "base-files") == 0 ||
+        strcmp(pkg_name, "bash") == 0 ||
+        strcmp(pkg_name, "coreutils") == 0) {
+        return 1;
+    }
+
+    return 0;
+}
+
+runepkg_error_t runepkg_defensive_check_critical_host_package(const char *pkg_name, const char *install_root) {
+    if (!pkg_name) return RUNEPKG_ERROR_NULL_POINTER;
+
+    if (!install_root || install_root[0] == '\0' || strcmp(install_root, "/") == 0) {
+        if (runepkg_defensive_is_critical_host_pkg(pkg_name)) {
+            runepkg_util_log_verbose("\033[1;33m[defensive]\033[0m Shielded critical host infrastructure package '%s' from direct extraction onto /\n", pkg_name);
+            return RUNEPKG_ERROR_INVALID_INPUT;
+        }
+    }
+
+    return RUNEPKG_SUCCESS;
+}
+
 /* --- Memory Debugging --- */
 
 #ifdef RUNEPKG_DEBUG_MEMORY

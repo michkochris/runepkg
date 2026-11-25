@@ -18,6 +18,10 @@
 #include <errno.h>
 #include <stdarg.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* --- Security Limits --- */
 #define RUNEPKG_MAX_STRING_LEN      (1024 * 1024)  /* 1MB max string */
 #define RUNEPKG_MAX_PATH_LEN        4096           /* 4KB max path */
@@ -200,7 +204,26 @@ size_t runepkg_memory_usage(void);
  */
 runepkg_error_t runepkg_defensive_validate_conflicts(const char *pkg_name, const char *pkg_version, char *error_buf, size_t err_size);
 
+/**
+ * @brief Checks if a package name is a critical host infrastructure package.
+ * @param pkg_name Package name to check.
+ * @return 1 if critical host package, 0 if normal application package.
+ */
+int runepkg_defensive_is_critical_host_pkg(const char *pkg_name);
+
+/**
+ * @brief Validates package installation against critical host protection rules.
+ * @param pkg_name Package name to validate.
+ * @param install_root Target installation root.
+ * @return RUNEPKG_SUCCESS (0) if allowed, RUNEPKG_ERROR_INVALID_INPUT (-5) if blocked.
+ */
+runepkg_error_t runepkg_defensive_check_critical_host_package(const char *pkg_name, const char *install_root);
+
 /* --- Error Messages --- */
 const char* runepkg_error_string(runepkg_error_t error);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RUNEPKG_DEFENSIVE_H */
