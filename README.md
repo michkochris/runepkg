@@ -11,7 +11,7 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-<img src="./runepkg/gemini-svg.svg" width="28" style="vertical-align: middle;"> **runepkg** is engineered from the ground up as an **absolute tooling and rescue model**. Unlike traditional package managers that depend on a healthy, cooperative host environment to function, **runepkg** operates under a single unyielding principle: **tooling survival comes first**. It is designed to remain unshakeable, self-contained, and fully operational even if the surrounding host system is accidentally or intentionally broken. Whether bootstrapping bare-metal targets or rescuing a collapsed OS, **runepkg** ensures its own tools and deployed payloads work unconditionally—giving you an absolute foundation to recover, rebuild, and deploy software across the Debian ecosystem.
+**runepkg** is engineered from the ground up as an **absolute tooling and rescue model**. Unlike traditional package managers that depend on a healthy, cooperative host environment to function, **runepkg** operates under a single unyielding principle: **tooling survival comes first**. It is designed to remain unshakeable, self-contained, and fully operational even if the surrounding host system is accidentally or intentionally broken. Whether bootstrapping bare-metal targets or rescuing a collapsed OS, **runepkg** ensures its own tools and deployed payloads work unconditionally—giving you an absolute foundation to recover, rebuild, and deploy software across the Debian ecosystem.
 
 **runepkg** was never conceived to simply compete with `dpkg`, `apt`, or `busybox dpkg`; it was engineered from the very foundation to surpass them across every dimension. Originally envisioned as an uncompromising, high-grade computer science project built to meet the rigorous software reliability standards of NASA or similar mission-critical organizations, **runepkg** is engineered specifically for the **Debian ecosystem** to deliver bare-metal `.deb` packages with lightning-fast binary speed and zero bloat.
 
@@ -81,6 +81,8 @@ The system is structured into three clear, distinct tiers to address distinct op
 
 Starting from its lowest C89 core up to the C++ FFI forge, **runepkg** is engineered with a series of deliberate architectural design choices that distinguish it from traditional package management tools:
 
+> 🎩 **Dive Deeper into the Architecture:** For a complete technical deep-dive into the FNV-1a hash engine, binary storage models, 4-stage hermetic toolchain forging, and low-level C89/C++ FFI mechanics, read the full [DESIGN.md](./docs/DESIGN.md) specification.
+
 - **Cascading Configuration System (`runepkgconfig`):** Features a 4-tier layered configuration hierarchy (hardcoded system defaults, `/etc/runepkg/runepkgconfig`, user config, and CLI environment overrides) that provides complete path portability, dynamic sysroot registries, and multi-profile target support without modifying executable code.
 - **Unified FNV-1a Memory Engine:** Employs a custom FNV-1a hash table with dynamic prime resizing to manage unified `PkgInfo` C structures in memory, guaranteeing minimal collision overhead, zero-wiped secure memory buffers, and ultra-fast $O(1)$ symbol lookups.
 - **Hierarchical Binary Serialization (`pkginfo.bin`):** Completely eliminates the severe I/O bottlenecks of flat-file text parsing (such as standard `/var/lib/dpkg/status`) by serializing `PkgInfo` records into a structured `package-version` directory hierarchy on disk, enabling zero-copy binary indexing and instant metadata retrieval.
@@ -90,7 +92,7 @@ Starting from its lowest C89 core up to the C++ FFI forge, **runepkg** is engine
 - **Security-Hardened Perimeter:** Features `secure_malloc` zero-wiping, path traversal jail protection (`..`), POSIX `rlimit` extraction bounds (preventing zip bombs), sandboxed worker privilege dropping (`_apt`), and OpenPGP `InRelease` signature verification.
 - **Native Source-to-Binary Toolchain Forging (`runas`):** Seamlessly integrates the companion `runas` engine to ingest Debian source packages (`.dsc`, `.orig.tar`), inspect and auto-install host build toolchains, apply Debian patches, and compile 100% Debian-compatible `.deb` packages directly from source.
 
-> 🎩 **Dive Deeper into the Architecture:** For a complete technical deep-dive into the FNV-1a hash engine, binary storage models, 4-stage hermetic toolchain forging, and low-level C89/C++ FFI mechanics, read the full [DESIGN.md](./docs/DESIGN.md) specification.
+> <img src="./runepkg/gemini-svg.svg" width="28" style="vertical-align: middle;"> **Psychic Debian Prophecy Engine (`runepkg_psychic`):** Leverages Debian's deterministic Multi-Arch invariants to project FHS directory trees, anchor dynamic linkers, and resolve virtual package telepathy pre-flight—proactively eliminating extraction failures and dependency dead-ends before they can happen.
 
 ---
 
