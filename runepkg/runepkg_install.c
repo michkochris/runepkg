@@ -824,7 +824,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                 }
                 if (!found_deb) {
                     const char *subdirs[] = {"amd64", "arm64", "i386", "armhf", "all", "noarch"};
-                    for (int s = 0; s < 6; s++) {
+                    int s;
+                    for (s = 0; s < 6; s++) {
                         if (strstr(deb_file_path, "*") != NULL) {
                             snprintf(download_pattern, sizeof(download_pattern), "%s/%s/%s", g_download_dir, subdirs[s], deb_file_path);
                         } else {

@@ -918,40 +918,27 @@ void handle_list_files(const char *package_name) {
 void handle_print_config(void) {
     printf("runepkg Configuration:\n");
     printf("=====================\n");
-    if (g_runepkg_base_dir) printf("  Base Directory:      %s\n", g_runepkg_base_dir);
-    else printf("  Base Directory:      (not set)\n");
-    if (g_control_dir) printf("  Control Directory:   %s\n", g_control_dir);
-    else printf("  Control Directory:   (not set)\n");
-    if (g_install_dir_internal) printf("  Install Directory:   %s\n", g_install_dir_internal);
-    else printf("  Install Directory:   (not set)\n");
-    if (g_system_install_root) printf("  System Install Root: %s\n", g_system_install_root);
-    else printf("  System Install Root: (not set)\n");
-    if (g_runepkg_db_dir) printf("  Database Directory:  %s\n", g_runepkg_db_dir);
-    else printf("  Database Directory:  (not set)\n");
-    if (g_download_dir) printf("  Download Directory:  %s\n", g_download_dir);
-    else printf("  Download Directory:  (not set)\n");
-    if (g_build_dir) printf("  Build Directory:     %s\n", g_build_dir);
-    else printf("  Build Directory:     (not set)\n");
-    if (g_debs_dir) printf("  Debs Directory:      %s\n", g_debs_dir);
-    else printf("  Debs Directory:      (not set)\n");
-    {
-        extern char *g_target_install_dir;
-        extern char *g_target_arch;
-        if (g_target_install_dir) printf("  Target Install Dir:  %s\n", g_target_install_dir);
-        else printf("  Target Install Dir:  (not set)\n");
-        if (g_target_arch) printf("  Target Architecture: %s\n", g_target_arch);
-        else printf("  Target Architecture: (not set)\n");
-    }
-
-    printf("  Cleanup: %s\n", g_cleanup_extract_dirs ? "yes" : "no");
-    {
-        extern bool g_md5_checks;
-        printf("  MD5 Checks: %s\n", g_md5_checks ? "yes" : "no");
-    }
+    printf("  target_arch:         %s\n", g_target_arch ? g_target_arch : "amd64:x86_64-linux-gnu");
+    printf("\n");
+    printf("  install_dir:         %s\n", g_install_dir_internal ? g_install_dir_internal : "/");
+    printf("  runepkg_db:          %s\n", g_runepkg_db_dir ? g_runepkg_db_dir : "/srv/lib/runepkg_dir/runepkg_db");
+    printf("\n");
+    printf("  runepkg_dir:         %s\n", g_runepkg_base_dir ? g_runepkg_base_dir : "/srv/lib/runepkg_dir");
+    printf("  control_dir:         %s\n", g_control_dir ? g_control_dir : "/srv/lib/runepkg_dir/control_dir");
+    printf("  download_dir:        %s\n", g_download_dir ? g_download_dir : "/srv/lib/runepkg_dir/download_dir");
+    printf("  build_dir:           %s\n", g_build_dir ? g_build_dir : "/srv/lib/runepkg_dir/build_dir");
+    printf("  target_deb:          %s\n", g_debs_dir ? g_debs_dir : "/srv/lib/runepkg_dir/target_deb");
+    printf("  cleanup:             %s\n", g_cleanup_extract_dirs ? "yes" : "no");
+    printf("  md5_checks:          %s\n", g_md5_checks ? "yes" : "no");
+    printf("\n");
+    printf("  host_dpkg:           %s\n", g_dpkg_host ? g_dpkg_host : "auto");
+    printf("\n");
+    printf("target_sysroot:      %s\n", g_target_sysroot ? g_target_sysroot : "/srv/lib/runepkg_dir/target_sysroot");
+    printf("\n");
 
     if (g_sources_count > 0 && g_sources) {
         int i;
-        printf("\nConfigured Sources:\n");
+        printf("Configured Sources:\n");
         printf("==================\n");
         for (i = 0; i < g_sources_count; i++) {
             if (g_sources[i]) {
@@ -963,7 +950,8 @@ void handle_print_config(void) {
             }
         }
     } else {
-        printf("\nNo sources configured.\n");
+        printf("Configured Sources:\n");
+        printf("==================\n");
     }
 }
 

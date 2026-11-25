@@ -1110,7 +1110,8 @@ int runepkg_storage_build_autocomplete_index(void) {
         {
             char sub_buf[PATH_MAX];
             const char *subdirs[] = {"amd64", "arm64", "i386", "armhf", "all", "noarch"};
-            for (int s = 0; s < 6; s++) {
+            int s;
+            for (s = 0; s < 6; s++) {
                 snprintf(sub_buf, sizeof(sub_buf), "%s/%s", g_download_dir, subdirs[s]);
                 if (runepkg_util_file_exists(sub_buf)) {
                     scan_and_add_entries(sub_buf, &packages, &count, &capacity, false, ".deb", true);

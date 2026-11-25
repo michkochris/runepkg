@@ -759,6 +759,12 @@ int runepkg_config_load(void) {
     } else {
         /* When --target is omitted on CLI, reset and plunge target state clean to host baseline */
         runepkg_config_reset_target_context(0);
+        if (g_install_dir_internal && strcmp(g_install_dir_internal, "/") != 0) {
+            char alt_db[PATH_MAX];
+            normalize_and_get_db_dir(g_install_dir_internal, alt_db, sizeof(alt_db));
+            runepkg_util_free_and_null(&g_runepkg_db_dir);
+            g_runepkg_db_dir = strdup(alt_db);
+        }
         runepkg_config_get_effective_db_dir();
     }
 
