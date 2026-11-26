@@ -1,4 +1,4 @@
-[ zypherus /home/jedi_michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir/ /mnt/runepkg
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# rm -rf /srv/lib/runepkg_dir /mnt/runepkg
 [ zypherus /home/jedi_michko/runepkg/runepkg ]# make clean && make uninstall
 Cleaning up build artifacts and unearthed runes...
 🧹 Clean complete. The forge is reset.
@@ -44,6 +44,30 @@ Installing target profiles...
 🧙 runepkg installation complete!
 Installing runas to /usr/bin...
 🧙 runas installation complete!
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg --print-config
+runepkg Configuration:
+=====================
+  target_arch:         amd64:x86_64-linux-gnu
+
+  install_dir:         /
+  runepkg_db:          /srv/lib/runepkg_dir/runepkg_db
+
+  runepkg_dir:         /srv/lib/runepkg_dir
+  control_dir:         /srv/lib/runepkg_dir/control_dir
+  download_dir:        /srv/lib/runepkg_dir/download_dir
+  build_dir:           /srv/lib/runepkg_dir/build_dir
+  target_deb:          /srv/lib/runepkg_dir/target_deb
+  cleanup:             yes
+  md5_checks:          yes
+
+  host_dpkg:           auto
+
+target_sysroot:      /srv/lib/runepkg_dir/target_sysroot
+
+Configured Sources:
+==================
+  [1] deb http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
+  [2] deb-src http://http.kali.org/kali kali-rolling main contrib non-free non-free-firmware
 [ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg sync && runepkg update
 Host synchronization successful.
 [runepkg] Starting parallel repository update...
@@ -51,8 +75,8 @@ Downloading 8 package lists...
   -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
@@ -60,64 +84,68 @@ Downloading 8 package lists...
 
 Building Hybrid Binary and Source Indexes...
 Checking for upgradable packages...
-Update complete! Binary/Source indexes updated. 0 upgradable. Time: 9.5s
+  [upgradable] libapt-pkg-perl: 0.1.43+b1 -> 0.1.43+b2
+  [upgradable] libscalar-list-utils-perl: 1:1.70-1+b1 -> 1:1.70-1+b2
+  [upgradable] libldap2-dev: 2.6.14+dfsg-2 -> 2.6.14+dfsg-2+b1
+  [upgradable] libnet-ssleay-perl: 1.96-2 -> 1.96-2+b1
+  [upgradable] kali-linux-core: 2026.4.3 -> 2026.4.4
+  [upgradable] libtext-charwidth-perl: 0.04-12+b1 -> 0.04-12+b2
+  [upgradable] kali-system-core: 2026.4.3 -> 2026.4.4
+  [upgradable] libclone-perl: 0.51-1 -> 0.51-1+b1
+  [upgradable] libversion-perl: 1:0.9934-1+b1 -> 1:0.9934-1+b2
+  [upgradable] vim: 2:9.2.0858-1 -> 2:9.2.0858-1+b1
+  [upgradable] libintl-xs-perl: 1.37-1+b1 -> 1.37-1+b2
+  [upgradable] kali-system-cli: 2026.4.3 -> 2026.4.4
+  [upgradable] texinfo-lib: 7.3-2+b1 -> 7.3-2+b2
+  [upgradable] libxml-parser-perl: 2.47-2+b1 -> 2.59-2
+  [upgradable] libio-compress-brotli-perl: 0.019000-1+b1 -> 0.019000-1+b2
+  [upgradable] libhtml-parser-perl: 3.86-1 -> 3.86-1+b1
+  [upgradable] libldap-dev: 2.6.14+dfsg-2 -> 2.6.14+dfsg-2+b1
+  [upgradable] libxml-libxml-perl: 2.0207+dfsg+really+2.0134-8+b1 -> 2.0207+dfsg+really+2.0134-8+b2
+  [upgradable] liblocale-gettext-perl: 1.07-10+b1 -> 1.07-10+b2
+  [upgradable] libldap2: 2.6.14+dfsg-2 -> 2.6.14+dfsg-2+b1
+  [upgradable] libtext-iconv-perl: 1.7-9+b1 -> 1.7-9+b2
+  [upgradable] libcrypt-urandom-perl: 0.55-1+b1 -> 0.55-1+b2
+  [upgradable] perl-base: 5.42.3-1 -> 5.44.0-3
+  [upgradable] kali-linux-wsl: 2026.4.3 -> 2026.4.4
+  [upgradable] libdigest-sha-perl: 6.04-1+b4 -> 6.04-1+b5
+  [upgradable] vim-tiny: 2:9.2.0858-1 -> 2:9.2.0858-1+b1
+  [upgradable] perl: 5.42.3-1 -> 5.44.0-3
+Update complete! Binary/Source indexes updated. 27 upgradable. Time: 22.5s
 [harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
   -> Found 16 index partitions to analyze.
-[success] Processed 113954 source rune stanzas in 673ms.
-  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29764 KB)
-[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -i file -f
-[runepkg] Planning installation for 1 package(s)...
-[psychic matryoshka prophecy] Automatically injected absolute rescue tool 'binutils'.
-[psychic matryoshka prophecy] Automatically injected core runtime 'libc6'.
-[psychic matryoshka prophecy] Automatically injected base utility 'coreutils'.
-[psychic matryoshka prophecy] Automatically injected POSIX shell 'dash'.
-[psychic matryoshka prophecy] Automatically injected GNU Bourne Again Shell 'bash'.
-[psychic matryoshka prophecy] Automatically injected FHS base files 'base-files'.
-  gcc-16-base libgcc-s1 libc6 libstdc++6 libc-gconv-modules-extra libmagic-mgc libmagic1t64 libsframe3 libzstd1 zlib1g
-  binutils-common libbinutils libgprofng0 libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu binutils libacl1
-  libattr1 libcap2 libgmp10 libpcre2-8-0 libselinux1 openssl-provider-legacy libssl3t64 libsystemd0 coreutils dash
-  libtinfo6 mawk base-files debianutils bash libbz2-1.0 liblzma5 file
+[success] Processed 114098 source rune stanzas in 709ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29803 KB)
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# dpkg -r file
+dpkg: dependency problems prevent removal of file:
+ libtool depends on file.
 
-37 packages (20.4 MB) will be installed. Continue? [y/N] y
-  -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+dpkg: error processing package file (--remove):
+ dependency problems - not removing
+Errors were encountered while processing:
+ file
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -r file
+Successfully removed packages:
+file
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# dpkg -r file
+dpkg: warning: ignoring request to remove file which is not installed
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -i file
+[runepkg] Planning installation for 1 package(s)...
+  gcc-16-base libgcc-s1 libc6 libc-gconv-modules-extra libmagic-mgc libmagic1t64 libbz2-1.0 liblzma5 zlib1g file
+
+10 packages (3.9 MB) will be installed. Continue? [y/N] y
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libacl1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libcap2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libattr1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libselinux1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libsystemd0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> dash                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libpcre2-8-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> openssl-provider-legacy   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libssl3t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> mawk                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> base-files                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> debianutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> coreutils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
-  -> bash                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
   -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
 
-[success] Downloaded 37 packages to /srv/lib/runepkg_dir/download_dir
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
 Reinstalling gcc-16-base (16.2.0-4) due to --force
 [md5sums] Passed for gcc-16-base
 [runepkg] Installing gcc-16-base (16.2.0-4)
@@ -127,9 +155,6 @@ Reinstalling libgcc-s1 (16.2.0-4) due to --force
 Reinstalling libc6 (2.43-7) due to --force
 [md5sums] Passed for libc6
 [runepkg] Installing libc6 (2.43-7)
-Reinstalling libstdc++6 (16.2.0-4) due to --force
-[md5sums] Passed for libstdc++6
-[runepkg] Installing libstdc++6 (16.2.0-4)
 Reinstalling libc-gconv-modules-extra (2.43-7) due to --force
 [md5sums] Passed for libc-gconv-modules-extra
 [runepkg] Installing libc-gconv-modules-extra (2.43-7)
@@ -139,94 +164,15 @@ Reinstalling libmagic-mgc (1:5.47-4) due to --force
 Reinstalling libmagic1t64 (1:5.47-4) due to --force
 [md5sums] Passed for libmagic1t64
 [runepkg] Installing libmagic1t64 (1:5.47-4)
-Reinstalling libsframe3 (2.47.50.20261021-1) due to --force
-[md5sums] Passed for libsframe3
-[runepkg] Installing libsframe3 (2.47.50.20261021-1)
-Reinstalling libzstd1 (1.5.7+dfsg-4) due to --force
-[md5sums] Passed for libzstd1
-[runepkg] Installing libzstd1 (1.5.7+dfsg-4)
-Reinstalling zlib1g (1:1.3.dfsg+really1.3.2-4) due to --force
-[md5sums] Passed for zlib1g
-[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
-Reinstalling binutils-common (2.47.50.20261021-1) due to --force
-[md5sums] Passed for binutils-common
-[runepkg] Installing binutils-common (2.47.50.20261021-1)
-Reinstalling libbinutils (2.47.50.20261021-1) due to --force
-[md5sums] Passed for libbinutils
-[runepkg] Installing libbinutils (2.47.50.20261021-1)
-Reinstalling libgprofng0 (2.47.50.20261021-1) due to --force
-[md5sums] Passed for libgprofng0
-[runepkg] Installing libgprofng0 (2.47.50.20261021-1)
-Reinstalling libctf-nobfd0 (2.47.50.20261021-1) due to --force
-[md5sums] Passed for libctf-nobfd0
-[runepkg] Installing libctf-nobfd0 (2.47.50.20261021-1)
-Reinstalling libctf0 (2.47.50.20261021-1) due to --force
-[md5sums] Passed for libctf0
-[runepkg] Installing libctf0 (2.47.50.20261021-1)
-Reinstalling libjansson4 (2.15.1-1) due to --force
-[md5sums] Passed for libjansson4
-[runepkg] Installing libjansson4 (2.15.1-1)
-Reinstalling binutils-x86-64-linux-gnu (2.47.50.20261021-1) due to --force
-[md5sums] Passed for binutils-x86-64-linux-gnu
-[runepkg] Installing binutils-x86-64-linux-gnu (2.47.50.20261021-1)
-Reinstalling binutils (2.47.50.20261021-1) due to --force
-[md5sums] Passed for binutils
-[runepkg] Installing binutils (2.47.50.20261021-1)
-Reinstalling libacl1 (2.4.0-1) due to --force
-[md5sums] Passed for libacl1
-[runepkg] Installing libacl1 (2.4.0-1)
-Reinstalling libattr1 (1:2.6.0-1) due to --force
-[md5sums] Passed for libattr1
-[runepkg] Installing libattr1 (1:2.6.0-1)
-Reinstalling libcap2 (1:2.78-1+b2) due to --force
-[md5sums] Passed for libcap2
-[runepkg] Installing libcap2 (1:2.78-1+b2)
-Reinstalling libgmp10 (2:6.3.0+dfsg-5+b2) due to --force
-[md5sums] Passed for libgmp10
-[runepkg] Installing libgmp10 (2:6.3.0+dfsg-5+b2)
-Reinstalling libpcre2-8-0 (10.49-1) due to --force
-[md5sums] Passed for libpcre2-8-0
-[runepkg] Installing libpcre2-8-0 (10.49-1)
-Reinstalling libselinux1 (3.11-2.1+b1) due to --force
-[md5sums] Passed for libselinux1
-[runepkg] Installing libselinux1 (3.11-2.1+b1)
-Reinstalling openssl-provider-legacy (3.6.5-1) due to --force
-[md5sums] Passed for openssl-provider-legacy
-[runepkg] Installing openssl-provider-legacy (3.6.5-1)
-Reinstalling libssl3t64 (3.6.5-1) due to --force
-[md5sums] Passed for libssl3t64
-[runepkg] Installing libssl3t64 (3.6.5-1)
-Reinstalling libsystemd0 (262.2-1) due to --force
-[md5sums] Passed for libsystemd0
-[runepkg] Installing libsystemd0 (262.2-1)
-Reinstalling coreutils (9.12-0.3) due to --force
-[md5sums] Passed for coreutils
-[runepkg] Installing coreutils (9.12-0.3)
-Reinstalling dash (0.5.12-13) due to --force
-[md5sums] Passed for dash
-[runepkg] Installing dash (0.5.12-13)
-Reinstalling libtinfo6 (6.6+20260608-2) due to --force
-[md5sums] Passed for libtinfo6
-[runepkg] Installing libtinfo6 (6.6+20260608-2)
-Reinstalling mawk (1.3.4.20260302-2) due to --force
-[md5sums] Passed for mawk
-[runepkg] Installing mawk (1.3.4.20260302-2)
-Reinstalling base-files (1:2026.3.1) due to --force
-[md5sums] Passed for base-files
-[runepkg] Installing base-files (1:2026.3.1)
-Reinstalling debianutils (5.24) due to --force
-[md5sums] Passed for debianutils
-[runepkg] Installing debianutils (5.24)
-Reinstalling bash (5.3-4+b1) due to --force
-[md5sums] Passed for bash
-[runepkg] Installing bash (5.3-4+b1)
 Reinstalling libbz2-1.0 (1.0.8-6+b2) due to --force
 [md5sums] Passed for libbz2-1.0
 [runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
 Reinstalling liblzma5 (5.8.4-1) due to --force
 [md5sums] Passed for liblzma5
 [runepkg] Installing liblzma5 (5.8.4-1)
-Reinstalling file (1:5.47-4) due to --force
+Reinstalling zlib1g (1:1.3.dfsg+really1.3.2-4) due to --force
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
 [md5sums] Passed for file
 [runepkg] Installing file (1:5.47-4)
 [ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd --version
@@ -235,4 +181,6 @@ Copyright (C) 2024 Free Software Foundation, Inc.
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 Written by Roland McGrath and Ulrich Drepper.
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# file /lib/ld-linux-x86-64.so.2
+/lib/ld-linux-x86-64.so.2: symbolic link to x86_64-linux-gnu/ld-linux-x86-64.so.2
 [ zypherus /home/jedi_michko/runepkg/runepkg ]#

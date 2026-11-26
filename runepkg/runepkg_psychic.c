@@ -17,6 +17,7 @@
 
 #include "runepkg_psychic.h"
 #include "runepkg_util.h"
+#include "runepkg_config.h"
 
 #define PSYCHIC_MAX_MATRIX_ENTRIES 512
 
@@ -858,75 +859,76 @@ int runepkg_psychic_reconcile_ld_symlink(const char *sysroot_path) {
 /* --- Psychic Matryoshka & Rescue Tooling Injector --- */
 
 int runepkg_psychic_inject_matryoshka_essentials(const char **pkg_names_in, int count_in, char ***pkg_names_out, int *count_out) {
-    int has_binutils = 0;
     int has_libc = 0;
-    int has_coreutils = 0;
-    int has_dash = 0;
     int has_bash = 0;
-    int has_base_files = 0;
+    int need_libc = 0;
+    int need_bash = 0;
     int new_count;
     int i;
     int out_idx;
     char **out_list;
+    char root[PATH_MAX];
+    char check_path[PATH_MAX];
+    struct stat st;
 
     if (!pkg_names_in || count_in <= 0 || !pkg_names_out || !count_out) {
         return -1;
     }
 
+    /* Resolve active target root */
+    if (g_target_sysroot && g_target_sysroot[0] != '\0') {
+        snprintf(root, sizeof(root), "%s", g_target_sysroot);
+    } else if (g_system_install_root && g_system_install_root[0] != '\0') {
+        snprintf(root, sizeof(root), "%s", g_system_install_root);
+    } else {
+        root[0] = '\0';
+    }
+
+    /* Check if libc6 / dynamic loader runtime is missing or broken on target root */
+    if (root[0] != '\0' && strcmp(root, "/") != 0) {
+        snprintf(check_path, sizeof(check_path), "%s/lib64", root);
+    } else {
+        snprintf(check_path, sizeof(check_path), "/lib64");
+    }
+    if (lstat(check_path, &st) != 0 || stat(check_path, &st) != 0) {
+        need_libc = 1;
+    }
+
+    /* Check if bash is missing on target root */
+    if (root[0] != '\0' && strcmp(root, "/") != 0) {
+        snprintf(check_path, sizeof(check_path), "%s/bin/bash", root);
+    } else {
+        snprintf(check_path, sizeof(check_path), "/bin/bash");
+    }
+    if (lstat(check_path, &st) != 0 || stat(check_path, &st) != 0) {
+        need_bash = 1;
+    }
+
     for (i = 0; i < count_in; i++) {
         if (pkg_names_in[i]) {
-            if (strcmp(pkg_names_in[i], "binutils") == 0 || strncmp(pkg_names_in[i], "binutils", 8) == 0) {
-                has_binutils = 1;
-            }
             if (strcmp(pkg_names_in[i], "libc6") == 0 || strncmp(pkg_names_in[i], "libc6", 5) == 0) {
                 has_libc = 1;
-            }
-            if (strcmp(pkg_names_in[i], "coreutils") == 0) {
-                has_coreutils = 1;
-            }
-            if (strcmp(pkg_names_in[i], "dash") == 0) {
-                has_dash = 1;
             }
             if (strcmp(pkg_names_in[i], "bash") == 0) {
                 has_bash = 1;
             }
-            if (strcmp(pkg_names_in[i], "base-files") == 0) {
-                has_base_files = 1;
-            }
         }
     }
 
-    new_count = count_in + (!has_binutils ? 1 : 0) + (!has_libc ? 1 : 0) +
-                (!has_coreutils ? 1 : 0) + (!has_dash ? 1 : 0) + (!has_bash ? 1 : 0) + (!has_base_files ? 1 : 0);
+    new_count = count_in + ((need_libc && !has_libc) ? 1 : 0) + ((need_bash && !has_bash) ? 1 : 0);
     out_list = (char **)malloc((size_t)new_count * sizeof(char *));
     if (!out_list) {
         return -1;
     }
 
     out_idx = 0;
-    if (!has_binutils) {
-        out_list[out_idx++] = strdup("binutils");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected absolute rescue tool 'binutils'.\n");
-    }
-    if (!has_libc) {
+    if (need_libc && !has_libc) {
         out_list[out_idx++] = strdup("libc6");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected core runtime 'libc6'.\n");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected missing core runtime 'libc6' (loader anchor missing).\n");
     }
-    if (!has_coreutils) {
-        out_list[out_idx++] = strdup("coreutils");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected base utility 'coreutils'.\n");
-    }
-    if (!has_dash) {
-        out_list[out_idx++] = strdup("dash");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected POSIX shell 'dash'.\n");
-    }
-    if (!has_bash) {
+    if (need_bash && !has_bash) {
         out_list[out_idx++] = strdup("bash");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected GNU Bourne Again Shell 'bash'.\n");
-    }
-    if (!has_base_files) {
-        out_list[out_idx++] = strdup("base-files");
-        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected FHS base files 'base-files'.\n");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected missing interpreter 'bash' (/bin/bash absent).\n");
     }
 
     for (i = 0; i < count_in; i++) {

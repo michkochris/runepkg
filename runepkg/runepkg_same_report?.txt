@@ -1,0 +1,80 @@
+================================================================================
+RUNEPKG SYSTEM VERIFICATION & DETERMINISM REPORT
+================================================================================
+Artifact:     runepkg_same_result.txt
+System Role:  Absolute Tooling & Rescue Package Manager
+Objective:    Demonstrate identical package resolution, dynamic linker (ld) 
+              anchoring, and runtime isolation across 3 execution tiers, 
+              culminating in host-environment resilience validation.
+================================================================================
+
+--------------------------------------------------------------------------------
+TIER 1: ALTERNATE INSTALL LOCATION (NATIVE ARCHITECTURE)
+--------------------------------------------------------------------------------
+Target Prefix:   /opt/runepkg-tier1-native (or custom isolated sysroot)
+Target Arch:     Native Host Arch (e.g., x86_64)
+
+1. Dynamic Linker (ld) Existence & Symlink Verification:
+   - Expected Path:   <PREFIX>/lib64/ld-linux-x86-64.so.2 (adjust per ABI)
+   - Symlink Status:    [PASS/FAIL] -> Points cleanly to target libc ld.so
+   - Binary Existence:  [PASS/FAIL] -> Executable permissions & ELF header valid
+
+2. Package & Dependency Extraction:
+   - Target Package:    <pkg_name>.deb (e.g., coreutils / busybox / target tool)
+   - Resolved Deps:     <libc6, libselinux1, etc.>
+   - Extraction State:  [PASS/FAIL] -> Unpacked cleanly without host pollution
+
+3. Runtime Library Resolution Proof:
+   - Command:           <PREFIX>/lib/ld.so --library-path <PREFIX>/lib <PREFIX>/bin/<tool> --version
+   - Output / Exit:     [EXIT 0] -> All shared objects resolved strictly within <PREFIX>
+
+--------------------------------------------------------------------------------
+TIER 2: ALTERNATE INSTALL LOCATION + ALTERNATE TARGET (CROSS-ARCH: ARM64)
+--------------------------------------------------------------------------------
+Target Prefix:   /opt/runepkg-tier2-arm64
+Target Arch:     aarch64 / arm64
+
+1. Dynamic Linker (ld) Existence & Symlink Verification:
+   - Expected Path:   <PREFIX>/lib/ld-linux-aarch64.so.1
+   - Symlink Status:    [PASS/FAIL] -> Valid relative symlink inside arm64 sysroot
+   - Binary Existence:  [PASS/FAIL] -> ELF 64-bit LSB shared object, ARM aarch64
+
+2. Package & Dependency Extraction:
+   - Target Package:    <pkg_name>_arm64.deb
+   - Resolved Deps:     <libc6:arm64, etc.>
+   - Extraction State:  [PASS/FAIL] -> Multi-arch layout preserved under <PREFIX>
+
+3. Runtime Library Resolution Proof (via QEMU User-Mode / BinFmt):
+   - Command:           qemu-aarch64 -L <PREFIX> <PREFIX>/bin/<tool> --version
+   - Readelf / ldd:     [PASS/FAIL] -> NEEDED entries map 100% to <PREFIX>/lib/aarch64-linux-gnu
+   - Output / Exit:     [EXIT 0] -> Identical functional output to Tier 1
+
+--------------------------------------------------------------------------------
+TIER 3: HOST ROOT EXECUTION & SYSTEM-FAILURE RESILIENCE TEST
+--------------------------------------------------------------------------------
+Target Prefix:   / (Live Host Root)
+Target Arch:     Native Host Arch
+
+1. Standard Host Verification (Parity Check):
+   - ld Existence & Symlink: [PASS/FAIL] -> Host dynamic linker intact & verified
+   - Pkg & Deps Working:     [PASS/FAIL] -> Installed & resolved identically to Tier 1/2
+
+2. Host-Breakage Isolation & Resilience Test (Rescue Guarantee):
+   - Hypothesis:      runepkg continues functioning even if the host system's 
+                      shared libraries or dynamic environment degrade/break.
+   - Fault Injection: Temporarily break/hide a secondary system library or 
+                      corrupt LD_LIBRARY_PATH (e.g., LD_LIBRARY_PATH=/nonexistent 
+                      or testing an isolated secondary library <lib_test.so>).
+   - Secondary Lib Check:
+       * Library Tested:   <e.g., libz.so.1 / libssl.so.3 / custom test lib>
+       * Host State:       [SIMULATED BROKEN / MISSING]
+       * runepkg Execution:[PASS/FAIL] -> runepkg binary + managed payload execute 
+                           with EXIT 0 using internal/anchored linkage.
+
+================================================================================
+FINAL DETERMINISM SUMMARY
+================================================================================
+[ ] Tier 1 (Alt Root / Native):   IDENTICAL RESULT
+[ ] Tier 2 (Alt Root / arm64):    IDENTICAL RESULT
+[ ] Tier 3 (Host Root + Fault):   IDENTICAL RESULT & RESILIENT
+================================================================================

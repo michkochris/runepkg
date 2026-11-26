@@ -1,0 +1,336 @@
+Can you please explain to me this copy and paste, ive been working non-stop for last 2 days with obsticles and challenges but i finally did a runepkg -i on host root with out going through all the upgrages of runepkg upgrade and apt upgrade to make them both happy, all this work implementing psychic and natryoshka finally paid off with no ld symlink on host. again no upgrading. making runepkg an absolute tooling pkg manager, see here: Here is the exact breakdown of the final pieces we put together that made everything click:
+
+Adding bash to the Matryoshka Essentials Loop
+When you ran runepkg -i file -f, the package manager successfully installed file and its dependency libc6.
+
+•
+
+The Catch: libc6 provides /usr/bin/ldd, which is a shell script starting with the shebang line #!/bin/bash.
+
+•
+
+The Fix: If bash isn't installed on the system, trying to invoke ldd throws bad interpreter: /bin/bash: No such file or directory. By adding bash alongside binutils, libc6, coreutils, dash, and base-files in runepkg_psychic_inject_matryoshka_essentials(), the psychic engine now automatically pulls in the GNU Bourne Again Shell whenever you install packages, ensuring every script interpreter exists.
+
+2. Porting Your  rescue_kali.sh Logic Directly Into C89 (runepkg_psychic_anchor_dynamic_linker)
+
+Before our last change, runepkg's C89 code was trying to anchor the dynamic loader (ld-linux-x86-64.so.2) using relative paths that accidentally resolved into non-existent directories (/usr/usr/lib/...), turning /lib/ld-linux-x86-64.so.2 into a broken symbolic link. That's why you kept having to jump over to Fedora to run your Kali rescue scripts.
+
+•
+
+The Fix: We rewrote runepkg_psychic_anchor_dynamic_linker() in  runepkg_psychic.c to precisely match your proven  rescue_kali.sh symlink blueprint:
+
+/* /lib64 -> usr/lib64 */
+
+symlink("usr/lib64", lib64_dir);
+
+
+
+/* /usr/lib64/ld-linux-x86-64.so.2 -> ../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 */
+
+symlink("../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2", link_path);
+
+
+
+/* /usr/lib/ld-linux-x86-64.so.2 -> x86_64-linux-gnu/ld-linux-x86-64.so.2 */
+
+symlink("x86_64-linux-gnu/ld-linux-x86-64.so.2", link_path);
+
+•
+
+Why it worked: Because runepkg now executes your exact Kali rescue script logic automatically at the conclusion of every single installation transaction (runepkg -i), it repairs and locks in the usrmerge symlinks and dynamic loader before anything can break.
+
+You essentially translated your external rescue workflow into a native C89 pre-flight/post-flight invariant engine inside runepkg. That's why it finally survived a host root install with flying colors!
+
+That breakdown is explaining the two fixes that let runepkg -i succeed directly on host root without running full system upgrades (runepkg upgrade or apt upgrade) or falling back to an external rescue environment.
+
+Here is what each part of that note means in plain terms:
+
+1. Why bash was added to the Matryoshka Essentials list
+What happened before: Installing file pulled in libc6, which includes /usr/bin/ldd. Because ldd is a shell script starting with #!/bin/bash, running it on a minimal system without bash fails with bad interpreter: /bin/bash: No such file or directory.
+
+What the change does: runepkg_psychic_inject_matryoshka_essentials() now automatically includes bash alongside core packages (binutils, libc6, coreutils, dash, base-files). When runepkg resolves dependencies for an install, it pulls in bash so scripts with #!/bin/bash have a valid interpreter available.
+
+2. Why runepkg_psychic_anchor_dynamic_linker was rewritten in C89
+What happened before: Earlier C89 code constructed relative symlink paths that resolved to doubled/bad paths like /usr/usr/lib/..., leaving /lib/ld-linux-x86-64.so.2 broken and forcing you to fall back to rescue scripts (rescue_kali.sh) from another environment.
+
+What the change does: runepkg_psychic_anchor_dynamic_linker() in runepkg_psychic.c now creates the exact symlink layout from your rescue_kali.sh logic right after installation transactions:
+
+/lib64 -> usr/lib64
+
+/usr/lib64/ld-linux-x86-64.so.2 -> ../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+
+/usr/lib/ld-linux-x86-64.so.2 -> x86_64-linux-gnu/ld-linux-x86-64.so.2
+
+Bottom Line
+Instead of relying on manual post-install fixes or external rescue scripts after a runepkg -i on host root, those two changes enforce the missing interpreter (bash) and the dynamic linker (ld-linux-x86-64.so.2) symlinks automatically as part of the install flow.
+
+Want to review how to verify these symlinks and ldd after an install?
+
+Yes
+So i know whats next though i was a mess before some sledp but my project source directory is a mess, multiple .txt files trying to figure it out, and now i need to clean up i guess i need to do some testing. please take this as example i ran my make musl-all i inserted runpkg into a very old debian based distro like my favorite damn small linux, we know what finally made runepkg work but how can i clean up the mess, process of elimination to figure out what is not overkill, or what would be exact matryoshka essentials i mean exact. because i feel like runepkg is bloated for some reason, let me reiterate before when i install file pkg, you get simple libraries libc libgcc_s1, it was confortable, it looked right, correct, and now a normal runepkg -i install like 30 mandatory, its overwrite no matter what
+
+Two things are causing the bloat you see on runepkg -i:
+
+Over-broad essential injection: runepkg_psychic_inject_matryoshka_essentials() is injecting an entire bundle (binutils, libc6, coreutils, dash, base-files, bash, plus their transitive dependencies) on every install instead of only what the target package or missing loader/interpreter actually requires.
+
+Unconditional overwrite behavior: Forced/unconditional overwrite on every install replaces existing files and pulls full dependency trees even when the host already satisfies them or when the package only needs minimal runtime glue.
+
+To clean up your source tree and isolate the exact minimal Matryoshka set without bloat, use a controlled process of elimination.
+
+1
+Quarantine scratch notes and stray build outputs
+Before changing C89 or C++ sources
+Move exploratory .txt notes, logs, and scratch scripts into a non-tracked folder outside the build path (for example notes/archive/ or /tmp/runepkg-scratch/) so active source files are easy to read.
+
+Remove stale staging/build artifacts so test runs start from a clean make musl-all state.
+
+Verify: Check git status or your source directory listing to confirm only intentional C89/C++ sources, headers, and build scripts remain in active paths.
+
+2
+Establish a baseline minimal install log
+Use a disposable test root or snapshot first
+Run runepkg -i file against a clean test root or snapshot and record the exact list of installed packages and overwritten files.
+
+Compare that list against ldd / readelf -d on the target binary to separate true shared-library needs from bulk essential pulls.
+
+Verify: Confirm you have a saved baseline package count and exact list of packages pulled in during a single file install.
+
+3
+Strip injected essentials down to the true minimum
+Eliminate one package at a time
+Reduce the injected/essential list inside runepkg_psychic_inject_matryoshka_essentials() to only what is strictly needed for basic execution and loader anchoring (for example, libc6 / dynamic linker support rather than full binutils or coreutils unless a package actually needs them).
+
+Test one removal at a time with make musl-all and a runepkg -i run on your minimal/legacy Debian-based test target (such as Damn Small Linux).
+
+Verify: Confirm runepkg -i completes and the installed binary runs cleanly without missing-library or loader errors after each removal.
+
+4
+Gate interpreter and linker repairs on actual need
+Avoid unconditional 30-package pulls and blind overwrites
+Only pull bash when a script/shebang or target dependency actually requires /bin/bash, rather than forcing it on every package install.
+
+Keep runepkg_psychic_anchor_dynamic_linker() focused on creating/verifying the dynamic linker symlinks cleanly, and gate forced file overwrites behind explicit flags or missing/broken targets instead of overwriting unconditionally.
+
+Verify: Run runepkg -i on a minimal Debian-based test target and check readelf -l / ldd and symlink targets (ls -la /lib64 /lib/ld-linux* /usr/lib/ld-linux*) to confirm only needed packages were installed and no broken symlinks remain.
+
+Practical Rule for "Exact" Matryoshka Essentials
+Keep essentials strictly to runtime/loader foundations: Only include packages required to load ELF binaries and resolve core C runtime symbols on the target architecture—not full toolchains or large utility suites unless requested or required by dependencies.
+
+Treat convenience tools as normal dependencies, not forced injections: If a user installs a package that does not need bash or binutils, runepkg should not force them into every transaction.
+
+Ok lets slow down and think about my example of damn small linux, or any very old linux. what is the correct theory of psychic matryoshka essentials, i mean i was good at clfs cross linux from scratch but this just seem to slip my mind completly, i want to get this down to a science, there are different levels to runepkg and source builder runas, runepkg -i should fix a broken very old system by applying a "base-pkg's"? makes you think of pkg debian-base or base-files? am i right. and there would be a deeper level of matryoshka for host cross development tools?
+
+You are thinking along the exact right lines—and your Cross Linux From Scratch (CLFS) background gives you the right mental model here.
+
+In CLFS, you don't build everything at once or treat every layer as identical; you separate target runtime essentials from toolchain/build tooling, keeping each layer minimal so it can bootstrap the next without polluting the target or pulling massive dependency trees.
+
+1. Is "base-pkg's" (debian-base / base-files) the right runtime layer?
+Yes—for fixing or bootstrapping a broken or very old system (like Damn Small Linux or an ancient Debian-based root) during runepkg -i, the first inner layer should be a minimal runtime/filesystem anchor, not a big general-purpose bundle.
+
+Think of that inner Matryoshka ring as answering one question: What is the smallest set needed so binaries and basic scripts can load, link, and exist cleanly on the target layout?
+
+Layout & linker anchors: Path/filesystem layout (base-files or equivalent directory/symlink layout) plus the dynamic loader/linker (libc6 / runtime loader and symlinks) so binaries don't fail with missing interpreter or broken ld paths.
+
+What does not belong in the base runtime ring: Full toolchains, large shell/utility suites, or heavy packages unless the target package's own NEEDED shared libraries or script interpreters actually require them.
+
+2. Why you want distinct Matryoshka layers (Runtime vs. Cross/Build Tooling)
+A single flat "essentials" list is what causes bloat—30 packages when installing file—because runtime needs and build/cross-compilation needs have completely different footprints:
+
+Matryoshka Layer	Purpose	What Belongs Here	What Stays Out
+Layer 0: Runtime & Loader Anchor	Let installed binaries load and execute on old/broken roots (runepkg -i target)	Dynamic linker/loader symlinks, core C runtime (libc6 / runtime libs), minimal base dirs	Compilers, linkers (ld toolchains), big shells/utilities unless required
+Layer 1: Package Runtime Needs	Satisfy what the specific .deb actually needs to run	Exact shared-library dependencies (DT_NEEDED) and only the interpreter if a script needs one	Unrelated packages from a blanket essentials list
+Layer 2: Cross / Build Tooling (Source Builder)	Build/compile packages for host or cross targets (CLFS style)	Cross-compilers, binutils/assemblers/linkers, headers, build scripts	Forced onto every simple runtime runepkg -i install
+3. Turning It Into a Clean Rule for runepkg
+Keep runepkg -i minimal by default: Repair/anchor the target loader and base layout only when missing/broken, resolve only the target package's actual dependencies, and avoid unconditional overwrites when existing files already match.
+
+Keep cross-development / source-building in its own layer: Treat cross-compilation and build tools as a separate build/toolchain tier rather than baking them into every runtime package installation.
+
+Want to map these layers onto your runepkg C89 and source-builder code?
+
+Yes
+Uhh this is acutually hard because i know debian as ninja linux warrior, i dont really know debian
+
+That is a totally fair admission—and honestly, it explains half the headache you've been hitting. Knowing Linux from the ground up (especially CLFS and low-level system mechanics) is very different from knowing Debian's quirky packaging conventions, history, and file layout rules.
+
+You don't need to become a "Debian expert" to make runepkg rock-solid. You just need to understand the few Debianisms that bite .deb package managers on old or non-standard systems.
+
+What You Actually Need to Know About Debian for runepkg
+Debian's layout is a mix of old and modern conventions: Older Debian/DSL systems keep things split across /lib and /usr/lib, whereas newer Debian uses merged-usr (/lib and /lib64 pointing into /usr/...). That layout mismatch is why dynamic linker paths break if you assume only one layout exists.
+
+.deb packages are simple archives under the hood: A .deb is just an ar archive containing debian-binary, control.tar.* (metadata, dependencies, maintainer scripts), and data.tar.* (the actual files to extract). You don't need heavy Debian tooling just to unpack, inspect, or install them.
+
+Not every package needs the whole Debian world: Debian has lots of meta-packages and policy assumptions meant for full desktop/server upgrades (apt). For a lean rescue/tooling installer like runepkg, treating .deb files as payload + metadata + actual ELF/script needs is much cleaner than trying to mimic every apt habit.
+
+How to Keep It Simple on Old Systems Like DSL
+Treat runepkg as an ELF + script + path fixer, not a mini-apt: Focus on extracting payloads cleanly, fixing broken loader/linker paths on the target, and only pulling missing shared libs or interpreters that are actually needed.
+
+Test against real failure cases, not guesses: When something fails on Damn Small Linux or a minimal root, look at the exact error message first (missing shared object, bad ELF interpreter, broken symlink) rather than adding broad "just in case" packages.
+
+Keep your own mental model: You already understand binaries, linkers, paths, and builds from CLFS—use that lens first, and only look up Debian specifics when a .deb metadata field or path convention surprises you.
+
+Want a quick cheat sheet of the few .deb internals that matter most?
+
+Yes
+Ya your right were going to need to extend thr psychic /lib /usr/lib to include /lib/lib64 or other way around?, also the -i install logic, im guess it dont matter how latrst .deb sits inside .deb but matters when payload unloaded?
+
+1. /lib/lib64 vs. the other way around
+On 64-bit Linux, the canonical top-level path is /lib64 (pointing to usr/lib64 on merged-/usr systems, or holding the 64-bit dynamic loader/libs on split systems), not /lib/lib64.
+
+What exists in standard layouts: /lib64 at the root (or /usr/lib64 under /usr) is where 64-bit ELF binaries look for ld-linux-x86-64.so.2 or shared libs; /lib/lib64 is normally not a standard loader search path.
+
+What to check first: Inspect the target binary's actual PT_INTERP (readelf -l <binary> | grep interp) and RUNPATH/RPATH before adding extra symlinks. Only add symlinks that match paths the dynamic linker or binaries actually probe, so you don't create circular or dangling links.
+
+2. .deb container vs. unloading the payload (-i)
+Yes—your instinct is right. What matters most for execution is what lands on disk when data.tar.* is unloaded, not merely how "new" the .deb format is.
+
+Inside the .deb archive: A .deb is just an ar archive (debian-binary, control.tar.*, data.tar.*). Newer .deb files mostly use newer compression inside data.tar.* or control.tar.* (like .zst or .xz instead of .gz), plus control metadata fields.
+
+When unloading the payload (runepkg -i): Execution depends on:
+
+Target paths & symlinks: Whether extracted files land in /lib vs. /usr/lib or /lib64 matches the host's actual directory and symlink layout (split vs. merged /usr).
+
+File permissions & overwrites: Executables keep +x, symlinks stay symlinks rather than turning into copies/broken links, and existing files aren't blindly clobbered when they shouldn't be.
+
+Runtime dependencies: Any shared libraries (DT_NEEDED) or script interpreters (#!/bin/...) referenced by the unpacked files exist at the paths the binary/script expects.
+
+Na none of the things you suggested, for last few days i have been disiplinely running same exact runepkg commands top to bottom on clean clear terminal so i get same results across the board. first i go through runepkg alternate install location, update -i file with fhs helpers, quick tests for ld symlink and exsistance, do the same exsct thing for alternate target runepkg --taarget=arm64:aarch64-linux-gnu same thing file and ld symlink exsistance and now that i can do this on root with out massive clobbered upgrades of both runepkg and apt. roit host execution of my tests would finialize my runepkg_same_result\?.txt
+
+Got it—you already have a repeatable top-to-bottom matrix (alternate root, cross-target arm64:aarch64-linux-gnu, and now host root /) and want to execute the final host-root pass cleanly to lock in runepkg_same_result?.txt without runepkg upgrade or apt upgrade clobbering the host.
+
+1
+Start from a fresh, recorded terminal session
+Clean environment before touching /
+Open a fresh terminal session and start logging output directly to a capture file so your exact commands and outputs are preserved.
+Verification: Confirm your logging file exists and is non-empty before running any runepkg test commands.
+
+2
+Snapshot pre-install loader and symlink state on host root
+Before running runepkg -i on /
+Record the current state of /lib64, dynamic linker symlinks (ld-linux*), and existing file / ldd paths on host root before installing anything.
+Verification: Check that your snapshot output shows the baseline symlink targets and existing binary status before any install occurs.
+
+3
+Run your exact host-root install and FHS helper pass
+No runepkg upgrade or apt upgrade
+Run the same runepkg -i sequence for file and your FHS helper steps on host root without running bulk upgrades.
+Verification: Confirm runepkg -i exits cleanly (0) and file executes on host root.
+
+4
+Verify dynamic linker symlinks and binary checks
+Same checks used on alt root and arm64
+Run your exact ld symlink existence/target checks and binary sanity checks on host root so the test assertions match your earlier passes.
+Verification: Confirm every expected ld symlink resolves to a valid target (no dangling links or /usr/usr/... paths) and ldd / file run without missing-interpreter or missing-library errors.
+
+5
+Compare host-root results against alt-root and arm64 passes
+Finalize runepkg_same_result?.txt
+Compare the pass/fail behavior and symlink/install outcomes across the three passes (alt root, arm64:aarch64-linux-gnu, and host root), then record the final result in runepkg_same_result?.txt.
+Verification: Open runepkg_same_result?.txt and verify all three test environments have recorded outcomes and match your expected repeatability criteria.
+
+Na thats just my testing and my proof. what really bothers me the most is that i dont fully understand the matryoshka essentials. like i said before when i run -i file on different install dir and alt target i get clean expected pkgs, i remember ten, file libraries, libc, libgcc_s1 and looks perfect in my opinion. why root have to be so bloated and misunderstood?
+
+Your instinct is spot-on. There is no inherent reason why installing file into host root (/) has to pull 30 packages while an alternate install directory or --target=arm64 only pulls the ~10 expected packages (file, its libraries, libc, libgcc_s1).
+
+The difference isn't that host root actually needs 30 packages—it's almost certainly a branch condition in runepkg that treats host root (/) differently from alternate roots/targets.
+
+Why Alt-Root / Alt-Target Gives You 10 Clean Packages, While / Bloats
+When you pass an alternate install location or --target=arm64, runepkg is likely following the normal dependency resolver for the target package (file -> libmagic -> libc6, libgcc-s1, etc.).
+
+When the target is host root (/), something in the psychic / Matryoshka path is triggering an unconditional host-rescue injection—specifically runepkg_psychic_inject_matryoshka_essentials()—which injects binutils, libc6, coreutils, dash, base-files, bash, and then resolves all of their transitive dependencies on top of file.
+
+What Matryoshka Essentials Should Actually Be
+Think of Matryoshka Essentials not as a big static list of packages, but as nested conditional layers where each outer layer only triggers if the inner layer is actually missing:
+
+Innermost Layer — Linker & Path Invariants (Zero extra packages):
+
+Check whether the dynamic linker (ld-linux-x86-64.so.2) and FHS/usrmerge symlinks (/lib64, /lib, /usr/lib) exist and point to valid targets.
+
+Repair broken symlinks directly in C89 (like your runepkg_psychic_anchor_dynamic_linker()). This fixes host root without installing a single extra package.
+
+Second Layer — Direct Runtime Dependencies of the Target Package (~10 packages for file):
+
+Resolve only what the .deb actually declares or links against (file + libmagic + libc6 + libgcc-s1 + zlib/xz/etc.).
+
+On host root, if those libraries already exist and satisfy version checks, don't force-reinstall or overwrite them unless requested.
+
+Outermost Layer — Missing Interpreter / Rescue Fallback (Only if triggered):
+
+Only pull bash (or another shell/tool) if a package's maintainer script or installed executable actually has a #!/bin/bash shebang and /bin/bash does not exist on the target root.
+
+Never inject binutils or coreutils unconditionally during a normal runepkg -i; keep those for explicit toolchain/build operations.
+
+Where to Look in Your Code
+Check the condition that calls runepkg_psychic_inject_matryoshka_essentials() during runepkg -i:
+
+It is likely gated on target_root == "/" (or !is_alt_root && !is_cross_target).
+
+If you replace that blanket host-root injection with check-before-inject (only inject a package if a required file/interpreter is genuinely missing on /), host root will resolve the exact same ~10 clean packages as your alt-root and arm64 runs.
+
+Want to inspect the exact condition that triggers Matryoshka injection on host root?
+
+Yes
+Ya thats crazy, majes me think of how crazy i was to set out to make it work, and the naming convention shows this psychic? matryoshka?
+
+Those names actually make complete sense once you look at what you were trying to pull off: installing .deb packages cleanly onto a live or broken host root without a full apt / runepkg upgrade dance, without breaking ld or missing shell interpreters, and while keeping a tiny C89 core.
+
+Why You Named Them That
+Psychic: Because a package manager installing a binary onto an older or semi-broken system has to anticipate what will blow up at runtime—missing dynamic loader symlinks, broken usrmerge paths, or a script needing /bin/bash—before you hit bad interpreter or a segfault after the fact.
+
+Matryoshka: Because a real system isn't one flat bucket of packages. Like nesting dolls, you have an inner runtime/loader core, the package's own shared libraries on top of it, and outer rescue/build layers that only open up when something deeper is missing or when you cross into toolchain/build work.
+
+Why It Feels "Crazy" (and Why It Actually Works)
+Most people either rely on a full distro package manager (apt / dpkg) with huge dependency graphs, or they build a static/chroot/CLFS root and avoid touching a live host root with a custom C89 installer. Trying to make a lean C89 tool handle old layouts, broken links, cross targets, and live root safely is ambitious—which is why your naming captured the exact tension of the problem: predicting runtime traps ("psychic") across nested system layers ("Matryoshka").
+
+The trick now is keeping the idea behind those names—smart checks and layered fallbacks—without letting "psychic" turn into "guess and install 20 extra packages every time."
+
+Want to tighten the psychic checks so they stay surgical instead of heavy?
+
+Yes
+Considering the things we talked about i myself dont have a clear head. i need some kind of implementation plan.
+
+Take a breath—you do not have to solve every edge case at once. Right now, the goal is just a calm, ordered plan to clean up the workspace, keep the ld linker fix that got you over the line, and stop host-root runepkg -i from pulling 30 packages when ~10 will do.
+
+1
+Clear out scratch notes and freeze your working baseline
+Do this before touching C89 or C++ code
+Move loose .txt notes, logs, and scratch files into an archive directory outside active source paths so you only look at live code.
+
+Back up or tag your current working state where runepkg_psychic_anchor_dynamic_linker() fixes the ld symlink on host root.
+
+Check: Confirm active source directories contain only intentional build/source files and your baseline state is saved.
+
+2
+Replace blanket Matryoshka injection with check-before-inject
+Keep the win, cut the bloat
+Locate where runepkg_psychic_inject_matryoshka_essentials() is called during runepkg -i on host root (/).
+
+Instead of unconditionally injecting binutils, coreutils, bash, dash, and base-files, gate each injection on an actual missing file, broken symlink, or needed script interpreter (#!/bin/bash when /bin/bash is missing).
+
+Check: Run runepkg -i file on host root and confirm it installs only the expected ~10 packages (file, its libraries, libc, libgcc_s1) without full system upgrades.
+
+3
+Tighten overwrite rules during payload extraction
+Prevent silent clobbering on host root
+Audit how data.tar.* extraction and symlink creation handle existing files and symlinks on target paths.
+
+Avoid blind overwrites when a valid target already exists unless explicitly requested or broken.
+
+Check: Verify existing host files and symlinks are not unexpectedly overwritten during a standard runepkg -i pass.
+
+4
+Re-run the three-target matrix and lock in results
+Use your existing clean-terminal routine
+Run your clean-terminal pass across alternate install root, cross-target (arm64:aarch64-linux-gnu), and host root (/) using the slimmer injection logic.
+
+Record the package counts and ld / file checks in runepkg_same_result?.txt.
+
+Check: Confirm all three targets pass and runepkg_same_result?.txt has your final, clean record.
+
+5
+Park cross-development and source-builder work for later
+Separate runtime installs from toolchain builds
+Keep cross-compiler, toolchain, and source-builder (runas / CLFS-style) layers separate from normal runepkg -i runtime installs.
+
+Tackle deeper legacy layouts (such as older Debian/DSL variants) only after host-root runepkg -i is clean and predictable.
+
+Check: Confirm normal runepkg -i stays lightweight and unaffected by build/toolchain logic.
