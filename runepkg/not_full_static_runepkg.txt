@@ -1,0 +1,11 @@
+ERROR: Cannot uninstall binutils because static runepkg and .deb extraction rely directly on 'ar' (from binutils).
+Without binutils, /usr/bin/ar is missing, causing .deb archive extraction to fail:
+  Command: /usr/bin/ar
+  ERROR: Failed to execute 'ar' for .deb extraction.
+  ERROR: Failed to extract .deb archive.
+  ERROR: Failed to extract .deb package.
+
+Furthermore, missing binutils causes the psychic linker reconciler to lack valid linker targets (x86_64-linux-gnu-ld.bfd), previously leading to broken dangling /usr/bin/ld symlinks.
+Ensuring binutils is retained and/or included in essential dependency/toolchain profiles guarantees:
+1. 'ar' is always present for unpacking .deb archives.
+2. Valid linker binaries exist so /usr/bin/ld symlinks never break.

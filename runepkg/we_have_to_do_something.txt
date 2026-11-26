@@ -1,0 +1,89 @@
+ooohhh my lord: [ zypherus /home/jedi_master/runepkg/runepkg ]# runepkg -i file
+
+[runepkg] Planning installation for 1 package(s)...
+
+gcc-16-base libgcc-s1 libc6 libc-gconv-modules-extra libmagic-mgc libmagic1t64 libbz2-1.0 liblzma5 zlib1g file
+
+
+
+10 packages (3.9 MB) will be installed. Continue? [y/N] y
+
+
+
+[success] Downloaded 10 packages to /srv/lib/runepkg_dir/download_dir
+
+[md5sums] Passed for gcc-16-base
+
+[runepkg] Installing gcc-16-base (16.2.0-4)
+
+[md5sums] Passed for libgcc-s1
+
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+
+[md5sums] Passed for libc6
+
+[warning] Running preinst for libc6 (install)...
+
+[runepkg] Installing libc6 (2.43-7)
+
+[warning] Running postinst for libc6 (configure)...
+
+[md5sums] Passed for file
+
+[runepkg] Installing file (1:5.47-4)
+
+[ zypherus /home/jedi_master/runepkg/runepkg ]# which ld
+
+bash: /usr/bin/which: /bin/sh: bad interpreter: No such file or directory
+
+[ zypherus /home/jedi_master/runepkg/runepkg ]#
+
+Look at that error message:
+
+bash: /usr/bin/which: /bin/sh: bad interpreter: No such file or directory
+
+Your runepkg -i file dependency plan installed the C runtime and file stack (gcc-16-base, libgcc-s1, libc6, libc-gconv-modules-extra, libmagic-mgc, libmagic1t64, libbz2-1.0, liblzma5, zlib1g, file), not a shell package providing /bin/sh (such as dash or bash), nor binutils providing ld.
+
+Why /bin/sh: bad interpreter: No such file or directory Happened
+Missing /bin/sh target: /usr/bin/which is a script starting with #!/bin/sh. When /bin/sh is missing or points to a nonexistent shell binary (for example /bin/dash or /bin/bash wasn't unpacked or got pruned), the kernel fails to execute the interpreter and reports /bin/sh: bad interpreter: No such file or directory.
+
+Why file didn't pull /bin/sh or binutils: file's runtime dependency graph here only pulls libc6, libgcc-s1, libmagic1t64 + libmagic-mgc, compression libs (libbz2-1.0, liblzma5, zlib1g), and gcc-16-base. Neither a shell (/bin/sh) nor binutils (ld) is in that minimal set.
+
+Why which ld couldn't even run: Even before checking for ld, which itself is a script that needs /bin/sh.
+
+How to Recover Without /bin/sh
+Because bash is already running and runepkg is a static binary, you do not need /bin/sh or which to inspect paths or install what is missing:
+
+Check /bin/sh and ld directly from bash:
+
+Inspect /bin/sh with ls -la /bin/sh and readlink -f /bin/sh.
+
+Check for ld directly via filesystem paths (for example ls -la /usr/bin/ld /usr/bin/*-ld /etc/alternatives/ld 2>/dev/null) or type -a ld in bash instead of /usr/bin/which.
+
+Install a shell (dash or bash) to restore /bin/sh:
+
+Install dash (or bash) via runepkg -i dash and ensure /bin/sh points to a valid shell binary so #!/bin/sh scripts like /usr/bin/which and maintainer scripts work again.
+
+Install binutils only if you want ld:
+
+Install binutils via runepkg -i binutils if that shell/rootfs actually needs ld and object/archive tools.
+
+i dont want to know how to recover, i just want to know how to not break ld symlink
+
+To keep the ld symlink from breaking in the first place, prevent its target from disappearing, prevent unguarded scripts or pruning passes from touching it, and isolate host vs. target state.
+
+Rules to Prevent Breaking ld
+Keep binutils in any layer that owns or expects ld: Do not prune or omit binutils (or the specific linker binary/alternative target that ld points to) if ld or update-alternatives for ld exists in that root/layer.
+
+Block unguarded removal or pruning of ld targets: Before removing packages or pruning a rootfs, check if any symlink or alternative points to a linker binary (ld.bfd, <triplet>-ld, /etc/alternatives/ld). If a target is being removed or pruned, remove or update the ld symlink/alternative in the same transaction rather than leaving a dangling link behind.
+
+Never run maintainer scripts or update-alternatives against the wrong root: Ensure preinst, postinst, prerm, postrm, and alternatives updates execute strictly scoped to the target root (chroot / target root prefix) so host /usr/bin/ld and /etc/alternatives/ld are never altered during cross-builds or teardown tests.
+
+Enforce a pre-commit / post-unpack symlink check in runepkg: In your Matryoshka / symlink reconciliation logic, verify that every symlink's target exists inside the target root before finalizing an unpack or removal pass—and either skip creating ld links when binutils is absent or remove ld cleanly when binutils is excluded.
+
+Quick Prevention Check Before Teardown or Unpack
+Verify target existence first: Confirm the binary that ld points to (readlink / realpath inside the target root) is present in the planned package set before running removals or pruning.
+
+Scope mutations to the target root: Confirm runepkg / runas operations and any maintainer hooks target the intended rootfs path, never an unintended host or sysroot path.
+
+Audit dangling links right after a pass: Run a quick check for broken symlinks (find <target_root> -xtype l) at the end of each runepkg operation so any broken link is caught before the next layer or test step.

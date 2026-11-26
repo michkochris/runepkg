@@ -213,6 +213,28 @@ public:
     int resolve_tree_multiple(const std::vector<std::string>& pkg_names, ResolveMode mode, RuneTargetPlan** out_plan) {
         if (pkg_names.empty()) return -1;
 
+        std::vector<std::string> effective_pkg_names = pkg_names;
+
+        /* --- Psychic Matryoshka & Rescue Tooling Injector --- */
+        if (mode == ResolveMode::MODE_INSTALL) {
+            std::vector<const char*> in_names;
+            for (size_t i = 0; i < effective_pkg_names.size(); i++) {
+                in_names.push_back(effective_pkg_names[i].c_str());
+            }
+            char **out_names = NULL;
+            int out_count = 0;
+            if (runepkg_psychic_inject_matryoshka_essentials(in_names.data(), (int)in_names.size(), &out_names, &out_count) == 0 && out_names) {
+                effective_pkg_names.clear();
+                for (int i = 0; i < out_count; i++) {
+                    if (out_names[i]) {
+                        effective_pkg_names.push_back(out_names[i]);
+                        free(out_names[i]);
+                    }
+                }
+                free(out_names);
+            }
+        }
+
         std::string db_path = get_default_db_path();
         std::unordered_map<std::string, RuneGraphEntry> graph;
 
@@ -249,6 +271,9 @@ public:
         /* Dynamically populate installed packages from runepkg_db and host directories */
         populate_host_installed_map(host_installed_map);
 
+        /* Absolute Rescue Tool Mode: Treat host installed map as empty so every dependency is resolved unconditionally */
+        host_installed_map.clear();
+
         /* Build virtual-to-real mapping across the binary and source graph */
         std::unordered_map<std::string, std::string> virtual_to_real;
         for (const auto& [name, node] : graph) {
@@ -275,7 +300,7 @@ public:
         }
 
         std::unordered_set<std::string> explicit_targets;
-        for (const auto& raw_pkg_name : pkg_names) {
+        for (const auto& raw_pkg_name : effective_pkg_names) {
             std::string clean_name = clean_package_key(raw_pkg_name);
             explicit_targets.insert(clean_name);
             if (virtual_to_real.count(clean_name)) {
@@ -287,7 +312,7 @@ public:
         std::set<std::string> visited;
         std::set<std::string> visiting;
 
-        for (const auto& raw_pkg_name : pkg_names) {
+        for (const auto& raw_pkg_name : effective_pkg_names) {
             std::string root_target = clean_package_key(raw_pkg_name);
             if (mode == ResolveMode::MODE_BUILD || mode == ResolveMode::MODE_TOOLCHAIN) {
                 char *src_name = runepkg_repo_find_source_for_binary(raw_pkg_name.c_str());

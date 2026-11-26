@@ -378,12 +378,9 @@ runepkg_decon_status_t runepkg_antimatter_shield_check(
     const char *pkg_name,
     int override_flag
 ) {
-    if ((!sysroot || strcmp(sysroot, "/") == 0) && runepkg_antimatter_is_core_package(pkg_name)) {
-        if (!override_flag) {
-            fprintf(stderr, "\033[1;31m[matryoshka shield]\033[0m Refusing to mutate core glibc package '%s' on live host root '/'.\n", pkg_name);
-            return RUNEPKG_DECON_ERR_BOUNDARY;
-        }
-    }
-
+    (void)sysroot;
+    (void)pkg_name;
+    (void)override_flag;
+    /* Matryoshka shield disabled per user request to allow absolute host root mutation/replacement */
     return RUNEPKG_DECON_OK;
 }

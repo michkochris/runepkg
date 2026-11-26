@@ -20,6 +20,7 @@
 #include "runepkg_md5sums.h"
 #include "runepkg_host.h"
 #include "runepkg_antimatter.h"
+#include "runepkg_psychic.h"
 
 #ifdef ENABLE_CPP_FFI
 #include "runepkg_cpp_ffi.h"
@@ -103,12 +104,13 @@ int runepkg_execute_maintainer_script(const char *script_path, const PkgInfo *pk
 
     if (!script_path || !runepkg_util_file_exists(script_path)) return 0;
 
-    /* Smart check: Only execute scripts if we are installing to the actual system root.
-     * In LFS/ISO creation scenarios (alternate root), we skip them silently to maintain clean zero-warning output. */
-    if (!g_system_install_root || strcmp(g_system_install_root, "/") != 0) {
+    /* Absolute Tooling Philosophy: Skip third-party Debian maintainer scripts by default
+     * to prevent upstream package scripts from mutating or breaking critical host symlinks (like /usr/bin/ld).
+     * Only execute if explicitly requested via RUNEPKG_EXECUTE_SCRIPTS=1. */
+    if (!getenv("RUNEPKG_EXECUTE_SCRIPTS")) {
         script_name = basename((char*)script_path);
-        runepkg_util_log_verbose("Skipping maintainer script %s for %s (alternate root)\n",
-               script_name, pkg_info->package_name);
+        runepkg_util_log_verbose("[absolute mode] Skipping maintainer script %s for %s (%s)\n",
+               script_name, pkg_info->package_name, action);
         return 0;
     }
 
@@ -879,7 +881,7 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
                             if (!installed && installing_packages) installed = runepkg_hash_search(installing_packages, name_buf);
                             if (installed && installed->version && strcmp(installed->version, ver_buf) == 0) {
                                 if (runepkg_hash_search(runepkg_main_hash_table, name_buf)) {
-                                        if (!g_force_mode || !is_top_level) {
+                                        if (!g_force_mode) {
                                             if (is_top_level) {
                                                 printf("Package %s is already installed (%s), skipping. Use -f/--force to reinstall.\n", name_buf, ver_buf);
                                             } else {
@@ -1497,6 +1499,8 @@ static int handle_install_internal(const char *deb_file_path, int is_top_level) 
         if (is_top_level) {
             runepkg_storage_build_autocomplete_index();
             handle_update_pkglist();
+            /* Psychic Linker Reconciler: Automatically heal any broken or dangling ld symlink */
+            runepkg_psychic_reconcile_ld_symlink(g_system_install_root);
         }
 
         runepkg_pack_cleanup_extraction_workspace(&pkg_info);

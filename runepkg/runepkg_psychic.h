@@ -143,6 +143,19 @@ int runepkg_psychic_prophesy_missing_package(const char *sysroot_path,
                                               char *out_pkg_buf,
                                               size_t buf_sz);
 
+/**
+ * @brief Automatically reconciles and heals broken or dangling /usr/bin/ld symlinks after host root installation.
+ * @param sysroot_path Target install root or sysroot path.
+ * @return 0 on success.
+ */
+int runepkg_psychic_reconcile_ld_symlink(const char *sysroot_path);
+
+/**
+ * @brief Psychic Matryoshka Rescue Injector: Prepends absolute rescue tools (binutils, libc6)
+ *        to guarantee toolchain survival and valid ld symlinks during package installation.
+ */
+int runepkg_psychic_inject_matryoshka_essentials(const char **pkg_names_in, int count_in, char ***pkg_names_out, int *count_out);
+
 #ifdef __cplusplus
 }
 #endif

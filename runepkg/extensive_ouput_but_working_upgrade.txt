@@ -1,0 +1,2167 @@
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# make clean && make uninstall
+Cleaning up build artifacts and unearthed runes...
+🧹 Clean complete. The forge is reset.
+Uninstalling runepkg and runas...
+Uninstallation complete.
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# make all && make install
+make[1]: Entering directory '/home/jedi_michko/runepkg/runepkg'
+--------------------------------------------------------
+  Unearthing Runes: Compiling runepkg v1.0.4
+--------------------------------------------------------
+  Build Mode: Extended (C++ FFI)
+
+  [forge] Compiling C Rune: runepkg_cli.c
+  [forge] Compiling C Rune: runepkg_handle.c
+  [forge] Compiling C Rune: runepkg_config.c
+  [forge] Compiling C Rune: runepkg_util.c
+  [forge] Compiling C Rune: runepkg_pack.c
+  [forge] Compiling C Rune: runepkg_hash.c
+  [forge] Compiling C Rune: runepkg_storage.c
+  [forge] Compiling C Rune: runepkg_defensive.c
+  [forge] Compiling C Rune: runepkg_completion.c
+  [forge] Compiling C Rune: runepkg_install.c
+  [forge] Compiling C Rune: runepkg_md5sums.c
+  [forge] Compiling C Rune: runepkg_crypto.c
+  [forge] Compiling C Rune: runepkg_host.c
+  [forge] Compiling C Rune: runepkg_state.c
+  [forge] Compiling C Rune: runepkg_psychic.c
+  [forge] Compiling C Rune: runepkg_antimatter.c
+  [ritual] Compiling C++ Rune: runepkg_security.cpp
+  [ritual] Compiling C++ Rune: runepkg_utility.cpp
+  [ritual] Compiling C++ Rune: runepkg_resolver.cpp
+  [ritual] Compiling C++ Rune: runepkg_network.cpp
+  [ritual] Compiling C++ Rune: runepkg_guard.cpp
+  [ritual] Compiling C++ Rune: runepkg_multiarch.cpp
+  [ritual] Compiling C++ Rune: runepkg_building.cpp
+  [ritual] Compiling C++ Rune: runepkg_runas.cpp
+  [link]  Linking binaries: runepkg runas
+⚡ runepkg build complete: runepkg runas
+make[1]: Leaving directory '/home/jedi_michko/runepkg/runepkg'
+Installing runepkg to /usr/bin...
+Installing configuration to /etc/runepkg...
+Installing target profiles...
+🧙 runepkg installation complete!
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg sync && runepkg update
+Host synchronization successful.
+[runepkg] Starting parallel repository update...
+Downloading 8 package lists...
+  -> InRelease (kali-rolling)  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free/... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/b... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/contrib/s... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/non-free-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/source  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-rolling/main/bina... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+Building Hybrid Binary and Source Indexes...
+Checking for upgradable packages...
+  [upgradable] bind9-libs: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] dbus-daemon: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libsmartcols1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libnewt0.52: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] python3.13: 3.13.12-1 -> 3.13.15-1
+  [upgradable] libauthen-sasl-perl: 2.2000-1 -> 2.2000-2
+  [upgradable] libltdl-dev: 2.6.2-2 -> 2.6.2-3
+  [upgradable] linux-libc-dev: 7.1.5-1kali1 -> 7.2.15-1kali1
+  [upgradable] libfido2-1: 1.17.0-1 -> 1.17.0-2
+  [upgradable] libfdisk1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] linux-sysctl-defaults: 4.15 -> 4.17
+  [upgradable] init-system-helpers: 1.69+kali1 -> 1.69+nmu3+kali1
+  [upgradable] openssl: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libext2fs2t64: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] zsh: 5.9-8+b40 -> 5.9.2-1+b2
+  [upgradable] libapt-pkg7.0: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] dbus-bin: 1.16.2-5 -> 1.16.4-1
+  [upgradable] zlib1g: 1:1.3.dfsg+really1.3.2-3 -> 1:1.3.dfsg+really1.3.2-4
+  [upgradable] libnghttp2-14: 1.70.0-1 -> 1.71.0-1
+  [upgradable] libbrotli-dev: 1.2.0-4+b1 -> 1.2.0-4.1
+  [upgradable] libscalar-list-utils-perl: 5.42.3-1 -> 1:1.70-1+b1
+  [upgradable] libnet-ssleay-perl: 1.96-1+b1 -> 1.96-2
+  [upgradable] libhwasan0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libc-gconv-modules-extra: 2.43-4 -> 2.43-7
+  [upgradable] libpython3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] less: 668-1 -> 710+really668-1
+  [upgradable] libctf-nobfd0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] manpages: 6.19-3 -> 6.20-2
+  [upgradable] libatomic1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libsemanage2: 3.10-1 -> 3.11-1+b2
+  [upgradable] udev: 260.1-1 -> 262.2-1
+  [upgradable] openssh-client-gssapi: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] cron: 3.0pl1-209 -> 3.0pl1-213
+  [upgradable] libsepol2: 3.10-1 -> 3.11-1
+  [upgradable] dhcpcd-base: 1:10.3.2-3 -> 1:10.5.2-6
+  [upgradable] openssl-provider-legacy: 3.6.3-1 -> 3.6.5-1
+  [upgradable] g++-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] libsystemd0: 260.1-1 -> 262.2-1
+  [upgradable] libubsan1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libpython3.13-stdlib: 3.13.12-1 -> 3.13.15-1
+  [upgradable] dbus: 1.16.2-5 -> 1.16.4-1
+  [upgradable] nano: 9.0-1 -> 9.3-1
+  [upgradable] libblkid1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] bind9-dnsutils: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] libc6: 2.43-4 -> 2.43-7
+  [upgradable] libuv1t64: 1.52.1-4 -> 1.53.0-1
+  [upgradable] liburing2: 2.14-1 -> 2.15-1
+  [upgradable] bsdextrautils: 2.42.2-4 -> 2.42.4-1
+  [upgradable] tasksel: 3.88+kali2 -> 3.91+kali1
+  [upgradable] libffi8: 3.5.2-4 -> 3.8.0-2
+  [upgradable] kali-linux-core: 2026.2.12 -> 2026.4.3
+  [upgradable] tzdata: 2026b-1 -> 2026f-1
+  [upgradable] libcurl4-openssl-dev: 8.21.0-2 -> 8.23.0-2
+  [upgradable] gcc-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] laptop-detect: 0.16+nmu1 -> 0.17
+  [upgradable] libgcc-s1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libasan8: 16.2.0-1 -> 16.2.0-4
+  [upgradable] musl-tools: 1.2.6-1 -> 1.2.6-2
+  [upgradable] libparted2t64: 3.7-1 -> 3.8-2
+  [upgradable] kali-defaults: 2026.2.12 -> 2026.4.2
+  [upgradable] libjson-c5: 0.18+ds-3 -> 0.19+ds-1
+  [upgradable] mawk: 1.3.4.20260302-1 -> 1.3.4.20260302-2
+  [upgradable] libcc1-0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] logsave: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] login: 1:4.16.0-2+really2.42.2-4 -> 1:4.16.0-2+really2.42.4-1
+  [upgradable] cpp-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] passwd: 1:4.19.3-2 -> 1:4.20.3-1
+  [upgradable] kali-system-core: 2026.2.12 -> 2026.4.3
+  [upgradable] libssl3t64: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libclone-perl: 0.50-1+b1 -> 0.51-1
+  [upgradable] patch: 2.8-2 -> 2.8.1-1
+  [upgradable] libcap-ng0: 0.9.3-1 -> 0.9.6-1+b1
+  [upgradable] python3: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] apt: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] debianutils: 5.23.2 -> 5.24
+  [upgradable] automake: 1:1.18.1-4 -> 1:1.19-3
+  [upgradable] libversion-perl: 5.42.3-1 -> 1:0.9934-1+b1
+  [upgradable] libx11-6: 2:1.8.13-1 -> 2:1.8.14-1
+  [upgradable] vim: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] nftables: 1.1.6-1+b1 -> 1.1.7-3
+  [upgradable] liblsan0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] openssh-server: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] openssh-sftp-server: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] apt-transport-https: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] libnghttp2-dev: 1.70.0-1 -> 1.71.0-1
+  [upgradable] manpages-dev: 6.19-3 -> 6.20-2
+  [upgradable] libbrotli1: 1.2.0-4+b1 -> 1.2.0-4.1
+  [upgradable] liburcu8t64: 0.15.6-1+b1 -> 0.15.7-1
+  [upgradable] libattr1: 1:2.5.2-4 -> 1:2.6.0-1
+  [upgradable] libmount1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] python3.13-minimal: 3.13.12-1 -> 3.13.15-1
+  [upgradable] gcc-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] bsdutils: 1:2.42.2-4 -> 1:2.42.4-1
+  [upgradable] mount: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libpam0g: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] procps: 2:4.0.4-9+b2 -> 2:4.0.7-1.1
+  [upgradable] ifupdown: 0.8.45 -> 0.8.45+nmu1+b1
+  [upgradable] libtool-bin: 2.6.2-2 -> 2.6.2-3
+  [upgradable] libitm1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libssl-dev: 3.6.3-1 -> 3.6.5-1
+  [upgradable] libbinutils: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libsasl2-modules-db: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] libsqlite3-0: 3.46.1-9+b1 -> 3.54.1-2
+  [upgradable] libpam-runtime: 1.7.0-5 -> 1.7.0-8
+  [upgradable] libsasl2-2: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] libsasl2-modules: 2.1.28+dfsg1-11 -> 2.1.28+dfsg1-12
+  [upgradable] kali-system-cli: 2026.2.12 -> 2026.4.3
+  [upgradable] dpkg: 1.23.7+kali1 -> 1.23.11+kali1
+  [upgradable] dbus-system-bus-common: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libnftnl11: 1.3.1-1+b1 -> 1.3.2-1
+  [upgradable] libcom-err2: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] publicsuffix: 20260428.1050-1 -> 20261007.0728-1
+  [upgradable] libc6-dev: 2.43-4 -> 2.43-7
+  [upgradable] comerr-dev: 2.1-1.47.4-1+b1 -> 2.1-1.47.4-1+b3
+  [upgradable] liblwp-protocol-https-perl: 6.15-1 -> 6.17-1
+  [upgradable] libpam-modules: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] libuuid1: 2.42.2-4 -> 2.42.4-1
+  [upgradable] adduser: 3.156 -> 3.159
+  [upgradable] vim-runtime: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] libsystemd-shared: 260.1-1 -> 262.2-1
+  [upgradable] gcc-16-base: 16.2.0-1 -> 16.2.0-4
+  [upgradable] fdisk: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libcap2: 1:2.78-1 -> 1:2.78-1+b2
+  [upgradable] sqv: 1.3.0-5+b2 -> 1.5.0-1
+  [upgradable] tmux: 3.6b-1 -> 3.7c-1
+  [upgradable] zlib1g-dev: 1:1.3.dfsg+really1.3.2-3 -> 1:1.3.dfsg+really1.3.2-4
+  [upgradable] libx11-data: 2:1.8.13-1 -> 2:1.8.14-1
+  [upgradable] tar: 1.35+dfsg-5 -> 1.35+dfsg-7
+  [upgradable] libdbus-1-3: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libc-l10n: 2.43-4 -> 2.43-7
+  [upgradable] liblmdb0: 0.9.31-1+b3 -> 0.9.35-1
+  [upgradable] kali-archive-keyring: 2025.2 -> 2025.3
+  [upgradable] libstdc++-16-dev: 16.2.0-1 -> 16.2.0-4
+  [upgradable] sudo: 1.9.17p2-7 -> 1.9.17p2-11
+  [upgradable] init: 1.69+kali1 -> 1.69+nmu3+kali1
+  [upgradable] gettext-base: 1.0-3 -> 1.0-5
+  [upgradable] libjansson4: 2.14-2+b4 -> 2.15.1-1
+  [upgradable] g++-16-x86-64-linux-gnu: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libhtml-parser-perl: 3.83-2+b1 -> 3.86-1
+  [upgradable] parted: 3.7-1 -> 3.8-2
+  [upgradable] distro-info-data: 0.69 -> 2026.10.12-1
+  [upgradable] tex-common: 6.20 -> 6.21
+  [upgradable] tasksel-data: 3.88+kali2 -> 3.91+kali1
+  [upgradable] liblzma5: 5.8.3-1 -> 5.8.4-1
+  [upgradable] libpython3-stdlib: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] netbase: 6.5 -> 6.6
+  [upgradable] dbus-session-bus-common: 1.16.2-5 -> 1.16.4-1
+  [upgradable] libc-dev-bin: 2.43-4 -> 2.43-7
+  [upgradable] libpam-modules-bin: 1.7.0-5+b2 -> 1.7.0-8
+  [upgradable] python3-minimal: 3.13.9-3+b1 -> 3.14.7-3
+  [upgradable] libcrypt1: 1:4.5.1-1+b1 -> 1:4.5.2+20251210-1
+  [upgradable] python3-newt: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] bind9-host: 1:9.20.23-1 -> 1:9.20.30-1
+  [upgradable] systemd-sysv: 260.1-1 -> 262.2-1
+  [upgradable] libss2: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] libpam-systemd: 260.1-1 -> 262.2-1
+  [upgradable] libsframe3: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] vim-common: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] libpopt0: 1.19+dfsg-2+b2 -> 1.19+dfsg-3
+  [upgradable] libelf1t64: 0.195-1 -> 0.196-1
+  [upgradable] runit-helper: 2.16.6 -> 2.16.7
+  [upgradable] gcc-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] openssh-client: 1:10.3p1-4 -> 1:10.6p2-1
+  [upgradable] cpp-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] dash: 0.5.12-12 -> 0.5.12-13
+  [upgradable] ucf: 3.0053 -> 3.0056
+  [upgradable] libcurl4-gnutls: 8.21.0-2 -> 8.23.0-2
+  [upgradable] liblwp-mediatypes-perl: 6.04-2 -> 6.05-1
+  [upgradable] apt-utils: 3.2.0+kali1 -> 3.3.6+kali1
+  [upgradable] libgomp1: 16.2.0-1 -> 16.2.0-4
+  [upgradable] libltdl7: 2.6.2-2 -> 2.6.2-3
+  [upgradable] libmodule-corelist-perl: 5.42.3-1 -> 5.20261022-1
+  [upgradable] cron-daemon-common: 3.0pl1-209 -> 3.0pl1-213
+  [upgradable] lzma: 5.8.3-1 -> 25.00+dfsg-1
+  [upgradable] libunbound8: 1.26.0-2 -> 1.26.2-1
+  [upgradable] g++-16: 16.2.0-1 -> 16.2.0-4
+  [upgradable] gettext: 1.0-3 -> 1.0-5
+  [upgradable] libcurl3t64-gnutls: 8.21.0-2 -> 8.23.0-2
+  [upgradable] nfs-common: 1:2.9.1-1 -> 1:3.1.1-1
+  [upgradable] libc-bin: 2.43-4 -> 2.43-7
+  [upgradable] musl: 1.2.6-1 -> 1.2.6-2
+  [upgradable] libgcc-16-dev: 16.2.0-1 -> 16.2.0-4
+  [upgradable] binutils-common: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] base-files: 1:2026.2.0 -> 1:2026.3.1
+  [upgradable] libexpat1: 2.8.1-1 -> 2.10.0-1
+  [upgradable] libxml2-16: 2.15.3+dfsg-1 -> 2.15.4+dfsg-1+b1
+  [upgradable] xz-utils: 5.8.3-1 -> 5.8.4-1
+  [upgradable] iproute2: 7.0.0-1 -> 7.3.0-1
+  [upgradable] coreutils: 9.10-1 -> 9.12-0.3
+  [upgradable] binutils: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libtsan2: 16.2.0-1 -> 16.2.0-4
+  [upgradable] ca-certificates: 20260601 -> 20260816+nmu1
+  [upgradable] liberror-perl: 0.17030-1 -> 0.17031-1
+  [upgradable] wget: 1.25.0-2 -> 1.25.0-3
+  [upgradable] bash: 5.3-3 -> 5.3-4+b1
+  [upgradable] binutils-x86-64-linux-gnu: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] lsb-base: 3.18-1 -> 11.6
+  [upgradable] libquadmath0: 16.2.0-1 -> 16.2.0-4
+  [upgradable] findutils: 4.10.0-4 -> 4.11.0-3
+  [upgradable] e2fsprogs: 1.47.4-1+b1 -> 1.47.4-1+b3
+  [upgradable] diffstat: 1.69-1 -> 1.69-2
+  [upgradable] g++: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] rsync: 3.5.0+ds1-2 -> 3.5.2+ds1-2
+  [upgradable] libnfsidmap1: 1:2.9.1-1 -> 1:3.1.1-1
+  [upgradable] util-linux: 2.42.2-4 -> 2.42.4-1
+  [upgradable] libselinux1: 3.10-1 -> 3.11-2.1+b1
+  [upgradable] libseccomp2: 2.6.0-2+b1 -> 2.6.1-1+b2
+  [upgradable] libcurl4t64: 8.21.0-2 -> 8.23.0-2
+  [upgradable] kali-linux-wsl: 2026.2.12 -> 2026.4.3
+  [upgradable] libmd0: 1.2.0-2 -> 1.3.0-1
+  [upgradable] cpp: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] gcc: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] cpp-x86-64-linux-gnu: 4:16.1.0-3 -> 4:16.2.0-1
+  [upgradable] libcap2-bin: 1:2.78-1 -> 1:2.78-1+b2
+  [upgradable] libdb5.3t64: 5.3.28+dfsg2-11+b1 -> 5.3.28+dfsg2-12
+  [upgradable] libctf0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] libtool: 2.6.2-2 -> 2.6.2-3
+  [upgradable] locales-all: 2.43-4 -> 2.43-7
+  [upgradable] libdigest-sha-perl: 5.42.3-1 -> 6.04-1+b4
+  [upgradable] quilt: 0.69-0.1 -> 0.69-1
+  [upgradable] tzdata-legacy: 2026b-1 -> 2026f-1
+  [upgradable] vim-tiny: 2:9.2.0524-1 -> 2:9.2.0858-1
+  [upgradable] python3-apt: 3.1.0 -> 3.1.0+b2
+  [upgradable] musl-dev: 1.2.6-1 -> 1.2.6-2
+  [upgradable] curl: 8.21.0-2 -> 8.23.0-2
+  [upgradable] libaudit1: 1:4.1.2-1+b1 -> 1:4.1.2-1+b2
+  [upgradable] libsemanage-common: 3.10-1 -> 3.11-1
+  [upgradable] liburi-perl: 5.35-1 -> 5.40-1
+  [upgradable] dbus-user-session: 1.16.2-5 -> 1.16.4-1
+  [upgradable] whiptail: 0.52.25-2 -> 0.52.25-2+b2
+  [upgradable] libpcap0.8t64: 1.10.6-1 -> 1.11.0-1
+  [upgradable] libstdc++6: 16.2.0-1 -> 16.2.0-4
+  [upgradable] login.defs: 1:4.19.3-2 -> 1:4.20.3-1
+  [upgradable] plocate: 1.1.24-1 -> 1.1.25-1
+  [upgradable] libpcre2-8-0: 10.46-1+b2 -> 10.49-1
+  [upgradable] libapparmor1: 4.1.7-4 -> 4.1.8-3+b1
+  [upgradable] libudev1: 260.1-1 -> 262.2-1
+  [upgradable] libnftables1: 1.1.6-1+b1 -> 1.1.7-3
+  [upgradable] zsh-common: 5.9-8 -> 5.9.2-1
+  [upgradable] systemd: 260.1-1 -> 262.2-1
+  [upgradable] libgprofng0: 2.47-2 -> 2.47.50.20261021-1
+  [upgradable] python-is-python3: 3.13.3-1 -> 3.14.7-1
+  [upgradable] libcbor0.10: 0.10.2-2.1+b1 -> 0.10.2-2.2
+  [upgradable] apt-file: 3.3 -> 3.4
+Update complete! Binary/Source indexes updated. 244 upgradable. Time: 14.9s
+[harvest] Starting parallel graph analysis on: /srv/lib/runepkg_dir/runepkg_db/lists
+  -> Found 16 index partitions to analyze.
+[success] Processed 113954 source rune stanzas in 692ms.
+  -> Serialized binary graph to /srv/lib/runepkg_dir/runepkg_db/runes_graph.bin (29764 KB)
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -r file
+Successfully removed packages:
+file
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -i file
+[runepkg] Planning installation for 1 package(s)...
+[psychic matryoshka prophecy] Automatically injected absolute rescue tool 'binutils'.
+[psychic matryoshka prophecy] Automatically injected core runtime 'libc6'.
+  gcc-16-base libgcc-s1 libc6 libstdc++6 libc-gconv-modules-extra libmagic-mgc libmagic1t64 libsframe3 libzstd1 zlib1g
+  binutils-common libbinutils libgprofng0 libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu binutils
+  libbz2-1.0 liblzma5 file
+
+21 packages (10.6 MB) will be installed. Continue? [y/N] y
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 21 packages to /srv/lib/runepkg_dir/download_dir
+Upgrading gcc-16-base from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+Upgrading libgcc-s1 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+Upgrading libc6 from 2.43-4 to 2.43-7
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+Upgrading libstdc++6 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libstdc++6
+[runepkg] Installing libstdc++6 (16.2.0-4)
+Upgrading libc-gconv-modules-extra from 2.43-4 to 2.43-7
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+Reinstalling libmagic-mgc (1:5.47-4) due to --force
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+Reinstalling libmagic1t64 (1:5.47-4) due to --force
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+Upgrading libsframe3 from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for libsframe3
+[runepkg] Installing libsframe3 (2.47.50.20261021-1)
+Reinstalling libzstd1 (1.5.7+dfsg-4) due to --force
+[md5sums] Passed for libzstd1
+[runepkg] Installing libzstd1 (1.5.7+dfsg-4)
+Upgrading zlib1g from 1:1.3.dfsg+really1.3.2-3 to 1:1.3.dfsg+really1.3.2-4
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
+Upgrading binutils-common from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for binutils-common
+[runepkg] Installing binutils-common (2.47.50.20261021-1)
+Upgrading libbinutils from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for libbinutils
+[runepkg] Installing libbinutils (2.47.50.20261021-1)
+Upgrading libgprofng0 from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for libgprofng0
+[runepkg] Installing libgprofng0 (2.47.50.20261021-1)
+Upgrading libctf-nobfd0 from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for libctf-nobfd0
+[runepkg] Installing libctf-nobfd0 (2.47.50.20261021-1)
+Upgrading libctf0 from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for libctf0
+[runepkg] Installing libctf0 (2.47.50.20261021-1)
+Upgrading libjansson4 from 2.14-2+b4 to 2.15.1-1
+[md5sums] Passed for libjansson4
+[runepkg] Installing libjansson4 (2.15.1-1)
+Upgrading binutils-x86-64-linux-gnu from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for binutils-x86-64-linux-gnu
+[runepkg] Installing binutils-x86-64-linux-gnu (2.47.50.20261021-1)
+Upgrading binutils from 2.47-2 to 2.47.50.20261021-1
+[md5sums] Passed for binutils
+[runepkg] Installing binutils (2.47.50.20261021-1)
+Reinstalling libbz2-1.0 (1.0.8-6+b2) due to --force
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+Upgrading liblzma5 from 5.8.3-1 to 5.8.4-1
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd --version
+bash: /usr/bin/ldd: /bin/bash: bad interpreter: No such file or directory
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg upgrade
+[runepkg] Starting full system upgrade...
+[psychic matryoshka prophecy] Automatically injected absolute rescue tool 'binutils'.
+[runepkg] Found 228 package(s) to upgrade.
+[runepkg] Planning installation for 228 package(s)...
+[psychic matryoshka prophecy] Automatically injected absolute rescue tool 'binutils'.
+[override] Overriding conflict: Package 'perl-base' breaks installed package 'perl-modules' (5.40.1-7)
+[override] Overriding conflict: Package 'libscalar-list-utils-perl' breaks installed package 'perl-modules' (5.40.1-7)
+[override] Overriding conflict: Package 'libio-socket-ip-perl' breaks installed package 'perl-modules' (5.40.1-7)
+  gcc-16-base libgcc-s1 libc6 libstdc++6 libc-bin libc-gconv-modules-extra libmagic-mgc libmagic1t64 libsframe3
+  libzstd1 zlib1g binutils-common libbinutils libgprofng0 libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu
+  binutils libfstrm0 libkrb5support0 libcom-err2 libk5crypto3 libkeyutils1 openssl-provider-legacy libssl3t64 libkrb5-3
+  libgssapi-krb5-2 libjemalloc2 libjson-c5 liblmdb0 libmaxminddb0 libnghttp2-14 libprotobuf-c1 liburcu8t64 libuv1t64
+  libxml2-16 bind9-libs libsystemd0 libdbus-1-3 dbus-bin dbus-session-bus-common libapparmor1 libaudit-common
+  libcap-ng0 libaudit1 libexpat1 libpcre2-8-0 libselinux1 dbus-daemon libsmartcols1 libslang2 libnewt0.52
+  libpython3.13-minimal python3.13-minimal media-types netbase debconf tzdata libbz2-1.0 libdb5.3t64 libffi8 liblzma5
+  libtinfo6 libncursesw6 readline-common libreadline8t64 libsqlite3-0 libuuid1 libpython3.13-stdlib python3.13
+  libcrypt1 perl-base perl-modules-5.42 libgdbm6t64 libgdbm-compat4t64 libperl5.42 perl libcrypt-urandom-perl
+  libauthen-sasl-perl libltdl7 m4 debianutils autoconf autotools-dev automake libltdl-dev linux-libc-dev libcbor0.10
+  libudev1 libfido2-1 libblkid1 libfdisk1 linux-sysctl-defaults init-system-helpers openssl libext2fs2t64 zsh-common
+  libcap2 zsh libxxhash0 liblz4-1 libapt-pkg7.0 libbrotli1 libbrotli-dev libscalar-list-utils-perl
+  perl-openssl-defaults libnet-ssleay-perl libhwasan0 less manpages libatomic1 libsemanage-common libsepol2
+  libsemanage2 libsystemd-shared libmount1 systemd libkmod2 udev openssh-common libmd0 libbsd0 libedit2
+  openssh-client-gssapi cron-daemon-common libpam0g sensible-utils libpam-modules-bin libpam-modules libpam-runtime
+  cron dhcpcd-base libgmp10 libisl23 libmpfr6 libmpc3 cpp-16-x86-64-linux-gnu cpp-x86-64-linux-gnu libcc1-0 libgomp1
+  libitm1 libasan8 liblsan0 libtsan2 libubsan1 libquadmath0 libgcc-16-dev gcc-16-x86-64-linux-gnu gcc-x86-64-linux-gnu
+  libc-dev-bin libc6-dev libstdc++-16-dev g++-16-x86-64-linux-gnu g++-x86-64-linux-gnu dbus-system-bus-common dbus nano
+  libunistring5 libidn2-0 bind9-host bind9-dnsutils liburing2 bsdextrautils liblocale-gettext-perl libdebconfclient0
+  base-passwd libnettle8t64 libhogweed6t64 sqv debian-archive-keyring libseccomp2 apt tasksel-data tasksel
+  kali-defaults libnghttp3-9 libngtcp2-16 libsasl2-modules-db libsasl2-2 libldap2 libngtcp2-crypto-ossl0 libpsl5t64
+  libssh2-1t64 libcurl4t64 curl tnftp ftp liblsof0 libtirpc-common libtirpc3t64 lsof libnfsidmap1 libwrap0 login.defs
+  libacl1 passwd adduser rpcbind libtext-charwidth-perl libtext-wrapi18n-perl libproc2-1 procps ucf keyutils
+  libevent-core-2.1-7t64 libnl-3-200 libnl-genl-3-200 nfs-common openssh-client openssh-client-ssh1 openssh-sftp-server
+  runit-helper libwtmpdb0 openssh-server dmidecode dmsetup libdevmapper1.02.1 libparted2t64 parted
+  libpython3.14-minimal python3.14-minimal python3-minimal libpython3.14-stdlib python3.14 libpython3-stdlib python3
+  python-is-python3 sudo tmux tree tzdata-legacy vim-common vim-tiny libp11-kit0 libtasn1-6 libgnutls30t64 wget
+  zsh-autosuggestions zsh-syntax-highlighting kali-system-core netcat-traditional libpcap0.8t64 tcpdump kali-linux-core
+  libidn2-dev comerr-dev libgssrpc4t64 libkadm5clnt-mit12 libkdb5-10t64 libkadm5srv-mit12 krb5-multidev libkrb5-dev
+  libldap-dev libpkgconf7 pkgconf-bin pkgconf libnghttp2-dev libnghttp3-dev libngtcp2-crypto-ossl-dev libngtcp2-dev
+  libunistring-dev libpsl-dev librtmp1 libgmpxx4ldbl libgmp-dev libevent-2.1-7t64 libunbound8 libgnutls-dane0t64
+  libp11-kit-dev libtasn1-6-dev nettle-dev libgnutls28-dev zlib1g-dev librtmp-dev libssl-dev libssh2-1-dev libzstd-dev
+  libcurl4-openssl-dev laptop-detect musl musl-dev musl-tools mawk logsave login libclone-perl patch libversion-perl
+  libxau6 libxdmcp6 libxcb1 libx11-data libx11-6 vim-runtime libgpm2 libsodium26 vim libmnl0 libnftnl11 libxtables12
+  libnftables1 nftables apt-transport-https manpages-dev libattr1 bsdutils mount libcap2-bin libelf1t64 libbpf1
+  iproute2 ifupdown cpp-16 cpp gcc-16 gcc file libtool libtool-bin libsasl2-modules kali-system-cli dpkg publicsuffix
+  ca-certificates libio-socket-ssl-perl libio-socket-ip-perl libencode-perl liburi-perl libnet-http-perl
+  libencode-locale-perl libtimedate-perl libhttp-date-perl libfile-listing-perl libhtml-tagset-perl libhtml-parser-perl
+  libhtml-tree-perl libcompress-raw-bzip2-perl libcompress-raw-zlib-perl libio-html-perl liblwp-mediatypes-perl
+  libhttp-message-perl libhttp-cookies-perl libhttp-negotiate-perl libtry-tiny-perl libwww-robotrules-perl libwww-perl
+  liblwp-protocol-https-perl fdisk tar libc-l10n kali-archive-keyring systemd-sysv init gettext-base distro-info-data
+  bzip2 tex-common python3-newt libss2 libpam-systemd libpopt0 dash libngtcp2-crypto-gnutls8 libcurl4-gnutls apt-utils
+  libmodule-corelist-perl lzma g++-16 gettext libcurl3t64-gnutls base-files xz-utils coreutils liberror-perl bash
+  sysvinit-utils lsb-base findutils e2fsprogs diffstat g++ rsync util-linux locales-all net-tools kali-linux-wsl
+  libdigest-sha-perl ed quilt python-apt-common python3-apt dbus-user-session whiptail plocate libapt-pkg-perl
+  libregexp-assemble-perl apt-file
+
+398 packages (223.9 MB) will be installed. Continue? [y/N] y
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-bin                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfstrm0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkrb5support0           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcom-err2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libk5crypto3              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssl-provider-legacy   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkeyutils1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjemalloc2              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblmdb0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkrb5-3                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgssapi-krb5-2          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmaxminddb0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjson-c5                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnghttp2-14             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libprotobuf-c1            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libuv1t64                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liburcu8t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-bin                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-session-bus-common   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-libs                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdbus-1-3               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libssl3t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libaudit1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapparmor1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libaudit-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libexpat1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap-ng0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxml2-16                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnewt0.52               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-daemon               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpcre2-8-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libselinux1               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libslang2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-minimal     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsmartcols1             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> netbase                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> media-types               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debconf                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tzdata                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libffi8                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtinfo6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libncursesw6              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> readline-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdb5.3t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libuuid1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libreadline8t64           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsqlite3-0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.13-stdlib      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm-compat4t64        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgdbm6t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcrypt-urandom-perl     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libauthen-sasl-perl       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-modules-5.42         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.13-minimal        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-base                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debianutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> autoconf                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libltdl7                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> m4                        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> autotools-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libltdl-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> automake                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcbor0.10               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfido2-1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libudev1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libperl5.42               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-sysctl-defaults     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libblkid1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfdisk1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init-system-helpers       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> linux-libc-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libext2fs2t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxxhash0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblz4-1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbrotli1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> perl-openssl-defaults     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssl                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libscalar-list-utils-perl [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbrotli-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapt-pkg7.0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnet-ssleay-perl        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libatomic1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> less                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage-common        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsemanage2              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhwasan0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsepol2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkmod2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmount1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmd0                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> manpages                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-common            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> udev                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libedit2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbsd0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cron-daemon-common        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sensible-utils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam0g                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-client-gssapi     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules-bin        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-modules            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-runtime            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dhcpcd-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cron                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpfr6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmp10                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libisl23                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmpc3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcc1-0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libitm1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgomp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsystemd-shared         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libquadmath0              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblsan0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-dev-bin              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libubsan1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libasan8                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-16-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-x86-64-linux-gnu      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++-16-dev          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-system-bus-common    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-16-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libidn2-0                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-host                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtsan2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bind9-dnsutils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liburing2                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6-dev                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bsdextrautils             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblocale-gettext-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdebconfclient0         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> base-passwd               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-16-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnettle8t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhogweed6t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sqv                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> debian-archive-keyring    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel-data              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tasksel                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libunistring5             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-defaults             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsasl2-2                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libngtcp2-16              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nano                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnghttp3-9              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsasl2-modules-db       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libngtcp2-crypto-ossl0    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpsl5t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libseccomp2               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libldap2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libssh2-1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ftp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtirpc-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcurl4t64               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtirpc3t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tnftp                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblsof0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> curl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnfsidmap1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwrap0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libacl1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lsof                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> login.defs                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> rpcbind                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtext-charwidth-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtext-wrapi18n-perl     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libproc2-1                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ucf                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> adduser                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> passwd                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> keyutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnl-genl-3-200          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnl-3-200               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libevent-core-2.1-7t64    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nfs-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> procps                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> runit-helper              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-sftp-server       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwtmpdb0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-client            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dmsetup                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dmidecode                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-client-ssh1       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> openssh-server            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> parted                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdevmapper1.02.1        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libparted2t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3-stdlib         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.14                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python-is-python3         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-minimal           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tree                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.14-minimal     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpython3.14-stdlib      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tmux                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sudo                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tzdata-legacy             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtasn1-6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3.14-minimal        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgnutls30t64            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-tiny                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh-syntax-highlighting   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-system-core          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zsh-autosuggestions       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libp11-kit0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> netcat-traditional        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> wget                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpcap0.8t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libidn2-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-linux-core           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgssrpc4t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> comerr-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkadm5clnt-mit12        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tcpdump                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkdb5-10t64             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkadm5srv-mit12         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpkgconf7               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libkrb5-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> pkgconf                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> krb5-multidev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> pkgconf-bin               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libldap-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnghttp2-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libngtcp2-crypto-ossl-dev [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpsl-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libunistring-dev          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnghttp3-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> librtmp1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmpxx4ldbl             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libngtcp2-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libevent-2.1-7t64         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgmp-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libp11-kit-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtasn1-6-dev            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgnutls-dane0t64        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libunbound8               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> librtmp-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16-x86-64-linux-gnu   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nettle-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libssh2-1-dev             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd-dev               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgnutls28-dev           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> laptop-detect             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> logsave                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcurl4-openssl-dev      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> mawk                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> musl                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libssl-dev                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> musl-tools                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> login                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libclone-perl             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libversion-perl           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxdmcp6                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> musl-dev                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxcb1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> patch                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgpm2                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libx11-data               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmnl0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libx11-6                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxtables12              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnftnl11                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsodium26               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libxau6                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> nftables                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libattr1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-transport-https       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnftables1              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bsdutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> mount                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libelf1t64                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcap2-bin               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbpf1                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ifupdown                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> cpp                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> iproute2                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsasl2-modules          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gcc-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-system-cli           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtool-bin               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtool                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ca-certificates           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> vim-runtime               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libio-socket-ip-perl      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dpkg                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> publicsuffix              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libnet-http-perl          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libencode-locale-perl     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtimedate-perl          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liburi-perl               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libencode-perl            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libio-socket-ssl-perl     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libfile-listing-perl      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhtml-tagset-perl       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhttp-date-perl         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcompress-raw-bzip2-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhtml-tree-perl         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcompress-raw-zlib-perl [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhtml-parser-perl       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblwp-mediatypes-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> manpages-dev              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhttp-negotiate-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhttp-cookies-perl      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libtry-tiny-perl          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwww-robotrules-perl    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libhttp-message-perl      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblwp-protocol-https-... [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-archive-keyring      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> systemd-sysv              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> fdisk                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libwww-perl               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> init                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libio-html-perl           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tar                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bzip2                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> distro-info-data          [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-l10n                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-newt              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> tex-common                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gettext-base              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libss2                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libngtcp2-crypto-gnutls8  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpam-systemd            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libpopt0                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcurl4-gnutls           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmodule-corelist-perl   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dash                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-utils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lzma                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> gettext                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> base-files                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libcurl3t64-gnutls        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++-16                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> coreutils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liberror-perl             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> sysvinit-utils            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> lsb-base                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> xz-utils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> diffstat                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> g++                       [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> bash                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> findutils                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> e2fsprogs                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> net-tools                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> kali-linux-wsl            [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libdigest-sha-perl        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> util-linux                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> rsync                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python-apt-common         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> dbus-user-session         [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> ed                        [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> python3-apt               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> whiptail                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libapt-pkg-perl           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> apt-file                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libregexp-assemble-perl   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> plocate                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> quilt                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> locales-all               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 398 packages to /srv/lib/runepkg_dir/download_dir
+Reinstalling gcc-16-base (16.2.0-4) due to --force
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+Reinstalling libgcc-s1 (16.2.0-4) due to --force
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+Reinstalling libc6 (2.43-7) due to --force
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+Reinstalling libstdc++6 (16.2.0-4) due to --force
+[md5sums] Passed for libstdc++6
+[runepkg] Installing libstdc++6 (16.2.0-4)
+Upgrading libc-bin from 2.43-4 to 2.43-7
+[md5sums] Passed for libc-bin
+[runepkg] Installing libc-bin (2.43-7)
+Reinstalling libc-gconv-modules-extra (2.43-7) due to --force
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+Reinstalling libmagic-mgc (1:5.47-4) due to --force
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+Reinstalling libmagic1t64 (1:5.47-4) due to --force
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+Reinstalling libsframe3 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libsframe3
+[runepkg] Installing libsframe3 (2.47.50.20261021-1)
+Reinstalling libzstd1 (1.5.7+dfsg-4) due to --force
+[md5sums] Passed for libzstd1
+[runepkg] Installing libzstd1 (1.5.7+dfsg-4)
+Reinstalling zlib1g (1:1.3.dfsg+really1.3.2-4) due to --force
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
+Reinstalling binutils-common (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils-common
+[runepkg] Installing binutils-common (2.47.50.20261021-1)
+Reinstalling libbinutils (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libbinutils
+[runepkg] Installing libbinutils (2.47.50.20261021-1)
+Reinstalling libgprofng0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libgprofng0
+[runepkg] Installing libgprofng0 (2.47.50.20261021-1)
+Reinstalling libctf-nobfd0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libctf-nobfd0
+[runepkg] Installing libctf-nobfd0 (2.47.50.20261021-1)
+Reinstalling libctf0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libctf0
+[runepkg] Installing libctf0 (2.47.50.20261021-1)
+Reinstalling libjansson4 (2.15.1-1) due to --force
+[md5sums] Passed for libjansson4
+[runepkg] Installing libjansson4 (2.15.1-1)
+Reinstalling binutils-x86-64-linux-gnu (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils-x86-64-linux-gnu
+[runepkg] Installing binutils-x86-64-linux-gnu (2.47.50.20261021-1)
+Reinstalling binutils (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils
+[runepkg] Installing binutils (2.47.50.20261021-1)
+Reinstalling libfstrm0 (0.6.1-1+b4) due to --force
+[md5sums] Passed for libfstrm0
+[runepkg] Installing libfstrm0 (0.6.1-1+b4)
+Reinstalling libkrb5support0 (1.22.1-3) due to --force
+[md5sums] Passed for libkrb5support0
+[runepkg] Installing libkrb5support0 (1.22.1-3)
+Upgrading libcom-err2 from 1.47.4-1+b1 to 1.47.4-1+b3
+[md5sums] Passed for libcom-err2
+[runepkg] Installing libcom-err2 (1.47.4-1+b3)
+Reinstalling libk5crypto3 (1.22.1-3) due to --force
+[md5sums] Passed for libk5crypto3
+[runepkg] Installing libk5crypto3 (1.22.1-3)
+Reinstalling libkeyutils1 (1.6.3-6+b2) due to --force
+[md5sums] Passed for libkeyutils1
+[runepkg] Installing libkeyutils1 (1.6.3-6+b2)
+Upgrading openssl-provider-legacy from 3.6.3-1 to 3.6.5-1
+[md5sums] Passed for openssl-provider-legacy
+[runepkg] Installing openssl-provider-legacy (3.6.5-1)
+Upgrading libssl3t64 from 3.6.3-1 to 3.6.5-1
+[md5sums] Passed for libssl3t64
+[runepkg] Installing libssl3t64 (3.6.5-1)
+Reinstalling libkrb5-3 (1.22.1-3) due to --force
+[md5sums] Passed for libkrb5-3
+[runepkg] Installing libkrb5-3 (1.22.1-3)
+Reinstalling libgssapi-krb5-2 (1.22.1-3) due to --force
+[md5sums] Passed for libgssapi-krb5-2
+[runepkg] Installing libgssapi-krb5-2 (1.22.1-3)
+Reinstalling libjemalloc2 (5.3.1-2) due to --force
+[md5sums] Passed for libjemalloc2
+[runepkg] Installing libjemalloc2 (5.3.1-2)
+Upgrading libjson-c5 from 0.18+ds-3 to 0.19+ds-1
+[md5sums] Passed for libjson-c5
+[runepkg] Installing libjson-c5 (0.19+ds-1)
+Upgrading liblmdb0 from 0.9.31-1+b3 to 0.9.35-1
+[md5sums] Passed for liblmdb0
+[runepkg] Installing liblmdb0 (0.9.35-1)
+Reinstalling libmaxminddb0 (1.13.3-1) due to --force
+[md5sums] Passed for libmaxminddb0
+[runepkg] Installing libmaxminddb0 (1.13.3-1)
+Upgrading libnghttp2-14 from 1.70.0-1 to 1.71.0-1
+[md5sums] Passed for libnghttp2-14
+[runepkg] Installing libnghttp2-14 (1.71.0-1)
+Reinstalling libprotobuf-c1 (1.5.1-1+b2) due to --force
+[md5sums] Passed for libprotobuf-c1
+[runepkg] Installing libprotobuf-c1 (1.5.1-1+b2)
+Upgrading liburcu8t64 from 0.15.6-1+b1 to 0.15.7-1
+[md5sums] Passed for liburcu8t64
+[runepkg] Installing liburcu8t64 (0.15.7-1)
+Upgrading libuv1t64 from 1.52.1-4 to 1.53.0-1
+[md5sums] Passed for libuv1t64
+[runepkg] Installing libuv1t64 (1.53.0-1)
+Upgrading libxml2-16 from 2.15.3+dfsg-1 to 2.15.4+dfsg-1+b1
+[md5sums] Passed for libxml2-16
+[runepkg] Installing libxml2-16 (2.15.4+dfsg-1+b1)
+Upgrading bind9-libs from 1:9.20.23-1 to 1:9.20.30-1
+[md5sums] Passed for bind9-libs
+[runepkg] Installing bind9-libs (1:9.20.30-1)
+Upgrading libsystemd0 from 260.1-1 to 262.2-1
+[md5sums] Passed for libsystemd0
+[runepkg] Installing libsystemd0 (262.2-1)
+Upgrading libdbus-1-3 from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for libdbus-1-3
+[runepkg] Installing libdbus-1-3 (1.16.4-1)
+Upgrading dbus-bin from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus-bin
+[runepkg] Installing dbus-bin (1.16.4-1)
+Upgrading dbus-session-bus-common from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus-session-bus-common
+[runepkg] Installing dbus-session-bus-common (1.16.4-1)
+Upgrading libapparmor1 from 4.1.7-4 to 4.1.8-3+b1
+[md5sums] Passed for libapparmor1
+[runepkg] Installing libapparmor1 (4.1.8-3+b1)
+Reinstalling libaudit-common (1:4.1.2-1) due to --force
+[md5sums] Passed for libaudit-common
+[runepkg] Installing libaudit-common (1:4.1.2-1)
+Upgrading libcap-ng0 from 0.9.3-1 to 0.9.6-1+b1
+[md5sums] Passed for libcap-ng0
+[runepkg] Installing libcap-ng0 (0.9.6-1+b1)
+Upgrading libaudit1 from 1:4.1.2-1+b1 to 1:4.1.2-1+b2
+[md5sums] Passed for libaudit1
+[runepkg] Installing libaudit1 (1:4.1.2-1+b2)
+Upgrading libexpat1 from 2.8.1-1 to 2.10.0-1
+[md5sums] Passed for libexpat1
+[runepkg] Installing libexpat1 (2.10.0-1)
+Upgrading libpcre2-8-0 from 10.46-1+b2 to 10.49-1
+[md5sums] Passed for libpcre2-8-0
+[runepkg] Installing libpcre2-8-0 (10.49-1)
+Upgrading libselinux1 from 3.10-1 to 3.11-2.1+b1
+[md5sums] Passed for libselinux1
+[runepkg] Installing libselinux1 (3.11-2.1+b1)
+Upgrading dbus-daemon from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus-daemon
+[runepkg] Installing dbus-daemon (1.16.4-1)
+Upgrading libsmartcols1 from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for libsmartcols1
+[runepkg] Installing libsmartcols1 (2.42.4-1)
+Reinstalling libslang2 (2.3.3-6) due to --force
+[md5sums] Passed for libslang2
+[runepkg] Installing libslang2 (2.3.3-6)
+Upgrading libnewt0.52 from 0.52.25-2 to 0.52.25-2+b2
+[md5sums] Passed for libnewt0.52
+[runepkg] Installing libnewt0.52 (0.52.25-2+b2)
+Upgrading libpython3.13-minimal from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for libpython3.13-minimal
+[runepkg] Installing libpython3.13-minimal (3.13.15-1)
+Upgrading python3.13-minimal from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for python3.13-minimal
+[runepkg] Installing python3.13-minimal (3.13.15-1)
+Reinstalling media-types (14.0.0) due to --force
+[md5sums] Passed for media-types
+[runepkg] Installing media-types (14.0.0)
+Upgrading netbase from 6.5 to 6.6
+[md5sums] Passed for netbase
+[runepkg] Installing netbase (6.6)
+Reinstalling debconf (1.5.92) due to --force
+[md5sums] Passed for debconf
+[runepkg] Installing debconf (1.5.92)
+Upgrading tzdata from 2026b-1 to 2026f-1
+[md5sums] Passed for tzdata
+[runepkg] Installing tzdata (2026f-1)
+Reinstalling libbz2-1.0 (1.0.8-6+b2) due to --force
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+Upgrading libdb5.3t64 from 5.3.28+dfsg2-11+b1 to 5.3.28+dfsg2-12
+[md5sums] Passed for libdb5.3t64
+[runepkg] Installing libdb5.3t64 (5.3.28+dfsg2-12)
+Upgrading libffi8 from 3.5.2-4 to 3.8.0-2
+[md5sums] Passed for libffi8
+[runepkg] Installing libffi8 (3.8.0-2)
+Reinstalling liblzma5 (5.8.4-1) due to --force
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+Reinstalling libtinfo6 (6.6+20260608-2) due to --force
+[md5sums] Passed for libtinfo6
+[runepkg] Installing libtinfo6 (6.6+20260608-2)
+Reinstalling libncursesw6 (6.6+20260608-2) due to --force
+[md5sums] Passed for libncursesw6
+[runepkg] Installing libncursesw6 (6.6+20260608-2)
+Reinstalling readline-common (8.3-4) due to --force
+[md5sums] Passed for readline-common
+[runepkg] Installing readline-common (8.3-4)
+Reinstalling libreadline8t64 (8.3-4) due to --force
+[md5sums] Passed for libreadline8t64
+[runepkg] Installing libreadline8t64 (8.3-4)
+Upgrading libsqlite3-0 from 3.46.1-9+b1 to 3.54.1-2
+[md5sums] Passed for libsqlite3-0
+[runepkg] Installing libsqlite3-0 (3.54.1-2)
+Upgrading libuuid1 from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for libuuid1
+[runepkg] Installing libuuid1 (2.42.4-1)
+Upgrading libpython3.13-stdlib from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for libpython3.13-stdlib
+[runepkg] Installing libpython3.13-stdlib (3.13.15-1)
+Upgrading python3.13 from 3.13.12-1 to 3.13.15-1
+[md5sums] Passed for python3.13
+[runepkg] Installing python3.13 (3.13.15-1)
+Upgrading libcrypt1 from 1:4.5.1-1+b1 to 1:4.5.2+20251210-1
+[md5sums] Passed for libcrypt1
+[runepkg] Installing libcrypt1 (1:4.5.2+20251210-1)
+[override] Overriding conflict: Package 'perl-base' breaks installed package 'perl-modules' (5.40.1-7)
+Reinstalling perl-base (5.42.3-1) due to --force
+[md5sums] Passed for perl-base
+[runepkg] Installing perl-base (5.42.3-1)
+Reinstalling perl-modules-5.42 (5.42.3-1) due to --force
+[md5sums] Passed for perl-modules-5.42
+[runepkg] Installing perl-modules-5.42 (5.42.3-1)
+Reinstalling libgdbm6t64 (1.26-1+b2) due to --force
+[md5sums] Passed for libgdbm6t64
+[runepkg] Installing libgdbm6t64 (1.26-1+b2)
+Reinstalling libgdbm-compat4t64 (1.26-1+b2) due to --force
+[md5sums] Passed for libgdbm-compat4t64
+[runepkg] Installing libgdbm-compat4t64 (1.26-1+b2)
+Reinstalling libperl5.42 (5.42.3-1) due to --force
+[md5sums] Passed for libperl5.42
+[runepkg] Installing libperl5.42 (5.42.3-1)
+Reinstalling perl (5.42.3-1) due to --force
+[md5sums] Passed for perl
+[runepkg] Installing perl (5.42.3-1)
+Reinstalling libcrypt-urandom-perl (0.55-1+b1) due to --force
+[md5sums] Passed for libcrypt-urandom-perl
+[runepkg] Installing libcrypt-urandom-perl (0.55-1+b1)
+Upgrading libauthen-sasl-perl from 2.2000-1 to 2.2000-2
+[md5sums] Passed for libauthen-sasl-perl
+[runepkg] Installing libauthen-sasl-perl (2.2000-2)
+Upgrading libltdl7 from 2.6.2-2 to 2.6.2-3
+[md5sums] Passed for libltdl7
+[runepkg] Installing libltdl7 (2.6.2-3)
+Reinstalling m4 (1.4.21-1) due to --force
+[md5sums] Passed for m4
+[runepkg] Installing m4 (1.4.21-1)
+Upgrading debianutils from 5.23.2 to 5.24
+[md5sums] Passed for debianutils
+[runepkg] Installing debianutils (5.24)
+Reinstalling autoconf (2.73-2) due to --force
+[md5sums] Passed for autoconf
+[runepkg] Installing autoconf (2.73-2)
+Reinstalling autotools-dev (20240727.1+nmu1) due to --force
+[md5sums] Passed for autotools-dev
+[runepkg] Installing autotools-dev (20240727.1+nmu1)
+Upgrading automake from 1:1.18.1-4 to 1:1.19-3
+[md5sums] Passed for automake
+[runepkg] Installing automake (1:1.19-3)
+Upgrading libltdl-dev from 2.6.2-2 to 2.6.2-3
+[md5sums] Passed for libltdl-dev
+[runepkg] Installing libltdl-dev (2.6.2-3)
+Upgrading linux-libc-dev from 7.1.5-1kali1 to 7.2.15-1kali1
+[md5sums] Passed for linux-libc-dev
+[runepkg] Installing linux-libc-dev (7.2.15-1kali1)
+Upgrading libcbor0.10 from 0.10.2-2.1+b1 to 0.10.2-2.2
+[md5sums] Passed for libcbor0.10
+[runepkg] Installing libcbor0.10 (0.10.2-2.2)
+Upgrading libudev1 from 260.1-1 to 262.2-1
+[md5sums] Passed for libudev1
+[runepkg] Installing libudev1 (262.2-1)
+Upgrading libfido2-1 from 1.17.0-1 to 1.17.0-2
+[md5sums] Passed for libfido2-1
+[runepkg] Installing libfido2-1 (1.17.0-2)
+Upgrading libblkid1 from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for libblkid1
+[runepkg] Installing libblkid1 (2.42.4-1)
+Upgrading libfdisk1 from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for libfdisk1
+[runepkg] Installing libfdisk1 (2.42.4-1)
+Upgrading linux-sysctl-defaults from 4.15 to 4.17
+[md5sums] Passed for linux-sysctl-defaults
+[runepkg] Installing linux-sysctl-defaults (4.17)
+Upgrading init-system-helpers from 1.69+kali1 to 1.69+nmu3+kali1
+[md5sums] Passed for init-system-helpers
+[runepkg] Installing init-system-helpers (1.69+nmu3+kali1)
+Upgrading openssl from 3.6.3-1 to 3.6.5-1
+[md5sums] Passed for openssl
+[runepkg] Installing openssl (3.6.5-1)
+Upgrading libext2fs2t64 from 1.47.4-1+b1 to 1.47.4-1+b3
+[md5sums] Passed for libext2fs2t64
+[runepkg] Installing libext2fs2t64 (1.47.4-1+b3)
+Upgrading zsh-common from 5.9-8 to 5.9.2-1
+[md5sums] Passed for zsh-common
+[runepkg] Installing zsh-common (5.9.2-1)
+Upgrading libcap2 from 1:2.78-1 to 1:2.78-1+b2
+[md5sums] Passed for libcap2
+[runepkg] Installing libcap2 (1:2.78-1+b2)
+Upgrading zsh from 5.9-8+b40 to 5.9.2-1+b2
+[md5sums] Passed for zsh
+[runepkg] Installing zsh (5.9.2-1+b2)
+Reinstalling libxxhash0 (0.8.3-2+b2) due to --force
+[md5sums] Passed for libxxhash0
+[runepkg] Installing libxxhash0 (0.8.3-2+b2)
+Reinstalling liblz4-1 (1.10.0-10) due to --force
+[md5sums] Passed for liblz4-1
+[runepkg] Installing liblz4-1 (1.10.0-10)
+Upgrading libapt-pkg7.0 from 3.2.0+kali1 to 3.3.6+kali1
+[md5sums] Passed for libapt-pkg7.0
+[runepkg] Installing libapt-pkg7.0 (3.3.6+kali1)
+Upgrading libbrotli1 from 1.2.0-4+b1 to 1.2.0-4.1
+[md5sums] Passed for libbrotli1
+[runepkg] Installing libbrotli1 (1.2.0-4.1)
+Upgrading libbrotli-dev from 1.2.0-4+b1 to 1.2.0-4.1
+[md5sums] Passed for libbrotli-dev
+[runepkg] Installing libbrotli-dev (1.2.0-4.1)
+[override] Overriding conflict: Package 'libscalar-list-utils-perl' breaks installed package 'perl-modules' (5.40.1-7)
+Upgrading libscalar-list-utils-perl from 5.42.3-1 to 1:1.70-1+b1
+[md5sums] Passed for libscalar-list-utils-perl
+[runepkg] Installing libscalar-list-utils-perl (1:1.70-1+b1)
+Reinstalling perl-openssl-defaults (7+b2) due to --force
+[md5sums] Passed for perl-openssl-defaults
+[runepkg] Installing perl-openssl-defaults (7+b2)
+Upgrading libnet-ssleay-perl from 1.96-1+b1 to 1.96-2
+[md5sums] Passed for libnet-ssleay-perl
+[runepkg] Installing libnet-ssleay-perl (1.96-2)
+Upgrading libhwasan0 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libhwasan0
+[runepkg] Installing libhwasan0 (16.2.0-4)
+Upgrading less from 668-1 to 710+really668-1
+[md5sums] Passed for less
+[runepkg] Installing less (710+really668-1)
+Upgrading manpages from 6.19-3 to 6.20-2
+[md5sums] Passed for manpages
+[runepkg] Installing manpages (6.20-2)
+Upgrading libatomic1 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libatomic1
+[runepkg] Installing libatomic1 (16.2.0-4)
+Upgrading libsemanage-common from 3.10-1 to 3.11-1
+[md5sums] Passed for libsemanage-common
+[runepkg] Installing libsemanage-common (3.11-1)
+Upgrading libsepol2 from 3.10-1 to 3.11-1
+[md5sums] Passed for libsepol2
+[runepkg] Installing libsepol2 (3.11-1)
+Upgrading libsemanage2 from 3.10-1 to 3.11-1+b2
+[md5sums] Passed for libsemanage2
+[runepkg] Installing libsemanage2 (3.11-1+b2)
+Upgrading libsystemd-shared from 260.1-1 to 262.2-1
+[md5sums] Passed for libsystemd-shared
+[runepkg] Installing libsystemd-shared (262.2-1)
+Upgrading libmount1 from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for libmount1
+[runepkg] Installing libmount1 (2.42.4-1)
+Upgrading systemd from 260.1-1 to 262.2-1
+[md5sums] Passed for systemd
+[runepkg] Installing systemd (262.2-1)
+Reinstalling libkmod2 (34.2-2kali1) due to --force
+[md5sums] Passed for libkmod2
+[runepkg] Installing libkmod2 (34.2-2kali1)
+Upgrading udev from 260.1-1 to 262.2-1
+[md5sums] Passed for udev
+[runepkg] Installing udev (262.2-1)
+[md5sums] Passed for openssh-common
+[runepkg] Installing openssh-common (1:10.6p2-1)
+Upgrading libmd0 from 1.2.0-2 to 1.3.0-1
+[md5sums] Passed for libmd0
+[runepkg] Installing libmd0 (1.3.0-1)
+Reinstalling libbsd0 (0.12.2-3) due to --force
+[md5sums] Passed for libbsd0
+[runepkg] Installing libbsd0 (0.12.2-3)
+Reinstalling libedit2 (3.1-20260512-1) due to --force
+[md5sums] Passed for libedit2
+[runepkg] Installing libedit2 (3.1-20260512-1)
+Upgrading openssh-client-gssapi from 1:10.3p1-4 to 1:10.6p2-1
+[md5sums] Passed for openssh-client-gssapi
+[runepkg] Installing openssh-client-gssapi (1:10.6p2-1)
+Upgrading cron-daemon-common from 3.0pl1-209 to 3.0pl1-213
+[md5sums] Passed for cron-daemon-common
+[runepkg] Installing cron-daemon-common (3.0pl1-213)
+Upgrading libpam0g from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam0g
+[runepkg] Installing libpam0g (1.7.0-8)
+Reinstalling sensible-utils (0.0.26) due to --force
+[md5sums] Passed for sensible-utils
+[runepkg] Installing sensible-utils (0.0.26)
+Upgrading libpam-modules-bin from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam-modules-bin
+[runepkg] Installing libpam-modules-bin (1.7.0-8)
+Upgrading libpam-modules from 1.7.0-5+b2 to 1.7.0-8
+[md5sums] Passed for libpam-modules
+[runepkg] Installing libpam-modules (1.7.0-8)
+Upgrading libpam-runtime from 1.7.0-5 to 1.7.0-8
+[md5sums] Passed for libpam-runtime
+[runepkg] Installing libpam-runtime (1.7.0-8)
+Upgrading cron from 3.0pl1-209 to 3.0pl1-213
+[md5sums] Passed for cron
+[runepkg] Installing cron (3.0pl1-213)
+Upgrading dhcpcd-base from 1:10.3.2-3 to 1:10.5.2-6
+[md5sums] Passed for dhcpcd-base
+[runepkg] Installing dhcpcd-base (1:10.5.2-6)
+Reinstalling libgmp10 (2:6.3.0+dfsg-5+b2) due to --force
+[md5sums] Passed for libgmp10
+[runepkg] Installing libgmp10 (2:6.3.0+dfsg-5+b2)
+Reinstalling libisl23 (0.28-1) due to --force
+[md5sums] Passed for libisl23
+[runepkg] Installing libisl23 (0.28-1)
+Reinstalling libmpfr6 (4.2.2-3) due to --force
+[md5sums] Passed for libmpfr6
+[runepkg] Installing libmpfr6 (4.2.2-3)
+Reinstalling libmpc3 (1.3.1-3) due to --force
+[md5sums] Passed for libmpc3
+[runepkg] Installing libmpc3 (1.3.1-3)
+Upgrading cpp-16-x86-64-linux-gnu from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for cpp-16-x86-64-linux-gnu
+[runepkg] Installing cpp-16-x86-64-linux-gnu (16.2.0-4)
+Upgrading cpp-x86-64-linux-gnu from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for cpp-x86-64-linux-gnu
+[runepkg] Installing cpp-x86-64-linux-gnu (4:16.2.0-1)
+Upgrading libcc1-0 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libcc1-0
+[runepkg] Installing libcc1-0 (16.2.0-4)
+Upgrading libgomp1 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libgomp1
+[runepkg] Installing libgomp1 (16.2.0-4)
+Upgrading libitm1 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libitm1
+[runepkg] Installing libitm1 (16.2.0-4)
+Upgrading libasan8 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libasan8
+[runepkg] Installing libasan8 (16.2.0-4)
+Upgrading liblsan0 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for liblsan0
+[runepkg] Installing liblsan0 (16.2.0-4)
+Upgrading libtsan2 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libtsan2
+[runepkg] Installing libtsan2 (16.2.0-4)
+Upgrading libubsan1 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libubsan1
+[runepkg] Installing libubsan1 (16.2.0-4)
+Upgrading libquadmath0 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libquadmath0
+[runepkg] Installing libquadmath0 (16.2.0-4)
+Upgrading libgcc-16-dev from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libgcc-16-dev
+[runepkg] Installing libgcc-16-dev (16.2.0-4)
+Upgrading gcc-16-x86-64-linux-gnu from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for gcc-16-x86-64-linux-gnu
+[runepkg] Installing gcc-16-x86-64-linux-gnu (16.2.0-4)
+Upgrading gcc-x86-64-linux-gnu from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for gcc-x86-64-linux-gnu
+[runepkg] Installing gcc-x86-64-linux-gnu (4:16.2.0-1)
+Upgrading libc-dev-bin from 2.43-4 to 2.43-7
+[md5sums] Passed for libc-dev-bin
+[runepkg] Installing libc-dev-bin (2.43-7)
+Upgrading libc6-dev from 2.43-4 to 2.43-7
+[md5sums] Passed for libc6-dev
+[runepkg] Installing libc6-dev (2.43-7)
+Upgrading libstdc++-16-dev from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for libstdc++-16-dev
+[runepkg] Installing libstdc++-16-dev (16.2.0-4)
+Upgrading g++-16-x86-64-linux-gnu from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for g++-16-x86-64-linux-gnu
+[runepkg] Installing g++-16-x86-64-linux-gnu (16.2.0-4)
+Upgrading g++-x86-64-linux-gnu from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for g++-x86-64-linux-gnu
+[runepkg] Installing g++-x86-64-linux-gnu (4:16.2.0-1)
+Upgrading dbus-system-bus-common from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus-system-bus-common
+[runepkg] Installing dbus-system-bus-common (1.16.4-1)
+Upgrading dbus from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus
+[runepkg] Installing dbus (1.16.4-1)
+Upgrading nano from 9.0-1 to 9.3-1
+[md5sums] Passed for nano
+[runepkg] Installing nano (9.3-1)
+Reinstalling libunistring5 (1.4.2-1) due to --force
+[md5sums] Passed for libunistring5
+[runepkg] Installing libunistring5 (1.4.2-1)
+Reinstalling libidn2-0 (2.3.8-5) due to --force
+[md5sums] Passed for libidn2-0
+[runepkg] Installing libidn2-0 (2.3.8-5)
+Upgrading bind9-host from 1:9.20.23-1 to 1:9.20.30-1
+[md5sums] Passed for bind9-host
+[runepkg] Installing bind9-host (1:9.20.30-1)
+Upgrading bind9-dnsutils from 1:9.20.23-1 to 1:9.20.30-1
+[md5sums] Passed for bind9-dnsutils
+[runepkg] Installing bind9-dnsutils (1:9.20.30-1)
+Upgrading liburing2 from 2.14-1 to 2.15-1
+[md5sums] Passed for liburing2
+[runepkg] Installing liburing2 (2.15-1)
+Upgrading bsdextrautils from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for bsdextrautils
+[runepkg] Installing bsdextrautils (2.42.4-1)
+Reinstalling liblocale-gettext-perl (1.07-10+b1) due to --force
+[md5sums] Passed for liblocale-gettext-perl
+[runepkg] Installing liblocale-gettext-perl (1.07-10+b1)
+Reinstalling libdebconfclient0 (0.283) due to --force
+[md5sums] Passed for libdebconfclient0
+[runepkg] Installing libdebconfclient0 (0.283)
+Reinstalling base-passwd (3.6.8) due to --force
+[md5sums] Passed for base-passwd
+[runepkg] Installing base-passwd (3.6.8)
+Reinstalling libnettle8t64 (3.10.2-1+b1) due to --force
+[md5sums] Passed for libnettle8t64
+[runepkg] Installing libnettle8t64 (3.10.2-1+b1)
+Reinstalling libhogweed6t64 (3.10.2-1+b1) due to --force
+[md5sums] Passed for libhogweed6t64
+[runepkg] Installing libhogweed6t64 (3.10.2-1+b1)
+Upgrading sqv from 1.3.0-5+b2 to 1.5.0-1
+[md5sums] Passed for sqv
+[runepkg] Installing sqv (1.5.0-1)
+Reinstalling debian-archive-keyring (2025.1) due to --force
+[md5sums] Passed for debian-archive-keyring
+[runepkg] Installing debian-archive-keyring (2025.1)
+Upgrading libseccomp2 from 2.6.0-2+b1 to 2.6.1-1+b2
+[md5sums] Passed for libseccomp2
+[runepkg] Installing libseccomp2 (2.6.1-1+b2)
+Upgrading apt from 3.2.0+kali1 to 3.3.6+kali1
+[md5sums] Passed for apt
+[runepkg] Installing apt (3.3.6+kali1)
+Upgrading tasksel-data from 3.88+kali2 to 3.91+kali1
+[md5sums] Passed for tasksel-data
+[runepkg] Installing tasksel-data (3.91+kali1)
+Upgrading tasksel from 3.88+kali2 to 3.91+kali1
+[md5sums] Passed for tasksel
+[runepkg] Installing tasksel (3.91+kali1)
+Upgrading kali-defaults from 2026.2.12 to 2026.4.2
+[md5sums] Passed for kali-defaults
+[runepkg] Installing kali-defaults (2026.4.2)
+Reinstalling libnghttp3-9 (1.17.0-1) due to --force
+[md5sums] Passed for libnghttp3-9
+[runepkg] Installing libnghttp3-9 (1.17.0-1)
+Reinstalling libngtcp2-16 (1.24.0-1) due to --force
+[md5sums] Passed for libngtcp2-16
+[runepkg] Installing libngtcp2-16 (1.24.0-1)
+Upgrading libsasl2-modules-db from 2.1.28+dfsg1-11 to 2.1.28+dfsg1-12
+[md5sums] Passed for libsasl2-modules-db
+[runepkg] Installing libsasl2-modules-db (2.1.28+dfsg1-12)
+Upgrading libsasl2-2 from 2.1.28+dfsg1-11 to 2.1.28+dfsg1-12
+[md5sums] Passed for libsasl2-2
+[runepkg] Installing libsasl2-2 (2.1.28+dfsg1-12)
+Reinstalling libldap2 (2.6.14+dfsg-2) due to --force
+[md5sums] Passed for libldap2
+[runepkg] Installing libldap2 (2.6.14+dfsg-2)
+Reinstalling libngtcp2-crypto-ossl0 (1.24.0-1) due to --force
+[md5sums] Passed for libngtcp2-crypto-ossl0
+[runepkg] Installing libngtcp2-crypto-ossl0 (1.24.0-1)
+Reinstalling libpsl5t64 (0.23.3-1) due to --force
+[md5sums] Passed for libpsl5t64
+[runepkg] Installing libpsl5t64 (0.23.3-1)
+Reinstalling libssh2-1t64 (1.11.1-6) due to --force
+[md5sums] Passed for libssh2-1t64
+[runepkg] Installing libssh2-1t64 (1.11.1-6)
+Upgrading libcurl4t64 from 8.21.0-2 to 8.23.0-2
+[md5sums] Passed for libcurl4t64
+[runepkg] Installing libcurl4t64 (8.23.0-2)
+Upgrading curl from 8.21.0-2 to 8.23.0-2
+[md5sums] Passed for curl
+[runepkg] Installing curl (8.23.0-2)
+Reinstalling tnftp (20260211-2) due to --force
+[md5sums] Passed for tnftp
+[runepkg] Installing tnftp (20260211-2)
+Reinstalling ftp (20260211-2) due to --force
+[md5sums] Passed for ftp
+[runepkg] Installing ftp (20260211-2)
+Reinstalling liblsof0 (4.99.4+dfsg-2) due to --force
+[md5sums] Passed for liblsof0
+[runepkg] Installing liblsof0 (4.99.4+dfsg-2)
+Reinstalling libtirpc-common (1.3.7+ds-1) due to --force
+[md5sums] Passed for libtirpc-common
+[runepkg] Installing libtirpc-common (1.3.7+ds-1)
+Reinstalling libtirpc3t64 (1.3.7+ds-1) due to --force
+[md5sums] Passed for libtirpc3t64
+[runepkg] Installing libtirpc3t64 (1.3.7+ds-1)
+Reinstalling lsof (4.99.4+dfsg-2) due to --force
+[md5sums] Passed for lsof
+[runepkg] Installing lsof (4.99.4+dfsg-2)
+Upgrading libnfsidmap1 from 1:2.9.1-1 to 1:3.1.1-1
+[md5sums] Passed for libnfsidmap1
+[runepkg] Installing libnfsidmap1 (1:3.1.1-1)
+Reinstalling libwrap0 (7.6.q-37) due to --force
+[md5sums] Passed for libwrap0
+[runepkg] Installing libwrap0 (7.6.q-37)
+Upgrading login.defs from 1:4.19.3-2 to 1:4.20.3-1
+[md5sums] Passed for login.defs
+[runepkg] Installing login.defs (1:4.20.3-1)
+Reinstalling libacl1 (2.4.0-1) due to --force
+[md5sums] Passed for libacl1
+[runepkg] Installing libacl1 (2.4.0-1)
+Upgrading passwd from 1:4.19.3-2 to 1:4.20.3-1
+[md5sums] Passed for passwd
+[runepkg] Installing passwd (1:4.20.3-1)
+Upgrading adduser from 3.156 to 3.159
+[md5sums] Passed for adduser
+[runepkg] Installing adduser (3.159)
+Reinstalling rpcbind (1.2.7-1) due to --force
+[md5sums] Passed for rpcbind
+[runepkg] Installing rpcbind (1.2.7-1)
+Reinstalling libtext-charwidth-perl (0.04-12+b1) due to --force
+[md5sums] Passed for libtext-charwidth-perl
+[runepkg] Installing libtext-charwidth-perl (0.04-12+b1)
+Reinstalling libtext-wrapi18n-perl (0.06-11) due to --force
+[md5sums] Passed for libtext-wrapi18n-perl
+[runepkg] Installing libtext-wrapi18n-perl (0.06-11)
+[md5sums] Passed for libproc2-1
+[runepkg] Installing libproc2-1 (2:4.0.7-1.1)
+Upgrading procps from 2:4.0.4-9+b2 to 2:4.0.7-1.1
+[md5sums] Passed for procps
+[runepkg] Installing procps (2:4.0.7-1.1)
+Upgrading ucf from 3.0053 to 3.0056
+[md5sums] Passed for ucf
+[runepkg] Installing ucf (3.0056)
+Reinstalling keyutils (1.6.3-6+b2) due to --force
+[md5sums] Passed for keyutils
+[runepkg] Installing keyutils (1.6.3-6+b2)
+Reinstalling libevent-core-2.1-7t64 (2.1.13-stable-1) due to --force
+[md5sums] Passed for libevent-core-2.1-7t64
+[runepkg] Installing libevent-core-2.1-7t64 (2.1.13-stable-1)
+[md5sums] Passed for libnl-3-200
+[runepkg] Installing libnl-3-200 (3.12.0-2+b1)
+[md5sums] Passed for libnl-genl-3-200
+[runepkg] Installing libnl-genl-3-200 (3.12.0-2+b1)
+Upgrading nfs-common from 1:2.9.1-1 to 1:3.1.1-1
+[md5sums] Passed for nfs-common
+[runepkg] Installing nfs-common (1:3.1.1-1)
+Upgrading openssh-client from 1:10.3p1-4 to 1:10.6p2-1
+[md5sums] Passed for openssh-client
+[runepkg] Installing openssh-client (1:10.6p2-1)
+Reinstalling openssh-client-ssh1 (1:7.5p1-18) due to --force
+[md5sums] Passed for openssh-client-ssh1
+[runepkg] Installing openssh-client-ssh1 (1:7.5p1-18)
+Upgrading openssh-sftp-server from 1:10.3p1-4 to 1:10.6p2-1
+[md5sums] Passed for openssh-sftp-server
+[runepkg] Installing openssh-sftp-server (1:10.6p2-1)
+Upgrading runit-helper from 2.16.6 to 2.16.7
+[md5sums] Passed for runit-helper
+[runepkg] Installing runit-helper (2.16.7)
+Reinstalling libwtmpdb0 (0.75.0-6) due to --force
+[md5sums] Passed for libwtmpdb0
+[runepkg] Installing libwtmpdb0 (0.75.0-6)
+Upgrading openssh-server from 1:10.3p1-4 to 1:10.6p2-1
+[md5sums] Passed for openssh-server
+[runepkg] Installing openssh-server (1:10.6p2-1)
+Reinstalling dmidecode (3.7-1) due to --force
+[md5sums] Passed for dmidecode
+[runepkg] Installing dmidecode (3.7-1)
+Reinstalling dmsetup (2:1.02.205-2+b2) due to --force
+[md5sums] Passed for dmsetup
+[runepkg] Installing dmsetup (2:1.02.205-2+b2)
+Reinstalling libdevmapper1.02.1 (2:1.02.205-2+b2) due to --force
+[md5sums] Passed for libdevmapper1.02.1
+[runepkg] Installing libdevmapper1.02.1 (2:1.02.205-2+b2)
+Upgrading libparted2t64 from 3.7-1 to 3.8-2
+[md5sums] Passed for libparted2t64
+[runepkg] Installing libparted2t64 (3.8-2)
+Upgrading parted from 3.7-1 to 3.8-2
+[md5sums] Passed for parted
+[runepkg] Installing parted (3.8-2)
+[md5sums] Passed for libpython3.14-minimal
+[runepkg] Installing libpython3.14-minimal (3.14.10-1)
+[md5sums] Passed for python3.14-minimal
+[runepkg] Installing python3.14-minimal (3.14.10-1)
+Upgrading python3-minimal from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for python3-minimal
+[runepkg] Installing python3-minimal (3.14.7-3)
+[md5sums] Passed for libpython3.14-stdlib
+[runepkg] Installing libpython3.14-stdlib (3.14.10-1)
+[md5sums] Passed for python3.14
+[runepkg] Installing python3.14 (3.14.10-1)
+Upgrading libpython3-stdlib from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for libpython3-stdlib
+[runepkg] Installing libpython3-stdlib (3.14.7-3)
+Upgrading python3 from 3.13.9-3+b1 to 3.14.7-3
+[md5sums] Passed for python3
+[runepkg] Installing python3 (3.14.7-3)
+Upgrading python-is-python3 from 3.13.3-1 to 3.14.7-1
+[md5sums] Passed for python-is-python3
+[runepkg] Installing python-is-python3 (3.14.7-1)
+Upgrading sudo from 1.9.17p2-7 to 1.9.17p2-11
+[md5sums] Passed for sudo
+[runepkg] Installing sudo (1.9.17p2-11)
+Upgrading tmux from 3.6b-1 to 3.7c-1
+[md5sums] Passed for tmux
+[runepkg] Installing tmux (3.7c-1)
+Reinstalling tree (2.3.2-1) due to --force
+[md5sums] Passed for tree
+[runepkg] Installing tree (2.3.2-1)
+Upgrading tzdata-legacy from 2026b-1 to 2026f-1
+[md5sums] Passed for tzdata-legacy
+[runepkg] Installing tzdata-legacy (2026f-1)
+Upgrading vim-common from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-common
+[runepkg] Installing vim-common (2:9.2.0858-1)
+Upgrading vim-tiny from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-tiny
+[runepkg] Installing vim-tiny (2:9.2.0858-1)
+Reinstalling libp11-kit0 (0.26.5-1) due to --force
+[md5sums] Passed for libp11-kit0
+[runepkg] Installing libp11-kit0 (0.26.5-1)
+Reinstalling libtasn1-6 (4.21.0-2+b1) due to --force
+[md5sums] Passed for libtasn1-6
+[runepkg] Installing libtasn1-6 (4.21.0-2+b1)
+Reinstalling libgnutls30t64 (3.8.13-1) due to --force
+[md5sums] Passed for libgnutls30t64
+[runepkg] Installing libgnutls30t64 (3.8.13-1)
+Upgrading wget from 1.25.0-2 to 1.25.0-3
+[md5sums] Passed for wget
+[runepkg] Installing wget (1.25.0-3)
+Reinstalling zsh-autosuggestions (0.7.1-1) due to --force
+[md5sums] Passed for zsh-autosuggestions
+[runepkg] Installing zsh-autosuggestions (0.7.1-1)
+Reinstalling zsh-syntax-highlighting (0.8.0-2) due to --force
+[md5sums] Passed for zsh-syntax-highlighting
+[runepkg] Installing zsh-syntax-highlighting (0.8.0-2)
+Upgrading kali-system-core from 2026.2.12 to 2026.4.3
+[md5sums] Passed for kali-system-core
+[runepkg] Installing kali-system-core (2026.4.3)
+Reinstalling netcat-traditional (1.10-50.1) due to --force
+[md5sums] Passed for netcat-traditional
+[runepkg] Installing netcat-traditional (1.10-50.1)
+Upgrading libpcap0.8t64 from 1.10.6-1 to 1.11.0-1
+[md5sums] Passed for libpcap0.8t64
+[runepkg] Installing libpcap0.8t64 (1.11.0-1)
+Reinstalling tcpdump (4.99.6-2) due to --force
+[md5sums] Passed for tcpdump
+[runepkg] Installing tcpdump (4.99.6-2)
+Upgrading kali-linux-core from 2026.2.12 to 2026.4.3
+[md5sums] Passed for kali-linux-core
+[runepkg] Installing kali-linux-core (2026.4.3)
+Reinstalling libidn2-dev (2.3.8-5) due to --force
+[md5sums] Passed for libidn2-dev
+[runepkg] Installing libidn2-dev (2.3.8-5)
+Upgrading comerr-dev from 2.1-1.47.4-1+b1 to 2.1-1.47.4-1+b3
+[md5sums] Passed for comerr-dev
+[runepkg] Installing comerr-dev (2.1-1.47.4-1+b3)
+Reinstalling libgssrpc4t64 (1.22.1-3) due to --force
+[md5sums] Passed for libgssrpc4t64
+[runepkg] Installing libgssrpc4t64 (1.22.1-3)
+Reinstalling libkadm5clnt-mit12 (1.22.1-3) due to --force
+[md5sums] Passed for libkadm5clnt-mit12
+[runepkg] Installing libkadm5clnt-mit12 (1.22.1-3)
+Reinstalling libkdb5-10t64 (1.22.1-3) due to --force
+[md5sums] Passed for libkdb5-10t64
+[runepkg] Installing libkdb5-10t64 (1.22.1-3)
+Reinstalling libkadm5srv-mit12 (1.22.1-3) due to --force
+[md5sums] Passed for libkadm5srv-mit12
+[runepkg] Installing libkadm5srv-mit12 (1.22.1-3)
+Reinstalling krb5-multidev (1.22.1-3) due to --force
+[md5sums] Passed for krb5-multidev
+[runepkg] Installing krb5-multidev (1.22.1-3)
+Reinstalling libkrb5-dev (1.22.1-3) due to --force
+[md5sums] Passed for libkrb5-dev
+[runepkg] Installing libkrb5-dev (1.22.1-3)
+Reinstalling libldap-dev (2.6.14+dfsg-2) due to --force
+[md5sums] Passed for libldap-dev
+[runepkg] Installing libldap-dev (2.6.14+dfsg-2)
+Reinstalling libpkgconf7 (2.5.1-4) due to --force
+[md5sums] Passed for libpkgconf7
+[runepkg] Installing libpkgconf7 (2.5.1-4)
+Reinstalling pkgconf-bin (2.5.1-4) due to --force
+[md5sums] Passed for pkgconf-bin
+[runepkg] Installing pkgconf-bin (2.5.1-4)
+Reinstalling pkgconf (2.5.1-4) due to --force
+[md5sums] Passed for pkgconf
+[runepkg] Installing pkgconf (2.5.1-4)
+Upgrading libnghttp2-dev from 1.70.0-1 to 1.71.0-1
+[md5sums] Passed for libnghttp2-dev
+[runepkg] Installing libnghttp2-dev (1.71.0-1)
+Reinstalling libnghttp3-dev (1.17.0-1) due to --force
+[md5sums] Passed for libnghttp3-dev
+[runepkg] Installing libnghttp3-dev (1.17.0-1)
+Reinstalling libngtcp2-crypto-ossl-dev (1.24.0-1) due to --force
+[md5sums] Passed for libngtcp2-crypto-ossl-dev
+[runepkg] Installing libngtcp2-crypto-ossl-dev (1.24.0-1)
+Reinstalling libngtcp2-dev (1.24.0-1) due to --force
+[md5sums] Passed for libngtcp2-dev
+[runepkg] Installing libngtcp2-dev (1.24.0-1)
+Reinstalling libunistring-dev (1.4.2-1) due to --force
+[md5sums] Passed for libunistring-dev
+[runepkg] Installing libunistring-dev (1.4.2-1)
+Reinstalling libpsl-dev (0.23.3-1) due to --force
+[md5sums] Passed for libpsl-dev
+[runepkg] Installing libpsl-dev (0.23.3-1)
+Reinstalling librtmp1 (2.6-1) due to --force
+[md5sums] Passed for librtmp1
+[runepkg] Installing librtmp1 (2.6-1)
+Reinstalling libgmpxx4ldbl (2:6.3.0+dfsg-5+b2) due to --force
+[md5sums] Passed for libgmpxx4ldbl
+[runepkg] Installing libgmpxx4ldbl (2:6.3.0+dfsg-5+b2)
+Reinstalling libgmp-dev (2:6.3.0+dfsg-5+b2) due to --force
+[md5sums] Passed for libgmp-dev
+[runepkg] Installing libgmp-dev (2:6.3.0+dfsg-5+b2)
+Reinstalling libevent-2.1-7t64 (2.1.13-stable-1) due to --force
+[md5sums] Passed for libevent-2.1-7t64
+[runepkg] Installing libevent-2.1-7t64 (2.1.13-stable-1)
+Upgrading libunbound8 from 1.26.0-2 to 1.26.2-1
+[md5sums] Passed for libunbound8
+[runepkg] Installing libunbound8 (1.26.2-1)
+Reinstalling libgnutls-dane0t64 (3.8.13-1) due to --force
+[md5sums] Passed for libgnutls-dane0t64
+[runepkg] Installing libgnutls-dane0t64 (3.8.13-1)
+Reinstalling libp11-kit-dev (0.26.5-1) due to --force
+[md5sums] Passed for libp11-kit-dev
+[runepkg] Installing libp11-kit-dev (0.26.5-1)
+Reinstalling libtasn1-6-dev (4.21.0-2+b1) due to --force
+[md5sums] Passed for libtasn1-6-dev
+[runepkg] Installing libtasn1-6-dev (4.21.0-2+b1)
+Reinstalling nettle-dev (3.10.2-1+b1) due to --force
+[md5sums] Passed for nettle-dev
+[runepkg] Installing nettle-dev (3.10.2-1+b1)
+Reinstalling libgnutls28-dev (3.8.13-1) due to --force
+[md5sums] Passed for libgnutls28-dev
+[runepkg] Installing libgnutls28-dev (3.8.13-1)
+Upgrading zlib1g-dev from 1:1.3.dfsg+really1.3.2-3 to 1:1.3.dfsg+really1.3.2-4
+[md5sums] Passed for zlib1g-dev
+[runepkg] Installing zlib1g-dev (1:1.3.dfsg+really1.3.2-4)
+Reinstalling librtmp-dev (2.6-1) due to --force
+[md5sums] Passed for librtmp-dev
+[runepkg] Installing librtmp-dev (2.6-1)
+Upgrading libssl-dev from 3.6.3-1 to 3.6.5-1
+[md5sums] Passed for libssl-dev
+[runepkg] Installing libssl-dev (3.6.5-1)
+Reinstalling libssh2-1-dev (1.11.1-6) due to --force
+[md5sums] Passed for libssh2-1-dev
+[runepkg] Installing libssh2-1-dev (1.11.1-6)
+Reinstalling libzstd-dev (1.5.7+dfsg-4) due to --force
+[md5sums] Passed for libzstd-dev
+[runepkg] Installing libzstd-dev (1.5.7+dfsg-4)
+Upgrading libcurl4-openssl-dev from 8.21.0-2 to 8.23.0-2
+[md5sums] Passed for libcurl4-openssl-dev
+[runepkg] Installing libcurl4-openssl-dev (8.23.0-2)
+Upgrading laptop-detect from 0.16+nmu1 to 0.17
+[md5sums] Passed for laptop-detect
+[runepkg] Installing laptop-detect (0.17)
+Upgrading musl from 1.2.6-1 to 1.2.6-2
+[md5sums] Passed for musl
+[runepkg] Installing musl (1.2.6-2)
+Upgrading musl-dev from 1.2.6-1 to 1.2.6-2
+[md5sums] Passed for musl-dev
+[runepkg] Installing musl-dev (1.2.6-2)
+Upgrading musl-tools from 1.2.6-1 to 1.2.6-2
+[md5sums] Passed for musl-tools
+[runepkg] Installing musl-tools (1.2.6-2)
+Upgrading mawk from 1.3.4.20260302-1 to 1.3.4.20260302-2
+[md5sums] Passed for mawk
+[runepkg] Installing mawk (1.3.4.20260302-2)
+Upgrading logsave from 1.47.4-1+b1 to 1.47.4-1+b3
+[md5sums] Passed for logsave
+[runepkg] Installing logsave (1.47.4-1+b3)
+Upgrading login from 1:4.16.0-2+really2.42.2-4 to 1:4.16.0-2+really2.42.4-1
+[md5sums] Passed for login
+[runepkg] Installing login (1:4.16.0-2+really2.42.4-1)
+Upgrading libclone-perl from 0.50-1+b1 to 0.51-1
+[md5sums] Passed for libclone-perl
+[runepkg] Installing libclone-perl (0.51-1)
+Upgrading patch from 2.8-2 to 2.8.1-1
+[md5sums] Passed for patch
+[runepkg] Installing patch (2.8.1-1)
+Upgrading libversion-perl from 5.42.3-1 to 1:0.9934-1+b1
+[md5sums] Passed for libversion-perl
+[runepkg] Installing libversion-perl (1:0.9934-1+b1)
+Reinstalling libxau6 (1:1.0.11-1+b2) due to --force
+[md5sums] Passed for libxau6
+[runepkg] Installing libxau6 (1:1.0.11-1+b2)
+Reinstalling libxdmcp6 (1:1.1.5-2+b1) due to --force
+[md5sums] Passed for libxdmcp6
+[runepkg] Installing libxdmcp6 (1:1.1.5-2+b1)
+Reinstalling libxcb1 (1.17.0-2+b2) due to --force
+[md5sums] Passed for libxcb1
+[runepkg] Installing libxcb1 (1.17.0-2+b2)
+Upgrading libx11-data from 2:1.8.13-1 to 2:1.8.14-1
+[md5sums] Passed for libx11-data
+[runepkg] Installing libx11-data (2:1.8.14-1)
+Upgrading libx11-6 from 2:1.8.13-1 to 2:1.8.14-1
+[md5sums] Passed for libx11-6
+[runepkg] Installing libx11-6 (2:1.8.14-1)
+Upgrading vim-runtime from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim-runtime
+[runepkg] Installing vim-runtime (2:9.2.0858-1)
+Reinstalling libgpm2 (1.20.7-12+b2) due to --force
+[md5sums] Passed for libgpm2
+[runepkg] Installing libgpm2 (1.20.7-12+b2)
+Reinstalling libsodium26 (1.0.22-2) due to --force
+[md5sums] Passed for libsodium26
+[runepkg] Installing libsodium26 (1.0.22-2)
+Upgrading vim from 2:9.2.0524-1 to 2:9.2.0858-1
+[md5sums] Passed for vim
+[runepkg] Installing vim (2:9.2.0858-1)
+Reinstalling libmnl0 (1.0.5-3+b2) due to --force
+[md5sums] Passed for libmnl0
+[runepkg] Installing libmnl0 (1.0.5-3+b2)
+Upgrading libnftnl11 from 1.3.1-1+b1 to 1.3.2-1
+[md5sums] Passed for libnftnl11
+[runepkg] Installing libnftnl11 (1.3.2-1)
+Reinstalling libxtables12 (1.8.13-1) due to --force
+[md5sums] Passed for libxtables12
+[runepkg] Installing libxtables12 (1.8.13-1)
+Upgrading libnftables1 from 1.1.6-1+b1 to 1.1.7-3
+[md5sums] Passed for libnftables1
+[runepkg] Installing libnftables1 (1.1.7-3)
+Upgrading nftables from 1.1.6-1+b1 to 1.1.7-3
+[md5sums] Passed for nftables
+[runepkg] Installing nftables (1.1.7-3)
+Reinstalling apt-transport-https (3.3.6+kali1) due to --force
+[md5sums] Passed for apt-transport-https
+[runepkg] Installing apt-transport-https (3.3.6+kali1)
+Upgrading manpages-dev from 6.19-3 to 6.20-2
+[md5sums] Passed for manpages-dev
+[runepkg] Installing manpages-dev (6.20-2)
+Upgrading libattr1 from 1:2.5.2-4 to 1:2.6.0-1
+[md5sums] Passed for libattr1
+[runepkg] Installing libattr1 (1:2.6.0-1)
+Upgrading bsdutils from 1:2.42.2-4 to 1:2.42.4-1
+[md5sums] Passed for bsdutils
+[runepkg] Installing bsdutils (1:2.42.4-1)
+Upgrading mount from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for mount
+[runepkg] Installing mount (2.42.4-1)
+Upgrading libcap2-bin from 1:2.78-1 to 1:2.78-1+b2
+[md5sums] Passed for libcap2-bin
+[runepkg] Installing libcap2-bin (1:2.78-1+b2)
+Upgrading libelf1t64 from 0.195-1 to 0.196-1
+[md5sums] Passed for libelf1t64
+[runepkg] Installing libelf1t64 (0.196-1)
+Reinstalling libbpf1 (1:1.7.0-1) due to --force
+[md5sums] Passed for libbpf1
+[runepkg] Installing libbpf1 (1:1.7.0-1)
+Upgrading iproute2 from 7.0.0-1 to 7.3.0-1
+[md5sums] Passed for iproute2
+[runepkg] Installing iproute2 (7.3.0-1)
+Upgrading ifupdown from 0.8.45 to 0.8.45+nmu1+b1
+[md5sums] Passed for ifupdown
+[runepkg] Installing ifupdown (0.8.45+nmu1+b1)
+Upgrading cpp-16 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for cpp-16
+[runepkg] Installing cpp-16 (16.2.0-4)
+Upgrading cpp from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for cpp
+[runepkg] Installing cpp (4:16.2.0-1)
+Upgrading gcc-16 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for gcc-16
+[runepkg] Installing gcc-16 (16.2.0-4)
+Upgrading gcc from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for gcc
+[runepkg] Installing gcc (4:16.2.0-1)
+Reinstalling file (1:5.47-4) due to --force
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+Upgrading libtool from 2.6.2-2 to 2.6.2-3
+[md5sums] Passed for libtool
+[runepkg] Installing libtool (2.6.2-3)
+Upgrading libtool-bin from 2.6.2-2 to 2.6.2-3
+[md5sums] Passed for libtool-bin
+[runepkg] Installing libtool-bin (2.6.2-3)
+Upgrading libsasl2-modules from 2.1.28+dfsg1-11 to 2.1.28+dfsg1-12
+[md5sums] Passed for libsasl2-modules
+[runepkg] Installing libsasl2-modules (2.1.28+dfsg1-12)
+Upgrading kali-system-cli from 2026.2.12 to 2026.4.3
+[md5sums] Passed for kali-system-cli
+[runepkg] Installing kali-system-cli (2026.4.3)
+Upgrading dpkg from 1.23.7+kali1 to 1.23.11+kali1
+[md5sums] Passed for dpkg
+[runepkg] Installing dpkg (1.23.11+kali1)
+Upgrading publicsuffix from 20260428.1050-1 to 20261007.0728-1
+[md5sums] Passed for publicsuffix
+[runepkg] Installing publicsuffix (20261007.0728-1)
+Upgrading ca-certificates from 20260601 to 20260816+nmu1
+[md5sums] Passed for ca-certificates
+[runepkg] Installing ca-certificates (20260816+nmu1)
+Reinstalling libio-socket-ssl-perl (2.099-1) due to --force
+[md5sums] Passed for libio-socket-ssl-perl
+[runepkg] Installing libio-socket-ssl-perl (2.099-1)
+[override] Overriding conflict: Package 'libio-socket-ip-perl' breaks installed package 'perl-modules' (5.40.1-7)
+Upgrading libio-socket-ip-perl from 5.42.3-1 to 0.44-1
+[md5sums] Passed for libio-socket-ip-perl
+[runepkg] Installing libio-socket-ip-perl (0.44-1)
+Upgrading libencode-perl from 5.42.3-1 to 3.25-1
+[md5sums] Passed for libencode-perl
+[runepkg] Installing libencode-perl (3.25-1)
+Upgrading liburi-perl from 5.35-1 to 5.40-1
+[md5sums] Passed for liburi-perl
+[runepkg] Installing liburi-perl (5.40-1)
+Reinstalling libnet-http-perl (6.24-1) due to --force
+[md5sums] Passed for libnet-http-perl
+[runepkg] Installing libnet-http-perl (6.24-1)
+Reinstalling libencode-locale-perl (1.05-3) due to --force
+[md5sums] Passed for libencode-locale-perl
+[runepkg] Installing libencode-locale-perl (1.05-3)
+Reinstalling libtimedate-perl (2.3500-1) due to --force
+[md5sums] Passed for libtimedate-perl
+[runepkg] Installing libtimedate-perl (2.3500-1)
+Reinstalling libhttp-date-perl (6.08-1) due to --force
+[md5sums] Passed for libhttp-date-perl
+[runepkg] Installing libhttp-date-perl (6.08-1)
+Reinstalling libfile-listing-perl (6.16-1) due to --force
+[md5sums] Passed for libfile-listing-perl
+[runepkg] Installing libfile-listing-perl (6.16-1)
+Reinstalling libhtml-tagset-perl (3.24-1) due to --force
+[md5sums] Passed for libhtml-tagset-perl
+[runepkg] Installing libhtml-tagset-perl (3.24-1)
+Upgrading libhtml-parser-perl from 3.83-2+b1 to 3.86-1
+[md5sums] Passed for libhtml-parser-perl
+[runepkg] Installing libhtml-parser-perl (3.86-1)
+Reinstalling libhtml-tree-perl (5.07-3) due to --force
+[md5sums] Passed for libhtml-tree-perl
+[runepkg] Installing libhtml-tree-perl (5.07-3)
+Upgrading libcompress-raw-bzip2-perl from 5.42.3-1 to 2.225-1
+[md5sums] Passed for libcompress-raw-bzip2-perl
+[runepkg] Installing libcompress-raw-bzip2-perl (2.225-1)
+Upgrading libcompress-raw-zlib-perl from 5.42.3-1 to 2.225-1
+[md5sums] Passed for libcompress-raw-zlib-perl
+[runepkg] Installing libcompress-raw-zlib-perl (2.225-1)
+Reinstalling libio-html-perl (1.004-3) due to --force
+[md5sums] Passed for libio-html-perl
+[runepkg] Installing libio-html-perl (1.004-3)
+Upgrading liblwp-mediatypes-perl from 6.04-2 to 6.05-1
+[md5sums] Passed for liblwp-mediatypes-perl
+[runepkg] Installing liblwp-mediatypes-perl (6.05-1)
+Reinstalling libhttp-message-perl (7.04-1) due to --force
+[md5sums] Passed for libhttp-message-perl
+[runepkg] Installing libhttp-message-perl (7.04-1)
+Reinstalling libhttp-cookies-perl (6.12-2) due to --force
+[md5sums] Passed for libhttp-cookies-perl
+[runepkg] Installing libhttp-cookies-perl (6.12-2)
+Reinstalling libhttp-negotiate-perl (6.01-2) due to --force
+[md5sums] Passed for libhttp-negotiate-perl
+[runepkg] Installing libhttp-negotiate-perl (6.01-2)
+Reinstalling libtry-tiny-perl (0.32-1) due to --force
+[md5sums] Passed for libtry-tiny-perl
+[runepkg] Installing libtry-tiny-perl (0.32-1)
+Reinstalling libwww-robotrules-perl (6.03-1) due to --force
+[md5sums] Passed for libwww-robotrules-perl
+[runepkg] Installing libwww-robotrules-perl (6.03-1)
+Reinstalling libwww-perl (6.83-1) due to --force
+[md5sums] Passed for libwww-perl
+[runepkg] Installing libwww-perl (6.83-1)
+Upgrading liblwp-protocol-https-perl from 6.15-1 to 6.17-1
+[md5sums] Passed for liblwp-protocol-https-perl
+[runepkg] Installing liblwp-protocol-https-perl (6.17-1)
+Upgrading fdisk from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for fdisk
+[runepkg] Installing fdisk (2.42.4-1)
+Upgrading tar from 1.35+dfsg-5 to 1.35+dfsg-7
+[md5sums] Passed for tar
+[runepkg] Installing tar (1.35+dfsg-7)
+Upgrading libc-l10n from 2.43-4 to 2.43-7
+[md5sums] Passed for libc-l10n
+[runepkg] Installing libc-l10n (2.43-7)
+Upgrading kali-archive-keyring from 2025.2 to 2025.3
+[md5sums] Passed for kali-archive-keyring
+[runepkg] Installing kali-archive-keyring (2025.3)
+Upgrading systemd-sysv from 260.1-1 to 262.2-1
+[md5sums] Passed for systemd-sysv
+[runepkg] Installing systemd-sysv (262.2-1)
+Upgrading init from 1.69+kali1 to 1.69+nmu3+kali1
+[md5sums] Passed for init
+[runepkg] Installing init (1.69+nmu3+kali1)
+Upgrading gettext-base from 1.0-3 to 1.0-5
+[md5sums] Passed for gettext-base
+[runepkg] Installing gettext-base (1.0-5)
+Upgrading distro-info-data from 0.69 to 2026.10.12-1
+[md5sums] Passed for distro-info-data
+[runepkg] Installing distro-info-data (2026.10.12-1)
+Reinstalling bzip2 (1.0.8-6+b2) due to --force
+[md5sums] Passed for bzip2
+[runepkg] Installing bzip2 (1.0.8-6+b2)
+Upgrading tex-common from 6.20 to 6.21
+[md5sums] Passed for tex-common
+[runepkg] Installing tex-common (6.21)
+Upgrading python3-newt from 0.52.25-2 to 0.52.25-2+b2
+[md5sums] Passed for python3-newt
+[runepkg] Installing python3-newt (0.52.25-2+b2)
+Upgrading libss2 from 1.47.4-1+b1 to 1.47.4-1+b3
+[md5sums] Passed for libss2
+[runepkg] Installing libss2 (1.47.4-1+b3)
+Upgrading libpam-systemd from 260.1-1 to 262.2-1
+[md5sums] Passed for libpam-systemd
+[runepkg] Installing libpam-systemd (262.2-1)
+Upgrading libpopt0 from 1.19+dfsg-2+b2 to 1.19+dfsg-3
+[md5sums] Passed for libpopt0
+[runepkg] Installing libpopt0 (1.19+dfsg-3)
+Upgrading dash from 0.5.12-12 to 0.5.12-13
+[md5sums] Passed for dash
+[runepkg] Installing dash (0.5.12-13)
+Reinstalling libngtcp2-crypto-gnutls8 (1.24.0-1) due to --force
+[md5sums] Passed for libngtcp2-crypto-gnutls8
+[runepkg] Installing libngtcp2-crypto-gnutls8 (1.24.0-1)
+Upgrading libcurl4-gnutls from 8.21.0-2 to 8.23.0-2
+[md5sums] Passed for libcurl4-gnutls
+[runepkg] Installing libcurl4-gnutls (8.23.0-2)
+Upgrading apt-utils from 3.2.0+kali1 to 3.3.6+kali1
+[md5sums] Passed for apt-utils
+[runepkg] Installing apt-utils (3.3.6+kali1)
+Upgrading libmodule-corelist-perl from 5.42.3-1 to 5.20261022-1
+[md5sums] Passed for libmodule-corelist-perl
+[runepkg] Installing libmodule-corelist-perl (5.20261022-1)
+Upgrading lzma from 5.8.3-1 to 25.00+dfsg-1
+[md5sums] Passed for lzma
+[runepkg] Installing lzma (25.00+dfsg-1)
+Upgrading g++-16 from 16.2.0-1 to 16.2.0-4
+[md5sums] Passed for g++-16
+[runepkg] Installing g++-16 (16.2.0-4)
+Upgrading gettext from 1.0-3 to 1.0-5
+[md5sums] Passed for gettext
+[runepkg] Installing gettext (1.0-5)
+Upgrading libcurl3t64-gnutls from 8.21.0-2 to 8.23.0-2
+[md5sums] Passed for libcurl3t64-gnutls
+[runepkg] Installing libcurl3t64-gnutls (8.23.0-2)
+Upgrading base-files from 1:2026.2.0 to 1:2026.3.1
+[md5sums] Passed for base-files
+[runepkg] Installing base-files (1:2026.3.1)
+Upgrading xz-utils from 5.8.3-1 to 5.8.4-1
+[md5sums] Passed for xz-utils
+[runepkg] Installing xz-utils (5.8.4-1)
+Upgrading coreutils from 9.10-1 to 9.12-0.3
+[md5sums] Passed for coreutils
+[runepkg] Installing coreutils (9.12-0.3)
+Upgrading liberror-perl from 0.17030-1 to 0.17031-1
+[md5sums] Passed for liberror-perl
+[runepkg] Installing liberror-perl (0.17031-1)
+Upgrading bash from 5.3-3 to 5.3-4+b1
+[md5sums] Passed for bash
+[runepkg] Installing bash (5.3-4+b1)
+Reinstalling sysvinit-utils (3.18-1) due to --force
+[md5sums] Passed for sysvinit-utils
+[runepkg] Installing sysvinit-utils (3.18-1)
+Upgrading lsb-base from 3.18-1 to 11.6
+[md5sums] Passed for lsb-base
+[runepkg] Installing lsb-base (11.6)
+Upgrading findutils from 4.10.0-4 to 4.11.0-3
+[md5sums] Passed for findutils
+[runepkg] Installing findutils (4.11.0-3)
+Upgrading e2fsprogs from 1.47.4-1+b1 to 1.47.4-1+b3
+[md5sums] Passed for e2fsprogs
+[runepkg] Installing e2fsprogs (1.47.4-1+b3)
+Upgrading diffstat from 1.69-1 to 1.69-2
+[md5sums] Passed for diffstat
+[runepkg] Installing diffstat (1.69-2)
+Upgrading g++ from 4:16.1.0-3 to 4:16.2.0-1
+[md5sums] Passed for g++
+[runepkg] Installing g++ (4:16.2.0-1)
+Upgrading rsync from 3.5.0+ds1-2 to 3.5.2+ds1-2
+[md5sums] Passed for rsync
+[runepkg] Installing rsync (3.5.2+ds1-2)
+Upgrading util-linux from 2.42.2-4 to 2.42.4-1
+[md5sums] Passed for util-linux
+[runepkg] Installing util-linux (2.42.4-1)
+Upgrading locales-all from 2.43-4 to 2.43-7
+[md5sums] Passed for locales-all
+[runepkg] Installing locales-all (2.43-7)
+Reinstalling net-tools (2.10-2) due to --force
+[md5sums] Passed for net-tools
+[runepkg] Installing net-tools (2.10-2)
+Upgrading kali-linux-wsl from 2026.2.12 to 2026.4.3
+[md5sums] Passed for kali-linux-wsl
+[runepkg] Installing kali-linux-wsl (2026.4.3)
+Upgrading libdigest-sha-perl from 5.42.3-1 to 6.04-1+b4
+[md5sums] Passed for libdigest-sha-perl
+[runepkg] Installing libdigest-sha-perl (6.04-1+b4)
+Reinstalling ed (1.22.5-1) due to --force
+[md5sums] Passed for ed
+[runepkg] Installing ed (1.22.5-1)
+Upgrading quilt from 0.69-0.1 to 0.69-1
+[md5sums] Passed for quilt
+[runepkg] Installing quilt (0.69-1)
+Reinstalling python-apt-common (3.1.0) due to --force
+[md5sums] Passed for python-apt-common
+[runepkg] Installing python-apt-common (3.1.0)
+Upgrading python3-apt from 3.1.0 to 3.1.0+b2
+[md5sums] Passed for python3-apt
+[runepkg] Installing python3-apt (3.1.0+b2)
+Upgrading dbus-user-session from 1.16.2-5 to 1.16.4-1
+[md5sums] Passed for dbus-user-session
+[runepkg] Installing dbus-user-session (1.16.4-1)
+Upgrading whiptail from 0.52.25-2 to 0.52.25-2+b2
+[md5sums] Passed for whiptail
+[runepkg] Installing whiptail (0.52.25-2+b2)
+Upgrading plocate from 1.1.24-1 to 1.1.25-1
+[md5sums] Passed for plocate
+[runepkg] Installing plocate (1.1.25-1)
+Reinstalling libapt-pkg-perl (0.1.43+b1) due to --force
+[md5sums] Passed for libapt-pkg-perl
+[runepkg] Installing libapt-pkg-perl (0.1.43+b1)
+Reinstalling libregexp-assemble-perl (0.38-2) due to --force
+[md5sums] Passed for libregexp-assemble-perl
+[runepkg] Installing libregexp-assemble-perl (0.38-2)
+Upgrading apt-file from 3.3 to 3.4
+[md5sums] Passed for apt-file
+[runepkg] Installing apt-file (3.4)
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd version-check.sh
+        not a dynamic executable
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd --version
+ldd (Debian GLIBC 2.43-7) 2.43
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd --version
+ldd (Debian GLIBC 2.43-7) 2.43
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -r file
+Successfully removed packages:
+file
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# runepkg -i file
+[runepkg] Planning installation for 1 package(s)...
+[psychic matryoshka prophecy] Automatically injected absolute rescue tool 'binutils'.
+[psychic matryoshka prophecy] Automatically injected core runtime 'libc6'.
+  gcc-16-base libgcc-s1 libc6 libstdc++6 libc-gconv-modules-extra libmagic-mgc libmagic1t64 libsframe3 libzstd1 zlib1g
+  binutils-common libbinutils libgprofng0 libctf-nobfd0 libctf0 libjansson4 binutils-x86-64-linux-gnu binutils
+  libbz2-1.0 liblzma5 file
+
+21 packages (10.6 MB) will be installed. Continue? [y/N] y
+  -> gcc-16-base               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic1t64              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgcc-s1                 [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libsframe3                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libmagic-mgc              [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libstdc++6                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> zlib1g                    [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc-gconv-modules-extra  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libzstd1                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbinutils               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf-nobfd0             [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libctf0                   [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libjansson4               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> file                      [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-common           [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libgprofng0               [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libbz2-1.0                [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> binutils-x86-64-linux-gnu [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> liblzma5                  [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+  -> libc6                     [ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗ] 100.0%
+
+[success] Downloaded 21 packages to /srv/lib/runepkg_dir/download_dir
+Reinstalling gcc-16-base (16.2.0-4) due to --force
+[md5sums] Passed for gcc-16-base
+[runepkg] Installing gcc-16-base (16.2.0-4)
+Reinstalling libgcc-s1 (16.2.0-4) due to --force
+[md5sums] Passed for libgcc-s1
+[runepkg] Installing libgcc-s1 (16.2.0-4)
+Reinstalling libc6 (2.43-7) due to --force
+[md5sums] Passed for libc6
+[runepkg] Installing libc6 (2.43-7)
+Reinstalling libstdc++6 (16.2.0-4) due to --force
+[md5sums] Passed for libstdc++6
+[runepkg] Installing libstdc++6 (16.2.0-4)
+Reinstalling libc-gconv-modules-extra (2.43-7) due to --force
+[md5sums] Passed for libc-gconv-modules-extra
+[runepkg] Installing libc-gconv-modules-extra (2.43-7)
+Reinstalling libmagic-mgc (1:5.47-4) due to --force
+[md5sums] Passed for libmagic-mgc
+[runepkg] Installing libmagic-mgc (1:5.47-4)
+Reinstalling libmagic1t64 (1:5.47-4) due to --force
+[md5sums] Passed for libmagic1t64
+[runepkg] Installing libmagic1t64 (1:5.47-4)
+Reinstalling libsframe3 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libsframe3
+[runepkg] Installing libsframe3 (2.47.50.20261021-1)
+Reinstalling libzstd1 (1.5.7+dfsg-4) due to --force
+[md5sums] Passed for libzstd1
+[runepkg] Installing libzstd1 (1.5.7+dfsg-4)
+Reinstalling zlib1g (1:1.3.dfsg+really1.3.2-4) due to --force
+[md5sums] Passed for zlib1g
+[runepkg] Installing zlib1g (1:1.3.dfsg+really1.3.2-4)
+Reinstalling binutils-common (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils-common
+[runepkg] Installing binutils-common (2.47.50.20261021-1)
+Reinstalling libbinutils (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libbinutils
+[runepkg] Installing libbinutils (2.47.50.20261021-1)
+Reinstalling libgprofng0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libgprofng0
+[runepkg] Installing libgprofng0 (2.47.50.20261021-1)
+Reinstalling libctf-nobfd0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libctf-nobfd0
+[runepkg] Installing libctf-nobfd0 (2.47.50.20261021-1)
+Reinstalling libctf0 (2.47.50.20261021-1) due to --force
+[md5sums] Passed for libctf0
+[runepkg] Installing libctf0 (2.47.50.20261021-1)
+Reinstalling libjansson4 (2.15.1-1) due to --force
+[md5sums] Passed for libjansson4
+[runepkg] Installing libjansson4 (2.15.1-1)
+Reinstalling binutils-x86-64-linux-gnu (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils-x86-64-linux-gnu
+[runepkg] Installing binutils-x86-64-linux-gnu (2.47.50.20261021-1)
+Reinstalling binutils (2.47.50.20261021-1) due to --force
+[md5sums] Passed for binutils
+[runepkg] Installing binutils (2.47.50.20261021-1)
+Reinstalling libbz2-1.0 (1.0.8-6+b2) due to --force
+[md5sums] Passed for libbz2-1.0
+[runepkg] Installing libbz2-1.0 (1.0.8-6+b2)
+Reinstalling liblzma5 (5.8.4-1) due to --force
+[md5sums] Passed for liblzma5
+[runepkg] Installing liblzma5 (5.8.4-1)
+[md5sums] Passed for file
+[runepkg] Installing file (1:5.47-4)
+[ zypherus /home/jedi_michko/runepkg/runepkg ]# ldd --version
+bash: /usr/bin/ldd: /bin/bash: bad interpreter: No such file or directory
+[ zypherus /home/jedi_michko/runepkg/runepkg ]#

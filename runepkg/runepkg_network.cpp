@@ -1358,7 +1358,9 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
     if (runepkg_resolver_get_install_plan_multiple(pkg_names, count, &plan) == 0 && plan) {
         plans.push_back(plan);
         for (int j = 0; j < plan->node_count; j++) {
-            std::string pkg_name = plan->nodes[j].package_name;
+            std::string pkg_name_raw = plan->nodes[j].package_name;
+            size_t colon_pos = pkg_name_raw.find(':');
+            std::string pkg_name = (colon_pos != std::string::npos) ? pkg_name_raw.substr(0, colon_pos) : pkg_name_raw;
 
             std::string filename = plan->nodes[j].binary_filename ? plan->nodes[j].binary_filename : "";
             PkgMetadata meta;
@@ -1379,7 +1381,7 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
                     std::string url = get_package_url(pkg_name.c_str(), false, nullptr, nullptr);
 
                     if (!url.empty()) {
-                        tasks.push_back({url, dest_path, pkg_name, plan->nodes[j].download_size, false});
+                        tasks.push_back({url, dest_path, pkg_name_raw, plan->nodes[j].download_size, false});
                         total_size += plan->nodes[j].download_size;
                     }
                 }
@@ -1524,6 +1526,8 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
 
     extern bool g_batch_mode;
     g_batch_mode = true;
+    bool old_force = g_force_mode;
+    g_force_mode = true;
 
     if (g_batch_planned_packages) {
         runepkg_hash_clear_table(g_batch_planned_packages);
@@ -1540,25 +1544,15 @@ extern "C" int runepkg_repo_install_multiple(const char **pkg_names, int count) 
     }
 
     std::unordered_set<std::string> installed_in_this_pass;
-    for (auto p : plans) {
-        for (int i = 0; i < p->node_count; i++) {
-            std::string p_name = p->nodes[i].package_name;
-            if (installed_in_this_pass.count(p_name)) continue;
+    for (const auto& t : tasks) {
+        if (!t.success || t.dest_path.empty()) continue;
+        if (installed_in_this_pass.count(t.pkg_name)) continue;
 
-            std::string dest_path;
-            for (const auto& t : tasks) {
-                if (t.pkg_name == p_name && t.success) {
-                    dest_path = t.dest_path;
-                    break;
-                }
-            }
-            if (!dest_path.empty()) {
-                runepkg_install_batch_item(dest_path.c_str());
-                installed_in_this_pass.insert(p_name);
-            }
-        }
+        runepkg_install_batch_item(t.dest_path.c_str());
+        installed_in_this_pass.insert(t.pkg_name);
     }
 
+    g_force_mode = old_force;
     for (auto p : plans) runepkg_resolver_free_plan(p);
     g_batch_mode = false;
     return 0;

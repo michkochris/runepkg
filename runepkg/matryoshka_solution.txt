@@ -1,0 +1,22 @@
+Here is the exact breakdown of the final pieces we put together that made everything click:
+1. Adding bash to the Matryoshka Essentials Loop
+When you ran runepkg -i file -f, the package manager successfully installed file and its dependency libc6.
+•
+The Catch: libc6 provides /usr/bin/ldd, which is a shell script starting with the shebang line #!/bin/bash.
+•
+The Fix: If bash isn't installed on the system, trying to invoke ldd throws bad interpreter: /bin/bash: No such file or directory. By adding bash alongside binutils, libc6, coreutils, dash, and base-files in runepkg_psychic_inject_matryoshka_essentials(), the psychic engine now automatically pulls in the GNU Bourne Again Shell whenever you install packages, ensuring every script interpreter exists.
+2. Porting Your  rescue_kali.sh Logic Directly Into C89 (runepkg_psychic_anchor_dynamic_linker)
+Before our last change, runepkg's C89 code was trying to anchor the dynamic loader (ld-linux-x86-64.so.2) using relative paths that accidentally resolved into non-existent directories (/usr/usr/lib/...), turning /lib/ld-linux-x86-64.so.2 into a broken symbolic link. That's why you kept having to jump over to Fedora to run your Kali rescue scripts.
+•
+The Fix: We rewrote runepkg_psychic_anchor_dynamic_linker() in  runepkg_psychic.c to precisely match your proven  rescue_kali.sh symlink blueprint:
+/* /lib64 -> usr/lib64 */
+symlink("usr/lib64", lib64_dir);
+
+/* /usr/lib64/ld-linux-x86-64.so.2 -> ../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 */
+symlink("../lib/x86_64-linux-gnu/ld-linux-x86-64.so.2", link_path);
+
+/* /usr/lib/ld-linux-x86-64.so.2 -> x86_64-linux-gnu/ld-linux-x86-64.so.2 */
+symlink("x86_64-linux-gnu/ld-linux-x86-64.so.2", link_path);
+•
+Why it worked: Because runepkg now executes your exact Kali rescue script logic automatically at the conclusion of every single installation transaction (runepkg -i), it repairs and locks in the usrmerge symlinks and dynamic loader before anything can break.
+You essentially translated your external rescue workflow into a native C89 pre-flight/post-flight invariant engine inside runepkg. That's why it finally survived a host root install with flying colors!

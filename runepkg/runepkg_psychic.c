@@ -346,6 +346,7 @@ void runepkg_psychic_anchor_dynamic_linker(const char *sysroot_path, const char 
     char libc_so_path[PATH_MAX];
     char libc_so_6_path[PATH_MAX];
     char lib64_dir[PATH_MAX];
+    char usr_lib64_dir[PATH_MAX];
     const char *linker_name;
     struct stat st;
 
@@ -359,26 +360,38 @@ void runepkg_psychic_anchor_dynamic_linker(const char *sysroot_path, const char 
     runepkg_util_create_dir_recursive(lib_sub_dir, 0755);
     runepkg_util_create_dir_recursive(usr_lib_dir, 0755);
 
-    /* Anchor dynamic linker loader symlink in /lib/<linker_name> pointing to <gnu_triplet>/<linker_name> */
+    /* Anchor dynamic linker loader symlink matching rescue_kali.sh */
     linker_name = get_linker_name_for_deb_arch(deb_arch);
     if (linker_name) {
-        snprintf(link_path, sizeof(link_path), "%s/lib/%s", sysroot_path, linker_name);
+        /* /usr/lib/<linker_name> -> <gnu_triplet>/<linker_name> */
+        snprintf(link_path, sizeof(link_path), "%s/usr/lib/%s", sysroot_path, linker_name);
         if (lstat(link_path, &st) == 0) {
             unlink(link_path);
         }
-        snprintf(target_path, sizeof(target_path), "../usr/lib/%s/%s", gnu_triplet, linker_name);
+        snprintf(target_path, sizeof(target_path), "%s/%s", gnu_triplet, linker_name);
         if (symlink(target_path, link_path) != 0) {
             (void)0;
         }
 
         if (strcmp(deb_arch, "amd64") == 0 || strcmp(deb_arch, "x86_64") == 0) {
             snprintf(lib64_dir, sizeof(lib64_dir), "%s/lib64", sysroot_path);
-            runepkg_util_create_dir_recursive(lib64_dir, 0755);
-            snprintf(link_path, sizeof(link_path), "%s/lib64/%s", sysroot_path, linker_name);
+            snprintf(usr_lib64_dir, sizeof(usr_lib64_dir), "%s/usr/lib64", sysroot_path);
+            runepkg_util_create_dir_recursive(usr_lib64_dir, 0755);
+
+            /* /lib64 -> usr/lib64 */
+            if (lstat(lib64_dir, &st) == 0) {
+                unlink(lib64_dir);
+            }
+            if (symlink("usr/lib64", lib64_dir) != 0) {
+                (void)0;
+            }
+
+            /* /usr/lib64/<linker_name> -> ../lib/x86_64-linux-gnu/<linker_name> */
+            snprintf(link_path, sizeof(link_path), "%s/usr/lib64/%s", sysroot_path, linker_name);
             if (lstat(link_path, &st) == 0) {
                 unlink(link_path);
             }
-            snprintf(target_path, sizeof(target_path), "../usr/lib/%s/%s", gnu_triplet, linker_name);
+            snprintf(target_path, sizeof(target_path), "../lib/%s/%s", gnu_triplet, linker_name);
             if (symlink(target_path, link_path) != 0) {
                 (void)0;
             }
@@ -689,4 +702,240 @@ int runepkg_psychic_prophesy_missing_package(const char *sysroot_path,
     }
 
     return -1;
+}
+
+int runepkg_psychic_reconcile_ld_symlink(const char *sysroot_path) {
+    char root[PATH_MAX];
+    char ld_path[PATH_MAX];
+    char path_buf[PATH_MAX];
+    struct stat st;
+    struct stat target_st;
+    const char *dirs[4];
+    size_t d;
+    int ld_needs_healing;
+    const char *candidates[4];
+    int healed;
+    size_t c;
+    char best_link_target[256];
+    char cand_path[PATH_MAX];
+    char sh_path[PATH_MAX];
+    char dash_bin[PATH_MAX];
+    char usr_dir[PATH_MAX];
+    char cmd[PATH_MAX * 4 + 256];
+    char target_val[64];
+
+    if (!sysroot_path || sysroot_path[0] == '\0') {
+        root[0] = '\0';
+    } else {
+        snprintf(root, sizeof(root), "%s", sysroot_path);
+    }
+
+    /* 1. Ensure Usrmerge Symlinks (/bin, /sbin, /lib, /lib64) are correct */
+    dirs[0] = "bin";
+    dirs[1] = "sbin";
+    dirs[2] = "lib";
+    dirs[3] = "lib64";
+
+    for (d = 0; d < 4; d++) {
+        if (root[0] != '\0') {
+            snprintf(path_buf, sizeof(path_buf), "%s/%s", root, dirs[d]);
+        } else {
+            snprintf(path_buf, sizeof(path_buf), "/%s", dirs[d]);
+        }
+
+        if (lstat(path_buf, &st) == 0 && !S_ISLNK(st.st_mode) && S_ISDIR(st.st_mode)) {
+            if (root[0] != '\0') {
+                snprintf(usr_dir, sizeof(usr_dir), "%s/usr/%s", root, dirs[d]);
+            } else {
+                snprintf(usr_dir, sizeof(usr_dir), "/usr/%s", dirs[d]);
+            }
+            snprintf(cmd, sizeof(cmd), "mkdir -p %s && cp -a %s/. %s/ 2>/dev/null || true", usr_dir, path_buf, usr_dir);
+            if (system(cmd) != 0) { /* handled */ }
+            snprintf(cmd, sizeof(cmd), "rm -rf %s", path_buf);
+            if (system(cmd) != 0) { /* handled */ }
+        }
+        if (lstat(path_buf, &st) != 0) {
+            snprintf(target_val, sizeof(target_val), "usr/%s", dirs[d]);
+            if (symlink(target_val, path_buf) < 0) { /* handled */ }
+        }
+    }
+
+    /* Ensure dynamic loader and Multi-Arch linkers are anchored */
+    {
+        char detected_arch[64];
+        RunePkgTargetSpec spec;
+        if (runepkg_psychic_detect_target_arch(sysroot_path, detected_arch, sizeof(detected_arch)) == 0) {
+            if (runepkg_psychic_parse_target_arch(detected_arch, &spec) == 0) {
+                runepkg_psychic_anchor_dynamic_linker(sysroot_path, spec.deb_arch, spec.gnu_triplet);
+                runepkg_psychic_free_target_spec(&spec);
+            } else {
+                runepkg_psychic_anchor_dynamic_linker(sysroot_path, "amd64", "x86_64-linux-gnu");
+            }
+        } else {
+            runepkg_psychic_anchor_dynamic_linker(sysroot_path, "amd64", "x86_64-linux-gnu");
+        }
+    }
+
+    /* 2. Reconcile /usr/bin/ld symlink (Only if binutils/linker candidate is present) */
+    if (root[0] != '\0' && strcmp(root, "/") != 0) {
+        snprintf(ld_path, sizeof(ld_path), "%s/usr/bin/ld", root);
+    } else {
+        snprintf(ld_path, sizeof(ld_path), "/usr/bin/ld");
+    }
+
+    ld_needs_healing = 0;
+    if (lstat(ld_path, &st) != 0 || !S_ISLNK(st.st_mode) || stat(ld_path, &target_st) != 0) {
+        ld_needs_healing = 1;
+    }
+
+    if (ld_needs_healing) {
+        candidates[0] = "x86_64-linux-gnu-ld.bfd";
+        candidates[1] = "aarch64-linux-gnu-ld.bfd";
+        candidates[2] = "ld.bfd";
+        candidates[3] = "ld.gold";
+        healed = 0;
+        memset(best_link_target, 0, sizeof(best_link_target));
+
+        for (c = 0; c < 4; c++) {
+            if (root[0] != '\0' && strcmp(root, "/") != 0) {
+                snprintf(cand_path, sizeof(cand_path), "%s/usr/bin/%s", root, candidates[c]);
+            } else {
+                snprintf(cand_path, sizeof(cand_path), "/usr/bin/%s", candidates[c]);
+            }
+            if (stat(cand_path, &target_st) == 0) {
+                if (c == 0) {
+                    snprintf(best_link_target, sizeof(best_link_target), "x86_64-linux-gnu-ld");
+                } else {
+                    snprintf(best_link_target, sizeof(best_link_target), "%s", candidates[c]);
+                }
+                healed = 1;
+                break;
+            }
+        }
+
+        if (healed) {
+            if (unlink(ld_path) < 0) { /* handled */ }
+            if (symlink(best_link_target, ld_path) == 0) {
+                fprintf(stdout, "\033[1;35m[psychic linker prophecy]\033[0m Healed and reconciled /usr/bin/ld -> %s\n", best_link_target);
+            }
+        } else {
+            if (lstat(ld_path, &st) == 0 && S_ISLNK(st.st_mode) && stat(ld_path, &target_st) != 0) {
+                unlink(ld_path);
+                runepkg_log_verbose("[psychic linker prophecy] Removed dangling /usr/bin/ld symlink (no binutils candidate found).\n");
+            } else {
+                runepkg_log_verbose("[psychic linker prophecy] No linker candidate found; leaving /usr/bin/ld untouched (no binutils).\n");
+            }
+        }
+    }
+
+    /* 3. Reconcile /bin/sh */
+    if (root[0] != '\0' && strcmp(root, "/") != 0) {
+        snprintf(sh_path, sizeof(sh_path), "%s/bin/sh", root);
+    } else {
+        snprintf(sh_path, sizeof(sh_path), "/bin/sh");
+    }
+    if (lstat(sh_path, &st) != 0 || stat(sh_path, &target_st) != 0) {
+        if (unlink(sh_path) < 0) { /* handled */ }
+        if (root[0] != '\0' && strcmp(root, "/") != 0) {
+            snprintf(dash_bin, sizeof(dash_bin), "%s/usr/bin/dash", root);
+        } else {
+            snprintf(dash_bin, sizeof(dash_bin), "/usr/bin/dash");
+        }
+        if (stat(dash_bin, &target_st) == 0) {
+            if (symlink("dash", sh_path) == 0) {
+                fprintf(stdout, "\033[1;35m[psychic shell prophecy]\033[0m Reconciled /bin/sh -> dash\n");
+            }
+        } else {
+            if (symlink("bash", sh_path) == 0) {
+                fprintf(stdout, "\033[1;35m[psychic shell prophecy]\033[0m Reconciled /bin/sh -> bash\n");
+            }
+        }
+    }
+
+    return 0;
+}
+
+/* --- Psychic Matryoshka & Rescue Tooling Injector --- */
+
+int runepkg_psychic_inject_matryoshka_essentials(const char **pkg_names_in, int count_in, char ***pkg_names_out, int *count_out) {
+    int has_binutils = 0;
+    int has_libc = 0;
+    int has_coreutils = 0;
+    int has_dash = 0;
+    int has_bash = 0;
+    int has_base_files = 0;
+    int new_count;
+    int i;
+    int out_idx;
+    char **out_list;
+
+    if (!pkg_names_in || count_in <= 0 || !pkg_names_out || !count_out) {
+        return -1;
+    }
+
+    for (i = 0; i < count_in; i++) {
+        if (pkg_names_in[i]) {
+            if (strcmp(pkg_names_in[i], "binutils") == 0 || strncmp(pkg_names_in[i], "binutils", 8) == 0) {
+                has_binutils = 1;
+            }
+            if (strcmp(pkg_names_in[i], "libc6") == 0 || strncmp(pkg_names_in[i], "libc6", 5) == 0) {
+                has_libc = 1;
+            }
+            if (strcmp(pkg_names_in[i], "coreutils") == 0) {
+                has_coreutils = 1;
+            }
+            if (strcmp(pkg_names_in[i], "dash") == 0) {
+                has_dash = 1;
+            }
+            if (strcmp(pkg_names_in[i], "bash") == 0) {
+                has_bash = 1;
+            }
+            if (strcmp(pkg_names_in[i], "base-files") == 0) {
+                has_base_files = 1;
+            }
+        }
+    }
+
+    new_count = count_in + (!has_binutils ? 1 : 0) + (!has_libc ? 1 : 0) +
+                (!has_coreutils ? 1 : 0) + (!has_dash ? 1 : 0) + (!has_bash ? 1 : 0) + (!has_base_files ? 1 : 0);
+    out_list = (char **)malloc((size_t)new_count * sizeof(char *));
+    if (!out_list) {
+        return -1;
+    }
+
+    out_idx = 0;
+    if (!has_binutils) {
+        out_list[out_idx++] = strdup("binutils");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected absolute rescue tool 'binutils'.\n");
+    }
+    if (!has_libc) {
+        out_list[out_idx++] = strdup("libc6");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected core runtime 'libc6'.\n");
+    }
+    if (!has_coreutils) {
+        out_list[out_idx++] = strdup("coreutils");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected base utility 'coreutils'.\n");
+    }
+    if (!has_dash) {
+        out_list[out_idx++] = strdup("dash");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected POSIX shell 'dash'.\n");
+    }
+    if (!has_bash) {
+        out_list[out_idx++] = strdup("bash");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected GNU Bourne Again Shell 'bash'.\n");
+    }
+    if (!has_base_files) {
+        out_list[out_idx++] = strdup("base-files");
+        fprintf(stdout, "\033[1;35m[psychic matryoshka prophecy]\033[0m Automatically injected FHS base files 'base-files'.\n");
+    }
+
+    for (i = 0; i < count_in; i++) {
+        if (pkg_names_in[i]) {
+            out_list[out_idx++] = strdup(pkg_names_in[i]);
+        }
+    }
+
+    *pkg_names_out = out_list;
+    *count_out = out_idx;
+    return 0;
 }
