@@ -187,7 +187,7 @@ static int collect_pkg_args(int argc, char *argv[], int *idx, const char *out_pk
 }
 
 void usage(void) {
-    printf("runepkg (fast efficient old-school .deb package manager)\n\n");
+    printf("runepkg (absolute tooling/rescue package manager)\n\n");
     printf("Usage:\n");
     printf("  runepkg <COMMAND> [OPTIONS] [ARGUMENTS]\n\n");
 

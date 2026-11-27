@@ -1,124 +1,135 @@
 #!/usr/bin/env bash
-/******************************************************************************
-- Filename:    runepkg_same_test.sh
-- Author:      <michkochris@gmail.com>
-- Date:        2026-08-26
-- Description: Plain-text shell I/O verification suite for static linkage,
--              symlink jail containment, and 14 clean-room C89 utilities.
-- LICENSE:     GPLv3
--
-- GPLv3 is the platinum shield of open source software and freedom.
-- Turning code into a permanent public asset that protects builders and users
-- from patent warfare and locked-down hardware.
--
- ******************************************************************************/
+# ==============================================================================
+# - Filename:    runepkg_same_text.sh
+# - Author:      <michkochris@gmail.com>
+# - Date:        2026-08-26
+# - Description: Automated Multi-Tier Verification Suite for runepkg
+# - LICENSE:     GPLv3
+# ==============================================================================
 
 set -e
+export PATH=".:$PATH"
 export LC_ALL=C
 export TZ=UTC
 
-RESULT_FILE="runepkg_same_result.txt"
-TMP_DIR=$(mktemp -d /tmp/runepkg_test_XXXXXX)
+RUNEPKG_SAME_RESULT="runepkg_same_result.txt"
+CONFIG_FILE="/etc/runepkg/runepkgconfig"
 
-cleanup() {
-    rm -rf "$TMP_DIR"
+log_wait() {
+  echo ""
+  echo "--------------------------------------------------------------------------------"
+  echo "  ⚡ [EXECUTING] $1 . . . . . . (Please wait while processing)"
+  echo "--------------------------------------------------------------------------------"
+  echo ""
 }
-trap cleanup EXIT
 
-echo "================================================================================" > "$RESULT_FILE"
-echo "RUNEPKG: PLAIN-TEXT VERIFICATION SUITE & UTILITY CONTRACT LOG" >> "$RESULT_FILE"
-echo "Timestamp: $(date -u)" >> "$RESULT_FILE"
-echo "================================================================================" >> "$RESULT_FILE"
+echo "Active execution PATH: $PATH"
+log_wait "Building and installing runepkg binaries"
+rm -rf /srv/lib/runepkg_dir /mnt/runepkg
+clear && make clean && make uninstall
+make all && make install && make install-runas
 
-# ------------------------------------------------------------------------------
-# 1. ELF Header, Dynamic Linker & Static Build Verification
-# ------------------------------------------------------------------------------
-echo "" >> "$RESULT_FILE"
-echo "--- 1. ELF & STATIC LINKAGE AUDIT ---" >> "$RESULT_FILE"
+: > "$RUNEPKG_SAME_RESULT"
 
-if [ -f "./runepkg" ]; then
-    echo "[TEST 1.1] File Type & Static ELF Assertion" >> "$RESULT_FILE"
-    file ./runepkg >> "$RESULT_FILE" 2>&1 || true
+{
+  echo "================================================================================"
+  echo "RUNEPKG: MULTI-TIER EXECUTION VERIFICATION MATRIX LOG"
+  echo "Timestamp:   $(date -u)"
+  echo "Active PATH: $PATH"
+  echo "Config File: $CONFIG_FILE"
+  echo "================================================================================"
+  echo ""
 
-    echo "[TEST 1.2] ldd Dynamic Linker Check" >> "$RESULT_FILE"
-    ldd ./runepkg >> "$RESULT_FILE" 2>&1 || echo "ldd output: not a dynamic executable (Expected for static ELF)" >> "$RESULT_FILE"
+  # ----------------------------------------------------------------------------
+  # 0. ELF Header, Dynamic Linker & Static Build Audit
+  # ----------------------------------------------------------------------------
+  log_wait "0. ELF Header & Static Linkage Audit"
+  echo "=== ELF & LINKAGE AUDIT: RUNEPKG BINARY ==="
+  file ./runepkg 2>&1 || true
+  ldd ./runepkg 2>&1 || echo "ldd output: not a dynamic executable (Static ELF confirmed)"
+  readelf -h ./runepkg | grep -E "Type:|Machine:|Entry point" 2>&1 || true
+  readelf -l ./runepkg | grep -i "INTERP" 2>&1 || echo "No INTERP program header found (PASS)."
+  readelf -d ./runepkg 2>&1 || echo "No dynamic section found (PASS)."
+  echo ""
 
-    echo "[TEST 1.3] readelf Header & Dynamic Section Check" >> "$RESULT_FILE"
-    readelf -h ./runepkg | grep -E "Type:|Machine:|Entry point" >> "$RESULT_FILE" 2>&1 || true
-    readelf -l ./runepkg | grep -i "INTERP" >> "$RESULT_FILE" 2>&1 || echo "No INTERP program header found (PASS)." >> "$RESULT_FILE"
-    readelf -d ./runepkg >> "$RESULT_FILE" 2>&1 || echo "No dynamic section found in static binary (PASS)." >> "$RESULT_FILE"
-fi
+  # ----------------------------------------------------------------------------
+  # TIER 1: Alternate Install Location Mode
+  # ----------------------------------------------------------------------------
+  log_wait "TIER 1: Alternate Install Location Verification (/srv/lib/runepkg_dir/install_dir)"
+  sed -i 's|^install_dir=.*|install_dir=/srv/lib/runepkg_dir/install_dir|' "$CONFIG_FILE"
 
-# ------------------------------------------------------------------------------
-# 2. Symlink, Jail, and Path Tests (runepkg_psychic & readlink / ln / rm)
-# ------------------------------------------------------------------------------
-echo "" >> "$RESULT_FILE"
-echo "--- 2. SYMLINK, JAIL & PATH CONTAINMENT TESTS ---" >> "$RESULT_FILE"
+  echo "=== TIER 1: CONFIG ==="
+  runepkg --print-config
 
-STAGE_DIR="$TMP_DIR/stage"
-mkdir -p "$STAGE_DIR/real_dir"
-touch "$STAGE_DIR/real_dir/keep.txt"
-ln -s "real_dir" "$STAGE_DIR/link_dir"
+  echo "=== TIER 1: UPDATE ==="
+  runepkg update
 
-echo "[TEST 2.1] Broken & Looping Symlink Scan (find -xtype l)" >> "$RESULT_FILE"
-BROKEN_LINKS=$(find "$STAGE_DIR" -xtype l)
-if [ -z "$BROKEN_LINKS" ]; then
-    echo "Broken links count: 0 (PASS)" >> "$RESULT_FILE"
-else
-    echo "Broken links detected: $BROKEN_LINKS" >> "$RESULT_FILE"
-fi
+  echo "=== TIER 1: INSTALL FILE ==="
+  runepkg -i file
 
-echo "[TEST 2.2] Symlink Target Resolution (readlink & readlink -f)" >> "$RESULT_FILE"
-RAW_TARGET=$(readlink "$STAGE_DIR/link_dir")
-RESOLVED_TARGET=$(readlink -f "$STAGE_DIR/link_dir")
-echo "Raw target: $RAW_TARGET" >> "$RESULT_FILE"
-echo "Resolved target: $RESOLVED_TARGET" >> "$RESULT_FILE"
+  echo "=== TIER 1: LD SYMLINK ==="
+  file /srv/lib/runepkg_dir/install_dir/lib/ld-linux-x86-64.so.2 2>&1 || true
+  ls -la /srv/lib/runepkg_dir/install_dir/lib/ld-linux-x86-64.so.2 2>&1 || true
+  echo ""
 
-echo "[TEST 2.3] Non-Symlink-Following Removal Safety (runepkg_voidmatter)" >> "$RESULT_FILE"
-# Removing the link must NOT purge the underlying real_dir/keep.txt
-rm "$STAGE_DIR/link_dir"
-if [ -f "$STAGE_DIR/real_dir/keep.txt" ]; then
-    echo "Target file real_dir/keep.txt preserved after symlink removal (PASS)" >> "$RESULT_FILE"
-else
-    echo "ERROR: Target file real_dir/keep.txt was erroneously deleted!" >> "$RESULT_FILE"
-fi
+  # ----------------------------------------------------------------------------
+  # TIER 2: Alternate Target Architecture Mode (ARM64)
+  # ----------------------------------------------------------------------------
+  log_wait "TIER 2: Alternate Target Architecture Verification (arm64:aarch64-linux-gnu)"
+  echo "=== TIER 2: TARGET UPDATE (ARM64) ==="
+  runepkg --target=arm64:aarch64-linux-gnu update
 
-echo "[TEST 2.4] Symlink Loop Detection" >> "$RESULT_FILE"
-mkdir -p "$TMP_DIR/loop_test"
-ln -s "loop_b" "$TMP_DIR/loop_test/loop_a"
-ln -s "loop_a" "$TMP_DIR/loop_test/loop_b"
-LOOP_SCAN=$(find "$TMP_DIR/loop_test" -xtype l)
-if [ -n "$LOOP_SCAN" ]; then
-    echo "Symlink loop successfully detected (PASS)" >> "$RESULT_FILE"
-fi
+  echo "=== TIER 2: TARGET INSTALL FILE (ARM64) ==="
+  runepkg --target=arm64:aarch64-linux-gnu -i file
 
-# ------------------------------------------------------------------------------
-# 3. Stripped Environment (PATH=/nonexistent) & 14 Utility Contract Tests
-# ------------------------------------------------------------------------------
-echo "" >> "$RESULT_FILE"
-echo "--- 3. STRIPPED ENVIRONMENT (PATH=/nonexistent) UTILITY CONTRACT TESTS ---" >> "$RESULT_FILE"
+  echo "=== TIER 2: TARGET LD SYMLINK (ARM64) ==="
+  file /mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 2>&1 || true
+  ls -la /mnt/runepkg/aarch64-linux-gnu/lib/ld-linux-aarch64.so.1 2>&1 || true
+  echo ""
 
-TEST_WORK="$TMP_DIR/work"
-mkdir -p "$TEST_WORK"
+  # ----------------------------------------------------------------------------
+  # TIER 3: Live Host Root Rescue Mode
+  # ----------------------------------------------------------------------------
+  log_wait "TIER 3: Live Host Root Rescue Mode Verification (install_dir=/)"
+  sed -i 's|^install_dir=.*|install_dir=/|' "$CONFIG_FILE"
 
-echo "[TEST 3.1] PATH=/nonexistent Execution Verification" >> "$RESULT_FILE"
-if [ -f "./runepkg" ]; then
-    env -i PATH=/nonexistent ./runepkg --version >> "$RESULT_FILE" 2>&1 || true
-fi
+  echo "=== TIER 3: HOST ROOT CONFIG ==="
+  runepkg --print-config
 
-echo "[TEST 3.2] Metadata & Permission Restoration Assertion (chmod / chown / touch)" >> "$RESULT_FILE"
-TEST_FILE="$TEST_WORK/sample.txt"
-echo "runepkg static test payload" > "$TEST_FILE"
-chmod 755 "$TEST_FILE"
-touch -t 202608260000 "$TEST_FILE" || touch "$TEST_FILE"
-stat -c 'Mode: %a Owner: %u:%g Name: %n' "$TEST_FILE" >> "$RESULT_FILE" 2>&1
+  echo "=== TIER 3: HOST ROOT UPDATE ==="
+  runepkg update
 
-echo "[TEST 3.3] Checksum & Hash Assertion (md5sum & sha256sum)" >> "$RESULT_FILE"
-SHA_VAL=$(sha256sum "$TEST_FILE" | awk '{print $1}')
-echo "SHA256: $SHA_VAL" >> "$RESULT_FILE"
+  echo "=== TIER 3: HOST ROOT INSTALL FILE ==="
+  runepkg -i file
 
-echo "================================================================================" >> "$RESULT_FILE"
-echo "VERIFICATION COMPLETE: ALL CHECKS LOGGED TO $RESULT_FILE" >> "$RESULT_FILE"
-echo "================================================================================" >> "$RESULT_FILE"
+  echo "=== TIER 3: HOST ROOT LD SYMLINK ==="
+  file /lib/ld-linux-x86-64.so.2 2>&1 || true
+  ls -la /lib/ld-linux-x86-64.so.2 2>&1 || true
 
-echo "Test suite executed successfully. Summary logged to $RESULT_FILE."
+  echo "=== TIER 3: LDD /usr/bin/file ==="
+  ldd /usr/bin/file 2>&1 || true
+  echo ""
+
+  log_wait "TIER 3: Host System Integrity Audit (bash, ls, grep, openssl)"
+  echo "=== TIER 3: HOST SYSTEM INTEGRITY AUDIT ==="
+  echo "--- Testing Core Shell (bash) ---"
+  bash --version | head -n 1 2>&1 || true
+  ldd /bin/bash 2>&1 || true
+
+  echo "--- Testing Core Utility (ls) ---"
+  ls -la /usr/bin/ls 2>&1 || true
+  ldd /usr/bin/ls 2>&1 || true
+
+  echo "--- Testing Text Utility (grep) ---"
+  grep --version | head -n 1 2>&1 || true
+
+  echo "--- Testing System Crypto / SSL Libraries (openssl) ---"
+  openssl version 2>&1 || echo "openssl utility not present"
+  echo ""
+
+  echo "================================================================================"
+  echo "VERIFICATION COMPLETE: ALL CHECKS LOGGED TO $RUNEPKG_SAME_RESULT"
+  echo "================================================================================"
+} 2>&1 | tee "$RUNEPKG_SAME_RESULT"
+
+echo "Verification suite executed successfully. Output logged to $RUNEPKG_SAME_RESULT."

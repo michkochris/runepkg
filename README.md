@@ -11,7 +11,7 @@
 [![FFI: C++](https://img.shields.io/badge/FFI-C%2B%2B-blue.svg)](https://isocpp.org/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**runepkg** is a **true absolute tooling rescue package manager** engineered from the ground up as an uncompromising rescue model. Unlike traditional package managers that depend on a healthy, cooperative host environment to function, **runepkg** operates under a single unyielding principle: **tooling survival comes first**. It is designed to remain unshakeable, self-contained, and fully operational even if the surrounding host system is accidentally or intentionally broken. Whether bootstrapping bare-metal targets, anchoring dynamic loaders, or rescuing a collapsed OS without requiring bulk system upgrades, **runepkg** ensures its own tools and deployed payloads work unconditionally—giving you an absolute foundation to recover, rebuild, and deploy software across the Debian ecosystem.
+**runepkg** is a **absolute tooling/rescue package manager**
 
 🛡️ *GPLv3 is the platinum shield of open source software and freedom—turning code into a permanent public asset that protects builders and users from patent warfare and locked-down hardware.*
 
