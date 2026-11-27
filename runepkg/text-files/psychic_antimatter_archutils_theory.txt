@@ -1,0 +1,119 @@
+================================================================================
+RUNEPKG: THEORETICAL FOUNDATIONS OF PSYCHIC, ANTIMATTER & ARCH-UTILS
+================================================================================
+Title      : Base Theory & Architecture: Psychic, Antimatter & Zero-Day arch-utils
+Author     : Jedi Michko & AI Assistant (runepkg Core Development Team)
+License    : GNU General Public License v3.0 (GPLv3)
+Language   : Clean-Room ISO C89 / C90 (musl libc static ELF)
+Scope      : System-Failure Resilience, Multi-Arch Invariants, Path Decontamination,
+             and Zero-Dependency Utility Execution
+================================================================================
+
+1. EXECUTIVE VISION & THE UNIFIED TRIAD
+--------------------------------------------------------------------------------
+runepkg bridges the gap between low-level Linux From Scratch (LFS/CLFS) system
+bootstrap mechanics and cooperative Debian package management (.deb). The
+architecture rests upon three synergistic pillars:
+
+  ┌───────────────────────────┐      ┌───────────────────────────┐
+  │     runepkg_psychic.c     │      │   runepkg_antimatter.c    │
+  │ (Symlink & Link Anchor)   │      │ (Decon & Boundary Guard)  │
+  └─────────────┬─────────────┘      └─────────────┬─────────────┘
+                │                                  │
+                └────────────────┬─────────────────┘
+                                 │
+                                 ▼
+               ┌──────────────────────────────────┐
+               │            arch-utils            │
+               │ (Clean-Room C89 Utility Suite)   │
+               └──────────────────────────────────┘
+
+Together, this triad solves the fundamental fragility of Linux system rescue:
+ensuring that system tools, archive unpackers, linkers, and filesystem mutation
+primitives operate with absolute, deterministic certainty under `PATH=/nonexistent`
+or inside broken recovery environments.
+
+
+2. PILLAR I: THE PSYCHIC PRE-FLIGHT & LINK RECONCILIATION ENGINE (runepkg_psychic)
+--------------------------------------------------------------------------------
+Traditional package managers treat every host system as an unknown black box,
+relying on reactive error handling and trial-and-error resolution. Because runepkg
+is engineered for the Debian ecosystem, it leverages the deterministic invariants
+of Debian's FHS hierarchy, Multi-Arch directory standards (/lib/<triplet>), and
+dynamic loader conventions (ld-linux-*).
+
+Key Psychic Mechanics:
+1) Invariant Prophecy & Dynamic Linker Anchoring:
+   - Inspects and pre-emptively anchors dynamic linkers (ld-linux-x86-64.so.2,
+     ld-linux-aarch64.so.1) and usrmerge symlinks (/lib -> usr/lib) before
+     extraction or binary execution occurs.
+2) Matryoshka Essential Package Injection:
+   - Automatically injects minimal essential rescue/toolchain anchors (binutils,
+     libc6, bash, dash) into installation graphs during minimal package operations
+     (e.g. runepkg -i file), guaranteeing /usr/bin/ld and /bin/sh never dangle.
+3) Symlink Sanity & Loop Detection:
+   - Detects mutual symlink loops (a -> b, b -> a) and repairs broken loader
+     chains without hanging, crashing, or stack overflowing.
+
+
+3. PILLAR II: THE ANTIMATTER DECONTAM DECON CHAMBER & BOUNDARY GUARD (runepkg_antimatter)
+--------------------------------------------------------------------------------
+Boundary pollution between host commands (runepkg -i, runepkg upgrade) and cross-target
+executions (--target=arm64:aarch64-linux-gnu) causes a catastrophic "butterfly effect"
+when cross-arch environment variables (DEB_HOST_ARCH) or target profiles spill into
+host system directories.
+
+Key Antimatter Mechanics:
+1) The Decontamination Chamber ("Decon Plunger"):
+   - runepkg_antimatter_purge() & runepkg_antimatter_plunger() automatically scrub,
+     free, and NULL all target profiles, sysroot paths, and multi-arch environment
+     variables before host commands run.
+2) Pre-Flight In-Memory ELF Payload Inspection:
+   - runepkg_antimatter_validate_payload() inspects ELF header magic, EI_CLASS,
+     EI_DATA, and e_machine in memory before extraction. Even Architecture: all
+     packages are scanned to intercept mislabeled foreign binaries.
+3) Strict Sysroot Boundary Assertion:
+   - runepkg_antimatter_assert_boundary() canonicalizes parent paths and validates
+     symlink targets relative to allowed sysroot boundaries, preventing path
+     traversal escapes (..).
+
+
+4. PILLAR III: THE ZERO-DAY RESCUE UTILITY SUITE (arch-utils)
+--------------------------------------------------------------------------------
+arch-utils is the ultimate clean-room ISO C89 utility suite built on top of the
+Psychic and Antimatter foundations. By embodying Psychic link-sanity awareness
+and Antimatter boundary guards inside a 100% self-contained static ELF binary
+(~536 KB, musl-gcc -static), arch-utils exposes 14 classic Unix utilities:
+
+  ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch, md5sum/sha256sum, readlink
+
+Why It Lays the Groundwork for Zero-Day Rescue Capabilities:
+1) Indestructible PATH=/nonexistent Execution:
+   - Operates unconditionally when host /bin or /usr/bin binaries are missing,
+     half-installed, or linked against broken shared libraries.
+2) Four Functional Pillars:
+   - Archive & Stream Unpacking (ar, tar, gzip, xz, zstd)
+   - Directory, File, & Link Control (mkdir, rm, cp, ln, readlink)
+   - Permission, Ownership, & Timestamp Restoration (chmod, chown, touch)
+   - Checksum & Integrity Verification (md5sum, sha256sum)
+3) Non-Symlink-Following Removal Safety (runepkg_voidmatter):
+   - Purging a symlink link_dir -> real_dir removes only the symlink node, leaving
+     real_dir and its contents completely untouched.
+4) Deterministic Plain-Text Shell Verification:
+   - Generates predictable, machine-independent output under LC_ALL=C and TZ=UTC
+     for plain-text result log comparisons (runepkg_same_result?.txt).
+
+
+5. UNIFIED ARCHITECTURAL SUMMARY
+--------------------------------------------------------------------------------
+When a Linux system is healthy, traditional package tools work normally. But when
+libc or binutils breaks mid-upgrade, a dynamic linker symlink points into thin air,
+or a foreign architecture binary spills onto host /, traditional package managers
+collapse.
+
+The triad of runepkg_psychic (linker & symlink prophecy), runepkg_antimatter
+(decontamination & boundary guard), and arch-utils (clean-room static C89 utilities)
+transforms runepkg from a standard package manager into a true zero-day rescue
+system—guaranteeing 100% operational survival when the host environment is
+completely destroyed.
+================================================================================

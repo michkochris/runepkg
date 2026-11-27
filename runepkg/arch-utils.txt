@@ -1,0 +1,124 @@
+================================================================================
+arch-utils — Clean-Room ISO C89 Archive, Filesystem & Integrity Utilities
+================================================================================
+License : GNU General Public License v3.0 (GPLv3)
+Language: Strict ISO C89 / C90 (musl-ready, static ELF capable)
+Scope   : ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch,
+          md5sum/sha256sum, readlink
+================================================================================
+
+OVERVIEW & DETAILED DESCRIPTION
+--------------------------------------------------------------------------------
+arch-utils is a compact, clean-room ISO C89 command-line utility suite built
+for archive inspection and unpacking, stream decompression, filesystem staging,
+link/metadata control, and integrity verification. Compiled statically as a single
+~536 KB ELF binary (`musl-gcc -static`) under GPLv3, it provides a 100% self-contained
+replacement for 14 fundamental Unix utilities with zero reliance on host shellouts or
+fragile runtime toolchains. It embeds `runepkg_psychic` symlink pre-flight checks and
+`runepkg_antimatter` path containment guards to ensure safe, deterministic rescue
+execution across native and cross-target sysroots.
+
+
+WHO IT IS FOR (TARGET AUDIENCE)
+--------------------------------------------------------------------------------
+1. System Rescue & Recovery Operators
+   - Administrators working inside an initramfs, recovery shell, live ISO, or
+     broken chroot after a failed upgrade, botched libc/binutils update, or
+     damaged PATH.
+
+2. Cross-Architecture & Embedded / CLFS Builders
+   - Developers assembling or inspecting root filesystems, sysroots, and
+     target images across architectures (such as x86_64, arm64, riscv64) or
+     custom Linux From Scratch / cross-LFS environments without dragging in a
+     full distro userland.
+
+3. Low-Level Tooling & Package Engineers
+   - Maintainers building or debugging package managers, archive pipelines,
+     custom containers, or minimal build sandboxes who need straightforward
+     exit codes, controlled I/O, and repeatable plain-text shell test output.
+
+4. Security & Integrity Auditors
+   - Engineers checking archive layouts, verifying MD5/SHA-256 digests, or
+     inspecting symlink targets and path boundaries before unpacking or
+     deploying payloads.
+
+
+THE FOUR FUNCTIONAL PILLARS
+--------------------------------------------------------------------------------
+1. Archive & Stream Unpacking (ar, tar, gzip, xz, zstd):
+   - Inspecting or unpacking .deb containers (ar), tarballs (tar), and compressed
+     streams without calling external host tools.
+
+2. Directory, File, & Link Control (mkdir, rm, cp, ln, readlink):
+   - Building target trees, copying payload files, creating hard/symbolic links,
+     and resolving link chains or jail boundaries via runepkg_psychic awareness.
+
+3. Permission, Ownership, & Timestamp Restoration (chmod, chown, touch):
+   - Restoring exact POSIX modes, numeric UID/GID ownership, and microsecond
+     timestamps on extracted or staged files.
+
+4. Checksum & Integrity Verification (md5sum, sha256sum):
+   - Calculating and checking file or payload digests (MD5, SHA-256, FNV-1a)
+     before trusting or deploying archives.
+
+
+USAGE EXAMPLES & COMMAND COMMAND-LINE WORKFLOWS
+--------------------------------------------------------------------------------
+1. Multi-Call Applet Invocation:
+   # Extract .deb archive members directly:
+   arch-utils ar x package.deb
+
+   # Unpack compressed tar stream to target root:
+   arch-utils tar -xf data.tar.xz -C /target/sysroot
+
+   # Decompress LZMA2 stream to stdout and pipe to tar:
+   arch-utils xz -dc payload.tar.xz | arch-utils tar -xf -
+
+2. Standalone Rescue Execution under Stripped PATH (PATH=/nonexistent):
+   # Create nested target directory structure:
+   env -i PATH=/nonexistent arch-utils mkdir -p /target/sysroot/usr/bin
+
+   # Copy payload file and establish relative symlinks safely:
+   env -i PATH=/nonexistent arch-utils cp -a /stage/bin/app /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils ln -s ../usr/bin/app /target/sysroot/bin/app
+
+   # Inspect and canonicalize symlink targets:
+   env -i PATH=/nonexistent arch-utils readlink -f /target/sysroot/bin/app
+
+   # Restore permissions, ownership, and timestamps:
+   env -i PATH=/nonexistent arch-utils chmod 755 /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils chown 0:0 /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils touch -t 202608260000 /target/sysroot/usr/bin/app
+
+   # Calculate payload checksums:
+   env -i PATH=/nonexistent arch-utils sha256sum /target/sysroot/usr/bin/app
+
+3. Safe Non-Symlink Purging (runepkg_voidmatter safety):
+   # Safely remove symlinks without following into target directories:
+   env -i PATH=/nonexistent arch-utils rm -rf /target/sysroot/bin/app
+
+
+WHY IT IS USEFUL IN PRACTICE & BOTTOM LINE
+--------------------------------------------------------------------------------
+- Works When Host Tools Fail: A static musl build remains usable even when
+  normal binaries are missing, corrupted, or run under a restricted or
+  stripped PATH (such as PATH=/nonexistent).
+- One Consistent Toolset for Archives and Trees: Combines container and stream
+  handling (ar, tar, gzip, xz, zstd) with directory, file, link, permission,
+  ownership, timestamp, and checksum commands (mkdir, rm, cp, ln, chmod,
+  chown, touch, md5sum/sha256sum, readlink) in a single clean-room C89 suite.
+- Predictable Shell Automation: Produces plain-text outputs and clear status
+  codes suited to simple shell scripts, deterministic test logs, and manual
+  line-by-line inspection without bloated wrappers or runtime surprises.
+- Clean GPLv3 Foundation: Keeps licensing clear and self-contained for embedded
+  appliances, custom builds, and open rescue media.
+
+THE BOTTOM LINE
+--------------------------------------------------------------------------------
+arch-utils is the ultimate clean-room ISO C89 static utility suite for Linux system
+resilience. When libc or binutils breaks mid-upgrade, a dynamic linker symlink points into
+thin air, or you are staring at a half-built rootfs with almost nothing working,
+arch-utils provides an indestructible, ~536 KB self-contained toolset that works
+unconditionally under `PATH=/nonexistent`—turning potential system destruction into a
+fast, 5-minute recovery.
+================================================================================

@@ -218,11 +218,14 @@ To finish off the architecture cleanly without bloating runepkg's rescue core,
 the 14 classic utilities are modeled as a separate companion repository named
 `arch-utils` under GPLv3 in ISO C89 (`musl-gcc -static`).
 
-`arch-utils` entails a clean-room ISO C89 utility suite—built with musl libc
-and licensed under GPLv3—that gives developers, users, and sysadmins direct,
-low-level control over archives, compression streams, filesystem trees,
-symlinks/metadata, and integrity hashes without relying on external host binaries
-or dynamic libraries.
+Detailed Description:
+`arch-utils` entails a clean-room ISO C89 command-line utility suite built
+statically with `musl-gcc -static` under GPLv3. It gives developers, users,
+and sysadmins direct, low-level control over archives, compression streams,
+filesystem trees, symlinks/metadata, and integrity hashes without relying on
+external host binaries or dynamic libraries. It embeds `runepkg_psychic`
+link-sanity pre-flight checks and `runepkg_antimatter` path containment guards
+to ensure safe, deterministic rescue execution across native and cross-target sysroots.
 
 The Four Functional Pillars of `arch-utils`:
 1) Archive & Stream Unpacking (ar, tar, gzip, xz, zstd):
@@ -255,13 +258,46 @@ What a User / Sysadmin Uses `arch-utils` For:
    - Providing lightweight, self-contained utilities that operate without pulling in
      large userland packages, toolchain dependencies, or dynamic loader chains.
 
-Why a Static Clean-Room Suite Matters:
-When a Linux system is healthy, nobody thinks about tar, ar, ln, or chmod—until libc
-or binutils breaks mid-upgrade, a dynamic linker symlink points into thin air, or you
-are staring at a half-built rootfs with almost nothing working. Having a small,
-static, clean-room C89 utility suite (`musl-gcc -static`) that works unconditionally
-when the host environment is corrupted is the difference between a fast 5-minute
-recovery and reinstalling from scratch.
+Command-Line Usage Examples:
+1) Multi-Call Applet Invocation:
+   # Extract .deb archive members directly:
+   arch-utils ar x package.deb
+
+   # Unpack compressed tar stream to target root:
+   arch-utils tar -xf data.tar.xz -C /target/sysroot
+
+   # Decompress LZMA2 stream to stdout and pipe to tar:
+   arch-utils xz -dc payload.tar.xz | arch-utils tar -xf -
+
+2) Standalone Rescue Execution under Stripped PATH (PATH=/nonexistent):
+   # Create nested target directory structure:
+   env -i PATH=/nonexistent arch-utils mkdir -p /target/sysroot/usr/bin
+
+   # Copy payload file and establish relative symlinks safely:
+   env -i PATH=/nonexistent arch-utils cp -a /stage/bin/app /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils ln -s ../usr/bin/app /target/sysroot/bin/app
+
+   # Inspect and canonicalize symlink targets:
+   env -i PATH=/nonexistent arch-utils readlink -f /target/sysroot/bin/app
+
+   # Restore permissions, ownership, and timestamps:
+   env -i PATH=/nonexistent arch-utils chmod 755 /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils chown 0:0 /target/sysroot/usr/bin/app
+   env -i PATH=/nonexistent arch-utils touch -t 202608260000 /target/sysroot/usr/bin/app
+
+   # Calculate payload checksums:
+   env -i PATH=/nonexistent arch-utils sha256sum /target/sysroot/usr/bin/app
+
+3) Safe Non-Symlink Purging (runepkg_voidmatter safety):
+   # Safely remove symlinks without following into target directories:
+   env -i PATH=/nonexistent arch-utils rm -rf /target/sysroot/bin/app
+
+Bottom Line Info:
+- Binary Footprint: ~536 KB zero-dependency static ELF (`musl-gcc -static`).
+- License: GNU General Public License v3.0 (GPLv3) — Clean-Room C89.
+- Core Advantage: Guarantees 100% operational survival on broken systems (`PATH=/nonexistent`),
+  providing an indestructible, self-contained toolset that turns potential system destruction
+  into a fast, 5-minute recovery.
 
 
 5. EXPLICIT REPLACED UTILITIES MATRIX & SPECIFICATION
@@ -440,37 +476,62 @@ syscalls leak across files. We enforce six strict structural boundaries:
      not_full_static_plan.txt, and not_some_ordinary_plan.txt.
 
 2. Canonical References:
-   - DESIGN.md          : Architectural deep-dive, binary data structures, psychic & antimatter layers.
-   - HOLY_GRAIL.md      : Guide for 100% self-contained static musl builds.
-   - COPILOT.md         : Security audit and path traversal jail verification.
-   - RUNAS.md           : Companion Debian source package forge manual.
-   - arch-utils.txt     : Complete overview, target audience, and usage spec for arch-utils.
+   - DESIGN.md                             : Architectural deep-dive, binary data structures, psychic & antimatter layers.
+   - HOLY_GRAIL.md                         : Guide for 100% self-contained static musl builds.
+   - COPILOT.md                            : Security audit and path traversal jail verification.
+   - RUNAS.md                              : Companion Debian source package forge manual.
+   - arch-utils.txt                        : Complete overview, target audience, and usage spec for arch-utils.
+   - psychic_antimatter_archutils_theory.txt: Base theory synthesizing psychic pre-flight, antimatter decon, and zero-day arch-utils.
 
 
 8. VERIFICATION PLAN & ACCEPTANCE CRITERIA
 --------------------------------------------------------------------------------
-Automated Verification:
-1. Header Block Audit:
-   - Scan all .c, .h, .cpp, .hpp files across runepkg and arch-utils to verify that
-     lines 1-12 strictly match comment-header-master.txt with GPLv3 license terms
-     and the platinum shield text.
+1. ELF Header, Dynamic Linker, & Static Build Verification:
+   - File & Architecture Assertion:
+     `file ./runepkg ./arch-utils`
+     Confirms statically linked, ELF 64-bit executable status for the target architecture.
+   - Dynamic Linker Dependency Audit:
+     `ldd ./runepkg ./arch-utils`
+     Confirms "not a dynamic executable" (with non-zero exit code handled cleanly).
+   - Program Segment & Header Inspection:
+     `readelf -h ./runepkg ./arch-utils` -> Confirms EXEC/DYN Type, Machine, and Entry Point.
+     `readelf -l ./runepkg ./arch-utils` -> Confirms ZERO `INTERP` dynamic linker segments.
+     `readelf -d ./runepkg ./arch-utils` -> Confirms "There is no dynamic section in this file".
+   - Symbol Table Audit:
+     `nm -u ./runepkg ./arch-utils` / `objdump -T ./runepkg`
+     Confirms zero undefined dynamic symbols or dynamic symbol tables.
 
-2. Static Compilation & Zero-Dependency Audit:
-   - Compile via `make musl-all` or `musl-gcc -static` (and arch-utils static build).
-   - Run `ldd runepkg` (and `ldd arch-utils`) to confirm "not a dynamic executable".
+2. Symlink, Jail, & Path Containment Tests (runepkg_psychic & readlink / ln / rm):
+   - Broken & Looping Symlink Scan:
+     `find "$STAGE_DIR" -xtype l`
+     Lists any broken or looping symlinks in a staged sysroot; expects empty output on valid trees.
+   - Symlink Target Resolution vs Canonical Resolution:
+     `readlink "$LINK_PATH"`    -> Inspects raw stored target (e.g. relative ../lib/libc.so).
+     `readlink -f "$LINK_PATH"` -> Resolves all components to canonical target without escaping jail boundaries.
+   - Non-Symlink-Following Removal Safety (runepkg_voidmatter):
+     Creates directory `real_dir` containing sentinel file `keep.txt` and symlink `link_dir -> real_dir`.
+     Purging `link_dir` MUST leave `real_dir/keep.txt` intact.
+   - Symlink Loop Handling (runepkg_psychic):
+     Creates mutual symlinks (`a -> b` and `b -> a`). `runepkg_psychic` pre-flight loop detection
+     reports the loop cleanly without hanging, crashing, or stack overflowing.
 
-3. Restricted PATH Rescue Extraction Test:
-   - Execute package unpacking in a stripped shell container:
-     `env -i PATH=/nonexistent ./runepkg -i sample.deb`
-   - Confirm 100% successful extraction without invoking any of the 14 external host utilities.
+3. Stripped Environment (PATH=/nonexistent) & Utility Contract Tests:
+   - Wiped Environment Execution:
+     `env -i PATH=/nonexistent ./runepkg ...`
+     `env -i PATH=/nonexistent ./arch-utils ...`
+     Confirms 100% operational survival without access to host shell utilities or PATH lookups.
+   - Metadata & Checksum Assertions:
+     `stat -c '%a %u:%g %n' "$TARGET"` -> Verifies octal permissions (chmod) and ownership (chown).
+     `sha256sum "$FILE"` / `md5sum -c "$SUMS_FILE"` -> Verifies byte-for-byte payload integrity.
+   - Deterministic Plain-Text Shell I/O Capture (runepkg_same_result?.txt):
+     Executes tests with `LC_ALL=C` and `TZ=UTC` and redirects output for line-by-line verification:
+     `LC_ALL=C TZ=UTC env -i PATH=/nonexistent ./runepkg --version > runepkg_same_result1.txt 2>&1`
 
-4. Plain-Text Shell I/O Verification Suite (`runepkg_same_test?.sh` / `runepkg_same_result?.txt`):
-   - Run command-by-command shell I/O checks with deterministic output redirection
-     for line-by-line verification across the 14 utilities, psychic symlink handling,
-     antimatter target paths, and rescue paths.
-
-Manual Verification:
-1. README & Plan Alignment Review:
-   - Verify that README.md renders the 🛡️ shield emoji and GPLv3 platinum shield
-     text cleanly across GitHub and markdown preview tools.
+4. Plain-Text Verification Checklist:
+   [ ] `file` and `readelf -h -l -d` confirm expected ELF architecture, segments, and static linking.
+   [ ] `ldd` confirms no dynamic shared library dependencies on the static binary.
+   [ ] `find "$STAGE_DIR" -xtype l` finds zero broken or looping symlinks after staging/extraction.
+   [ ] `readlink` and `readlink -f` match expected targets and isolate `..` traversal outside sysroot.
+   [ ] `rm` / `runepkg_voidmatter` tests confirm symlinks pointing to protected targets do not delete target files.
+   [ ] `chmod`, `chown`, `touch`, `md5sum`, and `sha256sum` match expected modes, IDs, and digests under `PATH=/nonexistent`.
 ================================================================================

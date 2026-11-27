@@ -1,0 +1,8 @@
+
+
+this file serves as a placeholder of some sort of c or cpp built-in test-suite.
+i always concieved from very beggining that this could be done from with-in some how.
+its still a mystery to me, but some day, ok...
+
+and the naming i choose puts whatever file runepkg_zealot.c .cpp right where i want to see it
+in my runepkg source directory...
