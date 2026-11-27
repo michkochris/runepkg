@@ -1,24 +1,103 @@
-Implementation Plan: Zero-Dependency Static Core & GPLv3 Header / README Update
-Transition runepkg to a true zero-dependency static rescue package manager by eliminating runtime external utility shellouts (/usr/bin/ar, tar, gzip, xz, zstd, cp, rm, mkdir, ln, chmod, chown) through 15 clean-room C89 modules under GPLv3, updating file header comment blocks across the codebase to adhere to comment-header-master.txt, and highlighting the GPLv3 "platinum shield" declaration in README.md.
-User Review Required
-Important
-Clean-Room & Legal Compliance: BusyBox source (libbb) must never be downloaded into the workspace to preserve GPLv3 legal purity and prevent GPLv2 license contamination. All low-level format parsers (ar, USTAR tar, PAX headers) will be implemented directly from open POSIX specifications in pure C89.
-Note
-Header Block Updates: Standardized comment header blocks adhering to comment-header-master.txt will be applied across all C/C++ source and header files (.c, .h, .cpp, .hpp), retaining each file's specific filename, author, date, and description.
-Open Questions
-•
-None at present. The architectural roadmap for the 15 runepkg_*matter modules is fully specified in not_full_static_plan.txt.
-Proposed Changes
-1. Main Documentation & License Declaration
-[MODIFY]  README.md
-•
-Add italicized GPLv3 platinum shield declaration immediately following the first paragraph:
-GPLv3 is the platinum shield of open source software and freedom. Turning code into a permanent public asset that protects builders and users from patent warfare and locked-down hardware.
-2. Header Block Standardization (comment-header-master.txt)
-Standardize comment headers across all C and C++ source files and headers:
-[MODIFY] Source & Header Files in runepkg/
-•
-Standardize header blocks in all C/C++ files (runepkg_cli.c, runepkg_handle.c, runepkg_install.c, runepkg_storage.c, runepkg_util.c, runepkg_network.cpp, runepkg_resolver.cpp, runepkg_antimatter.c, etc.) according to comment-header-master.txt:
+================================================================================
+RUNEPKG: NOT SOME ORDINARY PLAN (GPLv3 PLATINUM SHIELD & ZERO-DEPENDENCY CORE)
+================================================================================
+License Commitment : GNU General Public License v3.0 (GPLv3) — Clean-Room C89
+Shield Emoji       : 🛡️ The Platinum Shield of Open Source Software & Freedom
+Author / Maintainer: <michkochris@gmail.com> (runepkg development team)
+Architecture       : Zero-Dependency ISO C89 Rescue Core + musl libc / C++ FFI
+================================================================================
+
+0. HISTORICAL CONTEXT & WHY THIS IS A MAJOR CHALLENGE
+--------------------------------------------------------------------------------
+In the early Unix era (1970s–1980s, AT&T UNIX / Version 7 / BSD), systems were
+built from small, composable command-line utilities (`ar`, `tar`, `mkdir`, `rm`,
+`cp`, `ln`, `chmod`, `chown`, `touch`, `readlink`) connected by pipes, standard
+I/O, and exit statuses—later consolidated in embedded Linux by tools like BusyBox
+and later GNU coreutils.
+
+Rebuilding 14 classic Unix utilities and archive/compression handlers inside a
+single clean-room ISO C89 static rescue binary (`musl-gcc -static`) under GPLv3
+is a major systems-engineering challenge for five concrete reasons:
+
+1) Early-Unix Composability vs. Single-Binary Rescue Reliability:
+   Early Unix relied on separate binaries and `PATH` lookup; rescue environments
+   break when `PATH`, shared libraries, or core binaries are missing or damaged.
+   Exposing these 14 capabilities as internal `runepkg` command-line options or
+   applets while avoiding external `exec`/`PATH` shellouts requires strict
+   separation between CLI argument/I/O dispatch and pure C89 core functions.
+
+2) Strict C89 Standard Constraints Without Modern Shortcuts:
+   ISO C89 forbids mixed declarations and code, `//` line comments in strict
+   mode, variadic macros in older dialects, and many modern POSIX conveniences
+   unless explicitly guarded. Implementing archive parsers, decompression streams,
+   cryptographic/checksum routines (`MD5`, `SHA-256`), and syscall wrappers in
+   portable C89 demands disciplined memory management and zero undefined
+   behavior.
+
+3) Filesystem & Rescue Edge Cases (Symlinks, Permissions, Atomicity):
+   Operations like `rm -rf`, `ln`, `cp`, `chmod`, `chown`, and `touch` operate
+   directly on live or target filesystems. Symlink loops, traversal (`..`),
+   partial writes, permission errors, and interrupted operations can corrupt a
+   host or sysroot if rollback, bounds checks, and error handling are incomplete.
+
+4) Archive & Compression Format Complexity:
+   Handling `ar` archives, USTAR/GNU/PAX `tar` headers, and `gzip`/`xz`/`zstd`
+   streams cleanly—while guarding against malformed headers, truncated streams,
+   and decompression/extraction bombs—adds substantial parser and state-machine
+   complexity.
+
+5) Clean-Room GPLv3 Provenance & Test Discipline:
+   Maintaining strict GPLv3 clean-room provenance (keeping GPLv2 trees such as
+   BusyBox out of the workspace and code) while verifying every utility with
+   deterministic plain-text shell I/O checks (`runepkg_same_result?.txt`) and
+   `PATH=/nonexistent` tests requires ongoing audit discipline as modules grow.
+
+
+1. PHILOSOPHICAL MANIFESTO: WHY GPLv3 IS THE PLATINUM SHIELD
+--------------------------------------------------------------------------------
+runepkg is engineered from the ground up under a single unyielding principle:
+tooling survival comes first. As declared in our main README.md and across every
+source module:
+
+  "🛡️ GPLv3 is the platinum shield of open source software and freedom—turning
+   code into a permanent public asset that protects builders and users from
+   patent warfare and locked-down hardware."
+
+Why This Uncompromising License Commitment Matters:
+
+1) Anti-Tivoization & Absolute Rescue Freedom:
+   - runepkg is engineered to rescue collapsed operating systems, unpack .deb
+     runes in recovery media, and bootstrap bare-metal targets.
+   - GPLv3 guarantees that any entity deploying runepkg in embedded appliances,
+     firmware, or hardware products cannot lock users out of modifying, building,
+     and reinstalling their own rescue binaries ("Tivoization"). GPLv2 leaves this
+     hardware-lockout vulnerability wide open; GPLv3 seals it permanently.
+
+2) Explicit Patent Defense for Community Builders:
+   - GPLv3 contains an explicit, automatic patent grant and patent-retaliation
+     clause. Anyone contributing to or distributing runepkg grants patent rights
+     to all downstream users, shielding developers and users from hostile patent
+     warfare and litigation.
+
+3) Clean-Room POSIX & Format Parser Purity:
+   - Legacy utilities like BusyBox are licensed under GPLv2-only, making them
+     legally incompatible with GPLv3 in a single combined binary.
+   - Instead of compromising runepkg's GPLv3 shield or inheriting tangled,
+     macro-heavy code with non-reentrant state traps, we implement every format
+     parser (ar, USTAR, PAX) and filesystem primitive in clean-room ANSI C89
+     directly from open POSIX and standard archive specifications.
+
+4) Mandatory AI Coding Agent Hygiene Rule:
+   - DO NOT download or place GPLv2-only source code (e.g. busybox_source/) inside
+     the runepkg workspace. Keeping GPLv2 code out of the indexed workspace prevents
+     accidental license contamination or code snippet mixing by AI coding agents.
+
+
+2. MANDATORY HEADER COMMENT STANDARD (comment-header-master.txt)
+--------------------------------------------------------------------------------
+Every single C and C++ source file (.c, .h, .cpp, .hpp) across the runepkg codebase
+MUST start with the canonical GPLv3 header block defined in comment-header-master.txt:
+
 /******************************************************************************
 - Filename:    <filename>
 - Author:      <michkochris@gmail.com>
@@ -31,49 +110,220 @@ Standardize header blocks in all C/C++ files (runepkg_cli.c, runepkg_handle.c, r
 - from patent warfare and locked-down hardware.
 -
  ******************************************************************************/
-3. True Zero-Dependency Static Rescue Core (Dual-Layer Architecture)
-Implement the 15 clean-room C89 modules (runepkg_*matter.c and .h) as mapped in not_full_static_plan.txt:
-Archive & Stream Layer
-•
-[NEW] runepkg_truematter.c / .h — Magic-byte format detection & path traversal security checks.
-•
-[NEW] runepkg_darkmatter.c / .h — Clean-room C89 ar header parser (eliminates dependency on /usr/bin/ar and binutils).
-•
-[NEW] runepkg_exomatter.c / .h — .deb package container reader (debian-binary, control.tar*, data.tar*).
-•
-[NEW] runepkg_fluxmatter.c / .h — Unified decompression stream dispatcher for zlib (.gz), xz-embedded/liblzma (.xz), libzstd (.zst), and uncompressed .tar.
-•
-[NEW] runepkg_rawmatter.c / .h — Safe zero-shell chunked I/O stream engine.
-•
-[NEW] runepkg_submatter.c / .h — Clean-room C89 streaming USTAR tar parser.
-•
-[NEW] runepkg_oddmatter.c / .h — Extended format handler (GNU/BSD longnames, PAX attributes).
-Filesystem & Metadata Layer
-•
-[NEW] runepkg_neomatter.c / .h — Recursive mkdir -p, file cloning, atomic temp-file staging (rename()).
-•
-[NEW] runepkg_voidmatter.c / .h — Non-symlink following safe recursive removal and rollback engine.
-•
-[NEW] runepkg_mirrormatter.c / .h — Direct symlink (symlink()) and hardlink (link()) creation.
-•
-[NEW] runepkg_spinmatter.c / .h — File permissions (chmod), ownership (lchown), and timestamp (utimensat) restoration.
-Rescue & FFI Bridge Layer
-•
-[NEW] runepkg_nullmatter.c / .h — Zero-external-binary rescue router.
-•
-[NEW] runepkg_redmatter.c / .h — Emergency host repair and state recovery routines.
-•
-[NEW] runepkg_protomatter.c / .h — Target rootfs / chroot / /mnt/runepkg bootstrapper.
-•
-[NEW] runepkg_graymatter.c / .h — Static C89 <-> C++ ABI FFI bridge.
-Verification Plan
-Automated Verification
-1.
-Header Audit: Verify that every .c, .h, .cpp, .hpp file starts with the canonical GPLv3 header block from comment-header-master.txt.
-2.
-Binary Inspection: Verify static compilation with musl-gcc -static and ensure ldd runepkg reports "not a dynamic executable".
-3.
-Zero-Utility Rescue Test: Run test .deb unpack inside a restricted container with env -i PATH=/nonexistent ./runepkg to confirm complete independence from external host tools like /usr/bin/ar.
-Manual Verification
-1.
-Readme Review: Inspect README.md to verify the italicized GPLv3 platinum shield phrase is properly rendered under the main intro paragraph.
+
+
+3. DUAL-LAYER ZERO-DEPENDENCY STATIC RESCUE CORE (15 C89 MODULES)
+--------------------------------------------------------------------------------
+Eliminate 100% of runtime external tool shellouts (/usr/bin/ar, tar, gzip, xz,
+zstd, cp, rm, mkdir, ln, chmod, chown) from the low-level rescue core. Compile a
+single, indestructible ~536 KB static ELF binary (`musl-gcc -static`) that operates
+unconditionally even on a completely wiped host environment (`PATH=/nonexistent`).
+
+The 15 Clean-Room C89 Modules (runepkg_*matter):
+
+[ Archive & Stream Layer ]
+1. runepkg_truematter.c / .h
+   - Magic-byte format detection (ar, tar, gz, xz, zst, ELF) & path traversal (..)
+     security enforcement prior to archive extraction.
+
+2. runepkg_darkmatter.c / .h
+   - Clean-room C89 ar archive header parser. Replaces runtime calls to /usr/bin/ar,
+     parsing debian-binary, control.tar*, and data.tar* entries directly from stream.
+
+3. runepkg_exomatter.c / .h
+   - High-level .deb container orchestrator. Validates control metadata, debian-binary
+     versioning, and delegates member extraction to stream handlers.
+
+4. runepkg_fluxmatter.c / .h
+   - Unified decompression stream dispatcher bridging zlib (.gz), xz-embedded/liblzma
+     (.xz), libzstd (.zst), and uncompressed raw streams to the tar parser.
+
+5. runepkg_rawmatter.c / .h
+   - Safe zero-shell chunked I/O stream engine with configurable memory buffers
+     and POSIX rlimit boundary checks to prevent extraction bombs.
+
+6. runepkg_submatter.c / .h
+   - Clean-room C89 streaming USTAR tar parser. Extracts files, directories, and
+     metadata in a single pass without temporary disk expansion.
+
+7. runepkg_oddmatter.c / .h
+   - Extended tar format handler managing GNU longnames, BSD archive variants, and
+     PAX extended header attributes.
+
+[ Filesystem & Metadata Layer ]
+8. runepkg_neomatter.c / .h
+   - Recursive directory creator (mkdir -p), file cloner, and atomic temporary file
+     staging engine utilizing rename() for fail-safe transactional extraction.
+
+9. runepkg_voidmatter.c / .h
+   - Non-symlink-following safe recursive directory/file removal engine with rollback
+     journaling to protect host system paths during package purge.
+
+10. runepkg_mirrormatter.c / .h
+    - Direct symlink (symlink()) and hardlink (link()) creation primitives with
+      chroot/sysroot jail containment checks.
+
+11. runepkg_spinmatter.c / .h
+    - Metadata restoration engine restoring file permissions (chmod), ownership
+      (lchown), and microsecond timestamps (utimensat) matching package specs.
+
+[ Rescue & FFI Bridge Layer ]
+12. runepkg_nullmatter.c / .h
+    - Zero-external-binary rescue router directing package operations away from broken
+      host binaries to internal clean-room primitives.
+
+13. runepkg_redmatter.c / .h
+    - Emergency host repair engine for diagnosing and fixing corrupted dpkg status
+      stanzas, broken symlinks, and missing shared library anchors.
+
+14. runepkg_protomatter.c / .h
+    - Target rootfs / chroot / /mnt/runepkg bootstrapper for bare-metal sysroot
+      creation and initramfs rescue image deployment.
+
+15. runepkg_graymatter.c / .h
+    - Static C89 <-> C++ ABI FFI bridge connecting the low-level rescue core with
+      the C++ high-level network and resolver engine.
+
+
+4. EXPLICIT REPLACED UTILITIES MATRIX & SPECIFICATION
+--------------------------------------------------------------------------------
+To achieve absolute zero-dependency rescue capability on broken or bare-metal host
+systems, runepkg eliminates runtime execution of 14 external host utilities and
+exposes them as clean command-line options / built-in applets. Each utility's
+function, command replacement, operational scope, and handling C89 module are
+explicitly defined below:
+
+1) Utility: `ar` (`/usr/bin/ar`)
+   - Replaced Shell Command : `ar x <package.deb>` / `ar t <package.deb>`
+   - Implementation Module  : `runepkg_darkmatter.c` / `runepkg_darkmatter.h`
+   - Clean-Room C89 Function: Parses BSD/GNU/Debian 60-byte magic `ar` headers
+     (`!<arch>\n`), extracting `debian-binary`, `control.tar.*`, and `data.tar.*`
+     payload streams directly in memory without calling `/usr/bin/ar`.
+
+2) Utility: `tar` (`/bin/tar`, `/usr/bin/tar`)
+   - Replaced Shell Command : `tar -xf`, `tar -C`, `tar -cf`, `tar -ztf`
+   - Implementation Modules : `runepkg_submatter.c` (USTAR) & `runepkg_oddmatter.c` (GNU/PAX)
+   - Clean-Room C89 Function: Implements single-pass 512-byte header streaming parser
+     supporting POSIX USTAR headers, GNU `L`/`K` long filename records, and PAX
+     extended header attributes without intermediate disk extraction or `/bin/tar`.
+
+3) Utility: `gzip` / `gunzip` (`/bin/gzip`, `/usr/bin/gzip`)
+   - Replaced Shell Command : `gzip -d`, `gunzip -c`, `gzip -9`
+   - Implementation Module  : `runepkg_fluxmatter.c` / `runepkg_fluxmatter.h`
+   - Clean-Room C89 Function: Direct stream decompression of `.gz` and `.tar.gz`
+     payloads via integrated `zlib` API, bypassing external `/bin/gzip` binaries.
+
+4) Utility: `xz` / `unxz` (`/usr/bin/xz`)
+   - Replaced Shell Command : `xz -d`, `unxz -c`, `xz -dc`
+   - Implementation Module  : `runepkg_fluxmatter.c` / `runepkg_fluxmatter.h`
+   - Clean-Room C89 Function: Direct stream decompression of LZMA2 `.tar.xz` archives
+     using `xz-embedded` / `liblzma` API, eliminating external `/usr/bin/xz` binaries.
+
+5) Utility: `zstd` / `unzstd` (`/usr/bin/zstd`)
+   - Replaced Shell Command : `zstd -d`, `unzstd -c`, `zstd -dc`
+   - Implementation Module  : `runepkg_fluxmatter.c` / `runepkg_fluxmatter.h`
+   - Clean-Room C89 Function: Direct stream decompression of modern `.tar.zst` payloads
+     using static `libzstd` C API, removing runtime `/usr/bin/zstd` dependencies.
+
+6) Utility: `mkdir` (`/bin/mkdir`)
+   - Replaced Shell Command : `mkdir -p <dir_path>`
+   - Implementation Module  : `runepkg_neomatter.c` / `runepkg_neomatter.h`
+   - Clean-Room C89 Function: Iterative recursive directory tree creation utilizing POSIX
+     `mkdir()` with canonical path sanitization, replacing external `/bin/mkdir` spawns.
+
+7) Utility: `rm` (`/bin/rm`)
+   - Replaced Shell Command : `rm -rf <path>`, `rm -f <file>`
+   - Implementation Module  : `runepkg_voidmatter.c` / `runepkg_voidmatter.h`
+   - Clean-Room C89 Function: Non-symlink-following safe recursive directory and file
+     purging using `unlink()`, `rmdir()`, and POSIX `opendir()`/`readdir()` with
+     rollback safety journals to prevent accidental host path corruption.
+
+8) Utility: `cp` (`/bin/cp`)
+   - Replaced Shell Command : `cp -a`, `cp -f`
+   - Implementation Module  : `runepkg_neomatter.c` / `runepkg_neomatter.h`
+   - Clean-Room C89 Function: High-throughput chunked file copying and atomic temporary file
+     staging using POSIX `read()`, `write()`, and atomic `rename()`.
+
+9) Utility: `ln` (`/bin/ln`)
+   - Replaced Shell Command : `ln -s <target> <link>`, `ln <target> <link>`
+   - Implementation Module  : `runepkg_mirrormatter.c` / `runepkg_mirrormatter.h`
+   - Clean-Room C89 Function: Direct creation of symbolic links (`symlink()`) and hard
+     links (`link()`) with chroot/sysroot boundary containment verification.
+
+10) Utility: `chmod` (`/bin/chmod`)
+    - Replaced Shell Command : `chmod <mode> <path>`
+    - Implementation Module  : `runepkg_spinmatter.c` / `runepkg_spinmatter.h`
+    - Clean-Room C89 Function: Direct POSIX `chmod()` mode bit restoration for files and
+      directories matching `.deb` control metadata specs.
+
+11) Utility: `chown` (`/bin/chown`)
+    - Replaced Shell Command : `chown <uid>:<gid> <path>`
+    - Implementation Module  : `runepkg_spinmatter.c` / `runepkg_spinmatter.h`
+    - Clean-Room C89 Function: Direct POSIX `lchown()` ownership restoration for files,
+      symlinks, and directories without resolving user/group names through host shellouts.
+
+12) Utility: `touch` (`/usr/bin/touch`)
+    - Replaced Shell Command : `touch -t`, `touch -r`
+    - Implementation Module  : `runepkg_spinmatter.c` / `runepkg_spinmatter.h`
+    - Clean-Room C89 Function: Microsecond access/modification timestamp restoration
+      using POSIX `utimensat()` / `utimes()` directly on file descriptors.
+
+13) Utility: `md5sum` / `sha256sum` (`/usr/bin/md5sum`, `/usr/bin/sha256sum`)
+    - Replaced Shell Command : `md5sum -c <md5sums>`, `sha256sum <file>`
+    - Implementation Modules : `runepkg_hash.c` & `runepkg_md5sums.c`
+    - Clean-Room C89 Function: In-memory FNV-1a, MD5, and SHA-256 calculation and verification
+      against `.deb` control `md5sums` records without external utility invocations.
+
+14) Utility: `readlink` (`/bin/readlink`)
+    - Replaced Shell Command : `readlink -f <path>`
+    - Implementation Module  : `runepkg_truematter.c` / `runepkg_truematter.h`
+    - Clean-Room C89 Function: Direct POSIX `readlink()` resolution and path canonicalization
+      to enforce path traversal jail containment without external shell execution.
+
+Summary One-Liner: ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch, md5sum/sha256sum, readlink.
+
+Usage Integration:
+  Usage: runepkg [OPTIONS] <utility> [ARGS...]
+  Summary One-Liner: ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch, md5sum/sha256sum, readlink.
+
+
+5. MAIN README.md & DOCUMENTATION INTEGRATION
+--------------------------------------------------------------------------------
+1. README.md Shield Emoji & Manifesto Placement:
+   - Prominently feature the 🛡️ shield badge and platinum shield blockquote directly
+     under the primary badge row in README.md.
+   - Maintain strict synchronization between README.md, RUNAS.md, comment-header-master.txt,
+     not_full_static_plan.txt, and not_some_ordinary_plan.txt.
+
+2. Canonical References:
+   - DESIGN.md       : Architectural deep-dive and binary data structures.
+   - HOLY_GRAIL.md   : Guide for 100% self-contained static musl builds.
+   - COPILOT.md      : Security audit and path traversal jail verification.
+   - RUNAS.md        : Companion Debian source package forge manual.
+
+
+6. VERIFICATION PLAN & ACCEPTANCE CRITERIA
+--------------------------------------------------------------------------------
+Automated Verification:
+1. Header Block Audit:
+   - Scan all .c, .h, .cpp, .hpp files to verify that lines 1-12 strictly match
+     comment-header-master.txt with GPLv3 license terms and the platinum shield text.
+
+2. Static Compilation & Zero-Dependency Audit:
+   - Compile via `make musl-all` or `musl-gcc -static`.
+   - Run `ldd runepkg` to confirm "not a dynamic executable".
+
+3. Restricted PATH Rescue Extraction Test:
+   - Execute package unpacking in a stripped shell container:
+     `env -i PATH=/nonexistent ./runepkg -i sample.deb`
+   - Confirm 100% successful extraction without invoking any of the 14 external host utilities.
+
+4. Plain-Text Shell I/O Verification Suite (`runepkg_same_result?.txt`):
+   - Run command-by-command shell I/O checks with deterministic output redirection
+     for line-by-line verification across the 14 utilities and rescue paths.
+
+Manual Verification:
+1. README & Plan Alignment Review:
+   - Verify that README.md renders the 🛡️ shield emoji and GPLv3 platinum shield
+     text cleanly across GitHub and markdown preview tools.
+================================================================================
