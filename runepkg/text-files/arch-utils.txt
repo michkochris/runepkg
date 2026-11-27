@@ -2,21 +2,58 @@
 arch-utils — Clean-Room ISO C89 Archive, Filesystem & Integrity Utilities
 ================================================================================
 License : GNU General Public License v3.0 (GPLv3)
-Language: Strict ISO C89 / C90 (musl-ready, static ELF capable)
+Language: Strict ISO C89 / C90 (musl-ready, static ELF & C API library)
 Scope   : ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch,
           md5sum/sha256sum, readlink
 ================================================================================
 
 OVERVIEW & DETAILED DESCRIPTION
 --------------------------------------------------------------------------------
-arch-utils is a compact, clean-room ISO C89 command-line utility suite built
-for archive inspection and unpacking, stream decompression, filesystem staging,
-link/metadata control, and integrity verification. Compiled statically as a single
-~536 KB ELF binary (`musl-gcc -static`) under GPLv3, it provides a 100% self-contained
-replacement for 14 fundamental Unix utilities with zero reliance on host shellouts or
-fragile runtime toolchains. It embeds `runepkg_psychic` symlink pre-flight checks and
-`runepkg_antimatter` path containment guards to ensure safe, deterministic rescue
-execution across native and cross-target sysroots.
+arch-utils is a compact, clean-room ISO C89 command-line utility suite and C API
+library built for archive inspection and unpacking, stream decompression,
+filesystem staging, link/metadata control, and integrity verification. Compiled
+statically as a single ~536 KB ELF binary (`musl-gcc -static`) under GPLv3, it
+provides a 100% self-contained replacement for 14 fundamental Unix utilities with zero
+reliance on host shellouts or fragile runtime toolchains. It embeds `runepkg_psychic`
+symlink pre-flight checks and `runepkg_antimatter` path containment guards to ensure
+safe, deterministic rescue execution across native and cross-target sysroots.
+
+
+OPTIONAL DEPLOYMENT & GNU UTILITY CONFLICT PREVENTION
+--------------------------------------------------------------------------------
+Standard Linux distributions ship with GNU coreutils, binutils, and tar (`/bin/cp`,
+`/bin/rm`, `/usr/bin/ar`, `/bin/tar`). Overwriting system utilities by default
+would create PATH collisions and script breakage due to GNU-specific flag expectations
+(e.g., `tar --wildcards` or `cp --parents`).
+
+To guarantee absolute safety, `arch-utils` is strictly OPTIONAL and decoupled:
+1. Multi-Call Invocation (`arch-utils <utility> [args]`):
+   Installed as a single binary without touching `/bin` or `/usr/bin` host tools.
+2. Isolated Prefix Installation (`/opt/arch-utils/bin/` or `/usr/lib/arch-utils/bin/`):
+   Symlinks for individual applets (`ar`, `tar`, `cp`, `rm`, etc.) live inside an
+   isolated directory. System rescue scripts or recovery shells prepend this path
+   to `PATH` only when needed (`export PATH=/opt/arch-utils/bin:$PATH`).
+3. Zero System Interference:
+   Standard host package management (`apt`, `dpkg`, `pacman`) remains 100% untouched.
+
+
+DUAL-MODE BUILD ARCHITECTURE: EXECUTABLE VS. C LIBRARY (`libarchutils`)
+--------------------------------------------------------------------------------
+`arch-utils` can be compiled into two distinct targets:
+
+Mode A: Standalone Multi-Call Executable (`arch-utils`)
+   - A single statically-linked ~536 KB musl binary executing applets via CLI arguments
+     or symlink name multiplexing. Ideal for rescue media, initramfs, and shell scripts.
+
+Mode B: C API Shared & Static Library (`libarchutils.so` / `libarchutils.a`)
+   - Exposes clean C89 library headers (`<archutils/archive.h>`, `<archutils/fs.h>`,
+     `<archutils/digest.h>`) allowing C/C++ applications, custom package managers,
+     installer frameworks, or embedded agents to link directly against `libarchutils`.
+   - Advantages of `libarchutils`:
+     * In-Process Execution: Unpack archives, stage directories, enforce symlink jail
+       containment, and verify SHA-256 digests in-memory without spawning subshells or fork/exec.
+     * Zero External Dependencies: Links directly into C/C++ binaries without requiring
+       external `system()` or `popen()` calls.
 
 
 WHO IT IS FOR (TARGET AUDIENCE)
@@ -32,15 +69,14 @@ WHO IT IS FOR (TARGET AUDIENCE)
      custom Linux From Scratch / cross-LFS environments without dragging in a
      full distro userland.
 
-3. Low-Level Tooling & Package Engineers
+3. Application & Installer Developers
+   - C/C++ developers needing a lightweight C library (`libarchutils`) for in-process
+     archive extraction, atomic directory staging, and MD5/SHA-256 checksums.
+
+4. Low-Level Tooling & Package Engineers
    - Maintainers building or debugging package managers, archive pipelines,
      custom containers, or minimal build sandboxes who need straightforward
      exit codes, controlled I/O, and repeatable plain-text shell test output.
-
-4. Security & Integrity Auditors
-   - Engineers checking archive layouts, verifying MD5/SHA-256 digests, or
-     inspecting symlink targets and path boundaries before unpacking or
-     deploying payloads.
 
 
 THE FOUR FUNCTIONAL PILLARS
@@ -97,6 +133,16 @@ USAGE EXAMPLES & COMMAND COMMAND-LINE WORKFLOWS
    # Safely remove symlinks without following into target directories:
    env -i PATH=/nonexistent arch-utils rm -rf /target/sysroot/bin/app
 
+4. C API Shared Library Linking Example (`libarchutils.so`):
+   #include <archutils/archive.h>
+   #include <archutils/fs.h>
+
+   int main(void) {
+       /* Unpack tarball directly in-process with zero subshells */
+       archutils_tar_extract("payload.tar.xz", "/target/sysroot");
+       return 0;
+   }
+
 
 WHY IT IS USEFUL IN PRACTICE & BOTTOM LINE
 --------------------------------------------------------------------------------
@@ -107,18 +153,15 @@ WHY IT IS USEFUL IN PRACTICE & BOTTOM LINE
   handling (ar, tar, gzip, xz, zstd) with directory, file, link, permission,
   ownership, timestamp, and checksum commands (mkdir, rm, cp, ln, chmod,
   chown, touch, md5sum/sha256sum, readlink) in a single clean-room C89 suite.
-- Predictable Shell Automation: Produces plain-text outputs and clear status
-  codes suited to simple shell scripts, deterministic test logs, and manual
-  line-by-line inspection without bloated wrappers or runtime surprises.
+- Dual Executable and Library Flexibility: Serves both CLI rescue scripts and
+  C/C++ applications via `libarchutils`.
 - Clean GPLv3 Foundation: Keeps licensing clear and self-contained for embedded
   appliances, custom builds, and open rescue media.
 
 THE BOTTOM LINE
 --------------------------------------------------------------------------------
-arch-utils is the ultimate clean-room ISO C89 static utility suite for Linux system
-resilience. When libc or binutils breaks mid-upgrade, a dynamic linker symlink points into
-thin air, or you are staring at a half-built rootfs with almost nothing working,
-arch-utils provides an indestructible, ~536 KB self-contained toolset that works
-unconditionally under `PATH=/nonexistent`—turning potential system destruction into a
-fast, 5-minute recovery.
+arch-utils is an optional, clean-room ISO C89 static utility suite and C library for
+Linux system resilience. Designed to coexist safely alongside GNU coreutils without
+PATH conflicts, it provides an indestructible ~536 KB multi-call executable and
+a `libarchutils` C library that turn potential system destruction into a fast, 5-minute recovery.
 ================================================================================

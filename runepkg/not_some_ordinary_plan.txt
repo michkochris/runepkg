@@ -219,13 +219,28 @@ the 14 classic utilities are modeled as a separate companion repository named
 `arch-utils` under GPLv3 in ISO C89 (`musl-gcc -static`).
 
 Detailed Description:
-`arch-utils` entails a clean-room ISO C89 command-line utility suite built
-statically with `musl-gcc -static` under GPLv3. It gives developers, users,
-and sysadmins direct, low-level control over archives, compression streams,
-filesystem trees, symlinks/metadata, and integrity hashes without relying on
-external host binaries or dynamic libraries. It embeds `runepkg_psychic`
+`arch-utils` entails an OPTIONAL clean-room ISO C89 command-line utility suite
+and C API library built statically with `musl-gcc -static` under GPLv3. It gives
+developers, users, and sysadmins direct, low-level control over archives,
+compression streams, filesystem trees, symlinks/metadata, and integrity hashes without
+relying on external host binaries or dynamic libraries. It embeds `runepkg_psychic`
 link-sanity pre-flight checks and `runepkg_antimatter` path containment guards
 to ensure safe, deterministic rescue execution across native and cross-target sysroots.
+
+Optional Deployment & Conflict Prevention:
+Standard Linux distributions ship with GNU coreutils, binutils, and tar (`/bin/cp`,
+`/bin/rm`, `/usr/bin/ar`, `/bin/tar`). Overwriting system utilities by default
+would create PATH collisions and script breakage due to GNU-specific flag expectations.
+To guarantee safety, `arch-utils` is strictly OPTIONAL and decoupled:
+- Multi-Call Invocation: Executed via `arch-utils <utility> [args]` without touching host `/bin`.
+- Isolated Prefix Installation: Installed under `/opt/arch-utils/bin/` for explicit PATH override when needed.
+- Zero System Interference: Native package managers (`apt`, `dpkg`, `pacman`) remain 100% untouched.
+
+Dual-Mode Build Architecture (Executable vs. C Library `libarchutils`):
+- Mode A (Standalone Executable `arch-utils`): Single static ~536 KB musl binary for CLI rescue & scripts.
+- Mode B (C API Library `libarchutils.so` / `libarchutils.a`): Exposes clean C89 headers (`<archutils/archive.h>`,
+  `<archutils/fs.h>`, `<archutils/digest.h>`) for direct in-process linking by C/C++ applications, custom package
+  managers, or embedded agents without spawning subshells or fork/exec.
 
 The Four Functional Pillars of `arch-utils`:
 1) Archive & Stream Unpacking (ar, tar, gzip, xz, zstd):
@@ -250,15 +265,15 @@ What a User / Sysadmin Uses `arch-utils` For:
    - Assembling and inspecting root filesystems for alternate target architectures
      (arm64, riscv64, etc.) where setting modes, links, and timestamps cleanly
      matters more than full distro bloat.
-3) Deterministic Scripting & Verification:
+3) In-Process Application Integration (`libarchutils`):
+   - Linking C/C++ applications directly against `libarchutils.so` for in-memory archive extraction,
+     atomic directory staging, and MD5/SHA-256 calculation without spawning external subshells.
+4) Deterministic Scripting & Verification:
    - Running lightweight, predictable commands in shell scripts or plain-text
      I/O verification suites (`runepkg_same_test?.sh` / `runepkg_same_result?.txt`)
      with deterministic exit codes and zero runtime surprises.
-4) Container, Embedded, & CLFS Build Environments:
-   - Providing lightweight, self-contained utilities that operate without pulling in
-     large userland packages, toolchain dependencies, or dynamic loader chains.
 
-Command-Line Usage Examples:
+Command-Line & C API Usage Examples:
 1) Multi-Call Applet Invocation:
    # Extract .deb archive members directly:
    arch-utils ar x package.deb
@@ -292,12 +307,21 @@ Command-Line Usage Examples:
    # Safely remove symlinks without following into target directories:
    env -i PATH=/nonexistent arch-utils rm -rf /target/sysroot/bin/app
 
+4) C API Shared Library Linking Example (`libarchutils.so`):
+   #include <archutils/archive.h>
+   #include <archutils/fs.h>
+
+   int main(void) {
+       /* Unpack tarball directly in-process with zero subshells */
+       archutils_tar_extract("payload.tar.xz", "/target/sysroot");
+       return 0;
+   }
+
 Bottom Line Info:
-- Binary Footprint: ~536 KB zero-dependency static ELF (`musl-gcc -static`).
+- Binary Footprint: ~536 KB zero-dependency static ELF (`musl-gcc -static`) / `libarchutils.so` shared library.
 - License: GNU General Public License v3.0 (GPLv3) — Clean-Room C89.
-- Core Advantage: Guarantees 100% operational survival on broken systems (`PATH=/nonexistent`),
-  providing an indestructible, self-contained toolset that turns potential system destruction
-  into a fast, 5-minute recovery.
+- Core Advantage: Guarantees 100% operational survival on broken systems (`PATH=/nonexistent`) while coexisting
+  safely alongside GNU coreutils, providing both an indestructible CLI executable and a clean `libarchutils` C API.
 
 
 5. EXPLICIT REPLACED UTILITIES MATRIX & SPECIFICATION

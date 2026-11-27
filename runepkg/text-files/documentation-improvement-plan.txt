@@ -38,7 +38,8 @@ specifications remain impeccably structured, accurate, and cross-referenced.
      * "GPLv3 Platinum Shield" (🛡️)
      * "Psychic Pre-Flight & Symlink Anchor" (`runepkg_psychic.c`)
      * "Antimatter Decontamination Chamber & Boundary Guard" (`runepkg_antimatter.c`)
-     * "Zero-Day Clean-Room Utility Suite" (`arch-utils`)
+     * "Zero-Day Clean-Room Utility Suite & C Library" (`arch-utils` / `libarchutils.so`)
+     * "Optional Deployment & Conflict Prevention" (`/opt/arch-utils/bin/`)
      * "Stripped Environment Execution" (`PATH=/nonexistent`)
 
 4) Standardized GPLv3 Comment Headers:
