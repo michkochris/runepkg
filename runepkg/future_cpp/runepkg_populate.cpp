@@ -1,11 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_populate.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-31
- * Description: Populates target-rules/ with canonical source
- *              recipes and creates relative symlinks for all binary aliases.
- *              Targeted at the project source tree for JIT enhancement.
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_populate.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-31
+- Description: Canonical source recipe generator and relative symlink populator for target-rules directory
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <iostream>

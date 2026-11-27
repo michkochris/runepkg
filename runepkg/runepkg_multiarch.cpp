@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_multiarch.cpp                                          */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-09-20                                                     */
-/* Description: Debian Multi-Arch Architecture & GNU Triplet Mapping Engine     */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_multiarch.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: Debian Multi-Arch architecture resolution and GNU triplet mapping engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include <iostream>
 #include <string>

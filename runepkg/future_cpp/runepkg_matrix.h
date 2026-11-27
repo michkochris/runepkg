@@ -1,9 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_matrix.h
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-30
- * Description: Binary Matrix DB Layout & Matrix Engine Definitions
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_matrix.h
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-30
+- Description: Binary matrix database structures, target profile definitions, and matrix engine declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_MATRIX_H

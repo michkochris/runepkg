@@ -1,7 +1,15 @@
-/******************************************************************************/
-/* Filename:    fuzz_sanitize_path.cpp                                         */
-/* Description: libFuzzer harness for runepkg::security::sanitize_extract_path */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    fuzz_sanitize_path.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: libFuzzer harness for runepkg path sanitization and security perimeter testing
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include <stdint.h>
 #include <stddef.h>

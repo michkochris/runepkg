@@ -1,9 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_md5sums.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-05-12
- * Description: Standalone MD5 implementation (RFC 1321) for runepkg
- * LICENSE:     GPL v3
+- Filename:    runepkg_md5sums.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-05-12
+- Description: Zero-dependency standalone MD5 hashing engine (RFC 1321) for verifying package file integrity
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_portable.h"

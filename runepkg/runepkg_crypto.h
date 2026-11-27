@@ -1,11 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_crypto.h
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Cryptographic verification for runepkg packages
- *
- * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
- * GPLV3
+- Filename:    runepkg_crypto.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Cryptographic verification function declarations and payload security interfaces
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_CRYPTO_H

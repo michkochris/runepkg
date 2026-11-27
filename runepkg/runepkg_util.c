@@ -1,16 +1,15 @@
-/****************************************************************************
- * Filename:    runepkg_util.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Essential utility functions for runepkg (runar linux)
- * LICENSE:     GPL v3
- * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
- * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- * THIS PROGRAM IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. SEE THE
- * GNU GENERAL PUBLIC LICENSE FOR MORE DETAILS.
- ***************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_util.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Core utility functions — string manipulation, path canonicalization, file I/O, and subprocess execution
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include "runepkg_portable.h"
 #include "runepkg_util.h"

@@ -1,9 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_guard.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-03-04
- * Description: RAII Transaction Guard implementation
- * LICENSE:     GPL v3
+- Filename:    runepkg_guard.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-03-04
+- Description: RAII Transaction Guard implementation for transactional safety and automatic rollback
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_guard.hpp"

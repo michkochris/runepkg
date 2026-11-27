@@ -1,9 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_network.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-26
- * Description: Parallel network synchronization & fetch engine (C++ FFI)
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_network.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-26
+- Description: Parallel network repository fetcher, mirror synchronization engine, and HTTP download manager
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_cpp_ffi.h"

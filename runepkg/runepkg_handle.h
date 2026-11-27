@@ -1,9 +1,14 @@
-/*****************************************************************************
+/******************************************************************************
 - Filename:    runepkg_handle.h
 - Author:      <michkochris@gmail.com>
 - Date:        2026-08-26
-- Description: Header for request handlers and lifecycle routines
-- LICENSE:     GPL v3
+- Description: Command request handlers and lifecycle routine function declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_HANDLE_H

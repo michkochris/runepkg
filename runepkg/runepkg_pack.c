@@ -1,14 +1,15 @@
-/*****************************************************************************
- * Filename:    runepkg_pack.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Package extraction and information collection for runepkg
- * LICENSE:     GPL v3
- * THIS IS FREE SOFTWARE; YOU CAN REDISTRIBUTE IT AND/OR MODIFY IT UNDER
- * THE TERMS OF THE GNU GENERAL PUBLIC LICENSE AS PUBLISHED BY THE FREE
- * SOFTWARE FOUNDATION; EITHER VERSION 3 OF THE LICENSE, OR (AT YOUR OPTION)
- * ANY LATER VERSION.
- ***************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_pack.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Debian archive (.deb) reader, ar archive parser, and control/data tar stream extraction
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include "runepkg_portable.h"
 #include "runepkg_pack.h"

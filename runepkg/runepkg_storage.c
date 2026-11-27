@@ -1,11 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_storage.c
- * Author:      <michkochris@gmail.com>
- * Date:        started 01-03-2025
- * Description: Persistent storage management for runepkg package database
- *
- * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
- * GPLV3
+- Filename:    runepkg_storage.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-03
+- Description: Persistent package database engine, status stanza serialization, and info list file generator
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_portable.h"

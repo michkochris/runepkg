@@ -1,9 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_building.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-29
- * Description: Matrix-Driven Debian Source Builder & Cross-Forge for runepkg
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_building.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: Matrix-driven Debian source builder & cross-forge for runepkg
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <iostream>

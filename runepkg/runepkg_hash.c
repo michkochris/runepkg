@@ -1,10 +1,15 @@
-/*****************************************************************************
- * Filename:    runepkg_hash.c
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Hash table implementation for runepkg package index
- * LICENSE:     GPL v3
- ***************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_hash.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: High-performance in-memory hash table implementation for package indexing and control fields
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include "runepkg_portable.h"
 #include "runepkg_hash.h"

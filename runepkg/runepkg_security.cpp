@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_security.cpp                                           */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-08-29                                                     */
-/* Description: Security Perimeter, Trust Anchor & Archive Sanitizer           */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_security.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: Security perimeter, trust anchor verification, archive path sanitization, and exploit mitigation engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include "runepkg_security.hpp"
 #include "runepkg_utility.hpp"

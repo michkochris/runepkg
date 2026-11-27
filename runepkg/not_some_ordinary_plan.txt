@@ -1,0 +1,79 @@
+Implementation Plan: Zero-Dependency Static Core & GPLv3 Header / README Update
+Transition runepkg to a true zero-dependency static rescue package manager by eliminating runtime external utility shellouts (/usr/bin/ar, tar, gzip, xz, zstd, cp, rm, mkdir, ln, chmod, chown) through 15 clean-room C89 modules under GPLv3, updating file header comment blocks across the codebase to adhere to comment-header-master.txt, and highlighting the GPLv3 "platinum shield" declaration in README.md.
+User Review Required
+Important
+Clean-Room & Legal Compliance: BusyBox source (libbb) must never be downloaded into the workspace to preserve GPLv3 legal purity and prevent GPLv2 license contamination. All low-level format parsers (ar, USTAR tar, PAX headers) will be implemented directly from open POSIX specifications in pure C89.
+Note
+Header Block Updates: Standardized comment header blocks adhering to comment-header-master.txt will be applied across all C/C++ source and header files (.c, .h, .cpp, .hpp), retaining each file's specific filename, author, date, and description.
+Open Questions
+•
+None at present. The architectural roadmap for the 15 runepkg_*matter modules is fully specified in not_full_static_plan.txt.
+Proposed Changes
+1. Main Documentation & License Declaration
+[MODIFY]  README.md
+•
+Add italicized GPLv3 platinum shield declaration immediately following the first paragraph:
+GPLv3 is the platinum shield of open source software and freedom. Turning code into a permanent public asset that protects builders and users from patent warfare and locked-down hardware.
+2. Header Block Standardization (comment-header-master.txt)
+Standardize comment headers across all C and C++ source files and headers:
+[MODIFY] Source & Header Files in runepkg/
+•
+Standardize header blocks in all C/C++ files (runepkg_cli.c, runepkg_handle.c, runepkg_install.c, runepkg_storage.c, runepkg_util.c, runepkg_network.cpp, runepkg_resolver.cpp, runepkg_antimatter.c, etc.) according to comment-header-master.txt:
+/******************************************************************************
+- Filename:    <filename>
+- Author:      <michkochris@gmail.com>
+- Date:        <YYYY-MM-DD>
+- Description: <Preserved single-responsibility file description>
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
+3. True Zero-Dependency Static Rescue Core (Dual-Layer Architecture)
+Implement the 15 clean-room C89 modules (runepkg_*matter.c and .h) as mapped in not_full_static_plan.txt:
+Archive & Stream Layer
+•
+[NEW] runepkg_truematter.c / .h — Magic-byte format detection & path traversal security checks.
+•
+[NEW] runepkg_darkmatter.c / .h — Clean-room C89 ar header parser (eliminates dependency on /usr/bin/ar and binutils).
+•
+[NEW] runepkg_exomatter.c / .h — .deb package container reader (debian-binary, control.tar*, data.tar*).
+•
+[NEW] runepkg_fluxmatter.c / .h — Unified decompression stream dispatcher for zlib (.gz), xz-embedded/liblzma (.xz), libzstd (.zst), and uncompressed .tar.
+•
+[NEW] runepkg_rawmatter.c / .h — Safe zero-shell chunked I/O stream engine.
+•
+[NEW] runepkg_submatter.c / .h — Clean-room C89 streaming USTAR tar parser.
+•
+[NEW] runepkg_oddmatter.c / .h — Extended format handler (GNU/BSD longnames, PAX attributes).
+Filesystem & Metadata Layer
+•
+[NEW] runepkg_neomatter.c / .h — Recursive mkdir -p, file cloning, atomic temp-file staging (rename()).
+•
+[NEW] runepkg_voidmatter.c / .h — Non-symlink following safe recursive removal and rollback engine.
+•
+[NEW] runepkg_mirrormatter.c / .h — Direct symlink (symlink()) and hardlink (link()) creation.
+•
+[NEW] runepkg_spinmatter.c / .h — File permissions (chmod), ownership (lchown), and timestamp (utimensat) restoration.
+Rescue & FFI Bridge Layer
+•
+[NEW] runepkg_nullmatter.c / .h — Zero-external-binary rescue router.
+•
+[NEW] runepkg_redmatter.c / .h — Emergency host repair and state recovery routines.
+•
+[NEW] runepkg_protomatter.c / .h — Target rootfs / chroot / /mnt/runepkg bootstrapper.
+•
+[NEW] runepkg_graymatter.c / .h — Static C89 <-> C++ ABI FFI bridge.
+Verification Plan
+Automated Verification
+1.
+Header Audit: Verify that every .c, .h, .cpp, .hpp file starts with the canonical GPLv3 header block from comment-header-master.txt.
+2.
+Binary Inspection: Verify static compilation with musl-gcc -static and ensure ldd runepkg reports "not a dynamic executable".
+3.
+Zero-Utility Rescue Test: Run test .deb unpack inside a restricted container with env -i PATH=/nonexistent ./runepkg to confirm complete independence from external host tools like /usr/bin/ar.
+Manual Verification
+1.
+Readme Review: Inspect README.md to verify the italicized GPLv3 platinum shield phrase is properly rendered under the main intro paragraph.

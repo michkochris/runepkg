@@ -1,9 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_guard.hpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-03-04
- * Description: RAII Transaction Guard for C++ Extended Suite
- * LICENSE:     GPL v3
+- Filename:    runepkg_guard.hpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-03-04
+- Description: RAII Transaction Guard header declarations for C++ Extended Suite
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_GUARD_HPP

@@ -1,9 +1,14 @@
-/*****************************************************************************
+/******************************************************************************
 - Filename:    runepkg_completion.c
 - Author:      <michkochris@gmail.com>
 - Date:        2025-01-04
-- Description: Bash completion logic for runepkg
-- LICENSE:     GPL v3
+- Description: Interactive command-line shell auto-completion engine for runepkg commands and package names
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_portable.h"

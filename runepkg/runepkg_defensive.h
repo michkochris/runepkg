@@ -1,11 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_defensive.h
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Defensive programming utilities and secure memory management
- *
- * This header provides security-hardened memory management functions and
- * defensive programming utilities for runepkg.
+- Filename:    runepkg_defensive.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Security-hardened memory management utilities and defensive programming declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_DEFENSIVE_H

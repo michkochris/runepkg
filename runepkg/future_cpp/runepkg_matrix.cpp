@@ -1,9 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_matrix.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-29
- * Description: Target Profile Matrix Engine & Declarative Package Recipes
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_matrix.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: Target profile matrix engine, binary matrix DB layout, and package recipe solver
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_matrix.h"

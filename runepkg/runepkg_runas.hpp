@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_runas.hpp                                              */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-09-20                                                     */
-/* Description: Interleaved Autocomplete & Source Engine (runas) Header        */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_runas.hpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: Interleaved autocomplete and source builder engine (runas) header declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #ifndef RUNEPKG_RUNAS_HPP
 #define RUNEPKG_RUNAS_HPP

@@ -1,0 +1,507 @@
+================================================================================
+
+RUNEPKG: NOT-FULLY-STATIC -> TRUE ZERO-DEPENDENCY STATIC RESCUE IMPLEMENTATION PLAN
+
+================================================================================
+
+License Commitment: GNU General Public License v3.0 (GPLv3) — Clean-Room C89
+
+Author / Maintainer: <michkochris@gmail.com> (runepkg development team)
+
+Architecture: Static ANSI C89 + musl libc Rescue Core / C++ FFI Layer
+
+================================================================================
+
+
+
+
+
+1. LICENSE INTEGRITY & WHY GPLv3 CLEAN-ROOM IS THE RIGHT PATH
+
+--------------------------------------------------------------------------------
+
+Commitment: `runepkg` remains strictly licensed under **GPLv3** as declared in
+
+`LICENSE` and `comment-header-master.txt`:
+
+
+
+  "GPLv3 is the platinum shield of open source software and freedom.
+
+   Turning code into a permanent public asset that protects builders and users
+
+   from patent warfare and locked-down hardware."
+
+
+
+Why Doing the Right Thing Here Matters:
+
+1) Anti-Tivoization & Rescue Freedom:
+
+   - `runepkg` is engineered as an absolute rescue and bootstrap package manager
+
+     capable of repairing or installing onto damaged or locked-down systems.
+
+   - GPLv3 ensures that anyone distributing `runepkg` in embedded firmware,
+
+     appliances, or custom hardware cannot lock users out of modifying and
+
+     re-installing their own package manager ("Tivoization"). GPLv2 does not
+
+     close that hardware-lockout loophole; GPLv3 does.
+
+2) Explicit Patent Defense for Builders & Users:
+
+   - GPLv3 includes an explicit, automatic patent grant and patent-retaliation
+
+     clause protecting downstream builders, contributors, and end users against
+
+     software patent aggression.
+
+3) Clean-Room Purity Beats `libbb` Spaghetti:
+
+   - Upstream BusyBox is licensed under **GPLv2-only**, which is legally
+
+     incompatible with GPLv3 in a combined binary.
+
+   - Rather than compromising `runepkg`'s GPLv3 shield—or inheriting BusyBox's
+
+     tangled `libbb` global state (`ptr_to_globals`), C99/GNUisms, and
+
+     fatal-exit (`bb_error_msg_and_die`) traps—we implement every low-level
+
+     primitive from **open POSIX, USTAR/PAX, and `ar` specifications** in pure,
+
+     standalone ANSI C89 against musl libc.
+
+4) Strict Workspace Hygiene Rule for Gemini Coding Agent:
+
+   - **DO NOT** download or place `busybox_source/` inside the `runepkg`
+
+     workspace. Keeping GPLv2-only source out of the indexed workspace prevents
+
+     accidental copy-paste or macro contamination by the AI coding agent.
+
+   - All specifications needed to build `ar`, `tar`, decompression, and POSIX
+
+     filesystem primitives are standard, public-domain format definitions.
+
+
+
+
+
+2. MANDATORY FILE HEADER STANDARD (`comment-header-master.txt`)
+
+--------------------------------------------------------------------------------
+
+Every new `runepkg_<shortword>matter.c` and `.h` file MUST begin with the
+
+canonical GPLv3 header block:
+
+
+
+/******************************************************************************
+
+- Filename:    runepkg_<shortword>matter.c
+
+- Author:      <michkochris@gmail.com>
+
+- Date:        YYYY-MM-DD
+
+- Description: <Single-responsibility C89 module role>
+
+- LICENSE:     GPLv3
+
+-
+
+- GPLv3 is the platinum shield of open source software and freedom.
+
+- Turning code into a permanent public asset that protects builders and users
+
+- from patent warfare and locked-down hardware.
+
+-
+
+ ******************************************************************************/
+
+
+
+
+
+3. OBJECTIVE & DUAL-LAYER STATIC ARCHITECTURE
+
+--------------------------------------------------------------------------------
+
+Eliminate 100% of runtime `fork()` / `exec()` / `system()` / `popen()` calls to
+
+external host utilities (`ar`, `tar`, `gzip`, `xz`, `zstd`, `cp`, `rm`,
+
+`mkdir`, `ln`, `chmod`, `chown`) from the low-level C89 rescue core.
+
+
+
+Target State:
+
+- Single static ELF binary compiled with `-std=c89 -pedantic -static` against
+
+  **musl libc** (MIT-licensed, 100% GPLv3-compatible).
+
+- Layer 1 — Low-Level C89 Rescue Core:
+
+  * Operates when `/bin`, `/usr/bin`, dynamic linkers (`ld-musl` / `ld-linux`),
+
+    or coreutils are completely missing or broken.
+
+  * Unpacks `.deb` packages (`ar` + `gzip`/`xz`/`zstd` + `tar`), validates
+
+    integrity, stages files atomically, and reconstructs permissions/symlinks
+
+    directly via POSIX/Linux syscalls.
+
+- Layer 2 — High-Level C++ FFI Layer:
+
+  * Bridges to the C89 core via clean `extern "C"` ABI boundaries in
+
+    `runepkg_graymatter.c` / `.h` for dependency resolution, repository
+
+    indexing, and high-level orchestration.
+
+
+
+
+
+4. DECOUPLED MODULE MAP (`runepkg_<shortword>matter.c` + `.h`)
+
+--------------------------------------------------------------------------------
+
+Each module owns one narrowly scoped C89 responsibility with explicit integer
+
+return codes (`0` on success, negative `RUNEPKG_ERR_*` codes on failure—never
+
+abrupt `exit()` inside library routines):
+
+
+
+[A] Core Archive & Stream Layer
+
+  1. `runepkg_truematter.c` / `.h`
+
+     - Role: Magic-byte detection, format identification (`.deb` `!<arch>\n`,
+
+       gzip `\x1f\x8b`, xz `\xfd7zXZ\x00`, zstd `\x28\xb5\x2f\xfd`, USTAR
+
+       `ustar`), header checksum validation, and path-traversal sanitization.
+
+  2. `runepkg_darkmatter.c` / `.h`
+
+     - Role: Clean-room ANSI C89 `ar` archive reader. Parses the 8-byte global
+
+       signature and 60-byte ASCII member headers (`ar_name`, `ar_date`,
+
+       `ar_uid`, `ar_gid`, `ar_mode`, `ar_size`, `ar_fmag`), enforcing 2-byte
+
+       even alignment padding between members.
+
+  3. `runepkg_exomatter.c` / `.h`
+
+     - Role: `.deb` container orchestrator. Uses `darkmatter` + `truematter` to
+
+       locate and stream `debian-binary` (verifying `"2.0\n"`), `control.tar*`,
+
+       and `data.tar*` without loading multi-hundred-MB packages into RAM.
+
+  4. `runepkg_fluxmatter.c` / `.h`
+
+     - Role: Unified compressed-stream dispatcher exposing a clean vtable
+
+       (`open`, `read`, `close`) over static `zlib` (`.gz`), `xz-embedded` /
+
+       `liblzma` (`.xz`), `libzstd` (`.zst`), and raw pass-through (`.tar`).
+
+  5. `runepkg_rawmatter.c` / `.h`
+
+     - Role: Zero-shell chunked buffer-to-disk and stream-to-stream I/O engine
+
+       (`EINTR`-safe `read`/`write` loops, bounded scratch buffers, optional
+
+       `fsync()`).
+
+  6. `runepkg_submatter.c` / `.h`
+
+     - Role: Clean-room ANSI C89 streaming `tar` reader. Parses 512-byte USTAR
+
+       blocks, octal numeric fields, and typeflags (`'0'`/`'\0'` regular file,
+
+       `'1'` hardlink, `'2'` symlink, `'5'` directory, `'x'`/`'g'` PAX headers,
+
+       `'L'`/`'K'` GNU longname/longlink).
+
+  7. `runepkg_oddmatter.c` / `.h`
+
+     - Role: Archive edge-case specialist—handles `ar` BSD `#1/<len>` extended
+
+       names, GNU `//` string tables, `tar` PAX path overrides (`path=`,
+
+       `linkpath=`), and non-standard padding/trailer blocks.
+
+
+
+[B] Filesystem, Links & Metadata Layer
+
+  8. `runepkg_neomatter.c` / `.h`
+
+     - Role: Recursive `mkdir -p` (`runepkg_neomatter_mkdir_p`), safe file
+
+       cloning without `/bin/cp`, and atomic staging (`write temp -> fsync ->
+
+       rename()`).
+
+  9. `runepkg_voidmatter.c` / `.h`
+
+     - Role: Safe non-symlink-following recursive removal (`opendir` /
+
+       `readdir` / `lstat` / `unlink` / `rmdir`—never following symlinks) and
+
+       failed-install rollback.
+
+ 10. `runepkg_mirrormatter.c` / `.h`
+
+     - Role: Symlink (`symlink()`) and hardlink (`link()`) creation with safe
+
+       target validation and atomic replacement of existing paths.
+
+ 11. `runepkg_spinmatter.c` / `.h`
+
+     - Role: Metadata reconstruction—applies file modes (`chmod()`), ownership
+
+       (`lchown()` when running as root/CAP_CHOWN), and modification timestamps
+
+       (`utimes()` / `utimensat()`).
+
+
+
+[C] Rescue, Isolation & FFI Bridge Layer
+
+ 12. `runepkg_nullmatter.c` / `.h`
+
+     - Role: Zero-external-binary rescue execution engine. Detects missing
+
+       host utilities or empty `PATH` and routes all operations through
+
+       internal `*matter` primitives.
+
+ 13. `runepkg_redmatter.c` / `.h`
+
+     - Role: Emergency host-repair & recovery routines (rebuilding broken
+
+       essential directory trees, verifying critical symlinks, recovering
+
+       interrupted unpack states).
+
+ 14. `runepkg_protomatter.c` / `.h`
+
+     - Role: Target rootfs / chroot / `/mnt/runepkg` bootstrapper—initializes
+
+       directory layout and package database state from scratch on a blank
+
+       filesystem.
+
+ 15. `runepkg_graymatter.c` / `.h`
+
+     - Role: Static C89-to-C++ FFI boundary (`extern "C"` structs, error codes,
+
+       and lifecycle handles) plus `PATH`-independence sanitization.
+
+
+
+
+
+5. GPLv3-COMPATIBLE STATIC LIBRARY DEPENDENCIES
+
+--------------------------------------------------------------------------------
+
+All third-party libraries statically linked into `runepkg` MUST be verified
+
+GPLv3-compatible before linking:
+
+- C Standard Library: `musl libc` (MIT License) — GPLv3 compatible.
+
+- `.gz` Decompression: `zlib` (zlib License) or `miniz` (MIT) — GPLv3 compatible.
+
+- `.xz` Decompression: `xz-embedded` (Public Domain / 0BSD) or `liblzma`
+
+  (0BSD / Public Domain) — GPLv3 compatible.
+
+- `.zst` Decompression: `zstd` (BSD-3-Clause / GPLv2 dual-licensed; under BSD
+
+  terms, 100% compatible with GPLv3) — GPLv3 compatible.
+
+
+
+
+
+6. PHASED IMPLEMENTATION ROADMAP (STRICT C89 + MUSL)
+
+--------------------------------------------------------------------------------
+
+
+
+PHASE 1: Foundation, Verification & `ar` Container Layer
+
+- Modules: `runepkg_truematter`, `runepkg_darkmatter`, `runepkg_oddmatter`,
+
+  `runepkg_exomatter`, `runepkg_rawmatter`.
+
+- Deliverables:
+
+  1) Define shared C89 error codes (`RUNEPKG_OK = 0`, `RUNEPKG_ERR_IO`,
+
+     `RUNEPKG_ERR_MAGIC`, `RUNEPKG_ERR_CORRUPT`, `RUNEPKG_ERR_TRAVERSAL`,
+
+     `RUNEPKG_ERR_NOMEM`) in `runepkg_truematter.h`.
+
+  2) Implement `ar` magic + 60-byte header parser in `runepkg_darkmatter.c` with
+
+     strict 2-byte boundary alignment (`offset += size + (size & 1)`).
+
+  3) Implement `.deb` member locator in `runepkg_exomatter.c` to extract or
+
+     stream `debian-binary`, `control.tar.*`, and `data.tar.*`.
+
+- Gate Test:
+
+  - Compare extracted member byte counts and SHA256 hashes against host `ar x`
+
+    across standard `.deb` packages (including odd-byte member sizes).
+
+
+
+PHASE 2: Unified Static Decompression Stream Layer
+
+- Modules: `runepkg_fluxmatter`, `runepkg_rawmatter`, `runepkg_truematter`.
+
+- Deliverables:
+
+  1) Detect compression format from magic bytes (`runepkg_truematter.c`) rather
+
+     than trusting filename extensions alone.
+
+  2) Implement `runepkg_flux_stream_t` in `runepkg_fluxmatter.c` wrapping
+
+     static `zlib`, `xz-embedded`/`liblzma`, `libzstd`, and raw `.tar`.
+
+- Gate Test:
+
+  - Stream-decompress `.tar.gz`, `.tar.xz`, `.tar.zst`, and uncompressed
+
+    `.tar` payloads into memory/fd and verify exact byte parity with external
+
+    `gzip -dc`, `xz -dc`, and `zstd -dc`.
+
+
+
+PHASE 3: Clean-Room C89 `tar` Extractor & Filesystem Primitives
+
+- Modules: `runepkg_submatter`, `runepkg_oddmatter`, `runepkg_neomatter`,
+
+  `runepkg_voidmatter`, `runepkg_mirrormatter`, `runepkg_spinmatter`.
+
+- Deliverables:
+
+  1) Implement 512-byte USTAR + PAX/GNU long-path parser (`runepkg_submatter.c`
+
+     + `runepkg_oddmatter.c`) reading directly from `runepkg_flux_stream_t`.
+
+  2) Reject any archive entry containing `..` path segments or unsafe absolute
+
+     link escapes (`runepkg_truematter.c`).
+
+  3) Wire `neomatter` (directories & atomic temp-file staging), `mirrormatter`
+
+     (symlinks/hardlinks), `spinmatter` (modes/uids/gids/mtimes), and
+
+     `voidmatter` (safe rollback on error).
+
+- Gate Test:
+
+  - Unpack complex `.deb` packages (containing deep directories, symlinks,
+
+    hardlinks, long paths > 100 chars, and special permissions) into a staging
+
+    root and diff tree structure, permissions, and symlinks against `tar -xf`.
+
+
+
+PHASE 4: Rescue Engine, Rootfs Bootstrapper & C++ FFI Bridge
+
+- Modules: `runepkg_nullmatter`, `runepkg_redmatter`, `runepkg_protomatter`,
+
+  `runepkg_graymatter`.
+
+- Deliverables:
+
+  1) Replace all remaining `system()`, `popen()`, `fork()`, and `exec*()` calls
+
+     in the C89 core with internal `*matter` calls (`runepkg_nullmatter.c`).
+
+  2) Implement `/mnt/runepkg` / chroot initialization (`runepkg_protomatter.c`)
+
+     and broken-state recovery (`runepkg_redmatter.c`).
+
+  3) Expose clean `extern "C"` ABI functions in `runepkg_graymatter.h` for the
+
+     high-level C++ layer.
+
+
+
+PHASE 5: End-to-End Static & Broken-Host Verification
+
+- Audit:
+
+  - Run `grep -rnE "system\(|popen\(|fork\(|exec[lv]" runepkg/` to confirm
+
+    zero external utility execution in the C89 rescue core.
+
+
+
+
+
+7. VERIFICATION & RESCUE TESTING CHECKLIST
+
+--------------------------------------------------------------------------------
+
+[ ] License & Header Audit:
+
+    - Confirm every new `runepkg_*matter.c` and `.h` carries the canonical GPLv3
+
+      header from `comment-header-master.txt` and zero GPLv2-only BusyBox code
+
+      exists in the tree.
+
+[ ] Strict C89 + Static musl Build:
+
+    - Compile with `musl-gcc -std=c89 -pedantic -Wall -Wextra -Werror -static`.
+
+    - Confirm `ldd runepkg` outputs `not a dynamic executable` and
+
+      `readelf -d runepkg` reports no `NEEDED` dynamic sections.
+
+[ ] Shell Output Regression Suite:
+
+    - Run command-by-command shell checks and diff outputs against existing
+
+      `runepkg_same_result*.txt` golden baselines to verify 100% CLI parity.
+
+[ ] Empty-PATH / Zero-Utility Rescue Test:
+
+    - Inside an isolated directory (`/mnt/runepkg` or chroot containing *only*
+
+      the static `runepkg` binary and `.deb` test packages), execute:
+
+      `env -i PATH=/nonexistent ./runepkg ...`
+
+    - Verify full `.deb` unpack, metadata extraction, symlink creation, and
+
+      installation succeed with zero external host binaries present.
+
+================================================================================

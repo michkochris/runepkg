@@ -1,23 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_hash.h
- * Author:      <michkochris@gmail.com>
- * Date:        started 01-02-2025
- * Description: Hash table for runepkg (runar linux) package management
- *
- * Copyright (c) 2025 runepkg (runar linux) All rights reserved.
- * GPLV3
- * This program is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation, either version 3 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details.
- *
- * You should have received a copy of the GNU General Public License along
- * with this program. If not, see <https://www.gnu.org/licenses/>.
+- Filename:    runepkg_hash.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-02
+- Description: Package hash table data structure definitions and search function declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_HASH_H

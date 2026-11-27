@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_cpp_ffi.h                                              */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-08-29                                                     */
-/* Description: Master C/C++ FFI Header & Extended Engine Declarations         */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_cpp_ffi.h
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: Master C/C++ FFI Header & Extended Engine Declarations
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #ifndef RUNEPKG_CPP_FFI_H
 #define RUNEPKG_CPP_FFI_H

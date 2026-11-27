@@ -1,11 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_portable.h
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Portability layer for C89/ANSI C compatibility
- *
- * This header provides standard types and definitions that were not part of
- * the original ISO C90 (C89) standard but are required by the codebase.
+- Filename:    runepkg_portable.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Cross-platform portability definitions and C89/C90 standard compatibility layer
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_PORTABLE_H

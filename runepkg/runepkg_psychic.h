@@ -1,10 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_psychic.h
- * Author:      <michkochris@gmail.com>
- * Date:        2026-09-04
- * Description: The Psychic Debian Subsystem for runepkg - Multi-Arch prophecy,
- *              scaffolding pre-flight checks, and virtual package telepathy.
- * LICENSE:     GPL v3
+- Filename:    runepkg_psychic.h
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-04
+- Description: Psychic Debian Subsystem header — Multi-Arch prophecy, scaffolding pre-flight checks, and virtual package telepathy
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_PSYCHIC_H

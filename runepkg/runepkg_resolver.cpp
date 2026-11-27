@@ -2,8 +2,13 @@
 - Filename:    runepkg_resolver.cpp
 - Author:      <michkochris@gmail.com>
 - Date:        2026-08-26
-- Description: 70k+ Repository Graph Harvester & Minimal Target Rune Resolver
-- LICENSE:     GPL v3
+- Description: Multi-repository dependency graph solver, version constraint analyzer, and minimal rune resolver
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <iostream>

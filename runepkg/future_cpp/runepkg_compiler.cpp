@@ -1,9 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_compiler.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-31
- * Description: Optimized JIT Target Profile Rule Compiler
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_compiler.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-31
+- Description: JIT target profile rule compiler & binary matrix optimization engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_matrix.h"

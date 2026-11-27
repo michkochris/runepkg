@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d4590029-7960-4200-99ac-0d815978dad0" name="Changes" comment="" />
+    <list default="true" id="d4590029-7960-4200-99ac-0d815978dad0" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -37,7 +40,7 @@
     "cidr.known.project.marker": "true",
     "git-widget-placeholder": "master",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "//wsl.localhost/kali-linux/home/jedi_michko/runepkg",
+    "last_opened_file_path": "//wsl.localhost/kali-linux/home/jedi_master/runepkg",
     "settings.editor.selected.configurable": "com.android.studio.ml.permissions"
   }
 }]]></component>
@@ -56,12 +59,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/runepkg/runepkg_runas.cpp</url>
-          <line>238</line>
+          <line>243</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/runepkg/runepkg_completion.c</url>
-          <line>646</line>
+          <line>651</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>

@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_runas.cpp                                              */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-09-20                                                     */
-/* Description: Interleaved Autocomplete & Source Engine (runas) Module        */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_runas.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: Companion source package builder (runas) — Debian source build engine, splitting, and deb package generation
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #include <iostream>
 #include <string>

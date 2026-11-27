@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_building.hpp                                           */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-09-20                                                     */
-/* Description: Standard Debian Source Builder & Toolchain Forge Engine        */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_building.hpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: Header declarations for Standard Debian Source Builder & Toolchain Forge Engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #ifndef RUNEPKG_BUILDING_HPP
 #define RUNEPKG_BUILDING_HPP

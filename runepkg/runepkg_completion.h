@@ -1,8 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_completion.h
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Completion helpers for runepkg
+/******************************************************************************
+- Filename:    runepkg_completion.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Shell auto-completion function declarations and helper definitions
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_COMPLETION_H

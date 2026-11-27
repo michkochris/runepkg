@@ -2,8 +2,13 @@
 - Filename:    runepkg_psychic.c
 - Author:      <michkochris@gmail.com>
 - Date:        2026-09-04
-- Description: Implementation of the Psychic Debian Subsystem (runepkg_psychic)
-- LICENSE:     GPL v3
+- Description: Psychic Debian Subsystem implementation — Multi-Arch prophecy, dependency forecasting, and virtual package telepathy
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <stdio.h>

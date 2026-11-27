@@ -1,11 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_scalpel.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-31
- * Description: Multi-Field Scalpel & Rule Mitigator for runepkg
- *              Surgically filters packages by language, profile, build system,
- *              or section, and generates custom @pkglist manifests.
- * LICENSE:     GPL v3
+/******************************************************************************
+- Filename:    runepkg_scalpel.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-31
+- Description: Multi-field scalpel package filter, rule mitigator, and manifest generator
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <iostream>

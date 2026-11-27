@@ -2,8 +2,13 @@
 - Filename:    runepkg_config.c
 - Author:      <michkochris@gmail.com>
 - Date:        2025-01-04
-- Description: Configuration parsing and path setup helpers for runepkg
-- LICENSE:     GPL v3
+- Description: Global configuration parser, environment variable resolver, and runtime path setup engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_portable.h"

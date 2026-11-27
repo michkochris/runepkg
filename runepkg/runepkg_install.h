@@ -1,8 +1,14 @@
-/*****************************************************************************
- * Filename:    runepkg_install.h
- * Author:      <michkochris@gmail.com>
- * Date:        2025-01-04
- * Description: Install-related helpers
+/******************************************************************************
+- Filename:    runepkg_install.h
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-04
+- Description: Package installation engine function declarations and entry points
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #ifndef RUNEPKG_INSTALL_H

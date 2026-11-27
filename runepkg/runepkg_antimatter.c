@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_antimatter.c                                          */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-09-20                                                     */
-/* Description: C89 Decontamination Chamber Gateway & Anti-Matter Gatekeeper   */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_antimatter.c
+- Author:      <michkochris@gmail.com>
+- Date:        2026-09-20
+- Description: C89 Decontamination Chamber Gateway & Anti-Matter Gatekeeper
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE

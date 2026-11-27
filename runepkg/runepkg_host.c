@@ -1,11 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_host.c
- * Author:      <michkochris@gmail.com>
- * Date:        started 01-05-2025
- * Description: Host integration and environment management for runepkg
- *
- * Copyright (c) 2025 runepkg (Runar Linux) All rights reserved.
- * GPLV3
+- Filename:    runepkg_host.c
+- Author:      <michkochris@gmail.com>
+- Date:        2025-01-05
+- Description: Host environment integration, system compatibility checks, and sysroot isolation management
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include "runepkg_host.h"

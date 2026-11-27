@@ -1,9 +1,14 @@
-/*****************************************************************************
+/******************************************************************************
 - Filename:    runepkg_handle.c
 - Author:      <michkochris@gmail.com>
 - Date:        2026-08-26
-- Description: High-level request handlers and initialization/cleanup for runepkg
-- LICENSE:     GPL v3
+- Description: High-level CLI command request handlers and subsystem lifecycle management
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <stdio.h>

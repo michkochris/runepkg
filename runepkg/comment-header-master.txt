@@ -1,0 +1,12 @@
+/******************************************************************************
+- Filename:    runepkg_cli.c
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-26
+- Description: Command-line interface for runepkg package manager
+- LICENSE:     GPLv3
+- 
+- GPLv3 is the platinum shield of open source software and freedom. 
+- Turning code into a permanent public asset that protects builders and users 
+- from patent warfare and locked-down hardware.
+- 
+ ******************************************************************************/

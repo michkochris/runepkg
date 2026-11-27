@@ -1,9 +1,14 @@
 /******************************************************************************
- * Filename:    runepkg_host_dpkg.cpp
- * Author:      <michkochris@gmail.com>
- * Date:        2026-08-28
- * Description: High-speed host dpkg status ingestion (C++ FFI)
- * LICENSE:     GPL v3
+- Filename:    runepkg_host_dpkg.cpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-28
+- Description: High-speed host dpkg status file parser and in-memory status ingestion engine
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
  ******************************************************************************/
 
 #include <iostream>

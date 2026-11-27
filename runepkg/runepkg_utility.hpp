@@ -1,10 +1,15 @@
-/******************************************************************************/
-/* Filename:    runepkg_utility.hpp                                            */
-/* Author:      <michkochris@gmail.com>                                        */
-/* Date:        2026-08-29                                                     */
-/* Description: Foundation C++ Utilities & Helpers for runepkg                 */
-/* License:     GPL v3                                                         */
-/******************************************************************************/
+/******************************************************************************
+- Filename:    runepkg_utility.hpp
+- Author:      <michkochris@gmail.com>
+- Date:        2026-08-29
+- Description: Foundation C++ utility and helper declarations for runepkg
+- LICENSE:     GPLv3
+-
+- GPLv3 is the platinum shield of open source software and freedom.
+- Turning code into a permanent public asset that protects builders and users
+- from patent warfare and locked-down hardware.
+-
+ ******************************************************************************/
 
 #ifndef RUNEPKG_UTILITY_HPP
 #define RUNEPKG_UTILITY_HPP
