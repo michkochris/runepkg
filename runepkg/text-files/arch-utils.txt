@@ -1,0 +1,71 @@
+================================================================================
+arch-utils — Clean-Room ISO C89 Archive, Filesystem & Integrity Utilities
+================================================================================
+License : GNU General Public License v3.0 (GPLv3)
+Language: Strict ISO C89 / C90 (musl-ready, static ELF capable)
+Scope   : ar, tar, gzip, xz, zstd, mkdir, rm, cp, ln, chmod, chown, touch,
+          md5sum/sha256sum, readlink
+================================================================================
+
+OVERVIEW
+--------------------------------------------------------------------------------
+arch-utils is a compact, clean-room ISO C89 command-line utility suite built
+for archive inspection and unpacking, stream decompression, filesystem staging,
+link/metadata control, and integrity verification. Engineered under GPLv3 with
+zero reliance on host shellouts or fragile runtime toolchains, it gives users
+predictable low-level tools where standard utilities are missing, broken, or
+too heavy.
+
+
+WHO IT IS FOR (TARGET AUDIENCE)
+--------------------------------------------------------------------------------
+1. System Rescue & Recovery Operators
+   - Administrators working inside an initramfs, recovery shell, live ISO, or
+     broken chroot after a failed upgrade, botched libc/binutils update, or
+     damaged PATH.
+
+2. Cross-Architecture & Embedded / CLFS Builders
+   - Developers assembling or inspecting root filesystems, sysroots, and
+     target images across architectures (such as x86_64, arm64, riscv64) or
+     custom Linux From Scratch / cross-LFS environments without dragging in a
+     full distro userland.
+
+3. Low-Level Tooling & Package Engineers
+   - Maintainers building or debugging package managers, archive pipelines,
+     custom containers, or minimal build sandboxes who need straightforward
+     exit codes, controlled I/O, and repeatable plain-text shell test output.
+
+4. Security & Integrity Auditors
+   - Engineers checking archive layouts, verifying MD5/SHA-256 digests, or
+     inspecting symlink targets and path boundaries before unpacking or
+     deploying payloads.
+
+
+WHY IT IS USEFUL IN PRACTICE
+--------------------------------------------------------------------------------
+- Works When Host Tools Fail: A static musl build remains usable even when
+  normal binaries are missing, corrupted, or run under a restricted or
+  stripped PATH (such as PATH=/nonexistent).
+- One Consistent Toolset for Archives and Trees: Combines container and stream
+  handling (ar, tar, gzip, xz, zstd) with directory, file, link, permission,
+  ownership, timestamp, and checksum commands (mkdir, rm, cp, ln, chmod,
+  chown, touch, md5sum/sha256sum, readlink) in a single clean-room C89 suite.
+- Predictable Shell Automation: Produces plain-text outputs and clear status
+  codes suited to simple shell scripts, deterministic test logs, and manual
+  line-by-line inspection without bloated wrappers or runtime surprises.
+- Clean GPLv3 Foundation: Keeps licensing clear and self-contained for embedded
+  appliances, custom builds, and open rescue media.
+
+
+TYPICAL USE CASES
+--------------------------------------------------------------------------------
+- Unpacking .deb components (ar + compressed tar streams) or inspecting
+  tarballs inside minimal recovery environments.
+- Staging a clean target root directory tree (mkdir, cp, ln, readlink) and
+  restoring exact permissions, numeric ownership, and timestamps (chmod,
+  chown, touch).
+- Verifying file or archive integrity (md5sum, sha256sum) before applying
+  changes to a sysroot or image.
+- Running repeatable shell verification checks against fixed inputs and
+  comparing outputs directly in plain text.
+================================================================================

@@ -218,15 +218,50 @@ To finish off the architecture cleanly without bloating runepkg's rescue core,
 the 14 classic utilities are modeled as a separate companion repository named
 `arch-utils` under GPLv3 in ISO C89 (`musl-gcc -static`).
 
-Role & Scope of `arch-utils`:
-- Provides standalone and/or multi-call (`arch-utils <utility> [ARGS...]`) C89
-  command-line tools for classic archive, compression, filesystem, metadata,
-  checksum, and link inspection tasks.
-- Incorporates "psychic" pre-flight awareness (link/path sanity and loop/jail
-  awareness) and clean target/path handling aligned with runepkg's conventions,
-  while keeping `runepkg` itself 100% self-contained during rescue runs.
-- Built with strict C89 flags (`-std=c89 -pedantic -Wall -Wextra`) and static
-  `musl` targets so it runs cleanly under `PATH=/nonexistent`.
+`arch-utils` entails a clean-room ISO C89 utility suite—built with musl libc
+and licensed under GPLv3—that gives developers, users, and sysadmins direct,
+low-level control over archives, compression streams, filesystem trees,
+symlinks/metadata, and integrity hashes without relying on external host binaries
+or dynamic libraries.
+
+The Four Functional Pillars of `arch-utils`:
+1) Archive & Stream Unpacking (ar, tar, gzip, xz, zstd):
+   - Inspecting and unpacking .deb containers (ar), tarballs (tar), and compressed
+     streams without calling external host tools.
+2) Directory, File, & Link Control (mkdir, rm, cp, ln, readlink):
+   - Building target trees, copying payload files, creating hard/symbolic links,
+     and resolving link chains or jail boundaries via runepkg_psychic awareness.
+3) Permission, Ownership, & Timestamp Restoration (chmod, chown, touch):
+   - Restoring exact POSIX modes, numeric UID/GID ownership, and microsecond
+     timestamps on extracted or staged files.
+4) Checksum & Integrity Verification (md5sum, sha256sum):
+   - Calculating and checking file or payload digests (MD5, SHA-256, FNV-1a)
+     before trusting or deploying archives.
+
+What a User / Sysadmin Uses `arch-utils` For:
+1) Broken or Minimal Rescue Shells:
+   - Operating under `PATH=/nonexistent` or inside an initramfs / recovery chroot
+     where `/bin/tar`, `/usr/bin/ar`, or `/bin/rm` is missing, damaged, or linked
+     against broken shared libraries.
+2) Cross-Target Staging & Rootfs Prep:
+   - Assembling and inspecting root filesystems for alternate target architectures
+     (arm64, riscv64, etc.) where setting modes, links, and timestamps cleanly
+     matters more than full distro bloat.
+3) Deterministic Scripting & Verification:
+   - Running lightweight, predictable commands in shell scripts or plain-text
+     I/O verification suites (`runepkg_same_test?.sh` / `runepkg_same_result?.txt`)
+     with deterministic exit codes and zero runtime surprises.
+4) Container, Embedded, & CLFS Build Environments:
+   - Providing lightweight, self-contained utilities that operate without pulling in
+     large userland packages, toolchain dependencies, or dynamic loader chains.
+
+Why a Static Clean-Room Suite Matters:
+When a Linux system is healthy, nobody thinks about tar, ar, ln, or chmod—until libc
+or binutils breaks mid-upgrade, a dynamic linker symlink points into thin air, or you
+are staring at a half-built rootfs with almost nothing working. Having a small,
+static, clean-room C89 utility suite (`musl-gcc -static`) that works unconditionally
+when the host environment is corrupted is the difference between a fast 5-minute
+recovery and reinstalling from scratch.
 
 
 5. EXPLICIT REPLACED UTILITIES MATRIX & SPECIFICATION
@@ -405,10 +440,11 @@ syscalls leak across files. We enforce six strict structural boundaries:
      not_full_static_plan.txt, and not_some_ordinary_plan.txt.
 
 2. Canonical References:
-   - DESIGN.md       : Architectural deep-dive, binary data structures, psychic & antimatter layers.
-   - HOLY_GRAIL.md   : Guide for 100% self-contained static musl builds.
-   - COPILOT.md      : Security audit and path traversal jail verification.
-   - RUNAS.md        : Companion Debian source package forge manual.
+   - DESIGN.md          : Architectural deep-dive, binary data structures, psychic & antimatter layers.
+   - HOLY_GRAIL.md      : Guide for 100% self-contained static musl builds.
+   - COPILOT.md         : Security audit and path traversal jail verification.
+   - RUNAS.md           : Companion Debian source package forge manual.
+   - arch-utils.txt     : Complete overview, target audience, and usage spec for arch-utils.
 
 
 8. VERIFICATION PLAN & ACCEPTANCE CRITERIA
